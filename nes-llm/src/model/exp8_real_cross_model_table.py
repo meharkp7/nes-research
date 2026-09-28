@@ -41,11 +41,10 @@ from src.core.types import EmbeddingConfig
 from src.embedding.intelligent_embedder import IntelligentEmbedder
 from src.extraction.decrypt_pipeline import DecryptPipeline
 from src.carrier_intelligence.qaci_pipeline import QACIPipeline
-from src.evaluation.fidelity_validator import FidelityValidator
 from src.evaluation.robustness_validator import RobustnessValidator
 from src.steganalysis.security_validator import SecurityValidator
 from src.model.model_loader import load_model_pair, extract_residuals
-from src.evaluation.exp5_model_builder import build_embedded_eval_model
+from src.model.exp8_result_adapter import get_exp5_result
 
 
 MODELS = [
@@ -113,69 +112,31 @@ def run_g3_ber(residuals, family: str, n_layers: int) -> Dict[str, Any]:
     )
 
 
-def find_exp5_result(model_id: str) -> Optional[Dict[str, Any]]:
-    """Read a previously completed Exp5 real-PPL result.
-
-    Exp8 must not silently repeat an hours-long forward-pass experiment.
-    Supported artifact names are intentionally explicit.
-    """
-    candidates = [
-        RESULT_DIR / "exp5_fidelity_ppl_results.json",
-        RESULT_DIR / "exp5b_fidelity_ppl_results.json",
-        RESULT_DIR / "exp5_results.json",
-    ]
-    for path in candidates:
-        if not path.exists():
-            continue
-        try:
-            data = json.loads(path.read_text())
-        except Exception:
-            continue
-        if isinstance(data, dict):
-            item = data.get(model_id)
-            if isinstance(item, dict):
-                return item
-    return None
-
-
 def run_g4_ppl(nf4, fp16, tok, residuals, family: str, n_layers: int, model_id: str) -> Dict[str, Any]:
-    """Exp8 G4 gate. Reuse completed Exp5; never launch a long PPL job implicitly."""
-    saved = find_exp5_result(model_id)
+    """Exp8 G4 gate: consume a completed Exp5 result without recomputation."""
+    saved = get_exp5_result(model_id)
     if saved is None:
         return _gate(
             "NOT_RUN",
             reason=(
-                "No saved Exp5 real-PPL artifact found. "
-                "Run Exp5 separately and save results/exp5_fidelity_ppl_results.json."
+                "No saved/registered Exp5 real-PPL artifact found. "
+                "Run Exp5 separately and register its result for Exp8."
             ),
         )
 
-    # Accept the common Exp5 field names and keep the original measurement intact.
-    degradation = saved.get("ppl_degradation", saved.get("degradation"))
-    embedded_ppl = saved.get("embedded_ppl", saved.get("ppl_embedded"))
-    baseline_ppl = saved.get("baseline_ppl", saved.get("ppl_base"))
-    control_ppl = saved.get(
-        "reconstruction_control_ppl",
-        saved.get("control_ppl", saved.get("ppl_control")),
-    )
+    degradation_pct = float(saved["ppl_degradation_pct"])
+    passed = degradation_pct < 2.0
 
-    if degradation is None:
-        return _gate(
-            "NOT_RUN",
-            reason="Saved Exp5 artifact does not contain a PPL degradation value.",
-        )
-
-    degradation = float(degradation)
-    passed = degradation < 0.02
     return _gate(
         "PASS" if passed else "FAIL",
-        baseline_ppl=baseline_ppl,
-        reconstruction_control_ppl=control_ppl,
-        embedded_ppl=embedded_ppl,
-        ppl_degradation=degradation,
-        source="saved_exp5_result",
+        baseline_ppl=saved.get("baseline_ppl"),
+        reconstruction_control_ppl=saved.get("reconstruction_control_ppl"),
+        embedded_ppl=saved.get("embedded_ppl"),
+        ppl_delta_pct=saved.get("ppl_delta_pct"),
+        ppl_degradation_pct=degradation_pct,
+        threshold_pct=2.0,
+        source=saved.get("source", "exp5_result"),
     )
-
 
 def run_g5_robustness(residuals, family: str, n_layers: int) -> Dict[str, Any]:
     result = make_embedding(
