@@ -113,66 +113,68 @@ def run_g3_ber(residuals, family: str, n_layers: int) -> Dict[str, Any]:
     )
 
 
-def run_g4_ppl(nf4, fp16, tok, residuals, family: str, n_layers: int) -> Dict[str, Any]:
+def find_exp5_result(model_id: str) -> Optional[Dict[str, Any]]:
+    """Read a previously completed Exp5 real-PPL result.
+
+    Exp8 must not silently repeat an hours-long forward-pass experiment.
+    Supported artifact names are intentionally explicit.
     """
-    Real PPL gate for Exp8.
+    candidates = [
+        RESULT_DIR / "exp5_fidelity_ppl_results.json",
+        RESULT_DIR / "exp5b_fidelity_ppl_results.json",
+        RESULT_DIR / "exp5_results.json",
+    ]
+    for path in candidates:
+        if not path.exists():
+            continue
+        try:
+            data = json.loads(path.read_text())
+        except Exception:
+            continue
+        if isinstance(data, dict):
+            item = data.get(model_id)
+            if isinstance(item, dict):
+                return item
+    return None
 
-    The original residual reconstruction control is measured first, then a
-    fresh model pair is used for the embedded evaluation. This prevents the
-    control/embedding comparison from being contaminated by in-place model
-    mutation.
-    """
-    try:
-        from datasets import load_dataset
 
-        dataset = load_dataset(
-            "wikitext", "wikitext-2-raw-v1", split="validation"
-        )
-        texts = [t for t in dataset["text"] if len(t.strip()) > 50][:200]
-        validator = FidelityValidator(max_ppl_degradation=0.02)
-
-        ppl_base = validator.validate_perplexity(nf4, tok, texts)
-
-        # Reconstruction control: W_fp16 ≈ W_nf4 + R_original.
-        control_model = build_embedded_eval_model(
-            nf4, fp16, residuals, family
-        )
-        ppl_control = validator.validate_perplexity(
-            control_model, tok, texts
-        )
-        del control_model
-
-        # Build the embedding from the already extracted residuals, then
-        # reconstruct a separate evaluation model with the embedded residuals.
-        embed_result = make_embedding(
-            residuals, family, n_layers, PAYLOAD_BITS, MESSAGE
-        )
-        embedded_model = build_embedded_eval_model(
-            nf4, fp16, embed_result.embedded_residuals, family
-        )
-        ppl_embedded = validator.validate_perplexity(
-            embedded_model, tok, texts
-        )
-        del embedded_model
-
-        fidelity = validator.compare_perplexity(
-            ppl_base, ppl_embedded
-        )
-
-        return _gate(
-            "PASS" if fidelity.passed else "FAIL",
-            baseline_ppl=ppl_base,
-            reconstruction_control_ppl=ppl_control,
-            embedded_ppl=ppl_embedded,
-            ppl_degradation=fidelity.ppl_degradation,
-            reconstruction_control_delta=(ppl_control - ppl_base) / max(ppl_base, 1e-8),
-            evaluation_samples=len(texts),
-        )
-    except Exception as exc:
+def run_g4_ppl(nf4, fp16, tok, residuals, family: str, n_layers: int, model_id: str) -> Dict[str, Any]:
+    """Exp8 G4 gate. Reuse completed Exp5; never launch a long PPL job implicitly."""
+    saved = find_exp5_result(model_id)
+    if saved is None:
         return _gate(
             "NOT_RUN",
-            reason=f"Real PPL gate unavailable: {type(exc).__name__}: {exc}",
+            reason=(
+                "No saved Exp5 real-PPL artifact found. "
+                "Run Exp5 separately and save results/exp5_fidelity_ppl_results.json."
+            ),
         )
+
+    # Accept the common Exp5 field names and keep the original measurement intact.
+    degradation = saved.get("ppl_degradation", saved.get("degradation"))
+    embedded_ppl = saved.get("embedded_ppl", saved.get("ppl_embedded"))
+    baseline_ppl = saved.get("baseline_ppl", saved.get("ppl_base"))
+    control_ppl = saved.get(
+        "reconstruction_control_ppl",
+        saved.get("control_ppl", saved.get("ppl_control")),
+    )
+
+    if degradation is None:
+        return _gate(
+            "NOT_RUN",
+            reason="Saved Exp5 artifact does not contain a PPL degradation value.",
+        )
+
+    degradation = float(degradation)
+    passed = degradation < 0.02
+    return _gate(
+        "PASS" if passed else "FAIL",
+        baseline_ppl=baseline_ppl,
+        reconstruction_control_ppl=control_ppl,
+        embedded_ppl=embedded_ppl,
+        ppl_degradation=degradation,
+        source="saved_exp5_result",
+    )
 
 
 def run_g5_robustness(residuals, family: str, n_layers: int) -> Dict[str, Any]:
@@ -297,7 +299,7 @@ def run_model(model_id: str, family: str, expected_layers: int) -> Dict[str, Any
         row["g2_qaci"] = run_g2_qaci(residuals, actual_layers)
         row["g3_ber"] = run_g3_ber(residuals, family, actual_layers)
         row["g4_ppl"] = run_g4_ppl(
-            nf4, fp16, tok, residuals, family, actual_layers
+            nf4, fp16, tok, residuals, family, actual_layers, model_id
         )
         row["g5_robustness"] = run_g5_robustness(
             residuals, family, actual_layers
