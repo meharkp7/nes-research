@@ -287,11 +287,10 @@ def run_model(model_id: str, family: str, expected_layers: int) -> Dict[str, Any
         actual_layers = len(nf4.model.layers)
         row["actual_layers"] = actual_layers
 
-        residuals, fp16_weights, quantized_weights = extract_residuals(
+        residuals = extract_residuals(
             nf4_model=nf4,
             fp16_model=fp16,
             family=family,
-            model_id=model_id,
         )
         row["residual_layers"] = len(residuals)
 
