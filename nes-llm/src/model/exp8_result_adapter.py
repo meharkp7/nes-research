@@ -4,11 +4,12 @@ from typing import Any, Dict, Optional
 
 
 # ---------------------------------------------------------------------------
-# Exp5 results
+# Exp5 completed result
 # ---------------------------------------------------------------------------
 #
-# These are the already-completed real Exp5 results for Qwen2.5-3B.
-# Exp8 consumes them; it does NOT rerun the expensive PPL experiment.
+# This is the real Qwen2.5-3B Exp5 result already completed separately.
+# Exp8 consumes it as an experiment-specific adapter rather than rerunning
+# the expensive WikiText-2 evaluation.
 #
 EXP5_RESULTS = {
     "Qwen/Qwen2.5-3B": {
@@ -25,10 +26,9 @@ EXP5_RESULTS = {
 
 def get_exp5_result(model_id: str) -> Optional[Dict[str, Any]]:
     """
-    Return the already-completed real Exp5 result for a model.
+    Return the previously completed real Exp5 result for a model.
 
-    Exp8 uses this adapter so that it does not rerun the expensive
-    WikiText-2 PPL evaluation.
+    This adapter intentionally does not rerun Exp5.
     """
     result = EXP5_RESULTS.get(model_id)
 
@@ -39,54 +39,58 @@ def get_exp5_result(model_id: str) -> Optional[Dict[str, Any]]:
 
 
 # ---------------------------------------------------------------------------
-# Exp7 neural detector results
+# Exp7 neural detector result
 # ---------------------------------------------------------------------------
 
 def find_neural_detector_result(
     model_id: str,
 ) -> Optional[Dict[str, Any]]:
     """
-    Read an already-produced Exp7 neural-detector result.
+    Find a previously saved real Exp7 neural-detector result.
 
-    Exp8 never trains a detector implicitly.
+    Exp8 must consume an already completed Exp7 result.
+    It must NOT silently train the detector again.
 
-    The Exp7 result may be located in:
-      1. results/ relative to the current working directory
-      2. nes-llm/results/ relative to this project
-      3. the parent nes-research/results/ directory
-
-    This is intentionally an Exp8-only adapter. It does not modify or
-    rerun Exp7.
+    The result may live in:
+        nes-llm/results/
+    or, for compatibility:
+        nes-research/results/
     """
 
     adapter_file = Path(__file__).resolve()
 
+    # ------------------------------------------------------------------
+    # Important path:
+    #
+    # __file__ =
+    # nes-research/nes-llm/src/model/exp8_result_adapter.py
+    #
+    # parents[0] = src/model
+    # parents[1] = src
+    # parents[2] = nes-llm
+    # parents[3] = nes-research
+    # ------------------------------------------------------------------
+
+    project_root = adapter_file.parents[2]   # nes-llm
+    repo_root = adapter_file.parents[3]      # nes-research
+
     candidates = [
-        # If Exp8 is run from nes-llm/
-        Path("results/exp7_neural_detector_results.json"),
+        # Primary location:
+        project_root / "results" / "exp7_neural_detector_results.json",
 
-        # If this adapter is inside:
-        # nes-research/nes-llm/src/model/
-        adapter_file.parents[2]
-        / "results"
-        / "exp7_neural_detector_results.json",
+        # Compatibility location:
+        repo_root / "results" / "exp7_neural_detector_results.json",
 
-        # If Exp8 is run from the outer:
-        # nes-research/
-        adapter_file.parents[3]
-        / "results"
-        / "exp7_neural_detector_results.json",
+        # Older possible artifact name:
+        project_root / "results" / "exp7_detector_results.json",
 
-        # Backward-compatible older artifact name
-        Path("results/exp7_detector_results.json"),
+        # Older possible artifact name:
+        repo_root / "results" / "exp7_detector_results.json",
 
-        adapter_file.parents[2]
-        / "results"
-        / "exp7_detector_results.json",
+        # Current working directory compatibility:
+        Path.cwd() / "results" / "exp7_neural_detector_results.json",
 
-        adapter_file.parents[3]
-        / "results"
-        / "exp7_detector_results.json",
+        Path.cwd() / "results" / "exp7_detector_results.json",
     ]
 
     seen = set()
@@ -103,37 +107,47 @@ def find_neural_detector_result(
             continue
 
         try:
-            data = json.loads(path.read_text(encoding="utf-8"))
+            data = json.loads(
+                path.read_text(encoding="utf-8")
+            )
         except (OSError, json.JSONDecodeError):
             continue
 
         if not isinstance(data, dict):
             continue
 
-        # Current Exp7 artifact format:
+        # --------------------------------------------------------------
+        # Format 1:
         #
         # {
-        #   "experiment": "...",
         #   "model_id": "Qwen/Qwen2.5-3B",
         #   "accuracy": 0.705,
         #   ...
         # }
+        # --------------------------------------------------------------
         if (
             data.get("model_id") == model_id
             and "accuracy" in data
         ):
-            return data
+            result = dict(data)
+            result["_source_path"] = str(path)
+            return result
 
-        # Future / multi-model format:
+        # --------------------------------------------------------------
+        # Format 2:
         #
         # {
         #   "Qwen/Qwen2.5-3B": {
-        #       "accuracy": ...
+        #       "accuracy": 0.705,
+        #       ...
         #   }
         # }
+        # --------------------------------------------------------------
         item = data.get(model_id)
 
         if isinstance(item, dict) and "accuracy" in item:
-            return item
+            result = dict(item)
+            result["_source_path"] = str(path)
+            return result
 
     return None
