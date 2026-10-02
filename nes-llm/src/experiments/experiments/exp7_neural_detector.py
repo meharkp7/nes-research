@@ -261,7 +261,10 @@ def _train_and_evaluate(dataset_path: Path) -> Dict[str, Any]:
             batch_x = batch_x.to(device)
             batch_y = batch_y.to(device)
             optimizer.zero_grad()
-            loss = loss_fn(model(batch_x).squeeze(1), batch_y)
+            # Detector.forward already squeezes to (batch,), so this must
+            # not squeeze again or the shape is invalid for an already
+            # 1-D tensor.
+            loss = loss_fn(model(batch_x), batch_y)
             loss.backward()
             optimizer.step()
 
