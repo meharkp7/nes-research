@@ -25,6 +25,8 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
 import torch  # noqa: E402
 
+from src.experiments.paths import REPO_ROOT, RESULTS_DIR  # noqa: E402
+
 MODEL_ID = "Qwen/Qwen2.5-3B"
 FAMILY = "qwen"
 NUM_LAYERS = 36
@@ -77,8 +79,6 @@ def probe_quant_formats() -> List[Dict[str, Any]]:
     from transformers import AutoModelForCausalLM, BitsAndBytesConfig
 
     from src.model.registry import get_layer_module  # noqa: E402
-
-from src.experiments.paths import REPO_ROOT, RESULTS_DIR  # noqa: E402
 
     import bitsandbytes.functional as bnb_func
 
