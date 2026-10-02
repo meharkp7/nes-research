@@ -1,6 +1,6 @@
 # NES Multi-Model Research — Final Summary
 
-Generated: 2026-10-02T08:49:48.605775+00:00
+Generated: 2026-10-02T08:52:37.801175+00:00
 
 This summary is generated from `results/experiment_manifest.json`. Every number below corresponds to a saved artifact.
 

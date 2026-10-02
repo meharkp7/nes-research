@@ -1,0 +1,72 @@
+{
+  "experiment": "exp7",
+  "title": "Security (statistical)",
+  "configuration": {
+    "payload_bits": 50000,
+    "validator": "SecurityValidator",
+    "num_bins": 64,
+    "adversary": "threshold classifier on mean absolute value of 10,000-value samples",
+    "scope": "statistical undetectability only"
+  },
+  "metrics": {
+    "kl_divergence": 6.932867836439982e-05,
+    "sign_bias": 0.014657527208328247,
+    "mean_shift": 8.423012332059443e-08,
+    "std_shift": 6.984919309616089e-10,
+    "statistical_detector_accuracy": 0.5039499998092651,
+    "max_kl_divergence": 0.05,
+    "max_detector_accuracy": 0.55,
+    "kl_gate_passed": true,
+    "detector_gate_passed": true,
+    "embedding_distortion": {
+      "total_values": 253755392,
+      "changed_values": 24229,
+      "changed_ratio": 9.548171492647534e-05,
+      "mean_abs_difference_over_changed": 0.019621650248346507
+    }
+  },
+  "thresholds": {
+    "description": "Statistical undetectability of the embedding.",
+    "max_kl_divergence": 0.05,
+    "max_detector_accuracy": 0.55
+  },
+  "status": "PASS",
+  "gate_status": "PASS",
+  "reproducibility": {
+    "model_id": "TinyLlama/TinyLlama-1.1B-Chat-v1.0",
+    "family": "llama",
+    "expected_layers": 22,
+    "actual_layers": 22,
+    "layer_count_matches_expected": true,
+    "random_seed": 42,
+    "device": "mps",
+    "software_versions": {
+      "python": "3.14.3",
+      "platform": "macOS-26.3-arm64-arm-64bit-Mach-O",
+      "torch": "2.13.0",
+      "transformers": "5.16.1",
+      "bitsandbytes": "0.50.2",
+      "accelerate": "1.14.0",
+      "numpy": "2.5.2"
+    },
+    "platform_notes": [
+      "Apple Silicon/MPS: NF4 dequantization must stay on CPU. Moving large dequantized tensors to MPS raises RuntimeError: Invalid buffer size.",
+      "MPS has no native int8/uint8 dequantize; PYTORCH_ENABLE_MPS_FALLBACK is set to 1."
+    ],
+    "residual_source": "live_extraction",
+    "residual_definition": "R = W_FP16 - dequantize(W_NF4)",
+    "timestamp": "2026-10-02T08:59:28.897898+00:00"
+  },
+  "notes": "Statistical undetectability gates hold. This says nothing about a trained neural adversary; see exp7_neural.",
+  "source": "run",
+  "sub_experiments": {
+    "exp7_neural": {
+      "status": "NOT_RUN",
+      "reason": "Neural-adversary security is a separate experiment with its own dataset and training cost. Passing the statistical gate must not be read as passing the neural gate."
+    }
+  },
+  "duration_seconds": 13.07,
+  "model_id": "TinyLlama/TinyLlama-1.1B-Chat-v1.0",
+  "family": "llama",
+  "generated_at": "2026-10-02T08:59:28.898365+00:00"
+}

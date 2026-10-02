@@ -1,0 +1,67 @@
+{
+  "experiment": "exp3",
+  "title": "Clean BER",
+  "configuration": {
+    "payload_bits": 50000,
+    "message_length_chars": 6000,
+    "embedding_strategy": "sign",
+    "carrier_selection": "qaci",
+    "message_source": "repeated 'A'; AES-256-GCM nonce is fresh per run"
+  },
+  "metrics": {
+    "payload_bits_requested": 50000,
+    "bits_embedded": 48256,
+    "bits_transmitted": 48256,
+    "bits_extracted": 48256,
+    "bits_compared": 48256,
+    "bit_errors": 0,
+    "ber": 0.0,
+    "decrypt_success": true,
+    "recovered_matches_original": true,
+    "key_id": "fbb9b7a87cae0ca9",
+    "layers_used": 22,
+    "recovery_stats": {
+      "success": true,
+      "bits_extracted": 48256,
+      "payload_bits": 48224,
+      "message_length": 6000
+    }
+  },
+  "thresholds": {
+    "description": "Clean embed -> extract -> decrypt round trip.",
+    "max_ber": 0.0
+  },
+  "status": "PASS",
+  "gate_status": "PASS",
+  "reproducibility": {
+    "model_id": "TinyLlama/TinyLlama-1.1B-Chat-v1.0",
+    "family": "llama",
+    "expected_layers": 22,
+    "actual_layers": 22,
+    "layer_count_matches_expected": true,
+    "random_seed": 42,
+    "device": "mps",
+    "software_versions": {
+      "python": "3.14.3",
+      "platform": "macOS-26.3-arm64-arm-64bit-Mach-O",
+      "torch": "2.13.0",
+      "transformers": "5.16.1",
+      "bitsandbytes": "0.50.2",
+      "accelerate": "1.14.0",
+      "numpy": "2.5.2"
+    },
+    "platform_notes": [
+      "Apple Silicon/MPS: NF4 dequantization must stay on CPU. Moving large dequantized tensors to MPS raises RuntimeError: Invalid buffer size.",
+      "MPS has no native int8/uint8 dequantize; PYTORCH_ENABLE_MPS_FALLBACK is set to 1."
+    ],
+    "residual_source": "live_extraction",
+    "residual_definition": "R = W_FP16 - dequantize(W_NF4)",
+    "timestamp": "2026-10-02T08:58:28.727629+00:00"
+  },
+  "notes": "Clean round trip recovered exactly.",
+  "source": "run",
+  "duration_seconds": 20.71,
+  "model_id": "TinyLlama/TinyLlama-1.1B-Chat-v1.0",
+  "family": "llama",
+  "generated_at": "2026-10-02T08:58:28.729422+00:00"
+}

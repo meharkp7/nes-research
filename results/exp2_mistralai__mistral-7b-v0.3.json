@@ -1,4 +1,6 @@
 {
+  "experiment": "exp2",
+  "title": "Residual Fingerprint",
   "model": "mistralai/Mistral-7B-v0.3",
   "family": "mistral",
   "num_layers": 32,
@@ -391,6 +393,58 @@
       "adjusted_quality": 0.2719586838668134
     }
   ],
-  "generated_at": "2026-10-02T10:12:46.079074+00:00",
-  "source_artifact": "results/exp2_mistralai__mistral-7b-v0.3.json"
+  "configuration": {
+    "profiler": "LayerProfiler",
+    "num_bins": 64,
+    "module": "mlp.down_proj"
+  },
+  "metrics": {
+    "num_layers": 32,
+    "min_magnitude_threshold": 0.002,
+    "layers_above_threshold": 26,
+    "fraction_above_threshold": 0.8125,
+    "required_fraction": 0.8,
+    "mean_quality": 0.4239888346970458,
+    "mean_mag_mean": 0.0018869373539018852,
+    "mean_entropy": 0.2958224479184497,
+    "min_mag_mean": 0.00021338991064112633,
+    "max_mag_mean": 0.002304795663803816
+  },
+  "thresholds": {
+    "description": "Residual fingerprint is informative.",
+    "min_mean_magnitude": 0.002,
+    "min_fraction_layers_above": 0.8
+  },
+  "status": "PASS",
+  "gate_status": "PASS",
+  "reproducibility": {
+    "model_id": "mistralai/Mistral-7B-v0.3",
+    "family": "mistral",
+    "expected_layers": 32,
+    "actual_layers": 32,
+    "layer_count_matches_expected": true,
+    "random_seed": 42,
+    "device": "mps",
+    "software_versions": {
+      "python": "3.14.3",
+      "platform": "macOS-26.3-arm64-arm-64bit-Mach-O",
+      "torch": "2.13.0",
+      "transformers": "5.16.1",
+      "bitsandbytes": "0.50.2",
+      "accelerate": "1.14.0",
+      "numpy": "2.5.2"
+    },
+    "platform_notes": [
+      "Apple Silicon/MPS: NF4 dequantization must stay on CPU. Moving large dequantized tensors to MPS raises RuntimeError: Invalid buffer size.",
+      "MPS has no native int8/uint8 dequantize; PYTORCH_ENABLE_MPS_FALLBACK is set to 1."
+    ],
+    "residual_source": "cache",
+    "residual_definition": "R = W_FP16 - dequantize(W_NF4)",
+    "timestamp": "2026-10-02T10:12:46.076883+00:00"
+  },
+  "notes": "26/32 layers exceed mag_mean 0.002.",
+  "source": "run",
+  "duration_seconds": 2.16,
+  "model_id": "mistralai/Mistral-7B-v0.3",
+  "generated_at": "2026-10-02T10:12:46.077401+00:00"
 }

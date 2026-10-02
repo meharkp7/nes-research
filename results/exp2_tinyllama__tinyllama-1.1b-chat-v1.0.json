@@ -1,4 +1,6 @@
 {
+  "experiment": "exp2",
+  "title": "Residual Fingerprint",
   "model": "TinyLlama/TinyLlama-1.1B-Chat-v1.0",
   "family": "llama",
   "num_layers": 22,
@@ -271,6 +273,58 @@
       "adjusted_quality": 0.27879896840778795
     }
   ],
-  "generated_at": "2026-10-02T08:58:07.986576+00:00",
-  "source_artifact": "results/exp2_tinyllama__tinyllama-1.1b-chat-v1.0.json"
+  "configuration": {
+    "profiler": "LayerProfiler",
+    "num_bins": 64,
+    "module": "mlp.down_proj"
+  },
+  "metrics": {
+    "num_layers": 22,
+    "min_magnitude_threshold": 0.002,
+    "layers_above_threshold": 0,
+    "fraction_above_threshold": 0.0,
+    "required_fraction": 0.8,
+    "mean_quality": 0.4839450363612696,
+    "mean_mag_mean": 0.0012804179039614444,
+    "mean_entropy": 0.4502599818973327,
+    "min_mag_mean": 0.0012234833557158709,
+    "max_mag_mean": 0.0013870903057977557
+  },
+  "thresholds": {
+    "description": "Residual fingerprint is informative.",
+    "min_mean_magnitude": 0.002,
+    "min_fraction_layers_above": 0.8
+  },
+  "status": "FAIL",
+  "gate_status": "FAIL",
+  "reproducibility": {
+    "model_id": "TinyLlama/TinyLlama-1.1B-Chat-v1.0",
+    "family": "llama",
+    "expected_layers": 22,
+    "actual_layers": 22,
+    "layer_count_matches_expected": true,
+    "random_seed": 42,
+    "device": "mps",
+    "software_versions": {
+      "python": "3.14.3",
+      "platform": "macOS-26.3-arm64-arm-64bit-Mach-O",
+      "torch": "2.13.0",
+      "transformers": "5.16.1",
+      "bitsandbytes": "0.50.2",
+      "accelerate": "1.14.0",
+      "numpy": "2.5.2"
+    },
+    "platform_notes": [
+      "Apple Silicon/MPS: NF4 dequantization must stay on CPU. Moving large dequantized tensors to MPS raises RuntimeError: Invalid buffer size.",
+      "MPS has no native int8/uint8 dequantize; PYTORCH_ENABLE_MPS_FALLBACK is set to 1."
+    ],
+    "residual_source": "live_extraction",
+    "residual_definition": "R = W_FP16 - dequantize(W_NF4)",
+    "timestamp": "2026-10-02T08:58:07.986036+00:00"
+  },
+  "notes": "Only 0/22 layers exceed mag_mean 0.002 (0.0% < 80%). A FAIL here is a real property of this model's NF4 residual scale, not a pipeline error.",
+  "source": "run",
+  "duration_seconds": 1.85,
+  "model_id": "TinyLlama/TinyLlama-1.1B-Chat-v1.0",
+  "generated_at": "2026-10-02T08:58:07.986144+00:00"
 }

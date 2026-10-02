@@ -1,4 +1,6 @@
 {
+  "experiment": "exp2",
+  "title": "Residual Fingerprint",
   "model": "Qwen/Qwen2.5-7B",
   "family": "qwen",
   "num_layers": 28,
@@ -343,6 +345,58 @@
       "adjusted_quality": 0.2854425717244461
     }
   ],
-  "generated_at": "2026-10-02T11:02:49.639694+00:00",
-  "source_artifact": "results/exp2_qwen__qwen2.5-7b.json"
+  "configuration": {
+    "profiler": "LayerProfiler",
+    "num_bins": 64,
+    "module": "mlp.down_proj"
+  },
+  "metrics": {
+    "num_layers": 28,
+    "min_magnitude_threshold": 0.002,
+    "layers_above_threshold": 21,
+    "fraction_above_threshold": 0.75,
+    "required_fraction": 0.8,
+    "mean_quality": 0.4556511549367532,
+    "mean_mag_mean": 0.00941199781872066,
+    "mean_entropy": 0.3188805011588255,
+    "min_mag_mean": 0.0012118675513193011,
+    "max_mag_mean": 0.013017192482948303
+  },
+  "thresholds": {
+    "description": "Residual fingerprint is informative.",
+    "min_mean_magnitude": 0.002,
+    "min_fraction_layers_above": 0.8
+  },
+  "status": "FAIL",
+  "gate_status": "FAIL",
+  "reproducibility": {
+    "model_id": "Qwen/Qwen2.5-7B",
+    "family": "qwen",
+    "expected_layers": 28,
+    "actual_layers": 28,
+    "layer_count_matches_expected": true,
+    "random_seed": 42,
+    "device": "mps",
+    "software_versions": {
+      "python": "3.14.3",
+      "platform": "macOS-26.3-arm64-arm-64bit-Mach-O",
+      "torch": "2.13.0",
+      "transformers": "5.16.1",
+      "bitsandbytes": "0.50.2",
+      "accelerate": "1.14.0",
+      "numpy": "2.5.2"
+    },
+    "platform_notes": [
+      "Apple Silicon/MPS: NF4 dequantization must stay on CPU. Moving large dequantized tensors to MPS raises RuntimeError: Invalid buffer size.",
+      "MPS has no native int8/uint8 dequantize; PYTORCH_ENABLE_MPS_FALLBACK is set to 1."
+    ],
+    "residual_source": "cache",
+    "residual_definition": "R = W_FP16 - dequantize(W_NF4)",
+    "timestamp": "2026-10-02T11:02:49.555889+00:00"
+  },
+  "notes": "Only 21/28 layers exceed mag_mean 0.002 (75.0% < 80%). A FAIL here is a real property of this model's NF4 residual scale, not a pipeline error.",
+  "source": "run",
+  "duration_seconds": 17.95,
+  "model_id": "Qwen/Qwen2.5-7B",
+  "generated_at": "2026-10-02T11:02:49.594531+00:00"
 }
