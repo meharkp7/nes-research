@@ -658,3 +658,104 @@ Both match the assumptions the adapters were written against.
 verified against a synthetic reference — bit-exact against AutoGPTQ's
 unpack, but never against an actual checkpoint. If the nibble axis or the
 zero-point bias were wrong, a real GPTQ checkpoint is where that shows.
+
+---
+
+## 14. Item 2 — Exp9, the result, and what it exposed
+
+### The targets never existed
+
+```
+Qwen/Qwen2.5-3B-GPTQ-Int4  -> 404
+Qwen/Qwen2.5-3B-AWQ        -> 404
+```
+
+Both were hardcoded in `exp9_alternative_quant.py`. The handoff and my own
+audit recorded the reason as "no GPTQ/AWQ checkpoint in the local cache" —
+**that was wrong**. The model ids do not exist.
+
+**Why it stayed hidden:** `exp9` returned NOT_RUN *before* attempting to
+load anything, so "this model id is fictional" and "this model is not
+downloaded yet" produced the identical status. The status carried no
+information about which failure it was. Fixed by making the failure
+modes distinguishable.
+
+### Only Instruct variants are published
+
+Real, ungated checkpoints:
+
+| model | size |
+|---|---|
+| Qwen/Qwen2.5-3B-Instruct | 6.18 GB |
+| Qwen/Qwen2.5-3B-Instruct-GPTQ-Int4 | 2.08 GB |
+| Qwen/Qwen2.5-3B-Instruct-AWQ | 2.70 GB |
+
+The old code derived the FP16 reference by string-stripping the suffix,
+which would have pulled the **base** model — different weights, plausible
+numbers, no meaning. Each target now declares an explicit
+`fp16_reference` and errors without one.
+
+### transformers cannot load either format here
+
+GPTQ requires `optimum`, AWQ requires `gptqmodel`; neither is installed.
+Rather than add two heavy dependencies for a path that only needs to read
+four packed tensors, `packed_loader.py` reads them straight from the
+safetensors shards. The adapters already operate at tensor level, so this
+also keeps the dequantization logic under our own test rather than
+delegating the interesting part to a third-party runtime.
+
+### Two adapter bugs that only real checkpoints could expose
+
+| | GPTQ | AWQ |
+|---|---|---|
+| `qweight` shape | (1376, 2048) = [in/8, out] | (11008, 256) = [in, out/8] |
+| packs nibbles along | **input** | **output** |
+| `scales` | (86, 2048), groups over in | (86, 2048), groups over in |
+
+Both store the weight as `[in, out]`; `nn.Linear.weight` is `[out, in]`, so
+a transpose is required.
+
+The earlier synthetic tests could not catch either, because the synthetic
+tensors were built from the same assumptions being tested. **A round-trip
+test built on an assumption cannot detect that the assumption is wrong.**
+
+A third bug sat in `residual_for_layer`: on a shape mismatch it called
+`.reshape()`, which has the same element count and therefore *succeeds*
+while scrambling the matrix. It now transposes when the shapes are
+swapped, and raises rather than reshaping in any other mismatch.
+
+### The verification gate, and why it exists
+
+`verify_dequantization` checks a dequantizer against the true FP16 weight
+before any residual is computed:
+
+| format | correlation | residual ratio | verdict |
+|---|---|---|---|
+| GPTQ | **0.9903** | 0.140 | correct |
+| AWQ | **0.2343** | 1.027 | wrong |
+
+I brute-forced 24 AWQ variants (8 nibble rotations × 3 zero-point
+treatments × 3 formulas) and the best correlation was 0.2343. That is not
+a dequantizer that is slightly off; the layout is not understood.
+
+### Result
+
+| target | status | evidence |
+|---|---|---|
+| Qwen2.5-3B-Instruct-GPTQ-Int4 | **PASS** | clean **BER 0.0**, mean abs residual 0.002787, corr 0.9903 |
+| Qwen2.5-3B-Instruct-AWQ | **NOT_RUN** | dequantization unverified (corr 0.2343) |
+
+**NES works beyond NF4.** GPTQ carries a payload at BER 0.0 through a
+format-specific dequantization path verified against the FP16 reference.
+
+AWQ is recorded NOT_RUN rather than given a BER. A wrong dequantizer
+produces a residual of the right shape and a plausible magnitude —
+0.0196 mean abs, the same order as the working NF4 residuals — so nothing
+downstream would have objected. The experiment would have reported a
+number and measured nothing. That is the specific failure this session
+has been guarding against, and it is now gated in code.
+
+**Not done:** AWQ's layout. The honest next step is installing `gptqmodel`
+or `autoawq` and diffing against its unpack, rather than continuing to
+guess. `zero_point: true` in the config and the output-axis packing are
+the likely areas.
