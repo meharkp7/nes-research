@@ -1,4 +1,6 @@
 {
+  "experiment": "exp2",
+  "title": "Residual Fingerprint",
   "model": "google/gemma-2-9b",
   "family": "gemma",
   "num_layers": 42,
@@ -511,6 +513,58 @@
       "adjusted_quality": 0.31888100099178784
     }
   ],
-  "generated_at": "2026-10-02T11:47:08.862090+00:00",
-  "source_artifact": "results/exp2_google__gemma-2-9b.json"
+  "configuration": {
+    "profiler": "LayerProfiler",
+    "num_bins": 64,
+    "module": "mlp.down_proj"
+  },
+  "metrics": {
+    "num_layers": 42,
+    "min_magnitude_threshold": 0.002,
+    "layers_above_threshold": 37,
+    "fraction_above_threshold": 0.8809523809523809,
+    "required_fraction": 0.8,
+    "mean_quality": 0.43570412237869327,
+    "mean_mag_mean": 0.0036046363786140104,
+    "mean_entropy": 0.31224017936554116,
+    "min_mag_mean": 0.0003780912375077605,
+    "max_mag_mean": 0.00445553008466959
+  },
+  "thresholds": {
+    "description": "Residual fingerprint is informative.",
+    "min_mean_magnitude": 0.002,
+    "min_fraction_layers_above": 0.8
+  },
+  "status": "PASS",
+  "gate_status": "PASS",
+  "reproducibility": {
+    "model_id": "google/gemma-2-9b",
+    "family": "gemma",
+    "expected_layers": 42,
+    "actual_layers": 42,
+    "layer_count_matches_expected": true,
+    "random_seed": 42,
+    "device": "mps",
+    "software_versions": {
+      "python": "3.14.3",
+      "platform": "macOS-26.3-arm64-arm-64bit-Mach-O",
+      "torch": "2.13.0",
+      "transformers": "5.16.1",
+      "bitsandbytes": "0.50.2",
+      "accelerate": "1.14.0",
+      "numpy": "2.5.2"
+    },
+    "platform_notes": [
+      "Apple Silicon/MPS: NF4 dequantization must stay on CPU. Moving large dequantized tensors to MPS raises RuntimeError: Invalid buffer size.",
+      "MPS has no native int8/uint8 dequantize; PYTORCH_ENABLE_MPS_FALLBACK is set to 1."
+    ],
+    "residual_source": "cache",
+    "residual_definition": "R = W_FP16 - dequantize(W_NF4)",
+    "timestamp": "2026-10-02T11:47:08.861204+00:00"
+  },
+  "notes": "37/42 layers exceed mag_mean 0.002.",
+  "source": "run",
+  "duration_seconds": 2.83,
+  "model_id": "google/gemma-2-9b",
+  "generated_at": "2026-10-02T11:47:08.861430+00:00"
 }

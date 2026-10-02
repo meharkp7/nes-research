@@ -1,6 +1,6 @@
 # NES Multi-Model Research — Final Summary
 
-Generated: 2026-10-02T11:36:56.977270+00:00
+Generated: 2026-10-02T12:00:50.723921+00:00
 
 This summary is generated from `results/experiment_manifest.json`. Every number below corresponds to a saved artifact.
 
@@ -8,35 +8,43 @@ This summary is generated from `results/experiment_manifest.json`. Every number 
 
 | Status | Cells |
 | --- | --- |
-| PASS | 19 |
-| FAIL | 5 |
+| PASS | 28 |
+| FAIL | 6 |
 | NOT_RUN | 2 |
 
-Total cells: 26. PASS and FAIL both represent completed experiments; only FAIL means the experiment ran and its gate was not met.
+Total cells: 36. PASS and FAIL both represent completed experiments; only FAIL means the experiment ran and its gate was not met.
 
 ## 2. Model x experiment matrix
 
 | Model | exp1 | exp2 | exp3 | exp4 | exp5 | exp6 | exp7 | exp7_neural | exp8 | exp9 |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
-| `meta-llama/Llama-3.1-8B` | NOT_RUN | NOT_RUN | NOT_RUN | NOT_RUN | NOT_RUN | NOT_RUN | NOT_RUN | NOT_RUN | NOT_RUN | NOT_RUN |
+| `meta-llama/Llama-3.1-8B` | PASS | **FAIL** | PASS | NOT_RUN | NOT_RUN | PASS | PASS | NOT_RUN | NOT_RUN | NOT_RUN |
 | `mistralai/Mistral-7B-v0.3` | PASS | PASS | PASS | NOT_RUN | NOT_RUN | PASS | PASS | NOT_RUN | NOT_RUN | NOT_RUN |
-| `google/gemma-2-9b` | NOT_RUN | NOT_RUN | NOT_RUN | NOT_RUN | NOT_RUN | NOT_RUN | NOT_RUN | NOT_RUN | NOT_RUN | NOT_RUN |
+| `google/gemma-2-9b` | PASS | PASS | PASS | NOT_RUN | NOT_RUN | PASS | PASS | NOT_RUN | NOT_RUN | NOT_RUN |
 | `Qwen/Qwen2.5-7B` | PASS | **FAIL** | PASS | NOT_RUN | NOT_RUN | PASS | PASS | NOT_RUN | NOT_RUN | NOT_RUN |
 | `Qwen/Qwen2.5-3B` | PASS | **FAIL** | PASS | PASS | PASS | PASS | PASS | **FAIL** | **FAIL** | NOT_RUN |
 | `TinyLlama/TinyLlama-1.1B-Chat-v1.0` | PASS | **FAIL** | PASS | NOT_RUN | NOT_RUN | PASS | PASS | NOT_RUN | NOT_RUN | NOT_RUN |
 | `microsoft/Phi-3-mini-4k-instruct` | NOT_RUN | NOT_RUN | NOT_RUN | NOT_RUN | NOT_RUN | NOT_RUN | NOT_RUN | NOT_RUN | NOT_RUN | NOT_RUN |
 
-### Missing cells (19)
+### Missing cells (27)
 
 | Model | Experiment |
 | --- | --- |
-| `meta-llama/Llama-3.1-8B` | all |
+| `meta-llama/Llama-3.1-8B` | exp4 |
+| `meta-llama/Llama-3.1-8B` | exp5 |
+| `meta-llama/Llama-3.1-8B` | exp7_neural |
+| `meta-llama/Llama-3.1-8B` | exp8 |
+| `meta-llama/Llama-3.1-8B` | exp9 |
 | `mistralai/Mistral-7B-v0.3` | exp4 |
 | `mistralai/Mistral-7B-v0.3` | exp5 |
 | `mistralai/Mistral-7B-v0.3` | exp7_neural |
 | `mistralai/Mistral-7B-v0.3` | exp8 |
 | `mistralai/Mistral-7B-v0.3` | exp9 |
-| `google/gemma-2-9b` | all |
+| `google/gemma-2-9b` | exp4 |
+| `google/gemma-2-9b` | exp5 |
+| `google/gemma-2-9b` | exp7_neural |
+| `google/gemma-2-9b` | exp8 |
+| `google/gemma-2-9b` | exp9 |
 | `Qwen/Qwen2.5-7B` | exp4 |
 | `Qwen/Qwen2.5-7B` | exp5 |
 | `Qwen/Qwen2.5-7B` | exp7_neural |
@@ -140,17 +148,20 @@ Falcon and MoE families are not validated. Their presence in the registry does n
 ## 8. Artifacts
 
 - `results/cross_model_table_real.json`
+- `results/exp1_google__gemma-2-9b.json`
 - `results/exp1_meta-llama__llama-3.1-8b.json`
 - `results/exp1_mistralai__mistral-7b-v0.3.json`
 - `results/exp1_qwen__qwen2.5-3b.json`
 - `results/exp1_qwen__qwen2.5-7b.json`
 - `results/exp1_tinyllama__tinyllama-1.1b-chat-v1.0.json`
 - `results/exp2_criterion_calibration.json`
+- `results/exp2_google__gemma-2-9b.json`
 - `results/exp2_meta-llama__llama-3.1-8b.json`
 - `results/exp2_mistralai__mistral-7b-v0.3.json`
 - `results/exp2_qwen__qwen2.5-3b.json`
 - `results/exp2_qwen__qwen2.5-7b.json`
 - `results/exp2_tinyllama__tinyllama-1.1b-chat-v1.0.json`
+- `results/exp3_google__gemma-2-9b.json`
 - `results/exp3_meta-llama__llama-3.1-8b.json`
 - `results/exp3_mistralai__mistral-7b-v0.3.json`
 - `results/exp3_qwen__qwen2.5-3b.json`
@@ -158,10 +169,14 @@ Falcon and MoE families are not validated. Their presence in the registry does n
 - `results/exp3_tinyllama__tinyllama-1.1b-chat-v1.0.json`
 - `results/exp4_qwen__qwen2.5-3b.json`
 - `results/exp5_qwen__qwen2.5-3b.json`
+- `results/exp6_google__gemma-2-9b.json`
+- `results/exp6_meta-llama__llama-3.1-8b.json`
 - `results/exp6_mistralai__mistral-7b-v0.3.json`
 - `results/exp6_qwen__qwen2.5-3b.json`
 - `results/exp6_qwen__qwen2.5-7b.json`
 - `results/exp6_tinyllama__tinyllama-1.1b-chat-v1.0.json`
+- `results/exp7_google__gemma-2-9b.json`
+- `results/exp7_meta-llama__llama-3.1-8b.json`
 - `results/exp7_mistralai__mistral-7b-v0.3.json`
 - `results/exp7_neural_detector_results.json`
 - `results/exp7_neural_parameter_study.json`

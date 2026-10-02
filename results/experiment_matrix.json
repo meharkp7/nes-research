@@ -16,11 +16,46 @@
     },
     "Qwen/Qwen2.5-3B-GPTQ-Int4": {
       "exp9": "NOT_RUN"
+    },
+    "Qwen/Qwen2.5-7B": {
+      "exp1": "PASS",
+      "exp2": "FAIL",
+      "exp3": "PASS",
+      "exp6": "PASS",
+      "exp7": "PASS"
+    },
+    "TinyLlama/TinyLlama-1.1B-Chat-v1.0": {
+      "exp1": "PASS",
+      "exp2": "FAIL",
+      "exp3": "PASS",
+      "exp6": "PASS",
+      "exp7": "PASS"
+    },
+    "google/gemma-2-9b": {
+      "exp1": "PASS",
+      "exp2": "PASS",
+      "exp3": "PASS",
+      "exp6": "PASS",
+      "exp7": "PASS"
+    },
+    "meta-llama/Llama-3.1-8B": {
+      "exp1": "PASS",
+      "exp2": "FAIL",
+      "exp3": "PASS",
+      "exp6": "PASS",
+      "exp7": "PASS"
+    },
+    "mistralai/Mistral-7B-v0.3": {
+      "exp1": "PASS",
+      "exp2": "PASS",
+      "exp3": "PASS",
+      "exp6": "PASS",
+      "exp7": "PASS"
     }
   },
   "coverage": {
-    "PASS": 6,
-    "FAIL": 3,
+    "PASS": 28,
+    "FAIL": 6,
     "NOT_RUN": 2,
     "MISSING_ARTIFACT": 0,
     "IMPLEMENTED_ONLY": 0,
