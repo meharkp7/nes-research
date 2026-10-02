@@ -34,14 +34,40 @@ class DecryptPipeline:
         message, result = pipeline.run(residuals, carrier_indices)
     """
 
-    def __init__(self, key: bytes, key_id: str = ""):
+    def __init__(
+        self,
+        key: bytes,
+        key_id: str = "",
+        strategy_name: str = "sign",
+        strategy_instance=None,
+    ):
         """
         Args:
             key:    32-byte AES-256 key.
             key_id: Optional identifier for logging.
+            strategy_name:       Scheme the carriers were encoded with.
+                                "sign" (default) reads a bit from the
+                                carrier's sign, which is what production
+                                has always done. Any other scheme needs
+                                its own extractor: a parity/grid scheme
+                                stores the bit in floor(v/w) % 2 and
+                                carries no sign information, so reading
+                                the sign returns noise.
+            strategy_instance:   The strategy that embedded the payload,
+                                required for non-sign schemes because the
+                                grid width is key-derived and lives on it.
         """
         self.cipher    = AESCipher(key, key_id=key_id)
-        self.extractor = SignExtractor()
+        self.strategy_name = strategy_name
+
+        if strategy_name and strategy_name != "sign":
+            from src.embedding.extractors import extractor_for
+
+            self.extractor = extractor_for(
+                strategy_name, strategy_instance
+            )
+        else:
+            self.extractor = SignExtractor()
 
     # ------------------------------------------------------------------
     # Main entry point

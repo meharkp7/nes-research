@@ -52,6 +52,21 @@ from src.core.types      import EmbeddingConfig, EmbeddingResult
 from src.core.exceptions import EmbeddingError
 import math
 
+# Grid width that satisfies both gates on Qwen2.5-3B.
+#
+# Measured frontier (results/exp11_lwe_alpha_pareto.json):
+#   0.002  BER 0.586  fails robustness, undetectable
+#   0.005  BER 0.013  both gates pass
+#   0.010  BER 0.000  both gates pass   <- chosen
+#   0.020  BER 0.000  both gates pass
+#   0.050  BER 0.000  detector 70.6%, fails again
+#
+# A single model is not a general claim; this is the middle of the window
+# with margin on both sides, and every other setting remains reachable
+# through the grid_width argument.
+DEFAULT_GRID_WIDTH = 0.010
+
+
 class LWEStrategy:
     """
     LWE-Inspired steganographic embedding.
@@ -69,12 +84,34 @@ class LWEStrategy:
         self,
         config:     EmbeddingConfig,
         secret_key: Optional[bytes] = None,
+        grid_width: Optional[float] = None,
     ):
         self.config         = config
         self.secret_key     = secret_key or b'\x00' * 32
         self.alpha          = config.alpha        # grid scale multiplier
         self.min_magnitude  = config.min_magnitude
-        self._grid_cache:   Dict[int, float] = {}
+
+        # Explicit grid width, or derive one that actually works.
+        #
+        # With the shipped defaults the width is
+        #     max(std * alpha * scale, min_magnitude * 2)
+        # = max(0.002 * 0.001 * ~1, 0.001 * 2) = max(2e-6, 2e-3)
+        # so the floor dominates by ~1000x and alpha has no effect at
+        # all. At that width the scheme is undetectable but collapses
+        # under noise (BER 0.586 at sigma=0.001).
+        #
+        # The measured frontier on Qwen2.5-3B is: width 0.005-0.02
+        # satisfies both BER <= 0.02 at sigma=0.001 and detector accuracy
+        # <= 55%, while 0.05 becomes detectable again (70.6%) and 0.002
+        # fails robustness. DEFAULT_GRID_WIDTH sits in the middle of that
+        # window. See results/exp11_lwe_alpha_pareto.json.
+        self.grid_width = (
+            grid_width
+            if grid_width is not None
+            else DEFAULT_GRID_WIDTH
+        )
+
+        self._grid_cache: Dict[int, float] = {}
 
     # ------------------------------------------------------------------
     # Key-derived grid
@@ -102,9 +139,13 @@ class LWEStrategy:
         # Scale factor in [0.75, 1.25] — varies per layer per key
         scale = (h[0] / 255.0) * 0.5 + 0.75
 
-        interval_width = max(
-            residual_std * self.alpha * scale,
-            self.min_magnitude * 2,     # minimum grid spacing
+        interval_width = (
+            self.grid_width
+            if self.grid_width is not None
+            else max(
+                residual_std * self.alpha * scale,
+                self.min_magnitude * 2,
+            )
         )
 
         self._grid_cache[layer_id] = interval_width
