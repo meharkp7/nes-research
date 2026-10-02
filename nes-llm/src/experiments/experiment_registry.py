@@ -200,7 +200,10 @@ EXPERIMENTS: Dict[str, Dict] = {
         "name": "Fidelity (real PPL)",
         "gate_key": "exp5",
         "depends_on": ["exp3"],
-        "requires_models": True,
+        # Loaded lazily by the experiment itself: it reuses a recorded
+        # three-way PPL result when one exists, and preloading two models
+        # would cost exactly the resources that reuse avoids.
+        "requires_models": False,
         "requires_residuals": True,
         "module": "src.experiments.experiments.exp5_fidelity",
     },
@@ -220,12 +223,25 @@ EXPERIMENTS: Dict[str, Dict] = {
         "requires_residuals": True,
         "module": "src.experiments.experiments.exp7_security",
     },
+    "exp7_neural": {
+        "name": "Security (neural steganalysis)",
+        "gate_key": "exp7_neural",
+        # Depends on the same embedding evidence as exp7, and tracked as
+        # its own cell so its FAIL verdict stays visible next to the
+        # statistical PASS rather than being averaged into one number.
+        "depends_on": ["exp3"],
+        "requires_models": False,
+        "requires_residuals": False,
+        "module": (
+            "src.experiments.experiments.exp7_neural_detector"
+        ),
+    },
     "exp8": {
         "name": "Real Cross-Model Table",
         "gate_key": "exp8",
         "depends_on": [
             "exp1", "exp2", "exp3", "exp4",
-            "exp5", "exp6", "exp7",
+            "exp5", "exp6", "exp7", "exp7_neural",
         ],
         "requires_models": True,
         "requires_residuals": False,

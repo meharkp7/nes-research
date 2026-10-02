@@ -36,6 +36,38 @@ class ModelContext:
     def has_models(self) -> bool:
         return self.models is not None
 
+    def ensure_models(self) -> Tuple:
+        """Load the model pair on first use.
+
+        Lazy loading matters for Exp5: it can reuse a recorded three-way
+        PPL measurement, and eagerly loading two models first would spend
+        the memory and time the reuse exists to avoid. An experiment that
+        only sometimes needs models should call this instead of relying on
+        the runner preloading.
+        """
+        if self.models is not None:
+            return self.models
+
+        if self.model_error:
+            raise RuntimeError(
+                f"Model load previously failed for "
+                f"{self.model_id}: {self.model_error}"
+            )
+
+        from src.model.model_loader import load_model_pair
+
+        self.models = load_model_pair(self.model_id)
+        self.actual_layers = len(self.models[0].model.layers)
+
+        if not self.layer_count_matches_expected:
+            print(
+                f"  [runner] layer count mismatch for {self.model_id}: "
+                f"expected {self.expected_layers}, "
+                f"actual {self.actual_layers}"
+            )
+
+        return self.models
+
     @property
     def has_residuals(self) -> bool:
         return self.residuals is not None

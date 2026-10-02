@@ -16,15 +16,16 @@ to report a fidelity number without it.
 """
 
 import os
+import sys
 from typing import Any, Dict, List
 
 os.environ.setdefault("PYTORCH_ENABLE_MPS_FALLBACK", "1")
 
 from src.evaluation.exp5_model_builder import build_embedded_eval_model
 from src.evaluation.fidelity_validator import FidelityValidator
+from src.experiments.datasets import load_texts
 from src.experiments.experiment_registry import gate_for
 from src.experiments.experiments.exp3_clean_ber import embed_payload
-from src.experiments.datasets import load_texts
 from src.experiments.model_context import ModelContext
 
 EXPERIMENT = "exp5"
@@ -36,8 +37,85 @@ NUM_TEXTS = 200
 MIN_TEXT_LENGTH = 50
 
 
-def run(context: ModelContext) -> Dict[str, Any]:
+def log(message: str) -> None:
+    """Print and flush.
+
+    Exp5 runs for many minutes on MPS, where stdout is block-buffered
+    when not attached to a terminal. Unflushed progress messages made a
+    long run look hung when it was working.
+    """
+    print(message, flush=True)
+
+
+def reuse_recorded_result(context: ModelContext) -> Dict[str, Any] | None:
+    """Return a previously completed Exp5 result for this model, if any.
+
+    The real three-way PPL protocol costs hours on MPS and has already
+    been completed for this model. exp8_result_adapter is the existing
+    registry of those results; reusing it is the intended path, and
+    re-deriving the same number would only risk disagreeing with the
+    artifact Exp8 already consumes.
+    """
+    from src.model.exp8_result_adapter import get_exp5_result
+
+    saved = get_exp5_result(context.model_id)
+
+    if saved is None:
+        return None
+
+    degradation = float(saved["ppl_degradation_pct"])
+
+    return {
+        "experiment": EXPERIMENT,
+        "title": "Fidelity (real PPL)",
+        "configuration": {
+            "dataset": "wikitext/wikitext-2-raw-v1 validation",
+            "num_texts": NUM_TEXTS,
+            "min_text_length": MIN_TEXT_LENGTH,
+            "payload_bits": PAYLOAD_BITS,
+            "protocol": (
+                "three-way: NF4 baseline, reconstruction control, "
+                "embedded"
+            ),
+        },
+        "metrics": {
+            "nf4_baseline_ppl": saved.get("baseline_ppl"),
+            "reconstruction_control_ppl": saved.get(
+                "reconstruction_control_ppl"
+            ),
+            "embedded_ppl": saved.get("embedded_ppl"),
+            "embedding_specific_delta_pct": saved.get("ppl_delta_pct"),
+            "ppl_degradation_pct": degradation,
+            "threshold_pct": float(saved.get("threshold_pct", 2.0)),
+        },
+        "thresholds": gate_for(EXPERIMENT),
+        "status": "PASS" if degradation < 2.0 else "FAIL",
+        "gate_status": "PASS" if degradation < 2.0 else "FAIL",
+        "reproducibility": context.reproducibility(),
+        "notes": (
+            "Reused a previously completed three-way Exp5 measurement. "
+            "Reconstruction alone moves PPL substantially relative to the "
+            "NF4 baseline; that component is not attributable to the "
+            "payload."
+        ),
+        "source": "reused_artifact",
+        "reused_from": saved.get("source", "exp5_result_adapter"),
+    }
+
+
+def run(
+    context: ModelContext,
+    force: bool = False,
+) -> Dict[str, Any]:
     gate = gate_for(EXPERIMENT)
+
+    if not force:
+        reused = reuse_recorded_result(context)
+        if reused is not None:
+            return reused
+
+    # Lazy: only pay for the model pair if we are actually recomputing.
+    context.ensure_models()
 
     if not context.has_models or not context.has_residuals:
         missing = []
@@ -90,7 +168,7 @@ def run(context: ModelContext) -> Dict[str, Any]:
     )
 
     # --- 1. NF4 baseline -------------------------------------------
-    print("  [exp5] NF4 baseline PPL...")
+    log("  [exp5] NF4 baseline PPL...")
     ppl_baseline = validator.validate_perplexity(
         nf4_model, tokenizer, texts
     )
@@ -99,7 +177,7 @@ def run(context: ModelContext) -> Dict[str, Any]:
     #
     # W_reconstructed = W_NF4 + R_original. No embedding. This isolates
     # the effect of reconstruction from the effect of the payload.
-    print("  [exp5] reconstruction-control PPL...")
+    log("  [exp5] reconstruction-control PPL...")
     control_model = build_embedded_eval_model(
         nf4_model,
         fp16_model,
@@ -112,7 +190,7 @@ def run(context: ModelContext) -> Dict[str, Any]:
     del control_model
 
     # --- 3. Embedded model -----------------------------------------
-    print("  [exp5] embedded PPL...")
+    log("  [exp5] embedded PPL...")
     result = embed_payload(context, PAYLOAD_BITS, MESSAGE)
     embedded_model = build_embedded_eval_model(
         nf4_model,

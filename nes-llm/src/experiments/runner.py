@@ -184,6 +184,10 @@ class Runner:
         kwargs = {}
         if experiment == "exp7_neural":
             kwargs["allow_training"] = self.allow_neural_training
+        elif experiment == "exp5":
+            # Exp5 reuses a recorded three-way PPL measurement by
+            # default; --force is the explicit opt-in to recompute it.
+            kwargs["force"] = self.force
 
         started = time.time()
 
