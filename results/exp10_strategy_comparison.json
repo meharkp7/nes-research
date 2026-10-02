@@ -74,13 +74,13 @@
         "0.0": 0.0,
         "0.001": 0.0,
         "0.002": 0.0,
-        "0.005": 0.0001950078003120125
+        "0.005": 0.00013000520020800833
       },
       "meets_robustness_gate": true,
-      "detector_accuracy": 0.7375,
+      "detector_accuracy": 0.7125,
       "meets_detector_gate": false,
       "signal_density": {
-        "mean_changed_values_per_patch": 25.565,
+        "mean_changed_values_per_patch": 25.54,
         "patch_size": 4096,
         "identical_pair_fraction": 0.08
       },
@@ -113,7 +113,7 @@
         "0.005": 6.500260010400417e-05
       },
       "meets_robustness_gate": true,
-      "detector_accuracy": 0.73125,
+      "detector_accuracy": 0.6875,
       "meets_detector_gate": false,
       "signal_density": {
         "mean_changed_values_per_patch": 52.3325,
@@ -145,11 +145,11 @@
       },
       "robustness_ber_curve": {
         "0.0": 0.0,
-        "0.001": 0.3174726989079563,
-        "0.002": 0.4965548621944878,
-        "0.005": 0.5021125845033801
+        "0.001": 0.0,
+        "0.002": 0.01267550702028081,
+        "0.005": 0.3174726989079563
       },
-      "meets_robustness_gate": false,
+      "meets_robustness_gate": true,
       "detector_accuracy": 0.5,
       "meets_detector_gate": true,
       "signal_density": {
@@ -158,7 +158,7 @@
         "identical_pair_fraction": 0.0
       },
       "detector_samples": 800,
-      "wins": false,
+      "wins": true,
       "notes": "LWE-inspired parity/grid encoding, not lattice LWE: there is no matrix A and no SIS/LWE instance, so the post-quantum claim in its docstring is not supported by the implementation. Phase 3 removed the cover dependency: the grid width is derived from the stego tensor's own std, which is valid because the embedding is sparse (~0.001% of values). Requires LweParityExtractor rather than the sign-based one production uses."
     },
     {

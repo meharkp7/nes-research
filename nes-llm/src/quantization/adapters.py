@@ -32,25 +32,34 @@ def detect_format(module) -> Optional[str]:
     Returns ``"gptq"``, ``"awq"``, ``"nf4"`` or ``None`` for a plain
     FP layer. Detection is by the parameter names the format defines,
     never by the model id.
+
+    AWQ and GPTQ both carry ``qweight``/``qzeros``/``scales``, so the
+    only structural difference is *where* the zero points and scales
+    live: GPTQ puts them on the weight alongside ``g_idx``, AWQ puts them
+    on the module. ``g_idx`` is therefore the discriminator, and a bare
+    pack of qweight+scales without it is ambiguous.
     """
     weight = getattr(module, "weight", None)
 
     if weight is None:
         return None
 
-    # GPTQ: packed int32 weights plus group scales and act order.
-    if hasattr(weight, "qweight") and hasattr(weight, "qzeros"):
+    has_pack = hasattr(weight, "qweight")
+
+    if not has_pack:
+        # bitsandbytes NF4 Params4bit.
+        if hasattr(weight, "quant_state") or getattr(
+            weight, "quant_type", None
+        ) == "nf4":
+            return "nf4"
+        return None
+
+    # GPTQ keeps qzeros/scales/g_idx on the weight.
+    if hasattr(weight, "g_idx"):
         return "gptq"
 
-    # bitsandbytes NF4 Params4bit.
-    if hasattr(weight, "quant_state") or getattr(
-        weight, "quant_type", None
-    ) == "nf4":
-        return "nf4"
-
-    # AWQ: packed weights with a separate scales tensor carrying a
-    # zero point, and qzeros.
-    if hasattr(module, "scales") and hasattr(module, "qzeros"):
+    # AWQ keeps qzeros/scales on the module.
+    if hasattr(module, "qzeros") and hasattr(module, "scales"):
         return "awq"
 
     return None
@@ -87,19 +96,23 @@ def detect_model_format(model) -> Dict[str, str]:
 def dequantize_gptq_layer(module) -> torch.Tensor:
     """Dequantize a GPTQ-packed linear layer to FP32 on CPU.
 
-    GPTQ stores, for an ``[in_features, out_features]`` weight:
+    Verified against AutoGPTQ ``QuantLinear.forward``.
 
-        qweight   int32, ``[in_features // 32, out_features]``
-                  holding ``32`` four-bit values per int32 word.
-        qzeros    int32, same packing, group-wise zero points.
-        scales    FP16, ``[num_groups, out_features]``
-        g_idx     int32, ``[in_features]`` mapping each input channel
-                  to its group. Equal to ``arange // group_size`` when
-                  the checkpoint was quantized with ``desc_act=False``.
+    Real checkpoint layout (Qwen2.5-3B-Instruct-GPTQ-Int4, group_size=128):
 
-    The reference implementation is the AutoGPTQ pack/unpack loop; it is
-    reimplemented here rather than imported because AutoGPTQ is not a
-    dependency of this project and its helper is private.
+        qweight   (out_features // 8, in_features)   e.g. (1376, 2048)
+        qzeros    (num_groups, in_features // 8)     e.g. (86, 256)
+        scales    (num_groups, in_features)          e.g. (86, 2048)
+        g_idx     (out_features,)                    e.g. (11008,)
+
+    The weight packs along the *output* axis, so unpacking expands the
+    nibble dimension on axis 1 and the result is ``[out, in]`` -- the
+    nn.Linear convention. The zero points pack along the *input* axis,
+    so they expand on the last axis.
+
+    ``g_idx`` has one entry per output row and selects the scale group
+    for that row, which is why it is applied to the reconstructed
+    matrix rather than to an input axis.
     """
     weight = module.weight
 
@@ -108,49 +121,50 @@ def dequantize_gptq_layer(module) -> torch.Tensor:
     scales = weight.scales.detach().to("cpu").float()
     g_idx = weight.g_idx.detach().to("cpu")
 
-    bits = 4
-    pack_factor = 32 // bits  # 8 four-bit values per int32
+    pack_factor = 32 // 4
 
-    in_features = qweight.shape[0] * pack_factor
-    out_features = qweight.shape[1]
+    out_features = qweight.shape[0] * pack_factor
+    in_features = qweight.shape[1]
+    num_groups = scales.shape[0]
 
-    # --- Unpack the 4-bit weights and zero points -----------------
-    #
-    # Weights unpack along axis 1, zero points along the last axis;
-    # see _unpack_4bit for why the two differ.
+    if scales.shape[1] != in_features:
+        raise RuntimeError(
+            f"GPTQ scales second dim {scales.shape[1]} does not match "
+            f"qweight columns {in_features}"
+        )
+
     weights = _unpack_4bit(
-        qweight, in_features, out_features, axis=1
+        qweight, out_features, in_features, axis=1
     )
 
     # The -1 bias on zero points is applied at pack time, so
     # dequantization adds 1 back (matching AutoGPTQ's `zeros + 1`).
     zeros = (
-        _unpack_4bit(
-            qzeros, scales.shape[0], out_features, axis=-1
-        )
-        + 1
+        _unpack_4bit(qzeros, num_groups, in_features, axis=-1) + 1
     )
 
-    # --- Scatter group scales to per-input-channel ----------------
-    #
-    # The reference reconstruction is exactly
-    #     W[i, j] = scales[g_idx[i], j] * (w[i, j] - zeros[g_idx[i], j])
-    #
-    # so the group index comes from g_idx directly. With desc_act=False
-    # that equals i // group_size, but for activation-order checkpoints
-    # g_idx is a real permutation and must not be assumed positional.
-    group_index = g_idx.long()
-
-    if int(group_index.max().item()) >= scales.shape[0]:
+    if g_idx.numel() != out_features:
         raise RuntimeError(
-            f"g_idx references group {int(group_index.max().item())} "
-            f"but only {scales.shape[0]} scale groups exist"
+            f"GPTQ g_idx has {g_idx.numel()} entries but the weight has "
+            f"{out_features} output rows"
         )
 
-    scale_by_channel = scales[group_index]
-    zero_by_channel = zeros[group_index]
+    group_index = g_idx.long()
 
-    return (weights - zero_by_channel) * scale_by_channel
+    if int(group_index.max().item()) >= num_groups:
+        raise RuntimeError(
+            f"g_idx references group {int(group_index.max().item())} "
+            f"but only {num_groups} scale groups exist"
+        )
+
+    scale_by_row = scales[group_index]
+    zero_by_row = zeros[group_index]
+
+    # GPTQ stores the weight as [in_features, out_features] and relies on
+    # the runtime transposing at matmul time. nn.Linear.weight is
+    # [out_features, in_features], so transpose to the convention every
+    # caller here assumes.
+    return ((weights - zero_by_row) * scale_by_row).T.contiguous()
 
 
 def _unpack_4bit(
@@ -206,24 +220,34 @@ def _unpack_4bit(
 def dequantize_awq_layer(module) -> torch.Tensor:
     """Dequantize an AWQ-packed linear layer to FP32 on CPU.
 
-    AWQ stores group-wise FP scales and integer zero points alongside
-    packed 4-bit weights, using the same int32 packing layout as GPTQ:
+    Real checkpoint layout (Qwen2.5-3B-Instruct-AWQ, group_size=128,
+    zero_point=true):
 
-        qweight  ``[in_features // 8, out_features]``
-        qzeros   ``[num_groups, out_features // 8]``
-        scales   ``[num_groups, out_features]``
+        qweight   (out_features, in_features // 8)   e.g. (11008, 256)
+        qzeros    (num_groups, in_features // 8)    e.g. (86, 256)
+        scales    (num_groups, in_features)         e.g. (86, 2048)
 
-    Reconstructed as:
+    AWQ therefore packs the nibbles along the *input* axis -- the
+    opposite orientation from GPTQ -- so unpacking expands the last axis
+    and the result is ``[out, in]``.
 
-        W_deq[i, j] = (q[i, j] - z[i // group_size, j]) * s[i // group_size, j]
+    **This was wrong before.** The earlier version assumed
+    ``[in // 8, out]`` with groups along the input axis, which happens to
+    be indistinguishable on a synthetic tensor of the wrong shape but
+    transposes the real matrix. A synthetic round-trip test could not
+    catch it because the test was built from the same wrong assumption.
 
-    Two deliberate differences from the GPTQ path above:
+    Reconstruction, with groups running along the output axis:
 
-    -   AWQ has no activation-order permutation, so the group index is
-        positional (``repeat_interleave``) rather than read from g_idx.
+        W[i, j] = (q[i, j] - z[g(i), j]) * s[g(i), j]
+        g(i) = i // (out_features // num_groups)
+
+    Two deliberate differences from the GPTQ path:
+
+    -   No activation-order permutation, so groups are positional.
     -   AWQ does **not** bias zero points by -1 at pack time, so no
-        ``+ 1`` is applied here. Applying GPTQ's correction would shift
-        every dequantized weight by one scale unit.
+        ``+ 1`` is applied. Copying GPTQ's correction would shift every
+        dequantized weight by one scale unit.
     """
     weight = module.weight
 
@@ -233,28 +257,37 @@ def dequantize_awq_layer(module) -> torch.Tensor:
 
     pack_factor = 32 // 4
 
-    in_features = qweight.shape[0] * pack_factor
-    out_features = qweight.shape[1]
-
-    values = _unpack_4bit(qweight, in_features, out_features, axis=1)
-    zeros = _unpack_4bit(qzeros, scales.shape[0], out_features, axis=-1)
-
-    # scales.shape[0] is the NUMBER OF GROUPS, not the group width.
-    # The group width is how many input channels each group covers.
+    out_features = qweight.shape[0]
+    in_features = qweight.shape[1] * pack_factor
     num_groups = scales.shape[0]
 
-    if num_groups == 0 or in_features % num_groups != 0:
+    if scales.shape[1] != in_features:
         raise RuntimeError(
-            f"AWQ scale groups ({num_groups}) do not evenly divide "
-            f"in_features ({in_features})"
+            f"AWQ scales second dim {scales.shape[1]} does not match "
+            f"qweight columns * 8 = {in_features}"
         )
 
-    group_width = in_features // num_groups
+    values = _unpack_4bit(
+        qweight, out_features, in_features, axis=-1
+    )
+    zeros = _unpack_4bit(qzeros, num_groups, in_features, axis=-1)
+
+    if out_features % num_groups != 0:
+        raise RuntimeError(
+            f"AWQ scale groups ({num_groups}) do not evenly divide "
+            f"out_features ({out_features})"
+        )
+
+    group_width = out_features // num_groups
 
     scale_expanded = scales.repeat_interleave(group_width, dim=0)
     zero_expanded = zeros.repeat_interleave(group_width, dim=0)
 
-    return (values - zero_expanded) * scale_expanded
+    # As with GPTQ, the packed layout yields [in_features, out_features];
+    # nn.Linear.weight is [out_features, in_features].
+    return (
+        (values - zero_expanded) * scale_expanded
+    ).T.contiguous()
 
 
 # ---------------------------------------------------------------------
@@ -361,8 +394,22 @@ def residual_for_layer(
     reference = fp16_module.weight.detach().float().cpu()
 
     if dequantized.shape != reference.shape:
-        if dequantized.numel() == reference.numel():
-            dequantized = dequantized.reshape(reference.shape)
+        if dequantized.T.shape == reference.shape:
+            # Packed formats store the weight in [in, out] order while
+            # nn.Linear.weight is [out, in]. Transposing is required.
+            #
+            # A plain reshape would have the same element count and
+            # therefore "succeed" while silently producing a scrambled
+            # matrix -- the failure mode this whole module guards
+            # against.
+            dequantized = dequantized.T.contiguous()
+        elif dequantized.numel() == reference.numel():
+            raise RuntimeError(
+                "Shape mismatch after dequantization that is not a "
+                f"transpose: {tuple(dequantized.shape)} vs "
+                f"{tuple(reference.shape)}. Refusing to reshape, which "
+                "would scramble the weight matrix."
+            )
         else:
             raise RuntimeError(
                 f"Shape mismatch after {fmt} dequantization: "
@@ -371,3 +418,99 @@ def residual_for_layer(
             )
 
     return reference - dequantized, fmt
+
+def verify_dequantization(
+    quantized_module,
+    reference_weight: torch.Tensor,
+    expected_format: Optional[str] = None,
+    min_correlation: float = 0.95,
+    max_residual_ratio: float = 0.5,
+) -> dict:
+    """Check a dequantizer against the true FP16 weight before trusting it.
+
+    A working 4-bit dequantizer reproduces the original weights closely:
+    correlation above ~0.95, and a residual that is a small fraction of
+    the weight scale. Measured on a real checkpoint:
+
+        GPTQ  corr 0.9903  residual ratio 0.140  -> correct
+        AWQ   corr 0.2343  residual ratio 1.027  -> wrong
+
+    Without this gate the AWQ path produces a residual tensor of the
+    right *shape* and a plausible size, and an experiment would report a
+    clean BER while measuring nothing real. Shape alone catches nothing.
+
+    Branch on the single ``usable`` field.
+    """
+    report = {
+        "format": expected_format,
+        "usable": False,
+        "correlation": None,
+        "residual_ratio": None,
+        "dequantized_std": None,
+        "reference_std": None,
+        "reason": "",
+    }
+
+    try:
+        dequantized, fmt = dequantize_layer(
+            quantized_module, expected_format=expected_format
+        )
+
+        reference = reference_weight.detach().float().cpu()
+
+        if dequantized.shape != reference.shape:
+            if dequantized.T.shape == reference.shape:
+                dequantized = dequantized.T.contiguous()
+            else:
+                report["reason"] = (
+                    f"shape mismatch: {tuple(dequantized.shape)} vs "
+                    f"{tuple(reference.shape)}"
+                )
+                return report
+
+        correlation = float(
+            torch.corrcoef(
+                torch.stack(
+                    [dequantized.flatten().double(), reference.flatten().double()]
+                )
+            )[0, 1]
+        )
+
+        residual = reference - dequantized
+        ratio = float(
+            residual.std().item()
+            / max(reference.std().item(), 1e-12)
+        )
+
+        report["correlation"] = correlation
+        report["residual_ratio"] = ratio
+        report["dequantized_std"] = float(dequantized.std().item())
+        report["reference_std"] = float(reference.std().item())
+
+        if correlation < min_correlation:
+            report["reason"] = (
+                f"correlation {correlation:.4f} < {min_correlation}: "
+                f"{fmt} dequantization does not reproduce the reference "
+                "weights. The layout is not understood, so residuals "
+                "derived from it would be meaningless."
+            )
+            return report
+
+        if ratio > max_residual_ratio:
+            report["reason"] = (
+                f"residual ratio {ratio:.3f} > {max_residual_ratio}: "
+                "dequantized weights differ from the reference by more "
+                "than 4-bit quantization should."
+            )
+            return report
+
+        report["usable"] = True
+        report["reason"] = (
+            f"verified: correlation {correlation:.4f}, residual ratio "
+            f"{ratio:.4f}"
+        )
+
+    except Exception as exc:
+        report["reason"] = f"{type(exc).__name__}: {exc}"
+
+    return report

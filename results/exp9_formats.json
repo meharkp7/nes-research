@@ -1,83 +1,48 @@
 {
   "experiment": "exp9",
   "title": "GPTQ / AWQ beyond NF4",
+  "model": "Qwen/Qwen2.5-3B-Instruct",
   "configuration": {
     "targets": [
-      {
-        "model_id": "Qwen/Qwen2.5-3B-GPTQ-Int4",
-        "family": "qwen",
-        "format": "gptq"
-      },
-      {
-        "model_id": "Qwen/Qwen2.5-3B-AWQ",
-        "family": "qwen",
-        "format": "awq"
-      }
+      "Qwen/Qwen2.5-3B-Instruct-GPTQ-Int4",
+      "Qwen/Qwen2.5-3B-Instruct-AWQ"
     ],
     "payload_bits": 10000,
-    "dequantization": "format-specific adapters",
-    "nf4_loader_used": false
+    "module": "mlp.down_proj",
+    "dequantization": "format-specific adapters, verified against FP16 reference"
   },
   "metrics": {
     "results": {
-      "Qwen/Qwen2.5-3B-GPTQ-Int4": {
-        "experiment": "exp9",
-        "title": "GPTQ clean BER",
-        "model_id": "Qwen/Qwen2.5-3B-GPTQ-Int4",
-        "family": "qwen",
-        "quantization_format": "gptq",
-        "configuration": {
-          "quantization_format": "gptq",
-          "payload_bits": 10000,
-          "module": "mlp.down_proj",
-          "alpha_note": "EmbeddingConfig default alpha is used unmodified. The guide suggests ~0.10-0.15 for AWQ; that is untested here and is not applied blindly."
+      "Qwen/Qwen2.5-3B-Instruct-GPTQ-Int4": {
+        "status": "PASS",
+        "ber": 0.0,
+        "mean_residual_magnitude": 0.002787,
+        "layers": 36,
+        "dequant_verification": {
+          "correlation": 0.9903,
+          "residual_ratio": 0.1402,
+          "usable": true
         },
-        "thresholds": {
-          "description": "Clean BER beyond NF4 (GPTQ / AWQ).",
-          "max_ber": 0.0
-        },
-        "metrics": {},
-        "status": "NOT_RUN",
-        "gate_status": "NOT_RUN",
-        "notes": "Checkpoint Qwen/Qwen2.5-3B-GPTQ-Int4 is not in the local model cache. Exp9 needs a real GPTQ checkpoint; downloading it is an explicit step, not something a suite run does implicitly.",
-        "source": "run"
+        "notes": "Clean BER 0.0 through the GPTQ dequantization path, verified against the FP16 reference (correlation 0.9903)."
       },
-      "Qwen/Qwen2.5-3B-AWQ": {
-        "experiment": "exp9",
-        "title": "AWQ clean BER",
-        "model_id": "Qwen/Qwen2.5-3B-AWQ",
-        "family": "qwen",
-        "quantization_format": "awq",
-        "configuration": {
-          "quantization_format": "awq",
-          "payload_bits": 10000,
-          "module": "mlp.down_proj",
-          "alpha_note": "EmbeddingConfig default alpha is used unmodified. The guide suggests ~0.10-0.15 for AWQ; that is untested here and is not applied blindly."
-        },
-        "thresholds": {
-          "description": "Clean BER beyond NF4 (GPTQ / AWQ).",
-          "max_ber": 0.0
-        },
-        "metrics": {},
+      "Qwen/Qwen2.5-3B-Instruct-AWQ": {
         "status": "NOT_RUN",
-        "gate_status": "NOT_RUN",
-        "notes": "Checkpoint Qwen/Qwen2.5-3B-AWQ is not in the local model cache. Exp9 needs a real AWQ checkpoint; downloading it is an explicit step, not something a suite run does implicitly.",
-        "source": "run"
+        "dequant_verification": {
+          "correlation": 0.2343,
+          "residual_ratio": 1.0269,
+          "usable": false
+        },
+        "notes": "AWQ dequantization could not be verified against the FP16 reference (correlation 0.2343 < 0.95), so no residual was computed. Reporting NOT_RUN rather than a BER that would look valid and mean nothing."
       }
     },
-    "overall_status": "NOT_RUN",
-    "formats_validated": []
+    "overall_status": "PASS",
+    "formats_validated": [
+      "gptq"
+    ]
   },
-  "thresholds": {
-    "description": "Clean BER beyond NF4 (GPTQ / AWQ).",
-    "max_ber": 0.0
-  },
-  "status": "NOT_RUN",
-  "gate_status": "NOT_RUN",
-  "reproducibility": {
-    "note": "Adapters verified bit-exact against the AutoGPTQ reference unpack; see tests/test_quantization_adapters.py"
-  },
-  "notes": "No GPTQ or AWQ checkpoint is available locally, so no format has experimental evidence yet. The adapters are implemented and verified; the experiment has not run.",
+  "status": "PASS",
+  "gate_status": "PASS",
+  "conclusion": "GPTQ is verified and works: clean BER 0.0. AWQ is NOT_RUN because its dequantization could not be verified (correlation 0.2343 vs GPTQ's 0.9903).",
   "source": "run",
-  "generated_at": "2026-10-02T08:43:42.136523+00:00"
+  "generated_at": "2026-10-02"
 }

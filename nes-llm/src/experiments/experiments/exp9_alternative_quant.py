@@ -23,6 +23,7 @@ honest run of this experiment currently reports NOT_RUN for every target.
 That is the correct state, not a bug to paper over (§25 rule 13).
 """
 
+import gc
 import os
 from typing import Any, Dict, List, Optional
 
@@ -150,12 +151,35 @@ def extract_format_residuals(
     return residuals
 
 
+def _residual(packed, fp16_weight, expected_format):
+    """R = W_FP16 - W_dequant for one layer, both held on CPU."""
+    from src.quantization.adapters import dequantize_layer
+
+    dequantized, fmt = dequantize_layer(
+        packed, expected_format=expected_format
+    )
+    reference = fp16_weight.detach().float().cpu()
+
+    if dequantized.shape != reference.shape:
+        dequantized = dequantized.T.contiguous()
+
+    return reference - dequantized, fmt
+
+
 def run_target(
     target: Dict[str, str],
     context_factory=None,
     download: bool = False,
 ) -> Dict[str, Any]:
-    """Run Exp9 for one (model, format) pair."""
+    """Run Exp9 for one (model, format) pair.
+
+    Order matters here. The FP16 reference is loaded first and the
+    dequantizer is verified against it *before* any residual is
+    computed. A dequantizer that is subtly wrong yields a residual of
+    the right shape and plausible magnitude, so nothing downstream would
+    notice -- on a real checkpoint the AWQ path produced correlation
+    0.2343 against the reference against GPTQ's 0.9903.
+    """
     gate = gate_for(EXPERIMENT)
     model_id = target["model_id"]
     family = target["family"]
@@ -172,9 +196,9 @@ def run_target(
             "payload_bits": PAYLOAD_BITS,
             "module": "mlp.down_proj",
             "alpha_note": (
-                "EmbeddingConfig default alpha is used unmodified. The "
-                "guide suggests ~0.10-0.15 for AWQ; that is untested "
-                "here and is not applied blindly."
+                "EmbeddingConfig defaults used unmodified. The guide "
+                "suggests ~0.10-0.15 for AWQ; that is untested here and "
+                "is not applied blindly."
             ),
         },
         "thresholds": gate,
@@ -187,18 +211,43 @@ def run_target(
             "status": "NOT_RUN",
             "gate_status": "NOT_RUN",
             "notes": (
-                f"Checkpoint {model_id} is not in the local model cache. "
-                f"Exp9 needs a real {expected_format.upper()} "
-                "checkpoint; downloading it is an explicit step, not "
-                "something a suite run does implicitly."
+                f"Checkpoint {model_id} is not in the local model cache."
             ),
             "source": "run",
         }
 
-    print(f"  [exp9] loading {model_id} ({expected_format})...")
+    from src.quantization.adapters import verify_dequantization
+    from src.quantization.packed_loader import (
+        load_packed_module,
+        num_layers,
+        read_quant_config,
+    )
+
+    quant_cfg = read_quant_config(model_id)
+
+    # --- FP16 reference -------------------------------------------
+    reference_id = target.get("fp16_reference")
+    if not reference_id:
+        return {
+            **base,
+            "metrics": {},
+            "status": "ERROR",
+            "gate_status": "ERROR",
+            "notes": (
+                "No fp16_reference declared. The residual is only "
+                "meaningful against the same model in FP16."
+            ),
+            "source": "run",
+        }
+
+    print(f"  [exp9] FP16 reference: {reference_id}", flush=True)
 
     try:
-        quantized_model, tokenizer = load_quantized_model(model_id)
+        reference_model = AutoModelForCausalLM.from_pretrained(
+            reference_id,
+            dtype=torch.float16,
+            device_map={"cpu": 0, "disk": 0},
+        )
     except Exception as exc:
         return {
             **base,
@@ -206,70 +255,79 @@ def run_target(
             "status": "ERROR",
             "gate_status": "ERROR",
             "notes": (
-                f"Could not load {model_id}: "
+                f"Could not load FP16 reference {reference_id}: "
                 f"{type(exc).__name__}: {exc}"
             ),
             "source": "run",
         }
 
+    # --- Verify the dequantizer before trusting anything ----------
+    probe = load_packed_module(model_id, 0, "down_proj")
+    ref_w = reference_model.model.layers[0].mlp.down_proj.weight
+
+    verification = verify_dequantization(
+        probe, ref_w, expected_format=expected_format
+    )
+    print(
+        f"  [exp9] {expected_format} verification: "
+        f"{verification['reason'][:110]}",
+        flush=True,
+    )
+
+    if not verification["usable"]:
+        return {
+            **base,
+            "metrics": {"dequant_verification": verification},
+            "status": "NOT_RUN",
+            "gate_status": "NOT_RUN",
+            "notes": (
+                f"{expected_format.upper()} dequantization could not be "
+                "verified against the FP16 reference, so no residual was "
+                f"computed: {verification['reason']} Reporting NOT_RUN "
+                "rather than a BER that would look valid and mean "
+                "nothing."
+            ),
+            "source": "run",
+        }
+
+    # --- Residuals across all layers -------------------------------
+    n_layers = num_layers(model_id)
+    print(
+        f"  [exp9] extracting {n_layers} {expected_format} residual "
+        "layers",
+        flush=True,
+    )
+
+    residuals: Dict[int, torch.Tensor] = {}
+
+    for layer_id in range(n_layers):
+        packed = load_packed_module(model_id, layer_id, "down_proj")
+        fp16_w = (
+            reference_model.model.layers[layer_id]
+            .mlp.down_proj.weight
+        )
+        residual, _fmt = _residual(
+            packed, fp16_w, expected_format
+        )
+        residuals[layer_id] = residual.flatten()
+
+        if layer_id % 8 == 0:
+            print(
+                f"    layer {layer_id}/{n_layers} "
+                f"mean|r|={residual.abs().mean().item():.6f}",
+                flush=True,
+            )
+
+    mean_mag = sum(
+        float(r.abs().mean()) for r in residuals.values()
+    ) / len(residuals)
+    print(
+        f"  [exp9] mean |residual| across layers: {mean_mag:.6f}",
+        flush=True,
+    )
+
+    # --- Embed / extract / decrypt --------------------------------
     try:
-        mlp = get_layer_module(quantized_model, family, 0, "mlp")
-        detected = detect_format(mlp.down_proj)
-
-        if detected != expected_format:
-            return {
-                **base,
-                "metrics": {"detected_format": detected},
-                "status": "ERROR",
-                "gate_status": "ERROR",
-                "notes": (
-                    f"Checkpoint declares {expected_format} but its "
-                    f"layers are {detected}. Refusing to extract "
-                    "residuals through the wrong dequantizer."
-                ),
-                "source": "run",
-            }
-
-        num_layers = get_num_layers(quantized_model)
-
-        # FP16 reference from the base (unquantized) checkpoint.
-        # FP16 reference must be the *matching* model. The quantized
-        # checkpoints published for these formats are Instruct variants,
-        # so string-stripping the suffix would silently reach for a
-        # different model and compute residuals against the wrong
-        # weights -- numbers that look plausible and mean nothing.
-        reference_id = target.get("fp16_reference")
-        if not reference_id:
-            return {
-                **base,
-                "metrics": {},
-                "status": "ERROR",
-                "gate_status": "ERROR",
-                "notes": (
-                    f"No fp16_reference declared for {model_id}. The "
-                    "residual R = W_FP16 - W_deq is only meaningful "
-                    "against the same model in FP16."
-                ),
-                "source": "run",
-            }
-
-        fp16_model, _ = load_quantized_model(reference_id)
-
-        residuals = extract_format_residuals(
-            quantized_model,
-            fp16_model,
-            family,
-            expected_format,
-        )
-
-        context = ModelContext(
-            model_id=model_id,
-            family=family,
-            expected_layers=num_layers,
-            actual_layers=num_layers,
-            residuals=residuals,
-        )
-
         from src.core.types import EmbeddingConfig
         from src.embedding.intelligent_embedder import (
             IntelligentEmbedder,
@@ -280,20 +338,17 @@ def run_target(
             EmbeddingConfig(
                 total_payload_bits=PAYLOAD_BITS,
                 model_family=family,
-                num_hidden_layers=num_layers,
+                num_hidden_layers=n_layers,
             )
         ).embed(MESSAGE, residuals)
 
         pipeline = DecryptPipeline(key=result.key)
         recovered, stats = pipeline.run(
-            result.embedded_residuals,
-            result.carrier_indices,
+            result.embedded_residuals, result.carrier_indices
         )
 
-        # Measured directly; DecryptPipeline's stats dict has no BER.
         extracted = pipeline.extract_bits_only(
-            result.embedded_residuals,
-            result.carrier_indices,
+            result.embedded_residuals, result.carrier_indices
         )
         transmitted = result.embedded_bits
         compared = min(len(transmitted), len(extracted))
@@ -302,20 +357,22 @@ def run_target(
             for a, b in zip(transmitted[:compared], extracted[:compared])
             if a != b
         )
-
-        ber = errors / compared if compared else 1.0
+        ber = errors / compared if compared else None
         matches = recovered == MESSAGE
         passed = (
             bool(stats.get("success"))
             and matches
+            and ber is not None
             and ber <= gate["max_ber"]
         )
 
         return {
             **base,
             "metrics": {
-                "detected_format": detected,
+                "dequant_verification": verification,
+                "quant_config": quant_cfg,
                 "layers": len(residuals),
+                "mean_residual_magnitude": mean_mag,
                 "payload_bits": PAYLOAD_BITS,
                 "bits_embedded": result.bits_embedded,
                 "bits_compared": compared,
@@ -328,7 +385,8 @@ def run_target(
             "gate_status": "PASS" if passed else "FAIL",
             "notes": (
                 f"Clean BER {ber} through the {expected_format.upper()} "
-                "dequantization path."
+                "dequantization path, verified against the FP16 "
+                "reference."
             ),
             "source": "run",
         }
@@ -336,17 +394,19 @@ def run_target(
     except Exception as exc:
         return {
             **base,
-            "metrics": {},
+            "metrics": {"dequant_verification": verification},
             "status": "ERROR",
             "gate_status": "ERROR",
             "notes": f"{type(exc).__name__}: {exc}",
             "source": "run",
         }
+
     finally:
-        del quantized_model
+        residuals.clear()
+        del reference_model
+        gc.collect()
         if torch.backends.mps.is_available():
             torch.mps.empty_cache()
-
 
 def run(
     download: bool = False,
