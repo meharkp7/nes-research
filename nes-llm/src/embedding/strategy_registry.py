@@ -27,6 +27,7 @@ strategy, the properties that actually decide whether it is viable:
 """
 
 import importlib
+import inspect
 from dataclasses import dataclass, field
 from typing import Any, Callable, Dict, List, Optional
 
@@ -119,16 +120,17 @@ REGISTRY: Dict[str, StrategySpec] = {
         module="src.embedding.strategies.lwe_strategy",
         class_name="LWEStrategy",
         forces_sign_flip=False,
-        extract_needs_cover=True,
-        status="BLOCKED",
+        extract_needs_cover=False,
+        status="READY",
         notes=(
             "LWE-inspired parity/grid encoding, not lattice LWE: there is "
-            "no matrix A and no SIS/LWE instance, so the "
-            "post-quantum claim in its docstring is not supported. "
-            "Structurally the most promising option here (parity, not "
-            "sign flip) but extraction calls "
-            "residuals_ref[layer].std() to derive the grid width, so it "
-            "cannot extract from stego weights alone."
+            "no matrix A and no SIS/LWE instance, so the post-quantum "
+            "claim in its docstring is not supported by the "
+            "implementation. Phase 3 removed the cover dependency: the "
+            "grid width is derived from the stego tensor's own std, which "
+            "is valid because the embedding is sparse (~0.001% of "
+            "values). Requires LweParityExtractor rather than the "
+            "sign-based one production uses."
         ),
     ),
     "neural": StrategySpec(
@@ -167,7 +169,17 @@ def spec(name: str) -> StrategySpec:
 def build(config: EmbeddingConfig, name: Optional[str] = None):
     """Instantiate a strategy by name, defaulting to the config's choice."""
     name = name or config.embedding_strategy or DEFAULT_STRATEGY
-    return spec(name).factory(config)
+    strategy = spec(name).factory(config)
+
+    # Tag with the registry name so extraction can be dispatched to the
+    # extractor that matches this scheme's encoding. Without it a parity
+    # scheme would be handed to the sign-based extractor.
+    try:
+        strategy._registry_name = name
+    except Exception:
+        pass
+
+    return strategy
 
 
 def structural_report() -> List[Dict[str, Any]]:
@@ -214,14 +226,24 @@ def extract_with(
     embedded: Dict[int, torch.Tensor],
     carrier_indices: Dict[int, List[int]],
     residuals_ref: Optional[Dict[int, torch.Tensor]] = None,
+    strategy_name: Optional[str] = None,
 ) -> List[int]:
     """Extract through any registered strategy.
 
-    ``residuals_ref`` is passed only when the strategy demands it. A
-    strategy that needs it cannot extract from stego weights alone, which
-    ``probe_extraction`` measures rather than assumes.
+    ``residuals_ref`` is passed only when the strategy genuinely needs
+    it. Dispatch goes through ``embedding.extractors`` so a parity/grid
+    scheme is decoded by a parity extractor rather than the sign-based
+    one production uses, which would read the wrong quantity and return
+    noise.
     """
-    import inspect
+    name = strategy_name or getattr(strategy, "_registry_name", None)
+
+    if name:
+        from src.embedding.extractors import extract_bits
+
+        return extract_bits(
+            name, strategy, embedded, carrier_indices, residuals_ref
+        )
 
     extractor = getattr(strategy, "extract", None)
 

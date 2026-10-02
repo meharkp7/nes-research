@@ -225,7 +225,7 @@ class LWEStrategy:
         self,
         weights:         Dict[int, torch.Tensor],
         carrier_indices: Dict[int, List[int]],
-        residuals_ref:   Dict[int, torch.Tensor],
+        residuals_ref:   Optional[Dict[int, torch.Tensor]] = None,
     ) -> List[int]:
         """
         Extract bits using interval membership.
@@ -233,20 +233,45 @@ class LWEStrategy:
         Args:
             weights:         {layer_id: embedded_weight_tensor}
             carrier_indices: {layer_id: [flat_indices]}
-            residuals_ref:   Original residuals (needed to derive interval widths)
+            residuals_ref:   Optional original residuals. Not needed: the
+                             grid width is derived from the stego tensor's
+                             own standard deviation.
 
         Returns:
             List of recovered bits.
+
+        Why residuals_ref is optional
+        -----------------------------
+        Previously this required the cover residuals, which made the
+        scheme unusable: a real extractor only holds the stego weights,
+        so requiring the cover meant it could never function outside its
+        own test harness.
+
+        The grid width depends on ``residual_std`` per layer, and the
+        embedding is sparse -- a 10,000-bit payload touches ~10,256 of
+        ~811M residual values, about 0.001%. The standard deviation of
+        the full embedded tensor therefore equals the cover's to within
+        rounding, so the extractor can size the grid from the stego
+        weights alone. ``grid_widths_from_cover`` records whether the
+        supplied value was used, so a caller supplying a cover can still
+        be measured against the cover-derived path.
         """
         recovered_bits = []
+        used_cover = residuals_ref is not None
 
         for layer_id in sorted(weights.keys()):
             weight_tensor = weights[layer_id]
             indices       = carrier_indices.get(layer_id, [])
             weight_flat   = weight_tensor.flatten()
 
-            # Derive same interval width used during embedding
-            std            = residuals_ref[layer_id].float().std().item()
+            # Derive the same interval width used during embedding.
+            if used_cover:
+                std = residuals_ref[layer_id].float().std().item()
+            else:
+                # Sparse embedding: the untouched values dominate, so
+                # this tensor's own std is the cover's std.
+                std = weight_tensor.float().std().item()
+
             interval_width = self._derive_interval_width(layer_id, std)
 
             for carrier_idx in indices:
@@ -254,4 +279,5 @@ class LWEStrategy:
                 bit = self._decode(val, interval_width)
                 recovered_bits.append(bit)
 
+        self.grid_widths_from_cover = used_cover
         return recovered_bits

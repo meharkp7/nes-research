@@ -78,11 +78,32 @@ class RegistryTests(unittest.TestCase):
                 f"{name} has no notes",
             )
 
-    def test_lwe_is_flagged_as_needing_the_cover(self):
-        # Established by reading extract(): it calls
-        # residuals_ref[layer].std() to derive the grid width.
-        self.assertTrue(spec("lwe").extract_needs_cover)
-        self.assertEqual(spec("lwe").status, "BLOCKED")
+    def test_lwe_no_longer_requires_the_cover(self):
+        """Phase 3: the grid width is derived from the stego tensor.
+
+        Previously extract() required residuals_ref, which made the
+        scheme unusable -- a real extractor holds only stego weights.
+        The embedding is sparse enough that the embedded tensor's own std
+        equals the cover's.
+        """
+        self.assertFalse(spec("lwe").extract_needs_cover)
+        self.assertEqual(spec("lwe").status, "READY")
+
+        """A parity grid carries no sign information to read.
+
+        Handing it to the sign-based extractor returns noise, so the
+        scheme-specific extractor must be selected.
+        """
+        from src.embedding.extractors import (
+            LweParityExtractor,
+            SignBasedExtractor,
+            extractor_for,
+        )
+
+        self.assertIsInstance(extractor_for("lwe", None), LweParityExtractor)
+        self.assertIsInstance(
+            extractor_for("sign", None), SignBasedExtractor
+        )
 
     def test_sign_flip_flagged_for_sign_and_magnitude_aware(self):
         self.assertTrue(spec("sign").forces_sign_flip)
@@ -152,36 +173,20 @@ class RoundTripTests(unittest.TestCase):
             recovered, self.bits[:embedded_count]
         )
 
-    def test_lwe_cannot_extract_without_the_cover(self):
-        """The defect this suite exists to catch.
-
-        LWE-style encoding is the most promising scheme structurally, but
-        its extract() needs residuals_ref to size the grid. This asserts
-        the limitation rather than letting it look usable.
-        """
-        report = probe_extraction(
-            "lwe", self.residuals, self.bits, self.carriers
-        )
-
-        self.assertTrue(
-            report["embed_ok"],
-            "LWE embed should work; only extraction is blocked",
-        )
-        self.assertFalse(report["extract_without_cover_ok"])
-        self.assertFalse(report["structurally_usable"])
-        self.assertIn("CoverRequired", report["error"])
-
     def test_extract_with_raises_when_cover_withheld(self):
+        """A strategy that genuinely needs the cover must still refuse."""
         strategy = build(self._config("lwe"), "lwe")
-        result = embed_with(
-            strategy, self.residuals, self.bits, self.carriers
-        )
+
+        # lwe no longer needs it, so simulate a strategy that does.
+        class NeedyStrategy:
+            def extract(self, weights, carrier_indices, residuals_ref):
+                return []
 
         with self.assertRaises(CoverRequired):
             extract_with(
-                strategy,
-                result.embedded_weights,
-                result.carrier_indices,
+                NeedyStrategy(),
+                {"0": torch.zeros(4)},
+                {0: [0]},
                 residuals_ref=None,
             )
 
@@ -215,6 +220,41 @@ class RoundTripTests(unittest.TestCase):
         self.assertEqual(embedder.strategy_name, "sign")
         self.assertEqual(
             type(embedder.strategy).__name__, "SignEmbeddingStrategy"
+        )
+
+    def test_lwe_round_trips_without_cover(self):
+        strategy = build(self._config("lwe"), "lwe")
+        result = embed_with(
+            strategy, self.residuals, self.bits, self.carriers
+        )
+        recovered = extract_with(
+            strategy,
+            result.embedded_weights,
+            result.carrier_indices,
+            residuals_ref=None,
+            strategy_name="lwe",
+        )
+        embedded_count = result.bits_embedded
+        self.assertEqual(embedded_count, len(recovered))
+        self.assertEqual(recovered, self.bits[:embedded_count])
+
+    def test_lwe_uses_a_parity_extractor_not_a_sign_extractor(self):
+        """A parity grid carries no sign information to read.
+
+        Handing it to the sign-based extractor returns noise, so the
+        scheme-specific extractor must be selected.
+        """
+        from src.embedding.extractors import (
+            LweParityExtractor,
+            SignBasedExtractor,
+            extractor_for,
+        )
+
+        self.assertIsInstance(
+            extractor_for("lwe", None), LweParityExtractor
+        )
+        self.assertIsInstance(
+            extractor_for("sign", None), SignBasedExtractor
         )
 
 
