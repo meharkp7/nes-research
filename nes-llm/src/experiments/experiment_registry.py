@@ -56,6 +56,11 @@ THRESHOLDS = {
         "description": "Carrier-centered neural steganalysis stress test.",
         "max_detector_accuracy": 0.55,
     },
+    "exp11": {
+        "description": "LWE grid width vs both gates (robustness + detectability).",
+        "max_ber_at_sigma_0_001": 0.02,
+        "max_detector_accuracy": 0.55,
+    },
     "exp8": {
         "description": "Cross-model aggregation of G2-G6.",
         "required_gates": [
@@ -239,6 +244,22 @@ EXPERIMENTS: Dict[str, Dict] = {
         "module": (
             "src.experiments.experiments.exp7_neural_detector"
         ),
+    },
+    "exp10": {
+        "name": "Strategy Head-to-Head",
+        "gate_key": "exp10",
+        "depends_on": ["exp3"],
+        "requires_models": False,
+        "requires_residuals": True,
+        "module": "src.experiments.exp10_strategy_comparison",
+    },
+    "exp11": {
+        "name": "LWE Grid Width Frontier",
+        "gate_key": "exp11",
+        "depends_on": ["exp10"],
+        "requires_models": False,
+        "requires_residuals": True,
+        "module": "src.experiments.exp11_lwe_alpha_pareto",
     },
     "exp8": {
         "name": "Real Cross-Model Table",
