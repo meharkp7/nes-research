@@ -1,0 +1,150 @@
+{
+  "experiment": "exp8",
+  "title": "Real Cross-Model Table",
+  "configuration": {
+    "gates": [
+      "g2_qaci",
+      "g3_ber",
+      "g4_ppl",
+      "g5_robustness",
+      "g6_statistical",
+      "g6_neural_detector"
+    ],
+    "residual_source": "real NF4 residuals",
+    "synthetic_benchmark_used": false,
+    "target_models": [
+      "meta-llama/Llama-3.1-8B",
+      "mistralai/Mistral-7B-v0.3",
+      "google/gemma-2-9b",
+      "Qwen/Qwen2.5-7B",
+      "Qwen/Qwen2.5-3B",
+      "TinyLlama/TinyLlama-1.1B-Chat-v1.0",
+      "microsoft/Phi-3-mini-4k-instruct"
+    ]
+  },
+  "metrics": {
+    "models_in_table": [
+      "Qwen/Qwen2.5-3B"
+    ],
+    "models_missing_from_table": [
+      "meta-llama/Llama-3.1-8B",
+      "mistralai/Mistral-7B-v0.3",
+      "google/gemma-2-9b",
+      "Qwen/Qwen2.5-7B",
+      "TinyLlama/TinyLlama-1.1B-Chat-v1.0",
+      "microsoft/Phi-3-mini-4k-instruct"
+    ],
+    "overall_status": "FAIL",
+    "rows": {
+      "Qwen/Qwen2.5-3B": {
+        "model_id": "Qwen/Qwen2.5-3B",
+        "family": "qwen",
+        "expected_layers": 36,
+        "actual_layers": 36,
+        "layer_count_matches_expected": true,
+        "gates": {
+          "g2_qaci": {
+            "label": "QACI allocation",
+            "source_experiment": "exp1",
+            "status": "PASS",
+            "metrics": {
+              "total_bits_allocated": 50000,
+              "expected_bits": 50000,
+              "layers_selected": 36
+            }
+          },
+          "g3_ber": {
+            "label": "Clean BER",
+            "source_experiment": "exp3",
+            "status": "PASS",
+            "metrics": {
+              "ber": 0.0,
+              "bits_embedded": 48256,
+              "expected_bits": 50000,
+              "recovered_matches": true
+            }
+          },
+          "g4_ppl": {
+            "label": "Real PPL",
+            "source_experiment": "exp5",
+            "status": "PASS",
+            "metrics": {
+              "baseline_ppl": 12.4707,
+              "reconstruction_control_ppl": 11.3494,
+              "embedded_ppl": 11.3488,
+              "ppl_delta_pct": -0.005286623081384053,
+              "ppl_degradation_pct": 0.005286623081384053,
+              "threshold_pct": 2.0,
+              "source": "prior_completed_exp5_run"
+            }
+          },
+          "g5_robustness": {
+            "label": "Robustness",
+            "source_experiment": "exp6",
+            "status": "PASS",
+            "metrics": {
+              "ber_curve": {
+                "0.0": 0.0,
+                "0.0005": 0.0,
+                "0.001": 0.0,
+                "0.002": 0.0,
+                "0.005": 0.00013650546021840875,
+                "0.01": 0.018681747269890796,
+                "0.02": 0.1330148205928237
+              },
+              "ber_at_001": 0.0,
+              "ber_at_002": 0.0,
+              "total_bits": 10256,
+              "trials": 5
+            }
+          },
+          "g6_statistical": {
+            "label": "Statistical security",
+            "source_experiment": "exp7",
+            "status": "PASS",
+            "metrics": {
+              "kl_divergence": 2.1524119802052155e-05,
+              "sign_bias": 0.015144646167755127,
+              "mean_shift": 7.73943611420691e-08,
+              "std_shift": 9.313225746154785e-10,
+              "statistical_detector_accuracy": 0.5028000026941299
+            }
+          },
+          "g6_neural_detector": {
+            "label": "Neural detector",
+            "source_experiment": "exp7_neural",
+            "status": "FAIL",
+            "metrics": {
+              "accuracy": 0.705
+            }
+          }
+        },
+        "overall_status": "FAIL"
+      }
+    },
+    "target_model_count": 7,
+    "table_artifact": "/Users/meharkapoor7/nes-research/results/cross_model_table_real.json",
+    "table_csv": "/Users/meharkapoor7/nes-research/results/cross_model_table_real.csv"
+  },
+  "thresholds": {
+    "description": "Cross-model aggregation of G2-G6.",
+    "required_gates": [
+      "g2_qaci",
+      "g3_ber",
+      "g4_ppl",
+      "g5_robustness",
+      "g6_statistical",
+      "g6_neural_detector"
+    ]
+  },
+  "status": "FAIL",
+  "gate_status": "FAIL",
+  "reproducibility": {
+    "aggregation_only": true,
+    "note": "Exp8 aggregates artifacts from Exp1-Exp7; it performs no independent measurement.",
+    "table_generated": 1790930622.04348
+  },
+  "notes": "At least one gate failed on a real completed experiment. A FAIL here reflects genuine evidence, not a pipeline error.",
+  "source": "aggregation",
+  "generated_at": "2026-10-02T08:43:42.090993+00:00"
+}

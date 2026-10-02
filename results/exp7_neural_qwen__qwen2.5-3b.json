@@ -1,0 +1,66 @@
+{
+  "experiment": "exp7_neural",
+  "title": "Security (neural steganalysis)",
+  "model_id": "Qwen/Qwen2.5-3B",
+  "configuration": {
+    "detector": "MLP 4096 -> 256 -> 64 -> 1",
+    "loss": "BCEWithLogitsLoss",
+    "optimizer": "Adam",
+    "dataset": "artifacts/exp7_detector_dataset.pkl",
+    "seed": 42,
+    "test_ratio": 0.2,
+    "epochs": 30,
+    "batch_size": 32,
+    "learning_rate": 0.0001,
+    "hidden_1": 256,
+    "hidden_2": 64,
+    "scope": "carrier-centered stress test on paired patches from one model; not a universal-adversary claim"
+  },
+  "metrics": {
+    "accuracy": 0.705,
+    "accuracy_percent": 70.5,
+    "tp": 68,
+    "tn": 73,
+    "fp": 27,
+    "fn": 32,
+    "threshold": 0.55,
+    "gate_rule": "accuracy <= 0.55"
+  },
+  "thresholds": {
+    "description": "Carrier-centered neural steganalysis stress test.",
+    "max_detector_accuracy": 0.55
+  },
+  "status": "FAIL",
+  "gate_status": "FAIL",
+  "reproducibility": {
+    "model_id": "Qwen/Qwen2.5-3B",
+    "family": "qwen",
+    "expected_layers": 36,
+    "actual_layers": 36,
+    "layer_count_matches_expected": true,
+    "random_seed": 42,
+    "device": "mps",
+    "software_versions": {
+      "python": "3.14.3",
+      "platform": "macOS-26.3-arm64-arm-64bit-Mach-O",
+      "torch": "2.13.0",
+      "transformers": "5.16.1",
+      "bitsandbytes": "0.50.2",
+      "accelerate": "1.14.0",
+      "numpy": "2.5.2"
+    },
+    "platform_notes": [
+      "Apple Silicon/MPS: NF4 dequantization must stay on CPU. Moving large dequantized tensors to MPS raises RuntimeError: Invalid buffer size.",
+      "MPS has no native int8/uint8 dequantize; PYTORCH_ENABLE_MPS_FALLBACK is set to 1."
+    ],
+    "residual_source": null,
+    "residual_definition": "R = W_FP16 - dequantize(W_NF4)",
+    "timestamp": "2026-10-02T08:31:54.800019+00:00"
+  },
+  "notes": "Reused a previously completed neural-detector run. This is a real FAIL result and is preserved as such: the embedding passes the statistical gate but a carrier-centered neural adversary detects it above threshold.",
+  "source": "reused_artifact",
+  "reused_from": "artifacts/exp7_detector_dataset.pkl",
+  "duration_seconds": 0.01,
+  "family": "qwen",
+  "generated_at": "2026-10-02T08:31:54.801546+00:00"
+}

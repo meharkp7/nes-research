@@ -1,0 +1,105 @@
+{
+  "experiment": "exp4",
+  "title": "Capacity Curve",
+  "configuration": {
+    "payload_sizes": [
+      500000,
+      1000000,
+      5000000,
+      10000000
+    ],
+    "message_source": "repeated 'A', length = ceil(bits/8)"
+  },
+  "metrics": {
+    "payload_sizes_tested": [
+      500000,
+      1000000,
+      5000000,
+      10000000
+    ],
+    "points": [
+      {
+        "payload_bits": 500000,
+        "bits_embedded": 500264,
+        "bits_compared": 500264,
+        "bit_errors": 0,
+        "ber": 0.0,
+        "recovered_matches": true,
+        "status": "PASS"
+      },
+      {
+        "payload_bits": 1000000,
+        "bits_embedded": 1000264,
+        "bits_compared": 1000264,
+        "bit_errors": 0,
+        "ber": 0.0,
+        "recovered_matches": true,
+        "status": "PASS"
+      },
+      {
+        "payload_bits": 5000000,
+        "bits_embedded": 5000264,
+        "bits_compared": 5000264,
+        "bit_errors": 0,
+        "ber": 0.0,
+        "recovered_matches": true,
+        "status": "PASS"
+      },
+      {
+        "payload_bits": 10000000,
+        "bits_embedded": 10000264,
+        "bits_compared": 10000264,
+        "bit_errors": 0,
+        "ber": 0.0,
+        "recovered_matches": true,
+        "status": "PASS"
+      }
+    ],
+    "sizes_recovered_at_ber_zero": [
+      500000,
+      1000000,
+      5000000,
+      10000000
+    ],
+    "max_tested_payload_at_ber_zero_bits": 10000000,
+    "guide_minimum_bits": 500000,
+    "meets_guide_minimum": true
+  },
+  "thresholds": {
+    "description": "Capacity curve: payload sizes recovering at BER=0.",
+    "min_bits_required_by_guide": 500000
+  },
+  "status": "PASS",
+  "gate_status": "PASS",
+  "reproducibility": {
+    "model_id": "Qwen/Qwen2.5-3B",
+    "family": "qwen",
+    "expected_layers": 36,
+    "actual_layers": null,
+    "layer_count_matches_expected": null,
+    "random_seed": 42,
+    "device": "mps",
+    "software_versions": {
+      "python": "3.14.3",
+      "platform": "macOS-26.3-arm64-arm-64bit-Mach-O",
+      "torch": "2.13.0",
+      "transformers": "5.16.1",
+      "bitsandbytes": "0.50.2",
+      "accelerate": "1.14.0",
+      "numpy": "2.5.2"
+    },
+    "platform_notes": [
+      "Apple Silicon/MPS: NF4 dequantization must stay on CPU. Moving large dequantized tensors to MPS raises RuntimeError: Invalid buffer size.",
+      "MPS has no native int8/uint8 dequantize; PYTORCH_ENABLE_MPS_FALLBACK is set to 1."
+    ],
+    "residual_source": "cache",
+    "residual_definition": "R = W_FP16 - dequantize(W_NF4)",
+    "timestamp": "2026-10-02T08:05:20.227570+00:00"
+  },
+  "notes": "Maximum tested payload at BER=0 is 10,000,000 bits. This is the largest size tested, not an absolute capacity bound; no stopping criterion for the true maximum was established.",
+  "source": "run",
+  "duration_seconds": 62.39,
+  "model_id": "Qwen/Qwen2.5-3B",
+  "family": "qwen",
+  "generated_at": "2026-10-02T08:05:20.407270+00:00"
+}

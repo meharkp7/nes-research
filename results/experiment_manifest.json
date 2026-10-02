@@ -1,0 +1,287 @@
+{
+  "schema_version": "1.0",
+  "generated_at": "2026-10-02T08:43:42.137534+00:00",
+  "description": "NES multi-model experiment manifest. One entry per experiment x model cell. Status is never inferred from implementation alone.",
+  "records": {
+    "exp1::Qwen/Qwen2.5-3B": {
+      "experiment": "exp1",
+      "model_id": "Qwen/Qwen2.5-3B",
+      "family": "qwen",
+      "status": "PASS",
+      "gate_status": "PASS",
+      "artifact_path": "/Users/meharkapoor7/nes-research/results/exp1_qwen__qwen2.5-3b.json",
+      "artifact_exists": true,
+      "configuration": {
+        "probe_payload_bits": 10000,
+        "module": "mlp.down_proj",
+        "residual_layers_expected": 36
+      },
+      "source": "run",
+      "notes": "Structural probe passed. This is not a fidelity, robustness or security claim.",
+      "updated_at": "2026-10-02T07:45:36.886470+00:00",
+      "metrics": {
+        "layer_mismatch": 0
+      },
+      "duration_seconds": 7.62
+    },
+    "exp2::Qwen/Qwen2.5-3B": {
+      "experiment": "exp2",
+      "model_id": "Qwen/Qwen2.5-3B",
+      "family": "qwen",
+      "status": "FAIL",
+      "gate_status": "FAIL",
+      "artifact_path": "/Users/meharkapoor7/nes-research/results/exp2_qwen__qwen2.5-3b.json",
+      "artifact_exists": true,
+      "configuration": {
+        "profiler": "LayerProfiler",
+        "num_bins": 64,
+        "module": "mlp.down_proj"
+      },
+      "source": "run",
+      "notes": "Only 4/36 layers exceed mag_mean 0.002 (11.1% < 80%). A FAIL here is a real property of this model's NF4 residual scale, not a pipeline error.",
+      "updated_at": "2026-10-02T07:45:44.781395+00:00",
+      "metrics": {
+        "fraction_above_threshold": 0.1111111111111111
+      },
+      "duration_seconds": 7.88
+    },
+    "exp3::Qwen/Qwen2.5-3B": {
+      "experiment": "exp3",
+      "model_id": "Qwen/Qwen2.5-3B",
+      "family": "qwen",
+      "status": "PASS",
+      "gate_status": "PASS",
+      "artifact_path": "/Users/meharkapoor7/nes-research/results/exp3_qwen__qwen2.5-3b.json",
+      "artifact_exists": true,
+      "configuration": {
+        "payload_bits": 50000,
+        "message_length_chars": 6000,
+        "embedding_strategy": "sign",
+        "carrier_selection": "qaci",
+        "message_source": "repeated 'A'; AES-256-GCM nonce is fresh per run"
+      },
+      "source": "run",
+      "notes": "Clean round trip recovered exactly.",
+      "updated_at": "2026-10-02T07:47:58.564922+00:00",
+      "metrics": {
+        "ber": 0.0
+      },
+      "duration_seconds": 24.17
+    },
+    "exp4::Qwen/Qwen2.5-3B": {
+      "experiment": "exp4",
+      "model_id": "Qwen/Qwen2.5-3B",
+      "family": "qwen",
+      "status": "PASS",
+      "gate_status": "PASS",
+      "artifact_path": "/Users/meharkapoor7/nes-research/results/exp4_qwen__qwen2.5-3b.json",
+      "artifact_exists": true,
+      "configuration": {
+        "payload_sizes": [
+          500000,
+          1000000,
+          5000000,
+          10000000
+        ],
+        "message_source": "repeated 'A', length = ceil(bits/8)"
+      },
+      "source": "run",
+      "notes": "Maximum tested payload at BER=0 is 10,000,000 bits. This is the largest size tested, not an absolute capacity bound; no stopping criterion for the true maximum was established.",
+      "updated_at": "2026-10-02T08:05:20.407860+00:00",
+      "metrics": {
+        "max_tested_payload_at_ber_zero_bits": 10000000
+      },
+      "duration_seconds": 62.39
+    },
+    "exp5::Qwen/Qwen2.5-3B": {
+      "experiment": "exp5",
+      "model_id": "Qwen/Qwen2.5-3B",
+      "family": "qwen",
+      "status": "PASS",
+      "gate_status": "PASS",
+      "artifact_path": "/Users/meharkapoor7/nes-research/results/exp5_qwen__qwen2.5-3b.json",
+      "artifact_exists": true,
+      "configuration": {
+        "dataset": "wikitext/wikitext-2-raw-v1 validation",
+        "num_texts": 200,
+        "min_text_length": 50,
+        "payload_bits": 50000,
+        "protocol": "three-way: NF4 baseline, reconstruction control, embedded"
+      },
+      "source": "reused_artifact",
+      "notes": "Reused a previously completed three-way Exp5 measurement. Reconstruction alone moves PPL substantially relative to the NF4 baseline; that component is not attributable to the payload.",
+      "updated_at": "2026-10-02T08:30:11.152214+00:00",
+      "metrics": {
+        "embedding_specific_delta_pct": -0.005286623081384053,
+        "ppl_degradation_pct": 0.005286623081384053
+      },
+      "duration_seconds": 0.0
+    },
+    "exp6::Qwen/Qwen2.5-3B": {
+      "experiment": "exp6",
+      "model_id": "Qwen/Qwen2.5-3B",
+      "family": "qwen",
+      "status": "PASS",
+      "gate_status": "PASS",
+      "artifact_path": "/Users/meharkapoor7/nes-research/results/exp6_qwen__qwen2.5-3b.json",
+      "artifact_exists": true,
+      "configuration": {
+        "sigmas": [
+          0.0,
+          0.0005,
+          0.001,
+          0.002,
+          0.005,
+          0.01,
+          0.02
+        ],
+        "trials_per_sigma": 5,
+        "payload_bits": 10000,
+        "noise": "additive i.i.d. Gaussian on all residual tensors",
+        "seed": 42
+      },
+      "source": "run",
+      "notes": "Both operating-point gates hold. Non-gate sigma values are stochastic and vary slightly across reruns.",
+      "updated_at": "2026-10-02T07:49:26.944759+00:00",
+      "metrics": {
+        "payload_bits": 10000,
+        "ber_at_sigma_0_001": 0.0,
+        "ber_at_sigma_0_002": 0.0
+      },
+      "duration_seconds": 54.13
+    },
+    "exp7::Qwen/Qwen2.5-3B": {
+      "experiment": "exp7",
+      "model_id": "Qwen/Qwen2.5-3B",
+      "family": "qwen",
+      "status": "PASS",
+      "gate_status": "PASS",
+      "artifact_path": "/Users/meharkapoor7/nes-research/results/exp7_qwen__qwen2.5-3b.json",
+      "artifact_exists": true,
+      "configuration": {
+        "payload_bits": 50000,
+        "validator": "SecurityValidator",
+        "num_bins": 64,
+        "adversary": "threshold classifier on mean absolute value of 10,000-value samples",
+        "scope": "statistical undetectability only"
+      },
+      "source": "run",
+      "notes": "Statistical undetectability gates hold. This says nothing about a trained neural adversary; see exp7_neural.",
+      "updated_at": "2026-10-02T07:52:16.708035+00:00",
+      "metrics": {
+        "kl_divergence": 4.1736064304132015e-05,
+        "statistical_detector_accuracy": 0.5028000026941299
+      },
+      "duration_seconds": 49.99
+    },
+    "exp7_neural::Qwen/Qwen2.5-3B": {
+      "experiment": "exp7_neural",
+      "model_id": "Qwen/Qwen2.5-3B",
+      "family": "qwen",
+      "status": "FAIL",
+      "gate_status": "FAIL",
+      "artifact_path": "/Users/meharkapoor7/nes-research/results/exp7_neural_qwen__qwen2.5-3b.json",
+      "artifact_exists": true,
+      "configuration": {
+        "detector": "MLP 4096 -> 256 -> 64 -> 1",
+        "loss": "BCEWithLogitsLoss",
+        "optimizer": "Adam",
+        "dataset": "artifacts/exp7_detector_dataset.pkl",
+        "seed": 42,
+        "test_ratio": 0.2,
+        "epochs": 30,
+        "batch_size": 32,
+        "learning_rate": 0.0001,
+        "hidden_1": 256,
+        "hidden_2": 64,
+        "scope": "carrier-centered stress test on paired patches from one model; not a universal-adversary claim"
+      },
+      "source": "reused_artifact",
+      "notes": "Reused a previously completed neural-detector run. This is a real FAIL result and is preserved as such: the embedding passes the statistical gate but a carrier-centered neural adversary detects it above threshold.",
+      "updated_at": "2026-10-02T08:31:54.804342+00:00",
+      "metrics": {
+        "accuracy": 0.705
+      },
+      "duration_seconds": 0.01
+    },
+    "exp8::Qwen/Qwen2.5-3B": {
+      "experiment": "exp8",
+      "model_id": "Qwen/Qwen2.5-3B",
+      "family": "qwen",
+      "status": "FAIL",
+      "gate_status": "FAIL",
+      "artifact_path": "/Users/meharkapoor7/nes-research/results/exp8_cross_model.json",
+      "artifact_exists": true,
+      "configuration": {
+        "gates": [
+          "g2_qaci",
+          "g3_ber",
+          "g4_ppl",
+          "g5_robustness",
+          "g6_statistical",
+          "g6_neural_detector"
+        ],
+        "residual_source": "real NF4 residuals",
+        "synthetic_benchmark_used": false,
+        "target_models": [
+          "meta-llama/Llama-3.1-8B",
+          "mistralai/Mistral-7B-v0.3",
+          "google/gemma-2-9b",
+          "Qwen/Qwen2.5-7B",
+          "Qwen/Qwen2.5-3B",
+          "TinyLlama/TinyLlama-1.1B-Chat-v1.0",
+          "microsoft/Phi-3-mini-4k-instruct"
+        ]
+      },
+      "source": "aggregation",
+      "notes": "At least one gate failed on a real completed experiment. A FAIL here reflects genuine evidence, not a pipeline error.",
+      "updated_at": "2026-10-02T08:43:42.093411+00:00",
+      "metrics": {
+        "g2_qaci": "PASS",
+        "g3_ber": "PASS",
+        "g4_ppl": "PASS",
+        "g5_robustness": "PASS",
+        "g6_statistical": "PASS",
+        "g6_neural_detector": "FAIL"
+      }
+    },
+    "exp9::Qwen/Qwen2.5-3B-AWQ": {
+      "experiment": "exp9",
+      "model_id": "Qwen/Qwen2.5-3B-AWQ",
+      "family": "qwen",
+      "status": "NOT_RUN",
+      "gate_status": "NOT_RUN",
+      "artifact_path": "/Users/meharkapoor7/nes-research/results/exp9_formats.json",
+      "artifact_exists": true,
+      "configuration": {
+        "quantization_format": "awq",
+        "payload_bits": 10000,
+        "module": "mlp.down_proj",
+        "alpha_note": "EmbeddingConfig default alpha is used unmodified. The guide suggests ~0.10-0.15 for AWQ; that is untested here and is not applied blindly."
+      },
+      "source": "run",
+      "notes": "Checkpoint Qwen/Qwen2.5-3B-AWQ is not in the local model cache. Exp9 needs a real AWQ checkpoint; downloading it is an explicit step, not something a suite run does implicitly.",
+      "updated_at": "2026-10-02T08:43:42.137514+00:00",
+      "quantization_format": "awq"
+    },
+    "exp9::Qwen/Qwen2.5-3B-GPTQ-Int4": {
+      "experiment": "exp9",
+      "model_id": "Qwen/Qwen2.5-3B-GPTQ-Int4",
+      "family": "qwen",
+      "status": "NOT_RUN",
+      "gate_status": "NOT_RUN",
+      "artifact_path": "/Users/meharkapoor7/nes-research/results/exp9_formats.json",
+      "artifact_exists": true,
+      "configuration": {
+        "quantization_format": "gptq",
+        "payload_bits": 10000,
+        "module": "mlp.down_proj",
+        "alpha_note": "EmbeddingConfig default alpha is used unmodified. The guide suggests ~0.10-0.15 for AWQ; that is untested here and is not applied blindly."
+      },
+      "source": "run",
+      "notes": "Checkpoint Qwen/Qwen2.5-3B-GPTQ-Int4 is not in the local model cache. Exp9 needs a real GPTQ checkpoint; downloading it is an explicit step, not something a suite run does implicitly.",
+      "updated_at": "2026-10-02T08:43:42.137500+00:00",
+      "quantization_format": "gptq"
+    }
+  }
+}

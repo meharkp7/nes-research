@@ -1,0 +1,14 @@
+{
+  "ppl": {
+    "baseline": Infinity,
+    "embedded": Infinity,
+    "degradation": NaN,
+    "passed": false
+  },
+  "task_accuracy": {
+    "baseline": 0.0,
+    "embedded": 0.0,
+    "loss": 0.0,
+    "passed": true
+  }
+}

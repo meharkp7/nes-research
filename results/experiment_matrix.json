@@ -1,0 +1,29 @@
+{
+  "matrix": {
+    "Qwen/Qwen2.5-3B": {
+      "exp1": "PASS",
+      "exp2": "FAIL",
+      "exp3": "PASS",
+      "exp4": "PASS",
+      "exp5": "PASS",
+      "exp6": "PASS",
+      "exp7": "PASS",
+      "exp7_neural": "FAIL",
+      "exp8": "FAIL"
+    },
+    "Qwen/Qwen2.5-3B-AWQ": {
+      "exp9": "NOT_RUN"
+    },
+    "Qwen/Qwen2.5-3B-GPTQ-Int4": {
+      "exp9": "NOT_RUN"
+    }
+  },
+  "coverage": {
+    "PASS": 6,
+    "FAIL": 3,
+    "NOT_RUN": 2,
+    "MISSING_ARTIFACT": 0,
+    "IMPLEMENTED_ONLY": 0,
+    "ERROR": 0
+  }
+}

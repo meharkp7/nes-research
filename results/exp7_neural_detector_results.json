@@ -1,0 +1,21 @@
+{
+  "experiment": "exp7_neural_detector",
+  "model_id": "Qwen/Qwen2.5-3B",
+  "dataset_path": "artifacts/exp7_detector_dataset.pkl",
+  "seed": 42,
+  "test_ratio": 0.2,
+  "epochs": 30,
+  "batch_size": 32,
+  "learning_rate": 0.0001,
+  "hidden_1": 256,
+  "hidden_2": 64,
+  "accuracy": 0.705,
+  "accuracy_percent": 70.5,
+  "tp": 68,
+  "tn": 73,
+  "fp": 27,
+  "fn": 32,
+  "threshold": 0.55,
+  "gate_rule": "accuracy <= 0.55",
+  "status": "FAIL"
+}

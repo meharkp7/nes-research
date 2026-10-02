@@ -1,0 +1,57 @@
+{
+  "experiment": "exp5",
+  "title": "Fidelity (real PPL)",
+  "configuration": {
+    "dataset": "wikitext/wikitext-2-raw-v1 validation",
+    "num_texts": 200,
+    "min_text_length": 50,
+    "payload_bits": 50000,
+    "protocol": "three-way: NF4 baseline, reconstruction control, embedded"
+  },
+  "metrics": {
+    "nf4_baseline_ppl": 12.4707,
+    "reconstruction_control_ppl": 11.3494,
+    "embedded_ppl": 11.3488,
+    "embedding_specific_delta_pct": -0.005286623081384053,
+    "ppl_degradation_pct": 0.005286623081384053,
+    "threshold_pct": 2.0
+  },
+  "thresholds": {
+    "description": "Perplexity degradation attributable to embedding.",
+    "max_ppl_degradation_pct": 2.0
+  },
+  "status": "PASS",
+  "gate_status": "PASS",
+  "reproducibility": {
+    "model_id": "Qwen/Qwen2.5-3B",
+    "family": "qwen",
+    "expected_layers": 36,
+    "actual_layers": 36,
+    "layer_count_matches_expected": true,
+    "random_seed": 42,
+    "device": "mps",
+    "software_versions": {
+      "python": "3.14.3",
+      "platform": "macOS-26.3-arm64-arm-64bit-Mach-O",
+      "torch": "2.13.0",
+      "transformers": "5.16.1",
+      "bitsandbytes": "0.50.2",
+      "accelerate": "1.14.0",
+      "numpy": "2.5.2"
+    },
+    "platform_notes": [
+      "Apple Silicon/MPS: NF4 dequantization must stay on CPU. Moving large dequantized tensors to MPS raises RuntimeError: Invalid buffer size.",
+      "MPS has no native int8/uint8 dequantize; PYTORCH_ENABLE_MPS_FALLBACK is set to 1."
+    ],
+    "residual_source": "live_extraction",
+    "residual_definition": "R = W_FP16 - dequantize(W_NF4)",
+    "timestamp": "2026-10-02T08:30:11.150542+00:00"
+  },
+  "notes": "Reused a previously completed three-way Exp5 measurement. Reconstruction alone moves PPL substantially relative to the NF4 baseline; that component is not attributable to the payload.",
+  "source": "reused_artifact",
+  "reused_from": "prior_completed_exp5_run",
+  "duration_seconds": 0.0,
+  "model_id": "Qwen/Qwen2.5-3B",
+  "family": "qwen",
+  "generated_at": "2026-10-02T08:30:11.151169+00:00"
+}

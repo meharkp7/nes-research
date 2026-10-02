@@ -1,0 +1,2 @@
+model_id,family,expected_layers,actual_layers,overall_status,g2_qaci,g3_ber,g4_ppl,g5_robustness,g6_statistical,g6_neural_detector
+Qwen/Qwen2.5-3B,qwen,36,36,INCOMPLETE,PASS,PASS,PASS,PASS,PASS,NOT_RUN

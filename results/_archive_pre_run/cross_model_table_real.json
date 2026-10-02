@@ -1,0 +1,61 @@
+{
+  "Qwen/Qwen2.5-3B": {
+    "model_id": "Qwen/Qwen2.5-3B",
+    "family": "qwen",
+    "expected_layers": 36,
+    "actual_layers": 36,
+    "residual_layers": 36,
+    "g2_qaci": {
+      "status": "PASS",
+      "total_bits_allocated": 50000,
+      "expected_bits": 50000,
+      "layers_selected": 36
+    },
+    "g3_ber": {
+      "status": "PASS",
+      "ber": 0.0,
+      "bits_embedded": 48256,
+      "expected_bits": 50000,
+      "recovered_matches": true
+    },
+    "g4_ppl": {
+      "status": "PASS",
+      "baseline_ppl": 12.4707,
+      "reconstruction_control_ppl": 11.3494,
+      "embedded_ppl": 11.3488,
+      "ppl_delta_pct": -0.005286623081384053,
+      "ppl_degradation_pct": 0.005286623081384053,
+      "threshold_pct": 2.0,
+      "source": "prior_completed_exp5_run"
+    },
+    "g5_robustness": {
+      "status": "PASS",
+      "ber_curve": {
+        "0.0": 0.0,
+        "0.0005": 0.0,
+        "0.001": 0.0,
+        "0.002": 0.0,
+        "0.005": 3.9001560062402496e-05,
+        "0.01": 0.019013260530421218,
+        "0.02": 0.12997269890795632
+      },
+      "ber_at_001": 0.0,
+      "ber_at_002": 0.0,
+      "total_bits": 10256,
+      "trials": 5
+    },
+    "g6_statistical": {
+      "status": "PASS",
+      "kl_divergence": 8.885448914952576e-05,
+      "sign_bias": 0.01475214958190918,
+      "mean_shift": 3.0090450309216976e-07,
+      "std_shift": 2.7939677238464355e-09,
+      "statistical_detector_accuracy": 0.502700001001358
+    },
+    "g6_neural_detector": {
+      "status": "NOT_RUN",
+      "reason": "No saved real neural-detector result supplied to Exp8."
+    },
+    "overall_status": "INCOMPLETE"
+  }
+}
