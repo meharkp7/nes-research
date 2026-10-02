@@ -11,8 +11,7 @@
     "patch_size": 4096,
     "epochs": 30,
     "seed": 42,
-    "note": "Each strategy is measured by its own detector, since the dataset is built from that strategy's embedding. Sized for comparison, not as a headline result.",
-    "robustness_note": "BER measured through production SignExtractor extraction."
+    "note": "Each strategy is measured by its own detector, since the dataset is built from that strategy's embedding. Sized for comparison, not as a headline result."
   },
   "registry": [
     {
@@ -35,12 +34,12 @@
     },
     {
       "strategy": "lwe",
-      "status": "BLOCKED",
+      "status": "READY",
       "forces_sign_flip": false,
-      "extract_needs_cover": true,
+      "extract_needs_cover": false,
       "needs_trained_model": false,
       "class": "src.embedding.strategies.lwe_strategy.LWEStrategy",
-      "notes": "LWE-inspired parity/grid encoding, not lattice LWE: there is no matrix A and no SIS/LWE instance, so the post-quantum claim in its docstring is not supported. Structurally the most promising option here (parity, not sign flip) but extraction calls residuals_ref[layer].std() to derive the grid width, so it cannot extract from stego weights alone."
+      "notes": "LWE-inspired parity/grid encoding, not lattice LWE: there is no matrix A and no SIS/LWE instance, so the post-quantum claim in its docstring is not supported by the implementation. Phase 3 removed the cover dependency: the grid width is derived from the stego tensor's own std, which is valid because the embedding is sparse (~0.001% of values). Requires LweParityExtractor rather than the sign-based one production uses."
     },
     {
       "strategy": "neural",
@@ -67,25 +66,27 @@
         "error": "",
         "bits_embedded": 10256,
         "bits_compared": 10256,
+        "bit_errors": 0,
+        "usable_in_production_pipeline": true,
         "structurally_usable": true
       },
-      "detector_accuracy": 0.725,
-      "meets_detector_gate": false,
-      "signal_density": {
-        "mean_changed_values_per_patch": 25.4825,
-        "patch_size": 4096,
-        "identical_pair_fraction": 0.06
-      },
-      "detector_samples": 800,
-      "wins": false,
-      "notes": "Production default. Writes carrier as +/-|r| selected by the bit. Passes BER/PPL/robustness but is detected at 70.5% by a carrier-centered MLP; the sweep in exp7_neural_parameter_study shows retuning does not help.",
       "robustness_ber_curve": {
         "0.0": 0.0,
         "0.001": 0.0,
         "0.002": 0.0,
-        "0.005": 0.00022750910036401455
+        "0.005": 0.0001950078003120125
       },
-      "meets_robustness_gate": true
+      "meets_robustness_gate": true,
+      "detector_accuracy": 0.7375,
+      "meets_detector_gate": false,
+      "signal_density": {
+        "mean_changed_values_per_patch": 25.565,
+        "patch_size": 4096,
+        "identical_pair_fraction": 0.08
+      },
+      "detector_samples": 800,
+      "wins": false,
+      "notes": "Production default. Writes carrier as +/-|r| selected by the bit. Passes BER/PPL/robustness but is detected at 70.5% by a carrier-centered MLP; the sweep in exp7_neural_parameter_study shows retuning does not help."
     },
     {
       "strategy": "magnitude_aware",
@@ -101,9 +102,18 @@
         "error": "",
         "bits_embedded": 10256,
         "bits_compared": 10256,
+        "bit_errors": 0,
+        "usable_in_production_pipeline": true,
         "structurally_usable": true
       },
-      "detector_accuracy": 0.675,
+      "robustness_ber_curve": {
+        "0.0": 0.0,
+        "0.001": 0.0,
+        "0.002": 0.0,
+        "0.005": 6.500260010400417e-05
+      },
+      "meets_robustness_gate": true,
+      "detector_accuracy": 0.73125,
       "meets_detector_gate": false,
       "signal_density": {
         "mean_changed_values_per_patch": 52.3325,
@@ -112,32 +122,34 @@
       },
       "detector_samples": 800,
       "wins": false,
-      "notes": "Per-carrier adaptive margin, but still 'boosted if bit == 1 else -boosted'. Same structural sign leak as sign, with a larger perturbation, so it is expected to be at least as detectable rather than less.",
-      "robustness_ber_curve": {
-        "0.0": 0.0,
-        "0.001": 0.0,
-        "0.002": 0.0,
-        "0.005": 0.00013000520020800833
-      },
-      "meets_robustness_gate": true
+      "notes": "Per-carrier adaptive margin, but still 'boosted if bit == 1 else -boosted'. Same structural sign leak as sign, with a larger perturbation, so it is expected to be at least as detectable rather than less."
     },
     {
       "strategy": "lwe",
-      "status": "BLOCKED",
+      "status": "READY",
       "forces_sign_flip": false,
-      "extract_needs_cover": true,
+      "extract_needs_cover": false,
       "extractability": {
         "strategy": "lwe",
         "embed_ok": true,
         "decrypt_ok": false,
         "recovered_matches": false,
-        "ber": 0.4954173166926677,
+        "ber": 0.0,
         "error": "",
         "bits_embedded": 10256,
-        "note": "Embedded, but production extraction (SignExtractor, which reads carrier signs) cannot recover a non-sign scheme's bits. A scheme-specific extractor is required.",
         "bits_compared": 10256,
-        "structurally_usable": false
+        "bit_errors": 0,
+        "usable_in_production_pipeline": false,
+        "note": "Bits recover through the scheme's own extractor, but DecryptPipeline is hardcoded to SignExtractor and cannot read a non-sign scheme. Wiring it up is a separate change, not a scheme defect.",
+        "structurally_usable": true
       },
+      "robustness_ber_curve": {
+        "0.0": 0.0,
+        "0.001": 0.3174726989079563,
+        "0.002": 0.4965548621944878,
+        "0.005": 0.5021125845033801
+      },
+      "meets_robustness_gate": false,
       "detector_accuracy": 0.5,
       "meets_detector_gate": true,
       "signal_density": {
@@ -147,14 +159,7 @@
       },
       "detector_samples": 800,
       "wins": false,
-      "notes": "LWE-inspired parity/grid encoding, not lattice LWE: there is no matrix A and no SIS/LWE instance, so the post-quantum claim in its docstring is not supported. Structurally the most promising option here (parity, not sign flip) but extraction calls residuals_ref[layer].std() to derive the grid width, so it cannot extract from stego weights alone.",
-      "robustness_ber_curve": {
-        "0.0": 0.5036076443057722,
-        "0.001": 0.5036076443057722,
-        "0.002": 0.5036076443057722,
-        "0.005": 0.5034126365054602
-      },
-      "meets_robustness_gate": false
+      "notes": "LWE-inspired parity/grid encoding, not lattice LWE: there is no matrix A and no SIS/LWE instance, so the post-quantum claim in its docstring is not supported by the implementation. Phase 3 removed the cover dependency: the grid width is derived from the stego tensor's own std, which is valid because the embedding is sparse (~0.001% of values). Requires LweParityExtractor rather than the sign-based one production uses."
     },
     {
       "strategy": "neural",
@@ -170,6 +175,8 @@
         "error": "EmbeddingError: NeuralStrategy requires a trained model. Use NeuralEmbeddingTrainer().train(residuals) first.",
         "structurally_usable": false
       },
+      "robustness_ber_curve": null,
+      "meets_robustness_gate": false,
       "detector_accuracy": null,
       "meets_detector_gate": null,
       "signal_density": null,
@@ -180,6 +187,5 @@
   ],
   "winners": [],
   "study_invalid": false,
-  "conclusion": "No strategy beats sign. Both usable schemes (sign, magnitude_aware) force a sign flip at carriers and are detected at 72.50% and 67.50% against a 55% gate. The two non-sign candidates are unusable as implemented: lwe carries no recoverable bits at all (BER 0.5048 = chance, because production SignExtractor reads carrier signs and cannot decode a parity grid), and additionally its own extract() needs the cover residuals; neural requires training a model that does not exist yet. Phase 3 should not proceed on these candidates.",
-  "key_finding": "LWE's perturbation is 29x smaller than sign's (max per-patch delta 0.15 vs 4.41), which is why its detector accuracy sits at chance. That is below the detector's sensitivity, not a security proof, and it comes at the cost of carrying no recoverable bits."
+  "conclusion": "No strategy beats sign. Both sign-flip schemes fail the detectability gate; the two non-sign candidates are not usable as implemented (LWE needs the cover to extract, neural needs training). Phase 3 should not proceed on the current candidates."
 }

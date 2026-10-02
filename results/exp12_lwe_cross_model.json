@@ -1,0 +1,87 @@
+{
+  "experiment": "exp12_lwe_cross_model",
+  "title": "LWE grid width confirmed across cached models",
+  "grid_width": 0.01,
+  "gates": {
+    "ber_at_sigma_0_001": 0.02,
+    "detector_accuracy": 0.55
+  },
+  "reference_detector_result": "exp7_neural: sign embedding detected at 70.5% on Qwen2.5-3B, same gate and same detector architecture",
+  "results": [
+    {
+      "model_id": "TinyLlama/TinyLlama-1.1B-Chat-v1.0",
+      "status": "SKIPPED",
+      "reason": "residual cache incomplete"
+    },
+    {
+      "model_id": "Qwen/Qwen2.5-7B",
+      "layers": 28,
+      "status": "MEASURED",
+      "grid_width": 0.01,
+      "ber_at_sigma_0_001": 0.0,
+      "meets_robustness_gate": true,
+      "detector_accuracy": 0.5,
+      "meets_detector_gate": true,
+      "satisfies_both_gates": true,
+      "robustness_ber_curve": {
+        "0.0": 0.0,
+        "0.001": 0.0,
+        "0.002": 0.01202548101924077,
+        "0.005": 0.3159126365054602
+      },
+      "signal_density": {
+        "mean_changed_values_per_patch": 20.4425,
+        "patch_size": 4096,
+        "identical_pair_fraction": 0.0
+      }
+    },
+    {
+      "model_id": "meta-llama/Llama-3.1-8B",
+      "layers": 32,
+      "status": "MEASURED",
+      "grid_width": 0.01,
+      "ber_at_sigma_0_001": 0.0,
+      "meets_robustness_gate": true,
+      "detector_accuracy": 0.5,
+      "meets_detector_gate": true,
+      "satisfies_both_gates": true,
+      "robustness_ber_curve": {
+        "0.0": 0.0,
+        "0.001": 0.0,
+        "0.002": 0.012057982319292771,
+        "0.005": 0.3164001560062403
+      },
+      "signal_density": {
+        "mean_changed_values_per_patch": 35.6275,
+        "patch_size": 4096,
+        "identical_pair_fraction": 0.0
+      }
+    },
+    {
+      "model_id": "google/gemma-2-9b",
+      "layers": 42,
+      "status": "MEASURED",
+      "grid_width": 0.01,
+      "ber_at_sigma_0_001": 0.0,
+      "meets_robustness_gate": true,
+      "detector_accuracy": 0.5,
+      "meets_detector_gate": true,
+      "satisfies_both_gates": true,
+      "robustness_ber_curve": {
+        "0.0": 0.0,
+        "0.001": 0.0,
+        "0.002": 0.011992979719188768,
+        "0.005": 0.3139625585023401
+      },
+      "signal_density": {
+        "mean_changed_values_per_patch": 14.3375,
+        "patch_size": 4096,
+        "identical_pair_fraction": 0.0
+      }
+    }
+  ],
+  "models_passing": 3,
+  "models_measured": 3,
+  "conclusion": "The LWE grid width 0.01 satisfies both the robustness and detectability gates on 3 of 3 cached models.",
+  "changes_any_gate": false
+}

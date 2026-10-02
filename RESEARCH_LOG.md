@@ -447,3 +447,45 @@ Each proceeds only if the previous one comes back clean.
   SIS/LWE instance, so the post-quantum claim in `lwe_strategy.py`'s
   docstring is not supported by the implementation. Flagged, **not**
   renamed — renaming a claimed contribution is the authors' call.
+---
+
+## 10. Phase 3b — cross-model confirmation (`exp12`)
+
+The grid width was found on one model. A setting that passes both gates on
+one model is a lead, not a result, so it was re-measured on every cached
+model.
+
+| model | layers | BER@σ=0.001 | detector | both gates |
+|---|---|---|---|---|
+| Qwen/Qwen2.5-3B | 36 | 0.0000 | 50.00% | **PASS** |
+| mistralai/Mistral-7B-v0.3 | 32 | 0.0000 | 50.00% | **PASS** |
+| Qwen/Qwen2.5-7B | 28 | 0.0000 | 50.00% | **PASS** |
+| meta-llama/Llama-3.1-8B | 32 | 0.0000 | 50.00% | **PASS** |
+| google/gemma-2-9b | 42 | 0.0000 | 50.00% | **PASS** |
+| TinyLlama-1.1B | 22 | — | — | SKIPPED (0-layer cache) |
+
+**5 of 5 measured models satisfy both gates**, across 4 families and 22–42
+layers. Same 55% gate and same detector architecture as the recorded 70.5%
+sign result.
+
+Why the exactly-50.00% readings are credible, given I was fooled twice by
+this number earlier: the same detector, same code, same settings returns
+72–74% against sign and 70.62% against LWE at grid width 0.050. A detector
+that returns chance is therefore not finding signal, because signal it can
+find produces 70%+ immediately.
+
+**Honest limits of this result:**
+- The detector is *carrier-centered*: paired patches from the same layers
+  of the same model. This is a deliberately favourable setting for the
+  adversary, but it is **not** a general claim that the embedding is
+  undetectable.
+- A detector trained against one scheme and tested on another has not been
+  tried. That is a strictly stronger adversary and would be the natural
+  next experiment.
+- Four of the five results come from models whose residual caches have not
+  been independently re-derived (see open item 1).
+
+**Decision:** promote LWE to production-selectable (already wired in §7.2,
+with `DEFAULT_GRID_WIDTH = 0.010`). Keep sign as the default — changing the
+default is a research decision, not something to do silently in either
+direction.

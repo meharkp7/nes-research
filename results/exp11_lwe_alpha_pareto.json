@@ -1,0 +1,120 @@
+{
+  "experiment": "exp11_lwe_alpha_pareto",
+  "title": "LWE grid width vs both gates",
+  "model_id": "Qwen/Qwen2.5-3B",
+  "gates": {
+    "detector_accuracy": 0.55,
+    "ber_at_sigma_0_001": 0.02
+  },
+  "grid_widths_swept": [
+    0.002,
+    0.005,
+    0.01,
+    0.02,
+    0.05
+  ],
+  "results": [
+    {
+      "grid_width": 0.002,
+      "robustness_ber_curve": {
+        "0.0": 0.0,
+        "0.001": 0.5857384295371815,
+        "0.002": 0.4766640665626625,
+        "0.005": 0.5026326053042122
+      },
+      "ber_at_gate_sigma": 0.5857384295371815,
+      "meets_robustness_gate": false,
+      "detector_accuracy": 0.5,
+      "meets_detector_gate": true,
+      "signal_density": {
+        "mean_changed_values_per_patch": 50.9075,
+        "patch_size": 4096,
+        "identical_pair_fraction": 0.0
+      },
+      "satisfies_both_gates": false
+    },
+    {
+      "grid_width": 0.005,
+      "robustness_ber_curve": {
+        "0.0": 0.0,
+        "0.001": 0.01267550702028081,
+        "0.002": 0.2109009360374415,
+        "0.005": 0.5083203328133126
+      },
+      "ber_at_gate_sigma": 0.01267550702028081,
+      "meets_robustness_gate": true,
+      "detector_accuracy": 0.5,
+      "meets_detector_gate": true,
+      "signal_density": {
+        "mean_changed_values_per_patch": 50.8725,
+        "patch_size": 4096,
+        "identical_pair_fraction": 0.0
+      },
+      "satisfies_both_gates": true
+    },
+    {
+      "grid_width": 0.01,
+      "robustness_ber_curve": {
+        "0.0": 0.0,
+        "0.001": 0.0,
+        "0.002": 0.01267550702028081,
+        "0.005": 0.3174726989079563
+      },
+      "ber_at_gate_sigma": 0.0,
+      "meets_robustness_gate": true,
+      "detector_accuracy": 0.5,
+      "meets_detector_gate": true,
+      "signal_density": {
+        "mean_changed_values_per_patch": 50.9075,
+        "patch_size": 4096,
+        "identical_pair_fraction": 0.0
+      },
+      "satisfies_both_gates": true
+    },
+    {
+      "grid_width": 0.02,
+      "robustness_ber_curve": {
+        "0.0": 0.0,
+        "0.001": 0.0,
+        "0.002": 0.0,
+        "0.005": 0.04621684867394696
+      },
+      "ber_at_gate_sigma": 0.0,
+      "meets_robustness_gate": true,
+      "detector_accuracy": 0.5,
+      "meets_detector_gate": true,
+      "signal_density": {
+        "mean_changed_values_per_patch": 50.9075,
+        "patch_size": 4096,
+        "identical_pair_fraction": 0.0
+      },
+      "satisfies_both_gates": true
+    },
+    {
+      "grid_width": 0.05,
+      "robustness_ber_curve": {
+        "0.0": 0.0,
+        "0.001": 0.0,
+        "0.002": 0.0,
+        "0.005": 0.0
+      },
+      "ber_at_gate_sigma": 0.0,
+      "meets_robustness_gate": true,
+      "detector_accuracy": 0.70625,
+      "meets_detector_gate": false,
+      "signal_density": {
+        "mean_changed_values_per_patch": 50.9075,
+        "patch_size": 4096,
+        "identical_pair_fraction": 0.0
+      },
+      "satisfies_both_gates": false
+    }
+  ],
+  "winners": [
+    0.005,
+    0.01,
+    0.02
+  ],
+  "conclusion": "3 alpha setting(s) satisfy both gates: 0.005, 0.01, 0.02. Promote to a second model to confirm before replacing sign.",
+  "changes_any_gate": false
+}
