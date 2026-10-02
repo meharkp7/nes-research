@@ -1,6 +1,6 @@
 {
   "schema_version": "1.0",
-  "generated_at": "2026-10-02T10:12:26.935471+00:00",
+  "generated_at": "2026-10-02T11:21:58.586285+00:00",
   "description": "NES multi-model experiment manifest. One entry per experiment x model cell. Status is never inferred from implementation alone.",
   "records": {
     "exp1::Qwen/Qwen2.5-3B": {
@@ -28,8 +28,8 @@
       "experiment": "exp1",
       "model_id": "Qwen/Qwen2.5-7B",
       "family": "qwen",
-      "status": "FAIL",
-      "gate_status": "FAIL",
+      "status": "PASS",
+      "gate_status": "PASS",
       "artifact_path": "/Users/meharkapoor7/nes-research/results/exp1_qwen__qwen2.5-7b.json",
       "artifact_exists": true,
       "configuration": {
@@ -38,12 +38,12 @@
         "residual_layers_expected": 28
       },
       "source": "run",
-      "notes": "Structural probe did not complete.",
-      "updated_at": "2026-10-02T09:44:18.011261+00:00",
+      "notes": "Structural probe passed. This is not a fidelity, robustness or security claim.",
+      "updated_at": "2026-10-02T11:02:31.575994+00:00",
       "metrics": {
         "layer_mismatch": 0
       },
-      "duration_seconds": 0.04
+      "duration_seconds": 29.16
     },
     "exp1::TinyLlama/TinyLlama-1.1B-Chat-v1.0": {
       "experiment": "exp1",
@@ -102,11 +102,11 @@
       },
       "source": "run",
       "notes": "Only 21/28 layers exceed mag_mean 0.002 (75.0% < 80%). A FAIL here is a real property of this model's NF4 residual scale, not a pipeline error.",
-      "updated_at": "2026-10-02T09:44:22.881337+00:00",
+      "updated_at": "2026-10-02T11:02:49.638263+00:00",
       "metrics": {
         "fraction_above_threshold": 0.75
       },
-      "duration_seconds": 4.86
+      "duration_seconds": 17.95
     },
     "exp2::TinyLlama/TinyLlama-1.1B-Chat-v1.0": {
       "experiment": "exp2",
@@ -169,11 +169,11 @@
       },
       "source": "run",
       "notes": "Clean round trip recovered exactly.",
-      "updated_at": "2026-10-02T09:45:14.033980+00:00",
+      "updated_at": "2026-10-02T11:03:57.872225+00:00",
       "metrics": {
         "ber": 0.0
       },
-      "duration_seconds": 50.9
+      "duration_seconds": 67.43
     },
     "exp3::TinyLlama/TinyLlama-1.1B-Chat-v1.0": {
       "experiment": "exp3",
@@ -307,13 +307,13 @@
       },
       "source": "run",
       "notes": "Both operating-point gates hold. Non-gate sigma values are stochastic and vary slightly across reruns.",
-      "updated_at": "2026-10-02T10:10:15.683562+00:00",
+      "updated_at": "2026-10-02T11:21:07.200222+00:00",
       "metrics": {
         "payload_bits": 10000,
         "ber_at_sigma_0_001": 0.0,
         "ber_at_sigma_0_002": 0.0
       },
-      "duration_seconds": 1501.5
+      "duration_seconds": 1029.16
     },
     "exp6::TinyLlama/TinyLlama-1.1B-Chat-v1.0": {
       "experiment": "exp6",
@@ -389,12 +389,12 @@
       },
       "source": "run",
       "notes": "Statistical undetectability gates hold. This says nothing about a trained neural adversary; see exp7_neural.",
-      "updated_at": "2026-10-02T10:12:26.872267+00:00",
+      "updated_at": "2026-10-02T11:21:58.420205+00:00",
       "metrics": {
-        "kl_divergence": 3.681008820421994e-05,
+        "kl_divergence": 1.9149443687638268e-05,
         "statistical_detector_accuracy": 0.502550020813942
       },
-      "duration_seconds": 131.1
+      "duration_seconds": 51.12
     },
     "exp7::TinyLlama/TinyLlama-1.1B-Chat-v1.0": {
       "experiment": "exp7",

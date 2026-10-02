@@ -9,9 +9,9 @@
     "scope": "statistical undetectability only"
   },
   "metrics": {
-    "kl_divergence": 3.681008820421994e-05,
-    "sign_bias": 0.049770891666412354,
-    "mean_shift": 5.64457423024578e-07,
+    "kl_divergence": 1.9149443687638268e-05,
+    "sign_bias": 0.04976990818977356,
+    "mean_shift": 4.064986569574103e-08,
     "std_shift": 0.0,
     "statistical_detector_accuracy": 0.502550020813942,
     "max_kl_divergence": 0.05,
@@ -20,9 +20,9 @@
     "detector_gate_passed": true,
     "embedding_distortion": {
       "total_values": 1901068288,
-      "changed_values": 24206,
-      "changed_ratio": 1.2732840873099662e-05,
-      "mean_abs_difference_over_changed": 0.29838172063486323
+      "changed_values": 24290,
+      "changed_ratio": 1.277702655571308e-05,
+      "mean_abs_difference_over_changed": 0.2987407208470564
     }
   },
   "thresholds": {
@@ -55,7 +55,7 @@
     ],
     "residual_source": "cache",
     "residual_definition": "R = W_FP16 - dequantize(W_NF4)",
-    "timestamp": "2026-10-02T10:12:26.858983+00:00"
+    "timestamp": "2026-10-02T11:21:58.413192+00:00"
   },
   "notes": "Statistical undetectability gates hold. This says nothing about a trained neural adversary; see exp7_neural.",
   "source": "run",
@@ -65,8 +65,8 @@
       "reason": "Neural-adversary security is a separate experiment with its own dataset and training cost. Passing the statistical gate must not be read as passing the neural gate."
     }
   },
-  "duration_seconds": 131.1,
+  "duration_seconds": 51.12,
   "model_id": "Qwen/Qwen2.5-7B",
   "family": "qwen",
-  "generated_at": "2026-10-02T10:12:26.869341+00:00"
+  "generated_at": "2026-10-02T11:21:58.418309+00:00"
 }

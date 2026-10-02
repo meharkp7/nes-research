@@ -13,14 +13,22 @@
     "expected_layers": 32,
     "actual_layers": 32,
     "layer_count_source": "residual_dictionary",
+    "residual_layer_ids_contiguous": true,
+    "residual_elements_total": 1879048192,
+    "residual_dtype": "torch.float32",
+    "residual_device": "cpu",
+    "qaci_runs": true,
+    "qaci_probe_bits_requested": 10000,
+    "qaci_probe_bits_allocated": 10000,
+    "qaci_probe_layers_selected": 32,
     "layer_mismatch": 0
   },
   "thresholds": {
     "description": "Residual extraction succeeds and QACI accepts the result.",
     "max_allowed_layer_mismatch": 0
   },
-  "status": "FAIL",
-  "gate_status": "FAIL",
+  "status": "PASS",
+  "gate_status": "PASS",
   "reproducibility": {
     "model_id": "mistralai/Mistral-7B-v0.3",
     "family": "mistral",
@@ -44,12 +52,12 @@
     ],
     "residual_source": "cache",
     "residual_definition": "R = W_FP16 - dequantize(W_NF4)",
-    "timestamp": "2026-10-02T10:12:43.913595+00:00"
+    "timestamp": "2026-10-02T11:22:21.816412+00:00"
   },
-  "notes": "Structural probe did not complete.",
+  "notes": "Structural probe passed. This is not a fidelity, robustness or security claim.",
   "source": "run",
-  "duration_seconds": 0.0,
+  "duration_seconds": 7.36,
   "model_id": "mistralai/Mistral-7B-v0.3",
   "family": "mistral",
-  "generated_at": "2026-10-02T10:12:43.914263+00:00"
+  "generated_at": "2026-10-02T11:22:21.817985+00:00"
 }

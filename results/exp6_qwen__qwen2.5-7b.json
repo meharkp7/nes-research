@@ -22,9 +22,9 @@
       "0.0005": 0.0,
       "0.001": 0.0,
       "0.002": 0.0,
-      "0.005": 0.0001170046801872075,
-      "0.01": 0.009243369734789392,
-      "0.02": 0.035257410296411856
+      "0.005": 0.0001950078003120125,
+      "0.01": 0.00920436817472699,
+      "0.02": 0.036017940717628705
     },
     "ber_at_sigma_0_001": 0.0,
     "ber_at_sigma_0_002": 0.0,
@@ -66,12 +66,12 @@
     ],
     "residual_source": "cache",
     "residual_definition": "R = W_FP16 - dequantize(W_NF4)",
-    "timestamp": "2026-10-02T10:10:15.586007+00:00"
+    "timestamp": "2026-10-02T11:21:07.043854+00:00"
   },
   "notes": "Both operating-point gates hold. Non-gate sigma values are stochastic and vary slightly across reruns.",
   "source": "run",
-  "duration_seconds": 1501.5,
+  "duration_seconds": 1029.16,
   "model_id": "Qwen/Qwen2.5-7B",
   "family": "qwen",
-  "generated_at": "2026-10-02T10:10:15.652004+00:00"
+  "generated_at": "2026-10-02T11:21:07.163668+00:00"
 }

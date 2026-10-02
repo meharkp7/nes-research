@@ -340,17 +340,33 @@ def main() -> int:
             "any conclusion about detectability. This must not be read "
             "as evidence that the embedding is undetectable."
         )
-    elif not any_pass and spread < 0.05:
+    elif any_pass:
+        passing_labels = [
+            r["variant"] for r in results if r["meets_gate"]
+        ]
         conclusion = (
-            "Detectability is essentially insensitive to alpha, gamma "
-            "and payload size across the swept range, so the 70.5% FAIL "
-            "is a structural property of sign-based embedding at "
-            "carrier positions rather than a tuning problem."
+            f"{len(passing_labels)} variant(s) reach the {GATE:.0%} "
+            "gate: "
+            + "; ".join(passing_labels)
+            + ". Detectability is sensitive to embedding parameters."
+        )
+    elif spread <= 0.10:
+        conclusion = (
+            f"No variant reaches the {GATE:.0%} gate: accuracy stays in "
+            f"{min(accuracies):.2%}-{max(accuracies):.2%} "
+            f"(spread {spread:.2%}), i.e. at least "
+            f"{min(accuracies) - GATE:.1%} above the threshold across a "
+            "100x change in alpha, a 5x change in gamma and a 10x "
+            "change in payload size. Detectability is therefore "
+            "structural to sign-based embedding at carrier positions, "
+            "not a tuning problem, and the recorded 70.5% FAIL is not "
+            "fixable by retuning these parameters."
         )
     else:
         conclusion = (
-            "Detectability varies materially with embedding parameters; "
-            "at least one variant reaches the gate."
+            f"Accuracy varies materially across the sweep "
+            f"({min(accuracies):.2%}-{max(accuracies):.2%}) but no "
+            f"variant reaches the {GATE:.0%} gate."
         )
 
     print()

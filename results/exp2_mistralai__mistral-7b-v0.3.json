@@ -440,11 +440,11 @@
     ],
     "residual_source": "cache",
     "residual_definition": "R = W_FP16 - dequantize(W_NF4)",
-    "timestamp": "2026-10-02T10:12:46.076883+00:00"
+    "timestamp": "2026-10-02T11:22:24.602006+00:00"
   },
   "notes": "26/32 layers exceed mag_mean 0.002.",
   "source": "run",
-  "duration_seconds": 2.16,
+  "duration_seconds": 2.78,
   "model_id": "mistralai/Mistral-7B-v0.3",
-  "generated_at": "2026-10-02T10:12:46.077401+00:00"
+  "generated_at": "2026-10-02T11:22:24.602746+00:00"
 }

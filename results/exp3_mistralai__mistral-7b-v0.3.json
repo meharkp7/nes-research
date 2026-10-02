@@ -18,7 +18,7 @@
     "ber": 0.0,
     "decrypt_success": true,
     "recovered_matches_original": true,
-    "key_id": "de4ec0f65e2f11bd",
+    "key_id": "3b1bd1c124165ebd",
     "layers_used": 32,
     "recovery_stats": {
       "success": true,
@@ -56,12 +56,12 @@
     ],
     "residual_source": "cache",
     "residual_definition": "R = W_FP16 - dequantize(W_NF4)",
-    "timestamp": "2026-10-02T10:12:55.668548+00:00"
+    "timestamp": "2026-10-02T11:22:35.324261+00:00"
   },
   "notes": "Clean round trip recovered exactly.",
   "source": "run",
-  "duration_seconds": 9.62,
+  "duration_seconds": 10.72,
   "model_id": "mistralai/Mistral-7B-v0.3",
   "family": "mistral",
-  "generated_at": "2026-10-02T10:12:55.702103+00:00"
+  "generated_at": "2026-10-02T11:22:35.331518+00:00"
 }

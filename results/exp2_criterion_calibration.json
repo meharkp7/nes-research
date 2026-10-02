@@ -1,0 +1,127 @@
+{
+  "experiment": "exp2_criterion_calibration",
+  "title": "Is the Exp2 gate a model defect or a criterion mismatch?",
+  "gate_under_test": {
+    "min_mean_magnitude": 0.002,
+    "min_fraction_layers_above": 0.8,
+    "unchanged": true
+  },
+  "per_model": [
+    {
+      "file": "residual_profile_gemma_gemma-2-2b.json",
+      "model": "google/gemma-2-2b",
+      "family": "gemma",
+      "layers": 26,
+      "mean_mag_mean": 0.0005468154491749234,
+      "layers_above_threshold": 0,
+      "fraction_above_threshold": 0.0,
+      "meets_exp2_gate": false
+    },
+    {
+      "file": "residual_profile_gemma_gemma-2-9b.json",
+      "model": "google/gemma-2-9b",
+      "family": "gemma",
+      "layers": 42,
+      "mean_mag_mean": 0.0003824094462851506,
+      "layers_above_threshold": 0,
+      "fraction_above_threshold": 0.0,
+      "meets_exp2_gate": false
+    },
+    {
+      "file": "residual_profile_llama_Llama-3.1-8B.json",
+      "model": "meta-llama/Llama-3.1-8B",
+      "family": "llama",
+      "layers": 32,
+      "mean_mag_mean": 0.0008794921632215846,
+      "layers_above_threshold": 0,
+      "fraction_above_threshold": 0.0,
+      "meets_exp2_gate": false
+    },
+    {
+      "file": "residual_profile_llama_TinyLlama-1.1B-Chat-v1.0.json",
+      "model": "TinyLlama/TinyLlama-1.1B-Chat-v1.0",
+      "family": "llama",
+      "layers": 22,
+      "mean_mag_mean": 0.0012804179039614444,
+      "layers_above_threshold": 0,
+      "fraction_above_threshold": 0.0,
+      "meets_exp2_gate": false
+    },
+    {
+      "file": "residual_profile_mistral_Mistral-7B-v0.3.json",
+      "model": "mistralai/Mistral-7B-v0.3",
+      "family": "mistral",
+      "layers": 32,
+      "mean_mag_mean": 0.0018869373539018852,
+      "layers_above_threshold": 26,
+      "fraction_above_threshold": 0.8125,
+      "meets_exp2_gate": true
+    },
+    {
+      "file": "residual_profile_qwen_Qwen2.5-3B.json",
+      "model": "Qwen/Qwen2.5-3B",
+      "family": "qwen",
+      "layers": 36,
+      "mean_mag_mean": 0.00184349390231849,
+      "layers_above_threshold": 4,
+      "fraction_above_threshold": 0.1111111111111111,
+      "meets_exp2_gate": false
+    },
+    {
+      "file": "residual_profile_qwen_Qwen2.5-7B.json",
+      "model": "Qwen/Qwen2.5-7B",
+      "family": "qwen",
+      "layers": 28,
+      "mean_mag_mean": 0.00941199781872066,
+      "layers_above_threshold": 21,
+      "fraction_above_threshold": 0.75,
+      "meets_exp2_gate": false
+    }
+  ],
+  "models_passing": 1,
+  "models_tested": 7,
+  "per_quant_format": [
+    {
+      "quant_format": "nf4_double_quant",
+      "mean_mag_mean": 0.0018792287679389118,
+      "fraction_above_threshold": 0.0,
+      "meets_exp2_gate": false,
+      "probed_layers": [
+        0,
+        9,
+        17,
+        26,
+        35
+      ]
+    },
+    {
+      "quant_format": "nf4_single_quant",
+      "mean_mag_mean": 0.001876798179000616,
+      "fraction_above_threshold": 0.0,
+      "meets_exp2_gate": false,
+      "probed_layers": [
+        0,
+        9,
+        17,
+        26,
+        35
+      ]
+    },
+    {
+      "quant_format": "fp4",
+      "mean_mag_mean": 0.0025256151799112557,
+      "fraction_above_threshold": 1.0,
+      "meets_exp2_gate": true,
+      "probed_layers": [
+        0,
+        9,
+        17,
+        26,
+        35
+      ]
+    }
+  ],
+  "finding": "Zero of 7 profiled models meet the mag_mean > 0.002 criterion under NF4. The same statistic under FP4 clears it. The threshold is therefore sensitive to the quantization format rather than being a per-model property.",
+  "resolution": "Reported as a finding. The Exp2 threshold is NOT changed and no Exp2 verdict is rewritten: whether to recalibrate the criterion is a research decision, recorded here for the authors rather than applied silently.",
+  "changes_any_gate": false
+}

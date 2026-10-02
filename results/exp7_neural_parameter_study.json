@@ -1,0 +1,130 @@
+{
+  "experiment": "exp7_neural_parameter_study",
+  "title": "Neural detectability vs embedding parameters",
+  "model_id": "Qwen/Qwen2.5-3B",
+  "gate": 0.55,
+  "question": "Is the 70.5% neural-detector FAIL tunable?",
+  "method": {
+    "pairs_per_variant": 400,
+    "embeddings_per_variant": 20,
+    "patch_size": 4096,
+    "epochs": 30,
+    "seed": 42,
+    "note": "Smaller than the recorded 500-pair dataset and amortised embeddings; internally comparable across variants only, not a replacement for the recorded result."
+  },
+  "variants": [
+    {
+      "variant": "baseline (alpha=1e-3, gamma=2.5)",
+      "alpha": 0.001,
+      "gamma": 2.5,
+      "payload_bits": 10000,
+      "accuracy": 0.71875,
+      "meets_gate": false,
+      "dataset_samples": 800,
+      "signal_density": {
+        "pairs": 400,
+        "mean_changed_values_per_patch": 25.41,
+        "max_changed_values_per_patch": 77,
+        "patch_size": 4096,
+        "identical_pairs": 25,
+        "identical_pair_fraction": 0.0625
+      }
+    },
+    {
+      "variant": "alpha 1e-4 (10x smaller)",
+      "alpha": 0.0001,
+      "gamma": 2.5,
+      "payload_bits": 10000,
+      "accuracy": 0.71875,
+      "meets_gate": false,
+      "dataset_samples": 800,
+      "signal_density": {
+        "pairs": 400,
+        "mean_changed_values_per_patch": 25.8025,
+        "max_changed_values_per_patch": 84,
+        "patch_size": 4096,
+        "identical_pairs": 25,
+        "identical_pair_fraction": 0.0625
+      }
+    },
+    {
+      "variant": "alpha 1e-2 (10x larger)",
+      "alpha": 0.01,
+      "gamma": 2.5,
+      "payload_bits": 10000,
+      "accuracy": 0.7,
+      "meets_gate": false,
+      "dataset_samples": 800,
+      "signal_density": {
+        "pairs": 400,
+        "mean_changed_values_per_patch": 25.655,
+        "max_changed_values_per_patch": 86,
+        "patch_size": 4096,
+        "identical_pairs": 21,
+        "identical_pair_fraction": 0.0525
+      }
+    },
+    {
+      "variant": "gamma 1.0 (wider spread)",
+      "alpha": 0.001,
+      "gamma": 1.0,
+      "payload_bits": 10000,
+      "accuracy": 0.69375,
+      "meets_gate": false,
+      "dataset_samples": 800,
+      "signal_density": {
+        "pairs": 400,
+        "mean_changed_values_per_patch": 25.3075,
+        "max_changed_values_per_patch": 76,
+        "patch_size": 4096,
+        "identical_pairs": 16,
+        "identical_pair_fraction": 0.04
+      }
+    },
+    {
+      "variant": "gamma 5.0 (narrower)",
+      "alpha": 0.001,
+      "gamma": 5.0,
+      "payload_bits": 10000,
+      "accuracy": 0.74375,
+      "meets_gate": false,
+      "dataset_samples": 800,
+      "signal_density": {
+        "pairs": 400,
+        "mean_changed_values_per_patch": 26.3325,
+        "max_changed_values_per_patch": 92,
+        "patch_size": 4096,
+        "identical_pairs": 25,
+        "identical_pair_fraction": 0.0625
+      }
+    },
+    {
+      "variant": "payload 100k (10x carriers)",
+      "alpha": 0.001,
+      "gamma": 2.5,
+      "payload_bits": 100000,
+      "accuracy": 0.74375,
+      "meets_gate": false,
+      "dataset_samples": 800,
+      "signal_density": {
+        "pairs": 400,
+        "mean_changed_values_per_patch": 25.495,
+        "max_changed_values_per_patch": 78,
+        "patch_size": 4096,
+        "identical_pairs": 28,
+        "identical_pair_fraction": 0.07
+      }
+    }
+  ],
+  "range": {
+    "min": 0.69375,
+    "max": 0.74375
+  },
+  "spread": 0.050000000000000044,
+  "any_variant_meets_gate": false,
+  "conclusion": "No variant reaches the 55% gate: accuracy stays in 69.38%-74.38% (spread 5.00%), i.e. at least 14.4% above the threshold across a 100x change in alpha, a 5x change in gamma and a 10x change in payload size. Detectability is structural to sign-based embedding at carrier positions, not a tuning problem, and the recorded 70.5% FAIL is not fixable by retuning these parameters.",
+  "preserves_recorded_result": true,
+  "recorded_neural_accuracy": 0.705,
+  "interpretation": "This diagnostic does not replace the recorded 70.5% result and does not change the 55% gate.",
+  "all_variants_at_chance": false
+}
