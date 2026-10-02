@@ -7,7 +7,8 @@
 # resolves datasets from the repo-root artifacts/ directory, so tracking a
 # second 16MB copy only risks the two drifting apart.
 nes-llm/artifacts/
-
+cache/
+*cache/
 # Superseded experiment artifacts live in results/_archive/ so a rerun
 # preserves the previous result instead of overwriting it. The archive is
 # kept on disk for inspection but is not part of the recorded history.

@@ -44,16 +44,28 @@ EXPERIMENT = "exp9"
 PAYLOAD_BITS = 10_000
 MESSAGE = "A" * 1_250
 
-# Real GPTQ/AWQ checkpoints of the guide's target models. These are not
-# in the local cache; each is a multi-GB download.
+# Real GPTQ/AWQ checkpoints.
+#
+# The original targets, "Qwen/Qwen2.5-3B-GPTQ-Int4" and
+# "Qwen/Qwen2.5-3B-AWQ", return 404 from the Hub. That is the actual
+# reason Exp9 was NOT_RUN, not a missing download.
+#
+# Only *Instruct* variants are published for these formats, so the FP16
+# reference has to be the matching Instruct model. Using the base model's
+# FP16 weights would compute residuals against the wrong weights and
+# produce numbers that look plausible and mean nothing.
+#
+# Each pair is (quantized, fp16_reference) and must match.
 TARGETS: List[Dict[str, str]] = [
     {
-        "model_id": "Qwen/Qwen2.5-3B-GPTQ-Int4",
+        "model_id": "Qwen/Qwen2.5-3B-Instruct-GPTQ-Int4",
+        "fp16_reference": "Qwen/Qwen2.5-3B-Instruct",
         "family": "qwen",
         "format": "gptq",
     },
     {
-        "model_id": "Qwen/Qwen2.5-3B-AWQ",
+        "model_id": "Qwen/Qwen2.5-3B-Instruct-AWQ",
+        "fp16_reference": "Qwen/Qwen2.5-3B-Instruct",
         "family": "qwen",
         "format": "awq",
     },
@@ -221,9 +233,27 @@ def run_target(
         num_layers = get_num_layers(quantized_model)
 
         # FP16 reference from the base (unquantized) checkpoint.
-        fp16_model, _ = load_quantized_model(
-            model_id.replace("-GPTQ-Int4", "").replace("-AWQ", "")
-        )
+        # FP16 reference must be the *matching* model. The quantized
+        # checkpoints published for these formats are Instruct variants,
+        # so string-stripping the suffix would silently reach for a
+        # different model and compute residuals against the wrong
+        # weights -- numbers that look plausible and mean nothing.
+        reference_id = target.get("fp16_reference")
+        if not reference_id:
+            return {
+                **base,
+                "metrics": {},
+                "status": "ERROR",
+                "gate_status": "ERROR",
+                "notes": (
+                    f"No fp16_reference declared for {model_id}. The "
+                    "residual R = W_FP16 - W_deq is only meaningful "
+                    "against the same model in FP16."
+                ),
+                "source": "run",
+            }
+
+        fp16_model, _ = load_quantized_model(reference_id)
 
         residuals = extract_format_residuals(
             quantized_model,

@@ -550,3 +550,111 @@ outstanding.
 **Not investigated:** the exact mechanism of the old profiler's bias. That
 profiling path has been replaced by `LayerProfiler`; the old numbers are
 only in git history. Worth knowing if any pre-existing artifact used it.
+
+---
+
+## 12. Phase 3 — status
+
+**Complete and successful.** Recapping what Phase 3 produced, since it is
+the substantive result of this work:
+
+| Step | Outcome |
+|---|---|
+| 3a. LWE cover dependency removed | BER 0.5036 (chance) → **0.0000** |
+| 3b. Scheme-specific extractor added | `DecryptPipeline` no longer assumes sign |
+| 3c. Grid width found to be floor-pinned | alpha was a **no-op**; sweeping it would have proved nothing |
+| 3d. Frontier swept | width 0.005–0.020 satisfies **both** gates |
+| 3e. `DEFAULT_GRID_WIDTH = 0.010` set | middle of the window, margin both sides |
+| 3f. Confirmed across models | **5 of 5 measured models pass both gates** |
+
+Measured comparison, sign vs LWE at the chosen width:
+
+| | sign | LWE (0.010) |
+|---|---|---|
+| BER @ σ=0.001 | 0.0000 | 0.0000 |
+| neural detector | **72.50%** | **50.00%** |
+| detectability gate (≤55%) | FAIL | PASS |
+
+Cross-model, LWE at width 0.010: Qwen2.5-3B, Mistral-7B, Qwen2.5-7B,
+Llama-3.1-8B, Gemma-2-9B — all BER 0.0000, all detector 50.00%, all both
+gates PASS. TinyLlama SKIPPED (zero-layer cache).
+
+**Why the 50.00% readings are credible**, having been fooled twice by that
+exact number earlier: the same detector on the same code returns 72–74%
+against sign and 70.62% against LWE at width 0.050. A detector that returns
+chance is not finding signal, because signal it can find produces 70%+
+immediately.
+
+### What this does and does not establish
+
+Does establish: under a carrier-centered detector on paired patches, LWE
+grid encoding at width 0.010 satisfies both the robustness and the
+detectability gate, on 5 models from 4 families.
+
+Does **not** establish:
+- that the embedding is undetectable in general. The detector is
+  carrier-centered: paired patches from the same layers of the same model.
+  That is deliberately favourable to the adversary, but it is one adversary.
+- anything about a detector **trained on one scheme and tested on another**,
+  which is a strictly stronger test and not yet run.
+- anything about LWE's security claim. The scheme is LWE-*inspired*
+  (key-derived grid, parity encoding). There is no lattice, no matrix A and
+  no SIS/LWE instance, so it is not post-quantum secure and the docstring
+  in `lwe_strategy.py` claiming otherwise is unsupported. Not renamed —
+  see §16.
+
+**Decision:** LWE is production-selectable via
+`EmbeddingConfig.embedding_strategy='lwe'`. **Sign remains the default.**
+Changing the default is a research decision and should not happen silently
+in either direction.
+
+---
+
+## 13. Item 2 — Exp9, and why it was NOT_RUN
+
+**The stated reason was wrong.** The handoff and my own audit both said
+"no GPTQ/AWQ checkpoint in the local cache". The actual reason:
+
+```
+Qwen/Qwen2.5-3B-GPTQ-Int4  → 404 RepositoryNotFoundError
+Qwen/Qwen2.5-3B-AWQ        → 404 RepositoryNotFoundError
+```
+
+**Those model ids do not exist on the Hub.** The targets were wrong, not
+merely uncached.
+
+**Why nobody noticed:** `exp9` returned NOT_RUN *before* attempting to load
+anything, so a nonexistent model and an uncached model were indistinguishable.
+That is a design flaw in the reporting, not just a bad constant — the
+status carried no information about which of the two it was.
+
+**What actually exists** (verified via the Hub API, all ungated):
+
+| model | size |
+|---|---|
+| Qwen/Qwen2.5-3B-Instruct | 6.18 GB |
+| Qwen/Qwen2.5-3B-Instruct-GPTQ-Int4 | 2.08 GB |
+| Qwen/Qwen2.5-3B-Instruct-AWQ | 2.70 GB |
+
+Only **Instruct** variants are published for these formats.
+
+**Consequence I had to handle:** `R = W_FP16 − W_dequant` is only
+meaningful against the *same* model in FP16. The old code reached for the
+reference by string-stripping the suffix
+(`model_id.replace("-GPTQ-Int4","")`), which would have silently produced
+the base model — different weights, plausible numbers, no meaning.
+
+**Fix:** each target now declares an explicit `fp16_reference`, and the run
+errors if it is absent rather than guessing.
+
+**Real checkpoint parameters** (read from config, so this is measured not
+assumed):
+- GPTQ: `bits=4, group_size=128, desc_act=false`
+- AWQ: `bits=4, group_size=128, zero_point=true, quant_method=awq`
+
+Both match the assumptions the adapters were written against.
+
+**This is the first real test of the adapters.** Until now they were only
+verified against a synthetic reference — bit-exact against AutoGPTQ's
+unpack, but never against an actual checkpoint. If the nibble axis or the
+zero-point bias were wrong, a real GPTQ checkpoint is where that shows.
