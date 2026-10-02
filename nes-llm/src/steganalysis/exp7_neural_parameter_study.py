@@ -54,12 +54,21 @@ MODEL_ID = "Qwen/Qwen2.5-3B"
 FAMILY = "qwen"
 NUM_LAYERS = 36
 
-# Deliberately smaller than the recorded 500-pair dataset so a full
-# sweep is tractable. Every variant uses the same size, so the sweep
-# stays internally comparable; this is NOT the headline 70.5% dataset.
-PAIRS = 150
+# Matched to the recorded protocol's scale as closely as is affordable.
+#
+# The first attempt used 120 pairs and every variant scored exactly
+# 50.00% -- chance. That was an underpowered study, not evidence of
+# undetectability: sign embedding changes only a handful of values in a
+# 4096-wide carrier patch, so 120 pairs cannot train a detector to find
+# it. The recorded result used 500 pairs and reached 70.5%.
+PAIRS = 400
+# Patches are sampled from fewer distinct embeddings (see build_dataset).
+# Carrier positions come from residual quality, not payload content, so
+# extra embeddings mostly change the AES nonce rather than the patches a
+# detector sees.
+EMBEDDINGS_PER_VARIANT = 20
 PATCH_SIZE = 4096
-EPOCHS = 20
+EPOCHS = 30
 SEED = 42
 
 GATE = 0.55
@@ -87,10 +96,26 @@ def build_dataset(
     payload: int,
     rng: random.Random,
 ) -> List[Dict[str, Any]]:
-    """Build paired clean/stego patches for one parameter variant."""
+    """Build paired clean/stego patches for one parameter variant.
+
+    Embeddings are amortised across pairs. QACI selects carriers from
+    residual quality alone — it does not look at payload content — so the
+    carrier positions are identical for every message at a given payload
+    size. Re-embedding once per pair (as the recorded dataset builder
+    does) costs ~9.4s per call and buys only a fresh AES nonce for the
+    bit values, while the patches a detector sees are drawn from the
+    same carrier set.
+
+    So: EMBEDDINGS_PER_VARIANT distinct embeddings, each sampled at many
+    positions. That trades payload-bit diversity for tractability, and
+    the trade is recorded in the artifact. Since all variants use the
+    same setting, the sweep stays internally comparable.
+    """
     dataset = []
 
-    for sample_id in range(PAIRS):
+    per_embedding = max(PAIRS // EMBEDDINGS_PER_VARIANT, 1)
+
+    for embed_id in range(EMBEDDINGS_PER_VARIANT):
         config = EmbeddingConfig(
             total_payload_bits=payload,
             model_family=FAMILY,
@@ -100,7 +125,7 @@ def build_dataset(
         )
 
         result = IntelligentEmbedder(config).embed(
-            f"EXP7_SWEEP_{sample_id}_" + "A" * 1200,
+            f"EXP7_SWEEP_{embed_id}_" + "A" * 1200,
             residuals,
         )
 
@@ -114,14 +139,14 @@ def build_dataset(
         if not candidates:
             continue
 
-        for _ in range(2):
+        sample_id_base = embed_id * per_embedding
+
+        for offset in range(per_embedding):
             layer_id = rng.choice(candidates)
             indices = sorted(result.carrier_indices[layer_id])
             position = rng.choice(indices)
 
-            start = (
-                position // PATCH_SIZE
-            ) * PATCH_SIZE
+            start = (position // PATCH_SIZE) * PATCH_SIZE
 
             clean_patch = residuals[layer_id].flatten()[
                 start : start + PATCH_SIZE
@@ -133,6 +158,8 @@ def build_dataset(
 
             if len(clean_patch) < PATCH_SIZE:
                 continue
+
+            sample_id = sample_id_base + offset
 
             for label, values in ((0, clean_patch), (1, stego_patch)):
                 dataset.append(
@@ -173,7 +200,7 @@ def train_and_score(
         shuffle=False,
     )
 
-    model = Detector(len(train[0]["values"])).to(device)
+    model = Detector(len(train[0]["features"])).to(device)
     loss_fn = torch.nn.BCEWithLogitsLoss()
     optimizer = torch.optim.Adam(model.parameters(), lr=1e-4)
 
@@ -183,13 +210,60 @@ def train_and_score(
             batch_x = batch_x.to(device)
             batch_y = batch_y.to(device)
             optimizer.zero_grad()
-            loss = loss_fn(
-                model(batch_x).squeeze(1), batch_y
-            )
+            # Detector.forward already applies squeeze(-1); squeezing
+            # again raises on the 1-D result.
+            loss = loss_fn(model(batch_x), batch_y)
             loss.backward()
             optimizer.step()
 
     return float(evaluate(model, test_loader, device)["accuracy"])
+
+
+def measure_signal_density(
+    dataset: List[Dict[str, Any]],
+) -> Dict[str, Any]:
+    """How much of each patch actually differs, and how many pairs are identical.
+
+    This is the mechanism behind detectability, and it also explains why
+    a small study scores exactly 50%: sign embedding rewrites a carrier
+    to +/-|r|, which only changes the tensor when the payload bit
+    disagrees with the carrier's original sign. So roughly half the
+    carriers are left untouched, and some sampled pairs come out
+    byte-identical.
+    """
+    by_id: Dict[int, Dict[int, Any]] = {}
+
+    for sample in dataset:
+        by_id.setdefault(sample["sample_id"], {})[sample["label"]] = (
+            sample["features"]
+        )
+
+    changed_counts = []
+    identical = 0
+
+    for pair in by_id.values():
+        if 0 not in pair or 1 not in pair:
+            continue
+        delta = (pair[1] - pair[0]).abs()
+        n_changed = int((delta > 0).sum().item())
+        changed_counts.append(n_changed)
+        if n_changed == 0:
+            identical += 1
+
+    return {
+        "pairs": len(changed_counts),
+        "mean_changed_values_per_patch": (
+            sum(changed_counts) / len(changed_counts)
+            if changed_counts
+            else 0.0
+        ),
+        "max_changed_values_per_patch": max(changed_counts, default=0),
+        "patch_size": PATCH_SIZE,
+        "identical_pairs": identical,
+        "identical_pair_fraction": (
+            identical / len(changed_counts) if changed_counts else 0.0
+        ),
+    }
 
 
 def main() -> int:
@@ -222,6 +296,7 @@ def main() -> int:
         )
 
         accuracy = train_and_score(dataset, device)
+        density = measure_signal_density(dataset)
 
         results.append(
             {
@@ -232,30 +307,50 @@ def main() -> int:
                 "accuracy": accuracy,
                 "meets_gate": accuracy <= GATE,
                 "dataset_samples": len(dataset),
+                "signal_density": density,
             }
         )
 
         verdict = "PASS" if accuracy <= GATE else "FAIL"
-        print(f"{variant['label']:<38}{accuracy:>9.2%}  {verdict}")
+        print(
+            f"{variant['label']:<38}{accuracy:>9.2%}  {verdict}"
+            f"   ({density['mean_changed_values_per_patch']:.0f}"
+            f"/{PATCH_SIZE} values changed)"
+        )
 
     accuracies = [r["accuracy"] for r in results]
     spread = max(accuracies) - min(accuracies)
     any_pass = any(r["meets_gate"] for r in results)
+
+    # An all-exactly-50% sweep means the detector learned nothing, which
+    # is a power failure, not a security result. Guard against reading it
+    # as evidence of undetectability.
+    all_at_chance = all(abs(a - 0.5) < 1e-9 for a in accuracies)
 
     print()
     print(f"range across sweep : {min(accuracies):.2%} - {max(accuracies):.2%}")
     print(f"spread             : {spread:.2%}")
     print(f"any variant <= {GATE:.0%} : {any_pass}")
 
-    conclusion = (
-        "Detectability is essentially insensitive to alpha, gamma and "
-        "payload size across the swept range, so the 70.5% FAIL is a "
-        "structural property of sign-based embedding at carrier "
-        "positions rather than a tuning problem."
-        if not any_pass and spread < 0.05
-        else "Detectability varies materially with embedding parameters; "
-        "at least one variant reaches the gate."
-    )
+    if all_at_chance:
+        conclusion = (
+            "INVALID STUDY: every variant scored exactly 50%, i.e. the "
+            "detector learned nothing. The dataset is too weak to draw "
+            "any conclusion about detectability. This must not be read "
+            "as evidence that the embedding is undetectable."
+        )
+    elif not any_pass and spread < 0.05:
+        conclusion = (
+            "Detectability is essentially insensitive to alpha, gamma "
+            "and payload size across the swept range, so the 70.5% FAIL "
+            "is a structural property of sign-based embedding at "
+            "carrier positions rather than a tuning problem."
+        )
+    else:
+        conclusion = (
+            "Detectability varies materially with embedding parameters; "
+            "at least one variant reaches the gate."
+        )
 
     print()
     print(conclusion)
@@ -276,12 +371,15 @@ def main() -> int:
                 ),
                 "method": {
                     "pairs_per_variant": PAIRS,
+                    "embeddings_per_variant": EMBEDDINGS_PER_VARIANT,
                     "patch_size": PATCH_SIZE,
                     "epochs": EPOCHS,
                     "seed": SEED,
                     "note": (
-                        "Smaller than the recorded 500-pair dataset; "
-                        "internally comparable across variants only."
+                        "Smaller than the recorded 500-pair dataset and "
+                        "amortised embeddings; internally comparable "
+                        "across variants only, not a replacement for the "
+                        "recorded result."
                     ),
                 },
                 "variants": results,
