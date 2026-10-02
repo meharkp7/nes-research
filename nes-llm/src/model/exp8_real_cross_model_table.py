@@ -30,7 +30,7 @@ import json
 import os
 import traceback
 from pathlib import Path
-from typing import Any, Dict, Optional
+from typing import Any, Dict
 
 # Must be set before importing torch/model code.
 os.environ["PYTORCH_ENABLE_MPS_FALLBACK"] = "1"
@@ -44,17 +44,20 @@ from src.carrier_intelligence.qaci_pipeline import QACIPipeline
 from src.evaluation.robustness_validator import RobustnessValidator
 from src.steganalysis.security_validator import SecurityValidator
 from src.model.model_loader import load_model_pair, extract_residuals
-from src.model.exp8_result_adapter import get_exp5_result
+from src.model.exp8_result_adapter import (
+    get_exp5_result,
+    find_neural_detector_result,
+)
 
 
 MODELS = [
-    ("meta-llama/Llama-3.1-8B", "llama", 32),
-    ("mistralai/Mistral-7B-v0.3", "mistral", 32),
-    ("google/gemma-2-9b", "gemma", 42),
-    ("Qwen/Qwen2.5-7B", "qwen", 28),
+    # ("meta-llama/Llama-3.1-8B", "llama", 32),
+    # ("mistralai/Mistral-7B-v0.3", "mistral", 32),
+    # ("google/gemma-2-9b", "gemma", 42),
+    # ("Qwen/Qwen2.5-7B", "qwen", 28),
     ("Qwen/Qwen2.5-3B", "qwen", 36),
-    ("TinyLlama/TinyLlama-1.1B-Chat-v1.0", "llama", 22),
-    ("microsoft/Phi-3-mini-4k-instruct", "phi3", 32),
+    # ("TinyLlama/TinyLlama-1.1B-Chat-v1.0", "llama", 22),
+    # ("microsoft/Phi-3-mini-4k-instruct", "phi3", 32),
 ]
 
 PAYLOAD_BITS = 50_000
@@ -63,7 +66,10 @@ ROBUSTNESS_SIGMAS = [0.0, 0.0005, 0.001, 0.002, 0.005, 0.010, 0.020]
 MESSAGE = "A" * 6000
 ROBUSTNESS_MESSAGE = "A" * 1250
 
-RESULT_DIR = Path("results")
+# Resolved from this file, not from the current working directory, so that
+# running from nes-research/ versus nes-research/nes-llm/ writes to the same
+# artifact location and discovers the same inputs.
+RESULT_DIR = Path(__file__).resolve().parents[3] / "results"
 RESULT_DIR.mkdir(parents=True, exist_ok=True)
 JSON_PATH = RESULT_DIR / "cross_model_table_real.json"
 CSV_PATH = RESULT_DIR / "cross_model_table_real.csv"
@@ -190,31 +196,6 @@ def run_g6_statistical(residuals, family: str, n_layers: int) -> Dict[str, Any]:
         std_shift=outcome.moment_shift["std_shift"],
         statistical_detector_accuracy=outcome.detector_accuracy,
     )
-
-
-def find_neural_detector_result(model_id: str) -> Optional[Dict[str, Any]]:
-    """
-    Read an already-produced real detector result if one exists.
-
-    Exp8 never trains a detector implicitly. This avoids generating the heavy
-    detector PKLs as a side effect of a cross-model table run.
-    """
-    candidates = [
-        RESULT_DIR / "exp7_neural_detector_results.json",
-        RESULT_DIR / "exp7_detector_results.json",
-    ]
-    for path in candidates:
-        if not path.exists():
-            continue
-        try:
-            data = json.loads(path.read_text())
-        except Exception:
-            continue
-        if isinstance(data, dict):
-            item = data.get(model_id)
-            if isinstance(item, dict) and "accuracy" in item:
-                return item
-    return None
 
 
 def combine_gate_statuses(row: Dict[str, Any]) -> str:
