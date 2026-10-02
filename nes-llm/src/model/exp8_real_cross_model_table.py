@@ -44,6 +44,7 @@ from src.carrier_intelligence.qaci_pipeline import QACIPipeline
 from src.evaluation.robustness_validator import RobustnessValidator
 from src.steganalysis.security_validator import SecurityValidator
 from src.model.model_loader import load_model_pair, extract_residuals
+from src.experiments.residual_source import get_residuals
 from src.model.exp8_result_adapter import (
     get_exp5_result,
     find_neural_detector_result,
@@ -227,22 +228,24 @@ def run_model(model_id: str, family: str, expected_layers: int) -> Dict[str, Any
 
     nf4 = fp16 = tok = None
     try:
-        nf4, fp16, tok = load_model_pair(model_id)
-        actual_layers = len(nf4.model.layers)
-        row["actual_layers"] = actual_layers
-
-        residuals = extract_residuals(
-            nf4_model=nf4,
-            fp16_model=fp16,
+        # Residuals come from the validated cache when it is complete.
+        # No model is loaded yet: only the g4_ppl gate needs one, and for
+        # a 7B+ model NF4 + FP16 + full residual tensors exceed the MPS
+        # ceiling. Running the four model-free gates first means the
+        # memory is only contended for the PPL measurement.
+        residuals, provenance = get_residuals(
+            model_id=model_id,
             family=family,
+            num_layers=expected_layers,
+            use_cache=True,
         )
+        row["residual_source"] = provenance.get("source")
         row["residual_layers"] = len(residuals)
+        actual_layers = len(residuals)
+        row["actual_layers"] = actual_layers
 
         row["g2_qaci"] = run_g2_qaci(residuals, actual_layers)
         row["g3_ber"] = run_g3_ber(residuals, family, actual_layers)
-        row["g4_ppl"] = run_g4_ppl(
-            nf4, fp16, tok, residuals, family, actual_layers, model_id
-        )
         row["g5_robustness"] = run_g5_robustness(
             residuals, family, actual_layers
         )
@@ -263,6 +266,25 @@ def run_model(model_id: str, family: str, expected_layers: int) -> Dict[str, Any
                 accuracy=accuracy,
             )
 
+        # --- g4_ppl needs live weights ---------------------------
+        #
+        # Failures here are isolated: the other five gates above are
+        # already recorded, so an OOM in this one gate degrades the row
+        # to NOT_RUN for that gate instead of discarding the model.
+        try:
+            nf4, fp16, tok = load_model_pair(model_id)
+            row["g4_ppl"] = run_g4_ppl(
+                nf4, fp16, tok, residuals, family, actual_layers, model_id
+            )
+        except Exception as ppl_exc:
+            row["g4_ppl"] = _gate(
+                "NOT_RUN",
+                reason=(
+                    "Real PPL could not be measured: "
+                    f"{type(ppl_exc).__name__}: {ppl_exc}"
+                ),
+            )
+
         row["overall_status"] = combine_gate_statuses(row)
         return row
 
@@ -274,7 +296,8 @@ def run_model(model_id: str, family: str, expected_layers: int) -> Dict[str, Any
     finally:
         # Exp8 is deliberately model-by-model so the next model does not
         # inherit large references from the previous one.
-        del nf4, fp16, tok
+        nf4 = fp16 = tok = None
+        residuals = None
         if torch.backends.mps.is_available():
             torch.mps.empty_cache()
 

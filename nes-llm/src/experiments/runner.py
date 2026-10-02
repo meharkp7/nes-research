@@ -408,20 +408,55 @@ class Runner:
 
         started = time.time()
 
-        for experiment in self.experiments:
+        # Model-major order, not experiment-major.
+        #
+        # Residuals for a 8B model are several GB of float32, so holding
+        # every model's residuals at once is ~24GB for four models and
+        # will OOM. Running all experiments for one model and releasing it
+        # keeps peak memory at one model while still loading each model
+        # only once.
+        model_experiments = [
+            name
+            for name in self.experiments
+            if name not in ("exp8", "exp9")
+        ]
+        late_experiments = [
+            name for name in self.experiments if name in ("exp8", "exp9")
+        ]
+
+        for model_id in self.models:
+            print("\n" + "#" * 70)
+            print(f"# MODEL: {model_id}")
+            print("#" * 70)
+
+            for experiment in model_experiments:
+                print("\n" + "=" * 70)
+                print(
+                    f"EXPERIMENT {experiment}: "
+                    f"{EXPERIMENTS[experiment]['name']}"
+                )
+                print("=" * 70)
+                self.run_experiment(experiment, model_id)
+
+            # Release this model before loading the next one.
+            context = self.contexts.pop(model_id, None)
+            if context is not None:
+                context.release()
+                print(f"  [runner] released memory for {model_id}")
+
+            if torch.backends.mps.is_available():
+                torch.mps.empty_cache()
+
+            # Persist as we go, so a later model's failure does not
+            # discard earlier models' completed results.
+            manifest_mod.save(self.manifest)
+
+        for experiment in late_experiments:
             print("\n" + "=" * 70)
             print(f"EXPERIMENT {experiment}: {EXPERIMENTS[experiment]['name']}")
             print("=" * 70)
+            self.run_experiment(experiment, "aggregate")
 
-            if experiment in ("exp8", "exp9"):
-                self.run_experiment(experiment, "aggregate")
-                continue
-
-            for model_id in self.models:
-                self.run_experiment(experiment, model_id)
-
-        # Persist the manifest even when a model failed, so partial real
-        # results survive.
         manifest_mod.save(self.manifest)
 
         for context in self.contexts.values():

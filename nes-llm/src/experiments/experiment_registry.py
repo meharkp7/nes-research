@@ -168,7 +168,11 @@ EXPERIMENTS: Dict[str, Dict] = {
         "name": "Architecture Probe",
         "gate_key": "exp1",
         "depends_on": [],
-        "requires_models": True,
+        # No model load. Loading NF4 + FP16 together costs ~19GB for a 7B
+        # model and OOMs MPS, purely to read a layer count the residual
+        # dictionary already states. Everything from exp1 to exp7 then
+        # runs cache-only.
+        "requires_models": False,
         "requires_residuals": True,
         "module": "src.experiments.experiments.exp1_architecture",
     },
