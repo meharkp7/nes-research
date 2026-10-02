@@ -1,6 +1,6 @@
 # NES Multi-Model Research — Final Summary
 
-Generated: 2026-10-02T12:00:50.723921+00:00
+Generated: 2026-10-02T19:40:19.669759+00:00
 
 This summary is generated from `results/experiment_manifest.json`. Every number below corresponds to a saved artifact.
 
@@ -8,11 +8,11 @@ This summary is generated from `results/experiment_manifest.json`. Every number 
 
 | Status | Cells |
 | --- | --- |
-| PASS | 28 |
+| PASS | 33 |
 | FAIL | 6 |
 | NOT_RUN | 2 |
 
-Total cells: 36. PASS and FAIL both represent completed experiments; only FAIL means the experiment ran and its gate was not met.
+Total cells: 41. PASS and FAIL both represent completed experiments; only FAIL means the experiment ran and its gate was not met.
 
 ## 2. Model x experiment matrix
 
@@ -24,9 +24,9 @@ Total cells: 36. PASS and FAIL both represent completed experiments; only FAIL m
 | `Qwen/Qwen2.5-7B` | PASS | **FAIL** | PASS | NOT_RUN | NOT_RUN | PASS | PASS | NOT_RUN | NOT_RUN | NOT_RUN |
 | `Qwen/Qwen2.5-3B` | PASS | **FAIL** | PASS | PASS | PASS | PASS | PASS | **FAIL** | **FAIL** | NOT_RUN |
 | `TinyLlama/TinyLlama-1.1B-Chat-v1.0` | PASS | **FAIL** | PASS | NOT_RUN | NOT_RUN | PASS | PASS | NOT_RUN | NOT_RUN | NOT_RUN |
-| `microsoft/Phi-3-mini-4k-instruct` | NOT_RUN | NOT_RUN | NOT_RUN | NOT_RUN | NOT_RUN | NOT_RUN | NOT_RUN | NOT_RUN | NOT_RUN | NOT_RUN |
+| `microsoft/Phi-3-mini-4k-instruct` | PASS | PASS | PASS | NOT_RUN | NOT_RUN | PASS | PASS | NOT_RUN | NOT_RUN | NOT_RUN |
 
-### Missing cells (27)
+### Missing cells (31)
 
 | Model | Experiment |
 | --- | --- |
@@ -56,7 +56,11 @@ Total cells: 36. PASS and FAIL both represent completed experiments; only FAIL m
 | `TinyLlama/TinyLlama-1.1B-Chat-v1.0` | exp7_neural |
 | `TinyLlama/TinyLlama-1.1B-Chat-v1.0` | exp8 |
 | `TinyLlama/TinyLlama-1.1B-Chat-v1.0` | exp9 |
-| `microsoft/Phi-3-mini-4k-instruct` | all |
+| `microsoft/Phi-3-mini-4k-instruct` | exp4 |
+| `microsoft/Phi-3-mini-4k-instruct` | exp5 |
+| `microsoft/Phi-3-mini-4k-instruct` | exp7_neural |
+| `microsoft/Phi-3-mini-4k-instruct` | exp8 |
+| `microsoft/Phi-3-mini-4k-instruct` | exp9 |
 
 ## 3. Cross-model gate table
 
@@ -148,8 +152,12 @@ Falcon and MoE families are not validated. Their presence in the registry does n
 ## 8. Artifacts
 
 - `results/cross_model_table_real.json`
+- `results/exp10_strategy_comparison.json`
+- `results/exp11_lwe_alpha_pareto.json`
+- `results/exp12_lwe_cross_model.json`
 - `results/exp1_google__gemma-2-9b.json`
 - `results/exp1_meta-llama__llama-3.1-8b.json`
+- `results/exp1_microsoft__phi-3-mini-4k-instruct.json`
 - `results/exp1_mistralai__mistral-7b-v0.3.json`
 - `results/exp1_qwen__qwen2.5-3b.json`
 - `results/exp1_qwen__qwen2.5-7b.json`
@@ -157,12 +165,14 @@ Falcon and MoE families are not validated. Their presence in the registry does n
 - `results/exp2_criterion_calibration.json`
 - `results/exp2_google__gemma-2-9b.json`
 - `results/exp2_meta-llama__llama-3.1-8b.json`
+- `results/exp2_microsoft__phi-3-mini-4k-instruct.json`
 - `results/exp2_mistralai__mistral-7b-v0.3.json`
 - `results/exp2_qwen__qwen2.5-3b.json`
 - `results/exp2_qwen__qwen2.5-7b.json`
 - `results/exp2_tinyllama__tinyllama-1.1b-chat-v1.0.json`
 - `results/exp3_google__gemma-2-9b.json`
 - `results/exp3_meta-llama__llama-3.1-8b.json`
+- `results/exp3_microsoft__phi-3-mini-4k-instruct.json`
 - `results/exp3_mistralai__mistral-7b-v0.3.json`
 - `results/exp3_qwen__qwen2.5-3b.json`
 - `results/exp3_qwen__qwen2.5-7b.json`
@@ -171,12 +181,14 @@ Falcon and MoE families are not validated. Their presence in the registry does n
 - `results/exp5_qwen__qwen2.5-3b.json`
 - `results/exp6_google__gemma-2-9b.json`
 - `results/exp6_meta-llama__llama-3.1-8b.json`
+- `results/exp6_microsoft__phi-3-mini-4k-instruct.json`
 - `results/exp6_mistralai__mistral-7b-v0.3.json`
 - `results/exp6_qwen__qwen2.5-3b.json`
 - `results/exp6_qwen__qwen2.5-7b.json`
 - `results/exp6_tinyllama__tinyllama-1.1b-chat-v1.0.json`
 - `results/exp7_google__gemma-2-9b.json`
 - `results/exp7_meta-llama__llama-3.1-8b.json`
+- `results/exp7_microsoft__phi-3-mini-4k-instruct.json`
 - `results/exp7_mistralai__mistral-7b-v0.3.json`
 - `results/exp7_neural_detector_results.json`
 - `results/exp7_neural_parameter_study.json`
@@ -189,6 +201,7 @@ Falcon and MoE families are not validated. Their presence in the registry does n
 - `results/experiment_manifest.json`
 - `results/experiment_matrix.json`
 - `results/table3_ppl_task_accuracy.json`
+- `results/verify_residual_cache_qwen__qwen2.5-7b.json`
 
 Superseded artifact versions are preserved under `results/_archive/` rather than overwritten in place.
 

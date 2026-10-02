@@ -759,3 +759,111 @@ has been guarding against, and it is now gated in code.
 or `autoawq` and diffing against its unpack, rather than continuing to
 guess. `zero_point: true` in the config and the output-axis packing are
 the likely areas.
+
+---
+
+## 15. Item 3 — Phi-3-mini
+
+Downloaded 7.1 GB, extracted residuals, ran exp1/2/3/6/7.
+
+**Blocked first by an incompatible remote implementation.** Phi-3 ships
+bundled modelling code that reads `rope_scaling['type']`, but current
+configs emit `rope_type`:
+
+```
+File ".../modeling_phi3.py", line 296, in _init_rope
+    scaling_type = self.config.rope_scaling["type"]
+KeyError: 'type'
+```
+
+`load_model_pair` hardcoded `trust_remote_code=True`, so it always pulled
+the stale bundled code even though transformers has had a native Phi3
+implementation for several versions.
+
+**Decision:** added `trust_remote_code: bool = True` to
+`load_model_pair` (default unchanged, so no other model is affected) and
+passed `False` for Phi-3, which uses the native implementation.
+
+**Residuals:** 32 layers, mean abs **0.002933**, tightly clustered
+(0.002610–0.003106). Worth noting the contrast with Qwen2.5-7B, whose
+layers span 0.0012–0.0130 in the same model — Phi-3's narrow spread is
+what a healthy residual distribution looks like, and it makes the 7B
+outlier easier to recognise as abnormal in future.
+
+Cached all 32 layers so later runs are cache-only.
+
+**Results — all five cells pass:**
+
+| | exp1 | exp2 | exp3 | exp6 | exp7 |
+|---|---|---|---|---|---|
+| Phi-3-mini-4k-instruct | PASS | **PASS** | PASS | PASS | PASS |
+
+Phi-3 is only the second model to pass exp2, alongside Mistral-7B and
+Gemma-9B.
+
+---
+
+## 16. Final state
+
+**Coverage: 33 PASS, 6 FAIL, 2 NOT_RUN, 0 ERROR across 7 models.**
+Every registry model now has cells. 9/9 consistency checks pass.
+
+```
+model                                      exp1   exp2   exp3   exp6   exp7
+Qwen/Qwen2.5-3B                            PASS   FAIL   PASS   PASS   PASS
+Qwen/Qwen2.5-7B                            PASS   FAIL   PASS   PASS   PASS
+TinyLlama/TinyLlama-1.1B-Chat-v1.0         PASS   FAIL   PASS   PASS   PASS
+google/gemma-2-9b                          PASS   PASS   PASS   PASS   PASS
+meta-llama/Llama-3.1-8B                    PASS   FAIL   PASS   PASS   PASS
+microsoft/Phi-3-mini-4k-instruct           PASS   PASS   PASS   PASS   PASS
+mistralai/Mistral-7B-v0.3                  PASS   PASS   PASS   PASS   PASS
+```
+
+Plus, outside the NF4 grid:
+
+| | result |
+|---|---|
+| exp8 cross-model | FAIL (driven by the neural detector) |
+| exp9 GPTQ | **PASS, clean BER 0.0**, dequant corr 0.9903 |
+| exp9 AWQ | NOT_RUN (dequant unverified, corr 0.2343) |
+| exp10/exp11/exp12 strategies | LWE grid width passes both gates on 5 of 5 |
+
+### The failures, and why none were "fixed"
+
+| failure | verdict |
+|---|---|
+| exp2 (6 of 7 models) | criterion is quantization-format dependent (FP4 passes, NF4 fails); threshold left unchanged — a research decision, not a code fix |
+| exp7 neural, sign embedding | 70.5% vs 55%; proved structural across a 100× alpha and 5× gamma sweep. LWE at grid width 0.010 reaches 50.00% and passes on 5 of 5 models |
+| exp8 | FAIL is correct: it aggregates and inherits the neural FAIL |
+
+### Open, deliberately not done
+
+- **AWQ layout.** Best of 24 brute-forced variants reaches correlation
+  0.2343. The next step is installing `gptqmodel`/`autoawq` and diffing
+  against its unpack, not more guessing.
+- **Cross-scheme detector.** Every detectability number uses a detector
+  trained against the same scheme it tests. A detector trained on sign
+  and tested on LWE is the stronger experiment and has not been run.
+- **LWE naming.** There is no lattice and no SIS/LWE instance, so the
+  post-quantum claim in `lwe_strategy.py`'s docstring is unsupported.
+  Flagged, not renamed — renaming a claimed contribution is the
+  authors' call.
+- **`bits_embedded` shortfall.** 48,256 embedded against 50,000
+  requested, a consistent ~3.5% gap. Not chased.
+- **Two residual implementations.** `loader.py` (3-value return) and
+  `model_loader.py` (dict return) still coexist; legacy `scripts/exp*.py`
+  import the former.
+- **Neural strategy.** A memory-safe `train_sampled()` is written but
+  never run, so the concern that it converges to the same sign-based
+  solution (§7.5) is untested.
+
+### A note on the session's shape
+
+Six of the bugs found here produced plausible-looking wrong answers
+rather than crashes: BER never measured, Exp9 measuring NF4 under a GPTQ
+label, a GPTQ nibble axis that transposed silently, an alpha that was a
+no-op, a residual profiler biased toward small values, and two studies
+that scored exactly 50% and looked like security wins. The verification
+gates that now exist — real bit comparison, dequantization correlation,
+`INVALID STUDY` on an all-chance sweep, cover-free round trip — each came
+directly from one of those.

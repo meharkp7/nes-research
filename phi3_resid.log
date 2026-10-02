@@ -1,0 +1,23 @@
+Using device: mps
+dir: microsoft__phi-3-mini-4k-instruct | existing: []
+
+[load_model_pair] Model: microsoft/Phi-3-mini-4k-instruct
+[load_model_pair] Device: mps
+[load_model_pair] Loading NF4 model...
+Loading weights:   0%|          | 0/195 [00:00<?, ?it/s]Loading weights:   2%|▏         | 4/195 [00:01<00:57,  3.33it/s]Loading weights:   5%|▌         | 10/195 [00:01<00:19,  9.33it/s]Loading weights:   9%|▊         | 17/195 [00:01<00:10, 16.60it/s]Loading weights:  13%|█▎        | 26/195 [00:01<00:06, 26.93it/s]Loading weights:  17%|█▋        | 34/195 [00:01<00:04, 35.19it/s]Loading weights:  21%|██        | 41/195 [00:01<00:03, 39.50it/s]Loading weights:  24%|██▍       | 47/195 [00:01<00:03, 42.86it/s]Loading weights:  28%|██▊       | 55/195 [00:02<00:02, 50.83it/s]Loading weights:  32%|███▏      | 62/195 [00:02<00:02, 49.65it/s]Loading weights:  36%|███▌      | 70/195 [00:02<00:02, 54.53it/s]Loading weights:  39%|███▉      | 77/195 [00:02<00:03, 38.93it/s]Loading weights:  44%|████▎     | 85/195 [00:02<00:02, 46.33it/s]Loading weights:  47%|████▋     | 91/195 [00:02<00:02, 44.77it/s]Loading weights:  50%|████▉     | 97/195 [00:02<00:02, 46.49it/s]Loading weights:  53%|█████▎    | 104/195 [00:03<00:01, 49.86it/s]Loading weights:  57%|█████▋    | 112/195 [00:03<00:01, 54.83it/s]Loading weights:  61%|██████    | 119/195 [00:03<00:01, 50.75it/s]Loading weights:  65%|██████▌   | 127/195 [00:03<00:01, 57.60it/s]Loading weights:  69%|██████▊   | 134/195 [00:03<00:01, 58.01it/s]Loading weights:  73%|███████▎  | 142/195 [00:03<00:00, 60.94it/s]Loading weights:  76%|███████▋  | 149/195 [00:03<00:00, 56.92it/s]Loading weights:  81%|████████  | 158/195 [00:03<00:00, 62.05it/s]Loading weights:  85%|████████▌ | 166/195 [00:04<00:00, 64.44it/s]Loading weights:  89%|████████▊ | 173/195 [00:04<00:00, 60.12it/s]Loading weights:  93%|█████████▎| 182/195 [00:04<00:00, 64.47it/s]Loading weights:  97%|█████████▋| 189/195 [00:04<00:00, 48.05it/s]Loading weights: 100%|██████████| 195/195 [00:04<00:00, 50.08it/s]Loading weights: 100%|██████████| 195/195 [00:04<00:00, 41.74it/s]
+[load_model_pair] Loading FP16 model...
+[transformers] `torch_dtype` is deprecated! Use `dtype` instead!
+Loading weights:   0%|          | 0/195 [00:00<?, ?it/s]Loading weights:   6%|▌         | 11/195 [00:00<00:01, 102.22it/s]Loading weights:  13%|█▎        | 25/195 [00:00<00:01, 107.90it/s]Loading weights:  18%|█▊        | 36/195 [00:00<00:01, 79.50it/s] Loading weights:  23%|██▎       | 45/195 [00:00<00:01, 75.21it/s]Loading weights:  30%|██▉       | 58/195 [00:00<00:01, 88.30it/s]Loading weights:  35%|███▍      | 68/195 [00:00<00:01, 77.90it/s]Loading weights:  39%|███▉      | 77/195 [00:00<00:01, 71.71it/s]Loading weights:  44%|████▎     | 85/195 [00:01<00:01, 73.38it/s]Loading weights:  50%|████▉     | 97/195 [00:01<00:01, 80.04it/s]Loading weights:  54%|█████▍    | 106/195 [00:01<00:01, 70.58it/s]Loading weights:  58%|█████▊    | 114/195 [00:01<00:01, 62.28it/s]Loading weights:  64%|██████▍   | 125/195 [00:01<00:01, 67.99it/s]Loading weights:  68%|██████▊   | 133/195 [00:01<00:00, 69.56it/s]Loading weights:  74%|███████▍  | 145/195 [00:01<00:00, 76.91it/s]Loading weights:  78%|███████▊  | 153/195 [00:02<00:00, 72.37it/s]Loading weights:  84%|████████▎ | 163/195 [00:02<00:00, 72.59it/s]Loading weights:  88%|████████▊ | 171/195 [00:02<00:00, 74.00it/s]Loading weights:  92%|█████████▏| 179/195 [00:02<00:00, 71.85it/s]Loading weights: 100%|██████████| 195/195 [00:02<00:00, 78.47it/s]
+[load_model_pair] NF4 + FP16 loaded successfully.
+layers in model: 32
+extracted 32 layers
+save_layer: (layer_id: int, residual: torch.Tensor, fp16_weight: torch.Tensor, nf4_dequantized: torch.Tensor)
+/tmp/phi3_resid.py:17: UserWarning: Converting a tensor with requires_grad=True to a scalar may lead to unexpected behavior.
+Consider using tensor.detach() first. (Triggered internally at /Users/runner/work/pytorch/pytorch/torch/csrc/autograd/generated/python_variable_methods.cpp:823.)
+  mags = [float(r.abs().mean()) for r in res.values()]
+mean|r| across layers: 0.002933  min=0.002610 max=0.003106
+Traceback (most recent call last):
+  File "/tmp/phi3_resid.py", line 22, in <module>
+    cache.save_layer(r, i, model_id=MID, config={'num_hidden_layers': n})
+    ~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+TypeError: ModelTensorCache.save_layer() got an unexpected keyword argument 'model_id'

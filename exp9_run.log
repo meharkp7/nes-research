@@ -1,0 +1,27 @@
+Using device: mps
+  [exp9] FP16 reference: Qwen/Qwen2.5-3B-Instruct
+Loading weights:   0%|          | 0/434 [00:00<?, ?it/s]Loading weights:   0%|          | 1/434 [00:03<21:50,  3.03s/it]Loading weights:  32%|███▏      | 137/434 [00:03<00:04, 61.48it/s]Loading weights:  49%|████▉     | 214/434 [00:04<00:03, 62.43it/s]Loading weights:  60%|█████▉    | 259/434 [00:05<00:02, 63.01it/s]Loading weights:  67%|██████▋   | 289/434 [00:05<00:02, 67.78it/s]Loading weights:  72%|███████▏  | 312/434 [00:05<00:01, 66.09it/s]Loading weights:  76%|███████▌  | 329/434 [00:06<00:01, 65.23it/s]Loading weights:  79%|███████▉  | 343/434 [00:06<00:01, 65.50it/s]Loading weights:  82%|████████▏ | 355/434 [00:06<00:01, 66.19it/s]Loading weights:  84%|████████▍ | 365/434 [00:06<00:01, 65.73it/s]Loading weights:  86%|████████▋ | 375/434 [00:06<00:00, 68.69it/s]Loading weights:  89%|████████▉ | 387/434 [00:06<00:00, 71.37it/s]Loading weights:  92%|█████████▏| 399/434 [00:06<00:00, 73.00it/s]Loading weights:  95%|█████████▍| 411/434 [00:07<00:00, 73.07it/s]Loading weights:  97%|█████████▋| 423/434 [00:07<00:00, 69.52it/s]Loading weights: 100%|██████████| 434/434 [00:07<00:00, 59.16it/s]
+  [exp9] gptq verification: verified: correlation 0.9903, residual ratio 0.1402
+  [exp9] extracting 36 gptq residual layers
+    layer 0/36 mean|r|=0.002873
+    layer 8/36 mean|r|=0.002772
+    layer 16/36 mean|r|=0.002785
+    layer 24/36 mean|r|=0.002779
+    layer 32/36 mean|r|=0.002901
+  [exp9] mean |residual| across layers: 0.002787
+  [exp9] FP16 reference: Qwen/Qwen2.5-3B-Instruct
+Loading weights:   0%|          | 0/434 [00:00<?, ?it/s]Loading weights:   0%|          | 1/434 [00:04<35:30,  4.92s/it]Loading weights:  73%|███████▎  | 315/434 [00:05<00:01, 87.17it/s]Loading weights:  98%|█████████▊| 426/434 [00:07<00:00, 70.26it/s]Loading weights: 100%|██████████| 434/434 [00:07<00:00, 59.66it/s]
+  [exp9] awq verification: correlation 0.2343 < 0.95: awq dequantization does not reproduce the reference weights. The layout is not unde
+--- Qwen/Qwen2.5-3B-Instruct-GPTQ-Int4: PASS
+    Clean BER 0.0 through the GPTQ dequantization path, verified against the FP16 reference.
+    BER=0.0  mean|R|=0.002787
+    dequant corr=0.9903 ratio=0.1402
+--- Qwen/Qwen2.5-3B-Instruct-AWQ: NOT_RUN
+    AWQ dequantization could not be verified against the FP16 reference, so no residual was computed: correlation 0.2343 < 0.95: awq dequantization does not reproduce the reference weights. The layout is not understood, so residuals d
+    dequant corr=0.2343 ratio=1.0269
+
+Traceback (most recent call last):
+  File "/tmp/run_exp9.py", line 14, in <module>
+    print(r['conclusion'])
+          ~^^^^^^^^^^^^^^
+KeyError: 'conclusion'

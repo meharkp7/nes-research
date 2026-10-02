@@ -45,6 +45,13 @@
       "exp6": "PASS",
       "exp7": "PASS"
     },
+    "microsoft/Phi-3-mini-4k-instruct": {
+      "exp1": "PASS",
+      "exp2": "PASS",
+      "exp3": "PASS",
+      "exp6": "PASS",
+      "exp7": "PASS"
+    },
     "mistralai/Mistral-7B-v0.3": {
       "exp1": "PASS",
       "exp2": "PASS",
@@ -54,7 +61,7 @@
     }
   },
   "coverage": {
-    "PASS": 28,
+    "PASS": 33,
     "FAIL": 6,
     "NOT_RUN": 2,
     "MISSING_ARTIFACT": 0,

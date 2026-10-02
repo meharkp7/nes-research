@@ -1,0 +1,86 @@
+======================================================================
+ENVIRONMENT
+======================================================================
+  device            : mps
+  cuda / mps        : False / True
+  python            : 3.14.3
+  platform          : macOS-26.3-arm64-arm-64bit-Mach-O
+  torch             : 2.13.0
+  transformers      : 5.16.1
+  bitsandbytes      : 0.50.2
+  accelerate        : 1.14.0
+  numpy             : 2.5.2
+  note: Apple Silicon/MPS: NF4 dequantization must stay on CPU. Moving large dequantized tensors to MPS raises RuntimeError: Invalid buffer size.
+  note: MPS has no native int8/uint8 dequantize; PYTORCH_ENABLE_MPS_FALLBACK is set to 1.
+
+Using device: mps
+======================================================================
+NES EXPERIMENT SUITE
+======================================================================
+  models      : microsoft/Phi-3-mini-4k-instruct
+  experiments : exp1, exp2, exp3, exp6, exp7
+  seed        : 42
+  force       : True
+
+
+######################################################################
+# MODEL: microsoft/Phi-3-mini-4k-instruct
+######################################################################
+
+======================================================================
+EXPERIMENT exp1: Architecture Probe
+======================================================================
+
+======================================================================
+LOADING microsoft/Phi-3-mini-4k-instruct (phi3)
+======================================================================
+  [residuals] cache hit: microsoft/Phi-3-mini-4k-instruct (32 layers)
+  [artifact] wrote /Users/meharkapoor7/nes-research/results/exp1_microsoft__phi-3-mini-4k-instruct.json
+  [exp1] microsoft/Phi-3-mini-4k-instruct: PASS
+
+======================================================================
+EXPERIMENT exp2: Residual Fingerprint
+======================================================================
+  [artifact] wrote /Users/meharkapoor7/nes-research/results/exp2_microsoft__phi-3-mini-4k-instruct.json
+  [exp2] microsoft/Phi-3-mini-4k-instruct: PASS
+  [exp2] profile mirrored to /Users/meharkapoor7/nes-research/residual_profile_phi3_phi-3-mini-4k-instruct.json
+
+======================================================================
+EXPERIMENT exp3: Clean BER
+======================================================================
+  [artifact] wrote /Users/meharkapoor7/nes-research/results/exp3_microsoft__phi-3-mini-4k-instruct.json
+  [exp3] microsoft/Phi-3-mini-4k-instruct: PASS
+
+======================================================================
+EXPERIMENT exp6: Robustness
+======================================================================
+  [artifact] wrote /Users/meharkapoor7/nes-research/results/exp6_microsoft__phi-3-mini-4k-instruct.json
+  [exp6] microsoft/Phi-3-mini-4k-instruct: PASS
+
+======================================================================
+EXPERIMENT exp7: Security (statistical)
+======================================================================
+  [artifact] wrote /Users/meharkapoor7/nes-research/results/exp7_microsoft__phi-3-mini-4k-instruct.json
+  [exp7] microsoft/Phi-3-mini-4k-instruct: PASS
+  [runner] released memory for microsoft/Phi-3-mini-4k-instruct
+  [artifact] previous version archived -> /Users/meharkapoor7/nes-research/results/_archive/experiment_manifest__20261002T194019Z__manifest_update.json
+  [artifact] wrote /Users/meharkapoor7/nes-research/results/experiment_manifest.json
+  [artifact] previous version archived -> /Users/meharkapoor7/nes-research/results/_archive/experiment_manifest__20261002T194019Z__manifest_update_1.json
+  [artifact] wrote /Users/meharkapoor7/nes-research/results/experiment_manifest.json
+
+======================================================================
+SUITE COMPLETE
+======================================================================
+  duration : 201.85s
+  executed : 5
+  skipped  : 0 (already completed)
+
+  PASS              : 33
+  FAIL              : 6
+  NOT_RUN           : 2
+
+GENERATING REPORTS
+  matrix_json       : /Users/meharkapoor7/nes-research/results/experiment_matrix.json
+  matrix_csv        : /Users/meharkapoor7/nes-research/results/experiment_matrix.csv
+  cross_model_csv   : /Users/meharkapoor7/nes-research/results/cross_model_table_real.csv
+  summary           : /Users/meharkapoor7/nes-research/results/final_research_summary.md

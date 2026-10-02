@@ -1,0 +1,21 @@
+Using device: mps
+
+[load_model_pair] Model: microsoft/Phi-3-mini-4k-instruct
+[load_model_pair] Device: mps
+[load_model_pair] Loading NF4 model...
+Loading weights:   0%|          | 0/195 [00:00<?, ?it/s]Loading weights:   2%|▏         | 4/195 [00:01<01:01,  3.09it/s]Loading weights:   6%|▌         | 11/195 [00:01<00:19,  9.38it/s]Loading weights:  10%|▉         | 19/195 [00:01<00:09, 17.81it/s]Loading weights:  13%|█▎        | 26/195 [00:01<00:06, 24.95it/s]Loading weights:  17%|█▋        | 34/195 [00:01<00:04, 33.74it/s]Loading weights:  21%|██        | 41/195 [00:01<00:03, 38.57it/s]Loading weights:  26%|██▌       | 50/195 [00:02<00:03, 47.15it/s]Loading weights:  30%|██▉       | 58/195 [00:02<00:02, 53.21it/s]Loading weights:  33%|███▎      | 65/195 [00:02<00:02, 53.55it/s]Loading weights:  37%|███▋      | 72/195 [00:02<00:02, 56.30it/s]Loading weights:  41%|████      | 80/195 [00:02<00:01, 59.22it/s]Loading weights:  45%|████▌     | 88/195 [00:02<00:01, 62.13it/s]Loading weights:  49%|████▊     | 95/195 [00:02<00:01, 59.53it/s]Loading weights:  53%|█████▎    | 104/195 [00:02<00:01, 63.88it/s]Loading weights:  57%|█████▋    | 112/195 [00:02<00:01, 66.54it/s]Loading weights:  61%|██████    | 119/195 [00:03<00:01, 62.42it/s]Loading weights:  66%|██████▌   | 128/195 [00:03<00:01, 65.82it/s]Loading weights:  70%|██████▉   | 136/195 [00:03<00:00, 67.71it/s]Loading weights:  73%|███████▎  | 143/195 [00:03<00:00, 63.42it/s]Loading weights:  78%|███████▊  | 152/195 [00:03<00:00, 66.64it/s]Loading weights:  82%|████████▏ | 160/195 [00:03<00:00, 67.94it/s]Loading weights:  86%|████████▌ | 167/195 [00:03<00:00, 63.18it/s]Loading weights:  90%|█████████ | 176/195 [00:03<00:00, 66.51it/s]Loading weights:  94%|█████████▍| 184/195 [00:04<00:00, 68.15it/s]Loading weights:  98%|█████████▊| 191/195 [00:04<00:00, 50.84it/s]Loading weights: 100%|██████████| 195/195 [00:04<00:00, 45.29it/s]
+[load_model_pair] Loading FP16 model...
+[transformers] `torch_dtype` is deprecated! Use `dtype` instead!
+Loading weights:   0%|          | 0/195 [00:00<?, ?it/s]Loading weights:   9%|▊         | 17/195 [00:00<00:01, 154.37it/s]Loading weights:  17%|█▋        | 33/195 [00:00<00:01, 146.83it/s]Loading weights:  25%|██▌       | 49/195 [00:00<00:00, 149.56it/s]Loading weights:  33%|███▎      | 65/195 [00:00<00:00, 146.94it/s]Loading weights:  41%|████      | 80/195 [00:00<00:00, 142.57it/s]Loading weights:  49%|████▊     | 95/195 [00:00<00:00, 118.36it/s]Loading weights:  55%|█████▌    | 108/195 [00:01<00:01, 79.19it/s]Loading weights:  65%|██████▍   | 126/195 [00:01<00:00, 86.70it/s]Loading weights:  76%|███████▌  | 148/195 [00:01<00:00, 109.37it/s]Loading weights:  83%|████████▎ | 161/195 [00:01<00:00, 109.87it/s]Loading weights:  89%|████████▉ | 174/195 [00:01<00:00, 102.23it/s]Loading weights:  97%|█████████▋| 189/195 [00:01<00:00, 103.14it/s]Loading weights: 100%|██████████| 195/195 [00:01<00:00, 113.25it/s]
+[load_model_pair] NF4 + FP16 loaded successfully.
+layers: 32
+  layer 0/32
+  layer 8/32
+  layer 16/32
+  layer 24/32
+cached_layers: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31]
+Traceback (most recent call last):
+  File "/tmp/phi3_cache.py", line 22, in <module>
+    cache.metadata = cache._collect_metadata(nf4, fp16)
+                     ^^^^^^^^^^^^^^^^^^^^^^^
+AttributeError: 'ModelTensorCache' object has no attribute '_collect_metadata'

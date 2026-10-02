@@ -79,10 +79,22 @@ def main() -> int:
 
         artifact_status = data.get("status")
 
+        # exp9 records one manifest cell per format, all sharing a single
+        # artifact whose top-level status is the overall verdict. Compare
+        # against that format's own result, not the file-level status,
+        # or a single passing format masks a failing one.
+        if key.startswith("exp9::"):
+            model_id = key.split("::", 1)[1]
+            per_format = (
+                (data.get("metrics") or {})
+                .get("results", {})
+                .get(model_id, {})
+            )
+            if per_format:
+                artifact_status = per_format.get("status")
+
         # exp9 records one manifest cell per format, all sharing a file.
         if artifact_status and artifact_status != entry["status"]:
-            if key.startswith("exp9::") and artifact_status == "NOT_RUN":
-                continue
             disagreements.append(
                 f"{key}: manifest={entry['status']} artifact={artifact_status}"
             )

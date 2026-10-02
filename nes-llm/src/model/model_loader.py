@@ -153,6 +153,7 @@ def load_model_pair(
     model_id: str,
     device=None,
     token: Optional[str] = None,
+    trust_remote_code: bool = True,
 ):
     """
     Load NF4 and FP16 copies of the same model.
@@ -180,7 +181,7 @@ def load_model_pair(
 
     tokenizer = AutoTokenizer.from_pretrained(
         model_id,
-        trust_remote_code=True,
+        trust_remote_code=trust_remote_code,
         token=token,
     )
 
@@ -198,7 +199,7 @@ def load_model_pair(
         model_id,
         quantization_config=NF4_CONFIG,
         device_map={"": device},
-        trust_remote_code=True,
+        trust_remote_code=trust_remote_code,
         token=token,
     )
 
@@ -215,7 +216,7 @@ def load_model_pair(
         model_id,
         torch_dtype=torch.float16,
         device_map={"": device},
-        trust_remote_code=True,
+        trust_remote_code=trust_remote_code,
         token=token,
     )
 
