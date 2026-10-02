@@ -1,6 +1,6 @@
 {
   "schema_version": "1.0",
-  "generated_at": "2026-10-02T11:21:58.586285+00:00",
+  "generated_at": "2026-10-02T11:34:33.775576+00:00",
   "description": "NES multi-model experiment manifest. One entry per experiment x model cell. Status is never inferred from implementation alone.",
   "records": {
     "exp1::Qwen/Qwen2.5-3B": {
@@ -66,6 +66,27 @@
       },
       "duration_seconds": 2.33
     },
+    "exp1::mistralai/Mistral-7B-v0.3": {
+      "experiment": "exp1",
+      "model_id": "mistralai/Mistral-7B-v0.3",
+      "family": "mistral",
+      "status": "PASS",
+      "gate_status": "PASS",
+      "artifact_path": "/Users/meharkapoor7/nes-research/results/exp1_mistralai__mistral-7b-v0.3.json",
+      "artifact_exists": true,
+      "configuration": {
+        "probe_payload_bits": 10000,
+        "module": "mlp.down_proj",
+        "residual_layers_expected": 32
+      },
+      "source": "run",
+      "notes": "Structural probe passed. This is not a fidelity, robustness or security claim.",
+      "updated_at": "2026-10-02T11:22:21.819099+00:00",
+      "metrics": {
+        "layer_mismatch": 0
+      },
+      "duration_seconds": 7.36
+    },
     "exp2::Qwen/Qwen2.5-3B": {
       "experiment": "exp2",
       "model_id": "Qwen/Qwen2.5-3B",
@@ -128,6 +149,27 @@
         "fraction_above_threshold": 0.0
       },
       "duration_seconds": 1.85
+    },
+    "exp2::mistralai/Mistral-7B-v0.3": {
+      "experiment": "exp2",
+      "model_id": "mistralai/Mistral-7B-v0.3",
+      "family": "mistral",
+      "status": "PASS",
+      "gate_status": "PASS",
+      "artifact_path": "/Users/meharkapoor7/nes-research/results/exp2_mistralai__mistral-7b-v0.3.json",
+      "artifact_exists": true,
+      "configuration": {
+        "profiler": "LayerProfiler",
+        "num_bins": 64,
+        "module": "mlp.down_proj"
+      },
+      "source": "run",
+      "notes": "26/32 layers exceed mag_mean 0.002.",
+      "updated_at": "2026-10-02T11:22:24.604000+00:00",
+      "metrics": {
+        "fraction_above_threshold": 0.8125
+      },
+      "duration_seconds": 2.78
     },
     "exp3::Qwen/Qwen2.5-3B": {
       "experiment": "exp3",
@@ -197,6 +239,29 @@
         "ber": 0.0
       },
       "duration_seconds": 20.71
+    },
+    "exp3::mistralai/Mistral-7B-v0.3": {
+      "experiment": "exp3",
+      "model_id": "mistralai/Mistral-7B-v0.3",
+      "family": "mistral",
+      "status": "PASS",
+      "gate_status": "PASS",
+      "artifact_path": "/Users/meharkapoor7/nes-research/results/exp3_mistralai__mistral-7b-v0.3.json",
+      "artifact_exists": true,
+      "configuration": {
+        "payload_bits": 50000,
+        "message_length_chars": 6000,
+        "embedding_strategy": "sign",
+        "carrier_selection": "qaci",
+        "message_source": "repeated 'A'; AES-256-GCM nonce is fresh per run"
+      },
+      "source": "run",
+      "notes": "Clean round trip recovered exactly.",
+      "updated_at": "2026-10-02T11:22:35.333026+00:00",
+      "metrics": {
+        "ber": 0.0
+      },
+      "duration_seconds": 10.72
     },
     "exp4::Qwen/Qwen2.5-3B": {
       "experiment": "exp4",
@@ -348,6 +413,39 @@
       },
       "duration_seconds": 47.07
     },
+    "exp6::mistralai/Mistral-7B-v0.3": {
+      "experiment": "exp6",
+      "model_id": "mistralai/Mistral-7B-v0.3",
+      "family": "mistral",
+      "status": "PASS",
+      "gate_status": "PASS",
+      "artifact_path": "/Users/meharkapoor7/nes-research/results/exp6_mistralai__mistral-7b-v0.3.json",
+      "artifact_exists": true,
+      "configuration": {
+        "sigmas": [
+          0.0,
+          0.0005,
+          0.001,
+          0.002,
+          0.005,
+          0.01,
+          0.02
+        ],
+        "trials_per_sigma": 5,
+        "payload_bits": 10000,
+        "noise": "additive i.i.d. Gaussian on all residual tensors",
+        "seed": 42
+      },
+      "source": "run",
+      "notes": "Both operating-point gates hold. Non-gate sigma values are stochastic and vary slightly across reruns.",
+      "updated_at": "2026-10-02T11:33:51.676866+00:00",
+      "metrics": {
+        "payload_bits": 10000,
+        "ber_at_sigma_0_001": 0.0011505460218408738,
+        "ber_at_sigma_0_002": 0.010744929797191887
+      },
+      "duration_seconds": 676.33
+    },
     "exp7::Qwen/Qwen2.5-3B": {
       "experiment": "exp7",
       "model_id": "Qwen/Qwen2.5-3B",
@@ -419,6 +517,30 @@
         "statistical_detector_accuracy": 0.5039499998092651
       },
       "duration_seconds": 13.07
+    },
+    "exp7::mistralai/Mistral-7B-v0.3": {
+      "experiment": "exp7",
+      "model_id": "mistralai/Mistral-7B-v0.3",
+      "family": "mistral",
+      "status": "PASS",
+      "gate_status": "PASS",
+      "artifact_path": "/Users/meharkapoor7/nes-research/results/exp7_mistralai__mistral-7b-v0.3.json",
+      "artifact_exists": true,
+      "configuration": {
+        "payload_bits": 50000,
+        "validator": "SecurityValidator",
+        "num_bins": 64,
+        "adversary": "threshold classifier on mean absolute value of 10,000-value samples",
+        "scope": "statistical undetectability only"
+      },
+      "source": "run",
+      "notes": "Statistical undetectability gates hold. This says nothing about a trained neural adversary; see exp7_neural.",
+      "updated_at": "2026-10-02T11:34:33.637269+00:00",
+      "metrics": {
+        "kl_divergence": 3.9511600334662944e-05,
+        "statistical_detector_accuracy": 0.5011499971151352
+      },
+      "duration_seconds": 41.95
     },
     "exp7_neural::Qwen/Qwen2.5-3B": {
       "experiment": "exp7_neural",

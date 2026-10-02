@@ -1,0 +1,63 @@
+{
+  "experiment": "exp1",
+  "title": "Architecture Probe",
+  "configuration": {
+    "probe_payload_bits": 10000,
+    "module": "mlp.down_proj",
+    "residual_layers_expected": 32
+  },
+  "metrics": {
+    "architecture_registered": true,
+    "model_loaded": false,
+    "residual_layers": 32,
+    "expected_layers": 32,
+    "actual_layers": 32,
+    "layer_count_source": "residual_dictionary",
+    "residual_layer_ids_contiguous": true,
+    "residual_elements_total": 1879048192,
+    "residual_dtype": "torch.float32",
+    "residual_device": "cpu",
+    "qaci_runs": true,
+    "qaci_probe_bits_requested": 10000,
+    "qaci_probe_bits_allocated": 10000,
+    "qaci_probe_layers_selected": 32,
+    "layer_mismatch": 0
+  },
+  "thresholds": {
+    "description": "Residual extraction succeeds and QACI accepts the result.",
+    "max_allowed_layer_mismatch": 0
+  },
+  "status": "PASS",
+  "gate_status": "PASS",
+  "reproducibility": {
+    "model_id": "meta-llama/Llama-3.1-8B",
+    "family": "llama",
+    "expected_layers": 32,
+    "actual_layers": 32,
+    "layer_count_matches_expected": true,
+    "random_seed": 42,
+    "device": "mps",
+    "software_versions": {
+      "python": "3.14.3",
+      "platform": "macOS-26.3-arm64-arm-64bit-Mach-O",
+      "torch": "2.13.0",
+      "transformers": "5.16.1",
+      "bitsandbytes": "0.50.2",
+      "accelerate": "1.14.0",
+      "numpy": "2.5.2"
+    },
+    "platform_notes": [
+      "Apple Silicon/MPS: NF4 dequantization must stay on CPU. Moving large dequantized tensors to MPS raises RuntimeError: Invalid buffer size.",
+      "MPS has no native int8/uint8 dequantize; PYTORCH_ENABLE_MPS_FALLBACK is set to 1."
+    ],
+    "residual_source": "cache",
+    "residual_definition": "R = W_FP16 - dequantize(W_NF4)",
+    "timestamp": "2026-10-02T11:34:55.396551+00:00"
+  },
+  "notes": "Structural probe passed. This is not a fidelity, robustness or security claim.",
+  "source": "run",
+  "duration_seconds": 6.54,
+  "model_id": "meta-llama/Llama-3.1-8B",
+  "family": "llama",
+  "generated_at": "2026-10-02T11:34:55.397638+00:00"
+}

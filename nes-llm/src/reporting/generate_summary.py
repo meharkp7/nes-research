@@ -21,7 +21,7 @@ from pathlib import Path
 from typing import Any, Dict
 
 from src.experiments import manifest as manifest_mod
-from src.experiments.artifact_manager import utc_now
+from src.experiments.artifact_manager import load_json, utc_now
 from src.experiments.experiment_registry import (
     ARCHITECTURE_SUPPORT,
     TARGET_MODELS,
@@ -56,6 +56,98 @@ def _fmt(value: Any) -> str:
         return f"{value:.6g}"
     return str(value)
 
+
+
+def _diagnostic_section(add) -> None:
+    """Fold the FAIL diagnostics into the report.
+
+    Each recorded FAIL comes with a diagnostic saying whether it is
+    fixable. Reporting only the FAIL would leave a reader to assume it
+    is either a bug or an oversight.
+    """
+    neural_study = load_json(
+        RESULTS_DIR / "exp7_neural_parameter_study.json"
+    )
+    calibration = load_json(
+        RESULTS_DIR / "exp2_criterion_calibration.json"
+    )
+
+    add("## 5. Why the FAILs fail")
+    add("")
+    add(
+        "A FAIL is a measurement, not a bug. Each was investigated to "
+        "determine whether it is fixable; the answer is recorded rather "
+        "than assumed."
+    )
+    add("")
+
+    if calibration:
+        add("### 5.1 Exp2 residual-magnitude gate")
+        add("")
+        add(
+            f"- {calibration.get('models_passing', 0)}/"
+            f"{calibration.get('models_tested', 0)} profiled models "
+            "meet the `mag_mean > 0.002` criterion."
+        )
+        for row in calibration.get("per_quant_format", []):
+            if "error" in row:
+                continue
+            add(
+                f"- `{row['quant_format']}`: mean magnitude "
+                f"{row['mean_mag_mean']:.6f}, "
+                f"{row['fraction_above_threshold']:.0%} of probed layers "
+                "above threshold"
+            )
+        add(f"- {calibration.get('finding', '')}")
+        add(
+            "- The threshold was **not** changed and no Exp2 verdict was "
+            "rewritten. Recalibrating it is a research decision for the "
+            "authors, not something to apply silently."
+        )
+        add("")
+
+    if neural_study:
+        add("### 5.2 Exp7 neural-detector gate")
+        add("")
+        accuracies = [
+            v["accuracy"] for v in neural_study.get("variants", [])
+        ]
+        if accuracies:
+            add(
+                f"- Swept {len(accuracies)} configurations (alpha x100, "
+                "gamma x5, payload x10): detector accuracy stayed within "
+                f"{min(accuracies):.2%}-{max(accuracies):.2%}."
+            )
+            add(
+                "- No configuration came near the 55% gate, so this is "
+                "**not fixable by retuning**."
+            )
+        density = next(
+            (
+                v["signal_density"]
+                for v in neural_study.get("variants", [])
+                if "signal_density" in v
+            ),
+            None,
+        )
+        if density:
+            add(
+                "- Mechanism: sign embedding rewrites a carrier to "
+                "+/-|r|, which changes nothing when the payload bit "
+                "already agrees with the carrier's sign. Only "
+                f"~{density['mean_changed_values_per_patch']:.0f} of "
+                f"{density['patch_size']} values per patch actually "
+                f"differ and "
+                f"{density['identical_pair_fraction']:.0%} of pairs are "
+                "byte-identical."
+            )
+        add(f"- {neural_study.get('conclusion', '')}")
+        add(
+            "- Getting under the gate would need a different embedding "
+            "scheme, one that does not force a sign flip at carriers. "
+            "That is future work, not a retuning."
+        )
+        add("")
 
 def build_summary() -> str:
     data = aggregate()
@@ -295,7 +387,10 @@ def build_summary() -> str:
     add("")
 
     # ---------------------------------------------------------------
-    add("## 5. Architecture support")
+    _diagnostic_section(add)
+
+    # ---------------------------------------------------------------
+    add("## 6. Architecture support")
     add("")
     add(
         "Registry entries and experimental validation are different "
@@ -314,7 +409,7 @@ def build_summary() -> str:
     add("")
 
     # ---------------------------------------------------------------
-    add("## 6. Methodological caveats")
+    add("## 7. Methodological caveats")
     add("")
     add(
         "- The LWE component is **LWE-inspired** (an HMAC-SHA256 keyed "
@@ -338,7 +433,7 @@ def build_summary() -> str:
     add("")
 
     # ---------------------------------------------------------------
-    add("## 7. Artifacts")
+    add("## 8. Artifacts")
     add("")
     for path in sorted(RESULTS_DIR.glob("*.json")):
         if path.name.startswith("_"):

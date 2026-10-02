@@ -1,0 +1,77 @@
+{
+  "experiment": "exp6",
+  "title": "Robustness",
+  "configuration": {
+    "sigmas": [
+      0.0,
+      0.0005,
+      0.001,
+      0.002,
+      0.005,
+      0.01,
+      0.02
+    ],
+    "trials_per_sigma": 5,
+    "payload_bits": 10000,
+    "noise": "additive i.i.d. Gaussian on all residual tensors",
+    "seed": 42
+  },
+  "metrics": {
+    "ber_curve": {
+      "0.0": 0.0,
+      "0.0005": 0.0,
+      "0.001": 0.0011505460218408738,
+      "0.002": 0.010744929797191887,
+      "0.005": 0.032137285491419657,
+      "0.01": 0.05243759750390016,
+      "0.02": 0.11959828393135725
+    },
+    "ber_at_sigma_0_001": 0.0011505460218408738,
+    "ber_at_sigma_0_002": 0.010744929797191887,
+    "max_ber_at_sigma_0_001": 0.02,
+    "max_ber_at_sigma_0_002": 0.1,
+    "total_bits": 10256,
+    "trials": 5,
+    "payload_bits": 10000,
+    "gate_0_001_passed": true,
+    "gate_0_002_passed": true
+  },
+  "thresholds": {
+    "description": "BER under additive Gaussian noise.",
+    "max_ber_at_sigma_0_001": 0.02,
+    "max_ber_at_sigma_0_002": 0.1
+  },
+  "status": "PASS",
+  "gate_status": "PASS",
+  "reproducibility": {
+    "model_id": "mistralai/Mistral-7B-v0.3",
+    "family": "mistral",
+    "expected_layers": 32,
+    "actual_layers": 32,
+    "layer_count_matches_expected": true,
+    "random_seed": 42,
+    "device": "mps",
+    "software_versions": {
+      "python": "3.14.3",
+      "platform": "macOS-26.3-arm64-arm-64bit-Mach-O",
+      "torch": "2.13.0",
+      "transformers": "5.16.1",
+      "bitsandbytes": "0.50.2",
+      "accelerate": "1.14.0",
+      "numpy": "2.5.2"
+    },
+    "platform_notes": [
+      "Apple Silicon/MPS: NF4 dequantization must stay on CPU. Moving large dequantized tensors to MPS raises RuntimeError: Invalid buffer size.",
+      "MPS has no native int8/uint8 dequantize; PYTORCH_ENABLE_MPS_FALLBACK is set to 1."
+    ],
+    "residual_source": "cache",
+    "residual_definition": "R = W_FP16 - dequantize(W_NF4)",
+    "timestamp": "2026-10-02T11:33:51.447723+00:00"
+  },
+  "notes": "Both operating-point gates hold. Non-gate sigma values are stochastic and vary slightly across reruns.",
+  "source": "run",
+  "duration_seconds": 676.33,
+  "model_id": "mistralai/Mistral-7B-v0.3",
+  "family": "mistral",
+  "generated_at": "2026-10-02T11:33:51.672344+00:00"
+}
