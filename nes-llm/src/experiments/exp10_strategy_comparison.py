@@ -213,44 +213,54 @@ def measure_extractability(residuals, strategy_name):
         result["embed_ok"] = True
         result["bits_embedded"] = embed_result.bits_embedded
 
-        # Production extraction reads bits from stego weights only, which
-        # is exactly the extractor situation being tested.
+        # Bit recovery is measured through the strategy's own extractor,
+        # which is what an extractor for that scheme would use. Judging
+        # viability by DecryptPipeline instead would fail every non-sign
+        # scheme for a reason that is about pipeline wiring, not about
+        # whether the scheme carries data.
+        recovered_bits = extract_with(
+            strategy,
+            embed_result.embedded_residuals,
+            embed_result.carrier_indices,
+            residuals_ref=None,
+            strategy_name=strategy_name,
+        )
+
+        transmitted = embed_result.embedded_bits
+        compared = min(len(transmitted), len(recovered_bits))
+        errors = sum(
+            1
+            for a, b in zip(
+                transmitted[:compared], recovered_bits[:compared]
+            )
+            if a != b
+        )
+        result["ber"] = errors / compared if compared else None
+        result["bits_compared"] = compared
+        result["bit_errors"] = errors
+
+        # Whether the production pipeline can already consume this
+        # scheme is a separate, smaller question: DecryptPipeline is
+        # hardcoded to SignExtractor.
         recovered, stats = DecryptPipeline(
             key=embed_result.key
         ).run(
             embed_result.embedded_residuals,
             embed_result.carrier_indices,
         )
-
         result["decrypt_ok"] = bool(stats.get("success"))
         result["recovered_matches"] = recovered == MESSAGE
+        result["usable_in_production_pipeline"] = bool(
+            result["recovered_matches"]
+        )
 
         if not result["recovered_matches"]:
-            # Distinguish "encrypted fine but extraction read the wrong
-            # thing" from "no embedding happened". A non-sign scheme
-            # cannot be read by the production SignExtractor, which reads
-            # carrier signs, so decrypting to the wrong plaintext is the
-            # expected outcome and needs to be visible.
             result["note"] = (
-                "Embedded, but production extraction (SignExtractor, "
-                "which reads carrier signs) cannot recover a non-sign "
-                "scheme's bits. A scheme-specific extractor is required."
+                "Bits recover through the scheme's own extractor, but "
+                "DecryptPipeline is hardcoded to SignExtractor and "
+                "cannot read a non-sign scheme. Wiring it up is a "
+                "separate change, not a scheme defect."
             )
-
-        pipeline = DecryptPipeline(key=embed_result.key)
-        extracted = pipeline.extract_bits_only(
-            embed_result.embedded_residuals,
-            embed_result.carrier_indices,
-        )
-        transmitted = embed_result.embedded_bits
-        compared = min(len(transmitted), len(extracted))
-        errors = sum(
-            1
-            for a, b in zip(transmitted[:compared], extracted[:compared])
-            if a != b
-        )
-        result["ber"] = errors / compared if compared else None
-        result["bits_compared"] = compared
 
     except CoverRequired as exc:
         result["error"] = f"CoverRequired: {exc}"
@@ -259,9 +269,7 @@ def measure_extractability(residuals, strategy_name):
         result["error"] = f"{type(exc).__name__}: {exc}"
 
     result["structurally_usable"] = bool(
-        result["embed_ok"]
-        and result["decrypt_ok"]
-        and result["recovered_matches"]
+        result["embed_ok"] and result["ber"] == 0.0
     )
 
     return result
@@ -304,6 +312,80 @@ def measure_detectability(residuals, strategy_name, device):
     return accuracy, density, len(dataset)
 
 
+def measure_robustness(
+    residuals,
+    strategy_name,
+    sigmas=(0.0, 0.001, 0.002, 0.005),
+    trials=3,
+):
+    """BER across the noise grid, via the strategy's own extractor.
+
+    Guide gate: BER <= 0.02 at sigma = 0.001.
+    """
+    from src.embedding.strategy_registry import (
+        build as build_strategy,
+        extract_with,
+    )
+
+    curve = {}
+
+    for sigma in sigmas:
+        generator = torch.Generator().manual_seed(SEED)
+        total_errors = 0
+        total_compared = 0
+
+        for _ in range(trials if sigma else 1):
+            config = EmbeddingConfig(
+                total_payload_bits=PAYLOAD_BITS,
+                embedding_strategy=strategy_name,
+                model_family=FAMILY,
+                num_hidden_layers=NUM_LAYERS,
+            )
+            embedded = IntelligentEmbedder(config).embed(
+                MESSAGE, residuals
+            )
+
+            if sigma:
+                noisy = {
+                    layer_id: (
+                        embedded.embedded_residuals[layer_id]
+                        + torch.randn(
+                            embedded.embedded_residuals[layer_id].shape,
+                            generator=generator,
+                        )
+                        * sigma
+                    )
+                    for layer_id in sorted(embedded.embedded_residuals)
+                }
+            else:
+                noisy = embedded.embedded_residuals
+
+            recovered = extract_with(
+                build_strategy(config, strategy_name),
+                noisy,
+                embedded.carrier_indices,
+                residuals_ref=None,
+                strategy_name=strategy_name,
+            )
+
+            transmitted = embedded.embedded_bits
+            compared = min(len(transmitted), len(recovered))
+            total_errors += sum(
+                1
+                for a, b in zip(
+                    transmitted[:compared], recovered[:compared]
+                )
+                if a != b
+            )
+            total_compared += compared
+
+        curve[str(sigma)] = (
+            total_errors / total_compared if total_compared else None
+        )
+
+    return curve
+
+
 def main() -> int:
     random.seed(SEED)
     np.random.seed(SEED)
@@ -335,8 +417,18 @@ def main() -> int:
         accuracy = None
         density = None
         n_samples = 0
+        robustness = None
 
         if extractability["embed_ok"]:
+            robustness = measure_robustness(residuals, name)
+            ber_001 = robustness.get("0.001")
+            print(
+                f"  BER @ sigma=0.001: "
+                f"{ber_001:.4f}" if ber_001 is not None
+                else "  BER @ sigma=0.001: n/a",
+                flush=True,
+            )
+
             accuracy, density, n_samples = measure_detectability(
                 residuals, name, device
             )
@@ -359,6 +451,11 @@ def main() -> int:
             extractability["structurally_usable"]
             and accuracy is not None
             and accuracy <= GATE
+            # A scheme that cannot survive the robustness gate is not a
+            # usable replacement, even if it evades the detector.
+            and robustness is not None
+            and robustness.get("0.001") is not None
+            and robustness["0.001"] <= 0.02
         )
 
         results.append(
@@ -368,6 +465,12 @@ def main() -> int:
                 "forces_sign_flip": strategy_spec.forces_sign_flip,
                 "extract_needs_cover": strategy_spec.extract_needs_cover,
                 "extractability": extractability,
+                "robustness_ber_curve": robustness,
+                "meets_robustness_gate": (
+                    robustness is not None
+                    and robustness.get("0.001") is not None
+                    and robustness["0.001"] <= 0.02
+                ),
                 "detector_accuracy": accuracy,
                 "meets_detector_gate": (
                     accuracy <= GATE if accuracy is not None else None
@@ -399,8 +502,8 @@ def main() -> int:
     )
 
     print()
-    print(f"{'strategy':<20}{'usable':>9}{'accuracy':>11}{'gate':>7}")
-    print("-" * 50)
+    print(f"{'strategy':<20}{'usable':>9}{'BER.001':>10}{'accuracy':>11}{'gate':>7}")
+    print("-" * 60)
     for r in results:
         usable = "yes" if r["extractability"]["structurally_usable"] else "no"
         acc = (
@@ -408,6 +511,8 @@ def main() -> int:
             if r["detector_accuracy"] is not None
             else "-"
         )
+        ber = (r.get("robustness_ber_curve") or {}).get("0.001")
+        ber_s = f"{ber:.4f}" if ber is not None else "-"
         verdict = (
             "PASS"
             if r["meets_detector_gate"] is True
@@ -415,7 +520,7 @@ def main() -> int:
             if r["meets_detector_gate"] is False
             else "N/A"
         )
-        print(f"{r['strategy']:<20}{usable:>9}{acc:>11}{verdict:>7}")
+        print(f"{r['strategy']:<20}{usable:>9}{ber_s:>10}{acc:>11}{verdict:>7}")
 
     print()
 

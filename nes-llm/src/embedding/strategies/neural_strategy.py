@@ -40,6 +40,9 @@ import torch.optim as optim
 from src.core.types      import EmbeddingConfig, EmbeddingResult
 from src.core.exceptions import EmbeddingError
 
+# Fixed seed for the memory-safe training path so a run is reproducible.
+SEED_TRAINER = 42
+
 
 # ------------------------------------------------------------------
 # Network architecture
@@ -257,8 +260,202 @@ class NeuralEmbeddingTrainer:
         model.eval()
         return model
 
+    # ------------------------------------------------------------------
+    # Memory-safe training
+    # ------------------------------------------------------------------
+
+    def train_sampled(
+        self,
+        residuals:   Dict[int, torch.Tensor],
+        epochs:      int = 30,
+        sample_size: int = 2_000_000,
+        verbose:     bool = True,
+    ) -> NeuralEmbeddingModel:
+        """
+        Train without materialising the full residual tensor.
+
+        Why this exists
+        ---------------
+        ``train()`` concatenates every layer, takes an absolute-value copy,
+        runs ``kthvalue`` over the whole thing, and then calls
+        ``torch.randperm(n_total)``. For Qwen2.5-3B that is 2.44B residual
+        values, so the allocations are roughly:
+
+            torch.cat(...)          9.8 GB
+            .abs()                 9.8 GB
+            randperm(n_total)     19.6 GB   (int64)
+            kthvalue                full pass
+
+        ~39 GB before the first batch, on a machine where the NF4+FP16
+        model pair already OOMs at 30 GB. That is why the neural strategy
+        had never produced a result: it was not slow, it was not runnable.
+
+        This version samples per layer with ``torch.randint`` (no
+        permutation over the full range), estimates the magnitude
+        threshold from a bounded subsample, and tops up to ``sample_size``
+        high-magnitude values. Peak allocation is the output, not the
+        input size.
+        """
+        layers = sorted(residuals.keys())
+
+        if not layers:
+            raise ValueError("No residual tensors supplied")
+
+        # --- 1. Bounded subsample to estimate the magnitude threshold
+        per_layer_probe = max(sample_size // (4 * len(layers)), 4096)
+        probe = torch.cat([
+            residuals[layer_id].flatten()[
+                torch.randint(
+                    0,
+                    max(residuals[layer_id].numel(), 1),
+                    (min(per_layer_probe, residuals[layer_id].numel()),),
+                    generator=torch.Generator().manual_seed(
+                        SEED_TRAINER + layer_id
+                    ),
+                )
+            ].float()
+            for layer_id in layers
+        ])
+
+        # Carriers are the high-magnitude tail, so aim at roughly the
+        # top 20% of the observed distribution.
+        quantile = float(
+            torch.quantile(
+                probe.abs(), 0.80
+            ).item()
+        )
+        del probe
+
+        # --- 2. Collect a bounded high-magnitude training pool
+        target_high = int(sample_size * 0.75)
+        high_chunks = []
+        collected = 0
+
+        for layer_id in layers:
+            tensor = residuals[layer_id].flatten()
+
+            if tensor.numel() == 0:
+                continue
+
+            # Stride sample: cheap, deterministic, no permutation.
+            stride = max(tensor.numel() // (target_high // len(layers) + 1), 1)
+            candidates = tensor[::stride][: target_high // len(layers) + 1]
+
+            selected = candidates[candidates.abs() >= quantile]
+            high_chunks.append(selected.float())
+            collected += selected.numel()
+
+            if collected >= target_high:
+                break
+
+        if not high_chunks:
+            raise ValueError(
+                "No residual values above the sampled magnitude "
+                "quantile; cannot build a training pool"
+            )
+
+        high_mag = torch.cat(high_chunks)[:target_high]
+
+        # --- 3. A smaller random pool for generalisation
+        target_random = sample_size // 4
+        random_chunks = []
+        for layer_id in layers:
+            tensor = residuals[layer_id].flatten()
+            take = min(tensor.numel(), target_random // len(layers) + 1)
+            idx = torch.randint(
+                0, max(tensor.numel(), 1), (take,),
+                generator=torch.Generator().manual_seed(
+                    SEED_TRAINER + 1000 + layer_id
+                ),
+            )
+            random_chunks.append(tensor[idx].float())
+
+        random_smp = torch.cat(random_chunks)[:target_random]
+
+        training_pool = torch.cat([high_mag, random_smp])
+        del high_chunks, random_chunks
+
+        training_pool = training_pool[
+            torch.randperm(training_pool.numel())
+        ].to(self.device)
+
+        print(
+            f"[NeuralTrainer] pool={training_pool.numel():,} "
+            f"threshold={quantile:.3e} device={self.device}",
+            flush=True,
+        )
+
+        model     = NeuralEmbeddingModel(self.hidden_dim).to(self.device)
+        optimizer = optim.Adam(model.parameters(), lr=self.lr)
+        scheduler = optim.lr_scheduler.CosineAnnealingLR(
+            optimizer, T_max=epochs
+        )
+        bce_loss  = nn.BCELoss()
+        mse_loss  = nn.MSELoss()
+
+        model.train()
+        n = training_pool.numel()
+        generator = torch.Generator(device=self.device).manual_seed(
+            SEED_TRAINER
+        )
+
+        for epoch in range(epochs):
+            perm = torch.randperm(n, device=self.device, generator=generator)
+
+            tot_recovery = tot_fidelity = tot_security = 0.0
+            batches = 0
+
+            for start in range(0, n, self.batch_size):
+                idx   = perm[start : start + self.batch_size]
+                batch = training_pool[idx]
+                bits  = torch.randint(
+                    0, 2, (len(batch),),
+                    device=self.device, generator=generator,
+                ).float()
+
+                optimizer.zero_grad()
+                modified, bit_prob = model(batch, bits)
+
+                loss_recovery = bce_loss(bit_prob, bits)
+                loss_fidelity = mse_loss(modified, batch)
+                loss_security = (
+                    (modified.mean() - batch.mean()).pow(2)
+                    + (modified.std() - batch.std()).pow(2)
+                )
+
+                loss = (
+                    loss_recovery
+                    + self.lambda_fidelity * loss_fidelity
+                    + self.lambda_security * loss_security
+                )
+
+                loss.backward()
+                optimizer.step()
+
+                tot_recovery += loss_recovery.item()
+                tot_fidelity += loss_fidelity.item()
+                tot_security += loss_security.item()
+                batches += 1
+
+            scheduler.step()
+
+            if verbose and (epoch + 1) % 5 == 0:
+                print(
+                    f"  Epoch {epoch+1:3d}/{epochs} | "
+                    f"recovery={tot_recovery/batches:.4f} | "
+                    f"fidelity={tot_fidelity/batches:.8f} | "
+                    f"security={tot_security/batches:.8f}",
+                    flush=True,
+                )
+
+        model.eval()
+        return model
+
     def save(self, model: NeuralEmbeddingModel, path: str) -> None:
-        os.makedirs(os.path.dirname(path) if os.path.dirname(path) else ".", exist_ok=True)
+        os.makedirs(
+            os.path.dirname(path) if os.path.dirname(path) else ".",
+            exist_ok=True,
+        )
         torch.save({
             "state_dict": model.state_dict(),
             "hidden_dim": self.hidden_dim,
