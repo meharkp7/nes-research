@@ -17,7 +17,7 @@ import torch
 
 from src.crypto.aes_cipher                  import AESCipher
 from src.carrier_intelligence.qaci_pipeline import QACIPipeline
-from src.embedding.sign_strategy_v2         import SignEmbeddingStrategy
+from src.embedding.strategy_registry        import build as build_strategy
 from src.embedding.payload_encoder          import PayloadEncoder
 from src.core.types                         import EmbeddingConfig
 
@@ -42,7 +42,16 @@ class IntelligentEmbedder:
             total_layers=config.num_hidden_layers,
             gamma=config.gamma,
         )
-        self.strategy = SignEmbeddingStrategy(config)
+
+        # Honour EmbeddingConfig.embedding_strategy. It used to be
+        # accepted and ignored: the constructor hardcoded
+        # SignEmbeddingStrategy, so no experiment could select a
+        # different scheme. Resolved through the registry so every
+        # strategy shares one contract.
+        self.strategy_name = (
+            config.embedding_strategy or "sign"
+        )
+        self.strategy = build_strategy(config, self.strategy_name)
 
     def embed(
         self,
@@ -91,6 +100,7 @@ class IntelligentEmbedder:
             bits_embedded=     embed_result.bits_embedded,
             success=           embed_result.success,
             embedded_bits=     all_bits,             # ADD THIS
+            strategy=          self.strategy_name,
         )
 
 
@@ -106,6 +116,7 @@ class EmbedResult:
         bits_embedded:      int,
         success:            bool,
         embedded_bits:      List[int] = None,   # ADD THIS
+        strategy:           str = None,
     ):
         self.embedded_residuals = embedded_residuals
         self.carrier_indices    = carrier_indices
@@ -116,6 +127,7 @@ class EmbedResult:
         self.bits_embedded      = bits_embedded
         self.success            = success
         self.embedded_bits      = embedded_bits or []   # ADD THIS
+        self.strategy           = strategy
 
     def summary(self) -> dict:
         return {
