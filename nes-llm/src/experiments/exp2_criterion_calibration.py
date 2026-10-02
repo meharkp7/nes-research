@@ -36,7 +36,7 @@ REQUIRED_FRACTION = 0.80
 
 def collect_profiles() -> List[Dict[str, Any]]:
     """Summarise every saved residual profile against the Exp2 gate."""
-    root = Path(__file__).resolve().parents[2]
+    root = REPO_ROOT
     rows = []
 
     for path in sorted(root.glob("residual_profile_*.json")):
@@ -76,7 +76,9 @@ def probe_quant_formats() -> List[Dict[str, Any]]:
     """
     from transformers import AutoModelForCausalLM, BitsAndBytesConfig
 
-    from src.model.registry import get_layer_module
+    from src.model.registry import get_layer_module  # noqa: E402
+
+from src.experiments.paths import REPO_ROOT, RESULTS_DIR  # noqa: E402
 
     import bitsandbytes.functional as bnb_func
 
@@ -197,8 +199,7 @@ def main() -> int:
 
     formats = probe_quant_formats()
 
-    out = Path(__file__).resolve().parents[2] / "results"
-    out.mkdir(parents=True, exist_ok=True)
+    out = RESULTS_DIR
     target = out / "exp2_criterion_calibration.json"
 
     target.write_text(

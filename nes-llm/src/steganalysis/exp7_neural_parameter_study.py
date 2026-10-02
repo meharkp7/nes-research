@@ -38,6 +38,7 @@ from src.core.types import EmbeddingConfig  # noqa: E402
 from src.embedding.intelligent_embedder import (  # noqa: E402
     IntelligentEmbedder,
 )
+from src.experiments.paths import RESULTS_DIR  # noqa: E402
 from src.experiments.residual_source import (  # noqa: E402
     load_cached_residuals,
 )
@@ -355,8 +356,7 @@ def main() -> int:
     print()
     print(conclusion)
 
-    out = Path(__file__).resolve().parents[2] / "results"
-    out.mkdir(parents=True, exist_ok=True)
+    out = RESULTS_DIR
     target = out / "exp7_neural_parameter_study.json"
 
     target.write_text(
