@@ -1,6 +1,6 @@
 {
   "schema_version": "1.0",
-  "generated_at": "2026-10-02T08:43:42.137534+00:00",
+  "generated_at": "2026-10-02T08:49:40.690065+00:00",
   "description": "NES multi-model experiment manifest. One entry per experiment x model cell. Status is never inferred from implementation alone.",
   "records": {
     "exp1::Qwen/Qwen2.5-3B": {
@@ -110,12 +110,14 @@
       },
       "source": "reused_artifact",
       "notes": "Reused a previously completed three-way Exp5 measurement. Reconstruction alone moves PPL substantially relative to the NF4 baseline; that component is not attributable to the payload.",
-      "updated_at": "2026-10-02T08:30:11.152214+00:00",
+      "updated_at": "2026-10-02T08:49:40.689944+00:00",
       "metrics": {
         "embedding_specific_delta_pct": -0.005286623081384053,
-        "ppl_degradation_pct": 0.005286623081384053
-      },
-      "duration_seconds": 0.0
+        "ppl_degradation_pct": 0.005286623081384053,
+        "nf4_baseline_ppl": 12.4707,
+        "reconstruction_control_ppl": 11.3494,
+        "embedded_ppl": 11.3488
+      }
     },
     "exp6::Qwen/Qwen2.5-3B": {
       "experiment": "exp6",

@@ -106,6 +106,16 @@ def parse_args(argv=None):
         ),
     )
     parser.add_argument(
+        "--recompute-exp5",
+        action="store_true",
+        help=(
+            "Recompute Exp5's three-way PPL measurement instead of "
+            "reusing the recorded result. Deliberately separate from "
+            "--force: this is an hours-long MPS run, so a routine cell "
+            "refresh must not trigger it."
+        ),
+    )
+    parser.add_argument(
         "--seed",
         type=int,
         default=42,
@@ -211,6 +221,7 @@ def main(argv=None) -> int:
             seed=args.seed,
             allow_neural_training=args.train_neural_detector,
             exp9_download=args.download_exp9,
+            recompute_exp5=args.recompute_exp5,
         )
     except KeyError as exc:
         print(f"\nCONFIGURATION ERROR: {exc}", file=sys.stderr)

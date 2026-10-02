@@ -1,6 +1,6 @@
 # NES Multi-Model Research — Final Summary
 
-Generated: 2026-10-02T08:43:42.631839+00:00
+Generated: 2026-10-02T08:49:48.605775+00:00
 
 This summary is generated from `results/experiment_manifest.json`. Every number below corresponds to a saved artifact.
 
@@ -69,9 +69,9 @@ Total cells: 11. PASS and FAIL both represent completed experiments; only FAIL m
 ### 4.4 Fidelity
 
 - Status: **PASS**
-- NF4 baseline PPL: -
-- Reconstruction control PPL: -
-- Embedded PPL: -
+- NF4 baseline PPL: 12.4707
+- Reconstruction control PPL: 11.3494
+- Embedded PPL: 11.3488
 - Embedding-specific degradation: 0.00528662% (gate < 2%)
 
 ### 4.5 Non-NF4 formats (Exp9)

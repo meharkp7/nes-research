@@ -50,6 +50,7 @@ class Runner:
         seed: int = 42,
         allow_neural_training: bool = False,
         exp9_download: bool = False,
+        recompute_exp5: bool = False,
     ):
         self.models = list(models)
         self.experiments = resolve_order(experiments or experiment_names())
@@ -57,6 +58,7 @@ class Runner:
         self.seed = seed
         self.allow_neural_training = allow_neural_training
         self.exp9_download = exp9_download
+        self.recompute_exp5 = recompute_exp5
 
         self.manifest = manifest_mod.load()
         self.contexts: Dict[str, ModelContext] = {}
@@ -185,9 +187,12 @@ class Runner:
         if experiment == "exp7_neural":
             kwargs["allow_training"] = self.allow_neural_training
         elif experiment == "exp5":
-            # Exp5 reuses a recorded three-way PPL measurement by
-            # default; --force is the explicit opt-in to recompute it.
-            kwargs["force"] = self.force
+            # Separate from --force on purpose. --force means "redo this
+            # cell"; recomputing the three-way PPL is a much heavier
+            # decision, so it needs its own explicit opt-in. Otherwise a
+            # routine artifact refresh would silently trigger an hours-
+            # long MPS PPL run.
+            kwargs["force"] = self.recompute_exp5
 
         started = time.time()
 
@@ -443,6 +448,8 @@ def _summary_metrics(artifact: Dict[str, Any]) -> Dict[str, Any]:
         "ber", "payload_bits", "max_tested_payload_at_ber_zero_bits",
         "kl_divergence", "statistical_detector_accuracy", "accuracy",
         "embedding_specific_delta_pct", "ppl_degradation_pct",
+        "nf4_baseline_ppl", "reconstruction_control_ppl",
+        "embedded_ppl", "reconstruction_only_delta_pct",
         "ber_at_sigma_0_001", "ber_at_sigma_0_002",
         "fraction_above_threshold", "layer_mismatch",
     )
