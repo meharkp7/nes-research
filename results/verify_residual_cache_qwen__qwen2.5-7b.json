@@ -1,0 +1,44 @@
+{
+  "experiment": "verify_residual_cache",
+  "purpose": "Qwen2.5-7B residual magnitude is 7.9x every other model with a 10x within-model spread, which does not look like a model property.",
+  "model_id": "Qwen/Qwen2.5-7B",
+  "family": "qwen",
+  "layers_checked": [
+    0,
+    14,
+    27
+  ],
+  "rows": [
+    {
+      "layer_id": 0,
+      "bit_exact": true,
+      "max_abs_diff": 0.0,
+      "live_mag_mean": 0.009929805994033813,
+      "cached_mag_mean": 0.009929805994033813,
+      "mag_ratio": 1.0,
+      "shape_match": true
+    },
+    {
+      "layer_id": 14,
+      "bit_exact": true,
+      "max_abs_diff": 0.0,
+      "live_mag_mean": 0.012712567113339901,
+      "cached_mag_mean": 0.012712567113339901,
+      "mag_ratio": 1.0,
+      "shape_match": true
+    },
+    {
+      "layer_id": 27,
+      "bit_exact": true,
+      "max_abs_diff": 0.0,
+      "live_mag_mean": 0.0012118675513193011,
+      "cached_mag_mean": 0.0012118675513193011,
+      "mag_ratio": 1.0,
+      "shape_match": true
+    }
+  ],
+  "all_bit_exact": true,
+  "mag_ratio_min": 1.0,
+  "mag_ratio_max": 1.0,
+  "cache_is_trustworthy": true
+}

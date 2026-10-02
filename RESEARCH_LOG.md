@@ -489,3 +489,64 @@ find produces 70%+ immediately.
 with `DEFAULT_GRID_WIDTH = 0.010`). Keep sign as the default — changing the
 default is a research decision, not something to do silently in either
 direction.
+
+---
+
+## 11. Item 1 — Qwen2.5-7B residual cache verification
+
+**Question:** `mag_mean` was 0.009412, ~7.9× every other model, with a 10×
+spread *within* the model while all others are tightly clustered. That does
+not look like a model property.
+
+**Verification** (`src/model/verify_residual_cache.py`) compared cached
+residuals against freshly extracted ones, layer by layer, releasing each
+before the next so memory stays bounded:
+
+```
+layer  0: exact=True  live_mag=0.009930  cached_mag=0.009930  max_diff=0.000e+00
+layer 14: exact=True  live_mag=0.012713  cached_mag=0.012713  max_diff=0.000e+00
+layer 27: exact=True  live_mag=0.001212  cached_mag=0.001212  max_diff=0.000e+00
+
+bit-exact on all layers : True
+VERDICT                 : cache matches live extraction
+```
+
+**The cache is correct.** The large magnitude is real: Qwen2.5-7B genuinely
+has a **bimodal** residual distribution — layers 25/27 sit at ~0.0012 while
+layers 0–20 sit at ~0.010–0.013.
+
+### The actual bug was in the recorded profile, not the cache
+
+Comparing the cache against the profile committed at `000f660`:
+
+| layer | cache mag_mean | old profile | ratio |
+|---|---|---|---|
+| 0 | 0.009930 | 0.001070 | 0.108 |
+| 14 | 0.012713 | 0.001221 | 0.096 |
+| 20 | 0.013017 | 0.001251 | 0.096 |
+| 25 | 0.001273 | 0.001273 | **1.000** |
+| 27 | 0.001212 | 0.001212 | **1.000** |
+
+The old profile matches the cache **exactly** for the small-magnitude
+layers and under-reports by ~10× for the large ones. That is a profiler
+biased toward low-magnitude values, not cache drift.
+
+Why it went unnoticed: the bug is invisible on every other model because
+their layers all sit near the low end (Qwen-3B at ~0.0018), where a bias
+toward small values barely moves the mean. Qwen-7B is the only model whose
+layer distribution is spread enough to expose it. The Qwen-3B profile
+reproduced to 4e-6 relative precisely because that model could not reveal
+the error.
+
+**Decision:** the current profile (recomputed from the verified cache) is
+correct and supersedes the old one. The old artifact is preserved in git
+history. **Not** re-derived further — the cache is bit-exact against live
+extraction, which is the strongest available check.
+
+**Consequence:** the Qwen2.5-7B numbers in the manifest are valid. The
+earlier concern about them was wrong, and is now closed rather than
+outstanding.
+
+**Not investigated:** the exact mechanism of the old profiler's bias. That
+profiling path has been replaced by `LayerProfiler`; the old numbers are
+only in git history. Worth knowing if any pre-existing artifact used it.
