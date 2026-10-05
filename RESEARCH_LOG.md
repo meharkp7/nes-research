@@ -1129,3 +1129,113 @@ that scored exactly 50% and looked like security wins. The verification
 gates that now exist — real bit comparison, dequantization correlation,
 `INVALID STUDY` on an all-chance sweep, cover-free round trip — each came
 directly from one of those.
+
+## 18. Recent updates — the audit became a script
+
+Written after §17, because the work that followed it was not more
+measurement but more *reading*: every MEASURED claim in
+`RESEARCH_PLAN.md` was checked against the file it claims to come from,
+and four did not match. Nothing that was measured turned out wrong.
+Four sentences were.
+
+### 18.1 `claim_audit.py`
+
+`nes-llm/claim_audit.py` makes this section executable: 30 checks, each
+re-deriving one MEASURED claim from `results/*.json`. It exits non-zero
+on any claim it cannot verify — a number it cannot find is UNVERIFIED,
+never assumed true — and it reads its gate values from
+`experiment_registry.THRESHOLDS`, so moving a threshold breaks the audit
+as well as the experiment.
+
+It checks **counts** as well as values: how many models were measured,
+which layers were compared, which entries are in the file. That is the
+finding rather than a refinement of it. All four failures were counts
+that had drifted from their source while every value underneath stayed
+correct — which is precisely why reading the numbers again found nothing
+and re-deriving them did.
+
+### 18.2 The four findings
+
+Full detail is in §17; this is the index.
+
+| # | claim as written | what the artifact said | closed by |
+|---|---|---|---|
+| 1 | "5 of 5 measured models pass both gates" (§7, and its commit message) | 4 entries, 3 measured — Qwen2.5-3B and Mistral-7B absent, not skipped | re-running exp12 across all 6 cached models: 5 measured, 1 skipped, BER 0.0000 / detector 50.00% on every measured row |
+| 2 | exp2 "fails on 6 of 7 models"; §4.1 "1/7 pass … Six fail" | manifest: 4 of 7 fail, 3 pass. The calibration said `models_passing: 1` while its own `finding` said "Zero of 7" | reworded to the cells; the generator now counts, and the artifact was regenerated — 3 of 8, agreeing with exp2 on every shared model |
+| 3 | "Sign robustness BER 0 at σ=0.001" (three places) | 6 of 7 are exactly 0.0; Mistral-7B is 0.00115 and 0.01074 — both inside the 0.02 / 0.10 gates | reworded; no cell changed and no gate moved |
+| 4 | "7 models covered, 0 errors" | those 33 cells are the NF4 grid; GPTQ and AWQ are separate checkpoints with separate dequantizers | reworded to 9 model ids, 35/6/0, format split stated wherever the number appears |
+
+Findings 1 and 2 were closed by **producing the artifact that should
+have existed**. Findings 3 and 4 were closed by narrowing a claim to
+what was already measured. None was closed by changing a result:
+exp7_neural still fails at 70.5%, exp8 still inherits it, exp2 still
+fails on 4 models, and every threshold is unchanged — `claim_audit.py`
+asserts that last point itself.
+
+The shape is the same in all four: a claim one word wider than its
+evidence. "5 of 5" written from console output; "6 of 7" lifted from a
+diagnostic that measured a different set of files; "BER 0" an average
+standing in for a maximum; "7 models" a grid count wearing a suite's
+name.
+
+### 18.3 Commits
+
+| hash | what |
+|---|---|
+| `3cbe536` | AWQ nibble order from AutoAWQ source, absorbed-scale gate, thresholds moved into the registry |
+| `838e7c9` | exp9 verifies every layer and names the ones that fail |
+| `5263fab` | results regenerated: 35 PASS / 6 FAIL / 0 NOT_RUN |
+| `7132f5e` | §16/§17 written, `RESEARCH_PLAN` restructured into Phases A–D, claim-audit section added |
+| `6b8f5b8` | `claim_audit.py` created |
+| `e88c473` | finding 2 (exp2's counts) corrected in both documents |
+| `f69b929` | the suite's two import errors repaired → 38 tests OK |
+| `34a41e4` | `nes-llm/README.md` filled (it was tracked and empty) |
+| `4d149e8` | 19 tracked `.pyc` files untracked and ignored |
+| `a688eba` | verification commands and state recorded in the documents |
+| `62083cc` | findings 1 and 2 closed by re-running exp12 and the calibration |
+
+### 18.4 What was repaired along the way
+
+- **The test suite could not finish.** `unittest discover` reported
+  `FAILED (errors=2)` on every run, and neither error was an assertion.
+  `test_integration` imported pytest — not installed in this
+  environment — and never used it. `test_keyed_embedding` contained no
+  tests at all: a scratch script whose last statement decoded a
+  *wrong-key* stream, which raises, so importing the file was an error
+  rather than a run. Its intent is now three assertions, and a
+  wrong-key decode is treated as non-recovery rather than pinned to a
+  particular exception. 38 tests, OK.
+- **`nes-llm/README.md` was tracked and zero bytes.** The package's
+  entry point was a blank page while the instructions lived in a 32KB
+  handoff written for a previous agent. It now carries layout, how to
+  run, the verification commands, and an experiment table with every
+  gate and every state, FAILs included.
+- **19 `.pyc` files were in the index.** A committed byte-code file
+  records which source produced it, so it goes stale the moment the
+  source does and disagrees with it afterwards — the same failure mode
+  as the four findings, in a file nobody reads. Untracked and ignored.
+
+### 18.5 What verification now runs
+
+```bash
+cd nes-llm
+python run_nes_experiments.py --audit   # cell states   35 PASS / 6 FAIL / 0 NOT_RUN
+python check_consistency.py             # cross-artifact 9/9
+python claim_audit.py                   # MEASURED claims 30/30
+python -m unittest discover -s tests -p 'test_*.py'   # 38 tests, OK
+```
+
+The generated report carries the same three commands in its §9, so
+anyone holding the report can re-derive it rather than trust it.
+
+### 18.6 State at this commit
+
+35 PASS / 6 FAIL / 0 NOT_RUN / 0 ERROR; 30/30 claims verified; 9/9
+consistency checks; 38 tests. All four findings closed, and the warning
+marker is now absent from both documents — which is what makes it worth
+keeping as a marker rather than deleting: its presence in either
+document means a claim is open. And **no result, threshold or verdict
+changed by any of it**. The audit altered claims about the work, not the
+work, which is the only outcome that should have been possible and the
+one worth stating: an audit that starts "improving" numbers is a
+conflict of interest with a progress bar.
