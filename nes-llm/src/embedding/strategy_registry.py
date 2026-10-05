@@ -151,6 +151,14 @@ def _qae(config):
     return QaeDictAdapter(config)
 
 
+def _adaptive(config):
+    from src.embedding.strategies.adaptive_strategy import (
+        AdaptiveStrategy,
+    )
+
+    return AdaptiveStrategy(config)
+
+
 def _nf4_qae(config):
     raise RuntimeError(
         "nf4_qae is BLOCKED: its reference residual comes from "
@@ -282,6 +290,32 @@ REGISTRY: Dict[str, StrategySpec] = {
             "requires extending the shared embed contract for every "
             "strategy — an author decision, recorded here rather "
             "than bolted onto one experiment."
+        ),
+    ),
+    "adaptive": StrategySpec(
+        name="adaptive",
+        factory=_adaptive,
+        module="src.embedding.strategies.adaptive_strategy",
+        class_name="AdaptiveStrategy",
+        # Branch-dependent: the sign branch flips, the lwe/neural
+        # branches do not. The artifact records which branch the
+        # noise estimate actually fired.
+        forces_sign_flip=False,
+        extract_needs_cover=False,
+        needs_trained_model=True,
+        status="READY",
+        notes=(
+            "W5.1 meta-strategy: estimates sigma from first-order "
+            "residual differences and routes (sigma < 0.0005 -> lwe, "
+            "< 0.003 -> neural, else sign). forces_sign_flip is "
+            "BRANCH-DEPENDENT — see the artifact for which branch "
+            "fired. Extraction dispatches to the selected branch's "
+            "companion via AdaptiveRoutedExtractor. The neural "
+            "branch raises EmbeddingError without a trained model "
+            "(needs_trained_model: true); the lwe branch builds "
+            "LWEStrategy with a fresh random secret_key per run, so "
+            "its encoding is not bit-identical to the registry's "
+            "zero-key lwe."
         ),
     ),
 }

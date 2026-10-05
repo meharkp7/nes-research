@@ -148,6 +148,16 @@ THRESHOLDS = {
         "max_ber_at_sigma_0_002": 0.10,
         "max_detector_accuracy": 0.55,
     },
+    "exp19": {
+        "description": (
+            "Adaptive routing (W5.1): every branch round trip that "
+            "runs must hold at the round-trip gate — exp3's 0.0, "
+            "reused. WHICH branch the noise estimate selects is "
+            "measurement, not gate; a route to an unavailable "
+            "branch is recorded as the design's own failure."
+        ),
+        "max_ber": 0.0,
+    },
 }
 
 

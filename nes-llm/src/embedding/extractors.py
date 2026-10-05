@@ -58,10 +58,38 @@ class LweParityExtractor:
         )
 
 
+class AdaptiveRoutedExtractor:
+    """Decoder for whichever branch ``AdaptiveStrategy`` selected.
+
+    Only the strategy knows which branch the noise estimate routed to,
+    so the companion extractor is fetched from it at call time
+    (``get_extractor``). ``residuals_ref`` — the cover, when a caller
+    genuinely has one — is forwarded the way the design's own
+    companion expects; with no cover (what an extractor really holds)
+    the stego tensor stands in, which ``LWEStrategy.extract``
+    documents as equivalent for sparse payloads.
+    """
+
+    def __init__(self, strategy):
+        self.strategy = strategy
+
+    def extract(
+        self,
+        residuals: Dict[int, torch.Tensor],
+        carrier_indices: Dict[int, List[int]],
+        residuals_ref: Optional[Dict[int, torch.Tensor]] = None,
+    ) -> List[int]:
+        ref = residuals_ref if residuals_ref is not None else residuals
+        return self.strategy.get_extractor(ref).extract(
+            residuals, carrier_indices
+        )
+
+
 # Strategies whose encoding is not a sign flip, and therefore need an
 # extractor other than SignExtractor.
 NON_SIGN_EXTRACTORS: Dict[str, Callable] = {
     "lwe": LweParityExtractor,
+    "adaptive": AdaptiveRoutedExtractor,
 }
 
 # Everything else uses sign, which is what production already does.
