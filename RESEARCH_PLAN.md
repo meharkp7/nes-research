@@ -31,11 +31,12 @@ Read `RESEARCH_LOG.md` first for how we got here and which mistakes to not repea
 | Sign detection is structural | α×100, γ×5, payload×10 → 69.4–74.4% | `results/exp7_neural_parameter_study.json` |
 | LWE grid encoding is extractable without the cover | BER 0.5036 → 0.0000 (`extract_needs_cover: false`) | `results/exp10_*.json` |
 | LWE passes both gates on 5/5 measured models | BER 0.0000, detector 50.00%; TinyLlama SKIPPED (incomplete cache) | `results/exp12_lwe_cross_model.json` |
+| **LWE channel is not key-gated (W4.2)** | keyless read of all 10,256 bits at **BER 0.0**, positions at precision/recall 1.0; grid width is one public constant → gate **FAIL** | `results/exp13_keyless_recovery.json` |
 | **NES round-trips at BER 0.0 through three 4-bit formats: NF4, GPTQ, AWQ** | GPTQ corr 0.9903 / AWQ corr 0.9941 (raw 0.9890) | `results/exp9_formats.json` |
 | 9 model ids covered, 0 ERROR | 35 PASS / 6 FAIL / **0 NOT_RUN** | `results/experiment_manifest.json` |
 
 **How those rows are kept honest.** `nes-llm/claim_audit.py` re-derives every
-MEASURED row above from disk: **31/31 pass**, with `check_consistency.py` at
+MEASURED row above from disk: **39/39 pass**, with `check_consistency.py` at
 9/9 and a 38-test suite running green. Four claims in this document failed
 that audit while it was being built — a coverage figure with no artifact
 behind it, an average reported as a maximum, a count lifted from a different
@@ -92,13 +93,13 @@ any session that touches a result.
 cd nes-llm
 ../.venv/bin/python run_nes_experiments.py --audit    # manifest matrix
 ../.venv/bin/python check_consistency.py              # 9/9 must pass
-../.venv/bin/python claim_audit.py                    # 31/31 must pass
+../.venv/bin/python claim_audit.py                    # 39/39 must pass
 ```
 
 `claim_audit.py` is this section made executable: each row is re-derived from
 the artifact it names — counts included, because every claim that failed this
 audit failed on a count while the values underneath stayed correct — and it
-exits non-zero on anything it cannot verify. It passes **31/31** as written.
+exits non-zero on anything it cannot verify. It passes **39/39** as written.
 
 Four claims in this document failed it. Three are corrected in the audit notes
 below (exp12 coverage, exp6 robustness, exp2's count) and the fourth — the
@@ -119,6 +120,7 @@ record.
 | Statistical detection | below 55% gate | `exp7_*.json` |
 | LWE extractable without cover | 0.5036 → 0.0000, `extract_needs_cover: false` | `exp10_*.json` |
 | LWE both gates | BER 0.0, detector 50.00%, **5 of 5** measured models pass (TinyLlama skipped) | `exp12_lwe_cross_model.json` |
+| **LWE keyless recovery (W4.2)** | phase attacker: precision 1.0, recall 1.0, **stream BER 0.0 over 10,256 bits**, no key/cover/params; clean control 0 candidates; shipped width = 0.010 on 36 layers × 6 keys, `keyed_branch_active: false` | `exp13_keyless_recovery.json` |
 | **GPTQ round trip** | BER **0.0**, 10,256/10,256 bits, corr 0.9903, 36/36 layers | `exp9_formats.json` |
 | **AWQ round trip** | BER **0.0**, 10,256/10,256 bits, corr 0.9941, **35/36 layers** | `exp9_formats.json` |
 | Suite coverage | 35 PASS / 6 FAIL / 0 NOT_RUN / 0 ERROR | `experiment_manifest.json` |
@@ -169,7 +171,7 @@ model — including the pair that exposed the staleness.
 
 `python nes-llm/claim_audit.py` re-derives every MEASURED claim in this
 section from `results/*.json` and exits non-zero on any it cannot
-verify. All 31 checks pass at the time of writing. Run it before citing
+verify. All 39 checks pass at the time of writing. Run it before citing
 any number here.
 
 ### FAIL — measured, gate did not pass, not rewritten
@@ -181,6 +183,7 @@ any number here.
 | `exp8` cross-model | FAIL | correctly inherits the neural FAIL rather than averaging it away |
 | AWQ `model.layers.2.mlp.down_proj` | corr 0.9337 | excluded from Exp9's residual set and named in `metrics.layers_excluded` |
 | AWQ `model.layers.32` / `33` `self_attn.v_proj` | 0.9211 / 0.9147 | same; outside Exp9's module type entirely |
+| `exp13` LWE keyless recovery | attacker BER **0.0** vs `min_keyless_ber` 0.5 | the strategy's own docstring claims were tested with falsification criteria attached; the message itself stays AES ciphertext |
 
 ### IMPLEMENTED — exists, tested, no result depends on it
 
@@ -188,7 +191,7 @@ any number here.
 |---|---|---|
 | GPTQ + AWQ dequantizers | `src/quantization/adapters.py` | 20 tests in `tests/test_quantization_adapters.py` |
 | `verify_dequantization` gate | `adapters.py` | includes the absorbed-scale correction and the NaN-safe comparison |
-| `claim_audit.py` | `nes-llm/claim_audit.py` | 31 checks re-deriving every MEASURED claim — counts included — and exiting non-zero on any it cannot verify |
+| `claim_audit.py` | `nes-llm/claim_audit.py` | 39 checks re-deriving every MEASURED claim — counts included — and exiting non-zero on any it cannot verify |
 | `QuantizationStrategy`, `NF4QuantizationStrategy` | strategy registry | per-tensor ABC, needs an adapter; **never run** |
 | Neural strategy `train_sampled()` | adaptive strategy | **never run** |
 | `adaptive_strategy` noise routing | strategy registry | **never run** |
@@ -373,7 +376,13 @@ Things a research prototype has no answer for:
 - **W4.2 keyless detection.** Could an attacker find the key by searching grid widths?
   LWE's grid width is derived from `HMAC(key, layer_id)` — is the *scale* recoverable
   from the weights alone? If an attacker recovers the scale they may not need the key
-  to read bits, which breaks confidentiality.
+  to read bits, which breaks confidentiality. **Done — `results/exp13_keyless_recovery.json`,
+  gate FAIL.** The scale was never keyed in the shipped path (one public constant,
+  `keyed_branch_active: false`, 0/36 layers key-dependent even in the designed
+  formula), and an attacker with the weights and that constant reads all 10,256 bits
+  at BER 0.0 with positions at precision/recall 1.0. Scope: the payload is AES-GCM
+  ciphertext, so *message* confidentiality is untouched — what fails is the channel's
+  key-gating claim. Full record: `RESEARCH_LOG.md` §19.
 - **W4.3 multiple payloads.** What if two payloads share a model? Collision and
   crosstalk behaviour is unknown.
 - **W4.4 capacity limits.** What is the true maximum, and what breaks first —
@@ -381,7 +390,8 @@ Things a research prototype has no answer for:
 - **W4.5 malformed input.** Recovery from a partially-written payload.
 
 **W4.2 is the one I'd do first.** It is a potential break of the security property and
-it is cheap to test.
+it is cheap to test. *(Done — it is a break: exp13, gate FAIL, §0 and
+`RESEARCH_LOG.md` §19.)*
 
 ---
 
@@ -547,7 +557,7 @@ invalidate later work.
 
 | # | Item | Why here |
 |---|---|---|
-| 1 | **W4.2** key/scale recoverability | cheap; potential break of the security property |
+| 1 | **W4.2** key/scale recoverability — **done, exp13: FAIL** | cheap; potential break of the security property (it was) |
 | 2 | **W3.2** blind-patch adversary | cheapest test of the central claim |
 | 3 | **W2** LWE perplexity | biggest hole; invalidates the strategy choice if it fails |
 | 4 | **W3.1** cross-scheme detector | the claim's main weakness |

@@ -971,7 +971,7 @@ evidence; this is the version that survives.
 **Coverage: 35 PASS, 6 FAIL, 0 NOT_RUN, 0 ERROR.**
 Every registry model now has cells, and no cell is left unrun. 9/9
 consistency checks pass, the test suite runs clean (38 tests, OK), and
-`nes-llm/claim_audit.py` re-derives 31 MEASURED claims from the
+`nes-llm/claim_audit.py` re-derives 39 MEASURED claims from the
 artifacts on disk rather than from this prose — its failures, when it
 has any, are the findings below.
 
@@ -1009,8 +1009,8 @@ Four claims did not survive the final audit, and **all four are now
 closed** — three by rewording the claim, one by producing the artifact
 that should have existed. They are recorded rather than quietly
 corrected, because a document that only ever gets righter is not an
-audit. The audit is `nes-llm/claim_audit.py`: 31 checks, re-derived from
-`results/*.json`, **31/31 passing at the time of writing**.
+audit. The audit is `nes-llm/claim_audit.py`: 39 checks, re-derived from
+`results/*.json`, **39/39 passing at the time of writing**.
 
 **1. exp12 coverage — closed by re-running it.** §7 and its commit
 message state *5 of 5 measured models pass both gates*, with a six-row
@@ -1140,7 +1140,7 @@ Four sentences were.
 
 ### 18.1 `claim_audit.py`
 
-`nes-llm/claim_audit.py` makes this section executable: 31 checks, each
+`nes-llm/claim_audit.py` makes this section executable: 39 checks, each
 re-deriving one MEASURED claim from `results/*.json`. It exits non-zero
 on any claim it cannot verify — a number it cannot find is UNVERIFIED,
 never assumed true — and it reads its gate values from
@@ -1221,7 +1221,7 @@ name.
 cd nes-llm
 python run_nes_experiments.py --audit   # cell states   35 PASS / 6 FAIL / 0 NOT_RUN
 python check_consistency.py             # cross-artifact 9/9
-python claim_audit.py                   # MEASURED claims 31/31
+python claim_audit.py                   # MEASURED claims 39/39
 python -m unittest discover -s tests -p 'test_*.py'   # 38 tests, OK
 ```
 
@@ -1230,7 +1230,7 @@ anyone holding the report can re-derive it rather than trust it.
 
 ### 18.6 State at this commit
 
-35 PASS / 6 FAIL / 0 NOT_RUN / 0 ERROR; 31/31 claims verified; 9/9
+35 PASS / 6 FAIL / 0 NOT_RUN / 0 ERROR; 39/39 claims verified; 9/9
 consistency checks; 38 tests. All four findings closed, and the warning
 marker is now absent from both documents — which is what makes it worth
 keeping as a marker rather than deleting: its presence in either
@@ -1239,3 +1239,125 @@ changed by any of it**. The audit altered claims about the work, not the
 work, which is the only outcome that should have been possible and the
 one worth stating: an audit that starts "improving" numbers is a
 conflict of interest with a progress bar.
+
+---
+
+## 19. Phase B begins — W4.2 keyless recovery (exp13)
+
+First item of the suggested order (`RESEARCH_PLAN` §7 #1). §3 W4.2 asks
+whether an attacker could recover the LWE grid scale from the weights
+alone and read bits without the key, and calls it *"a potential break of
+the security property and cheap to test."* It is a break.
+
+### 19.1 What was built
+
+`nes-llm/src/experiments/exp13_keyless_recovery.py` — a standalone
+module in the exp12 mould (artifact + claim-audit checks, not a manifest
+cell, so the coverage numbers are untouched). The gate lives where
+ground rule 2 says it must, `THRESHOLDS["exp13"]`:
+
+- `min_keyless_ber ≥ 0.5` — an attacker holding only the released model
+  must be at chance reading the bitstream, and
+- `min_width_search_relative_error ≥ 0.01` — the scale must not be
+  locatable to within 1% from the weights alone.
+
+Both must hold; either failing records FAIL. Attacker model is
+Kerckhoffs: the released model and the public source, nothing else — no
+key, no cover, no carrier map, no payload parameters. One scope
+statement that the artifact carries and any citation must too: the
+payload is AES-256-GCM ciphertext (the embedder encrypts before
+embedding), so *message* confidentiality is not under test and is not
+claimed broken. What fails is the strategy's own claim that the hidden
+channel is key-gated.
+
+### 19.2 The measurement
+
+| tier | holds | result |
+|---|---|---|
+| shipped path | — | width **0.010, one distinct value** over 36 layers × 6 keys; `keyed_branch_active: false` — HMAC is computed and discarded |
+| designed control | — | forcing `grid_width=None`: **0/36 layers** key-dependent, spread 0.0 — the `min_magnitude` floor dominates the key term everywhere |
+| key invariance | any key | 6 keys decode identical streams, max pairwise **BER 0.0** |
+| **phase attacker** | weights + public constant | **precision 1.0, recall 1.0, stream BER 0.0 over all 10,256 bits**; clean control yields **0** candidate positions at 1e-5 / 1e-6 / 1e-7 |
+| Kerckhoffs re-run | + public QACI pipeline + payload size | precision ≈ 0.65, 0–4 of 36 layer allocations match, BER ≈ 0.49 (chance) — shifted allocations misalign the stream |
+| width search | weights only | spike on layer 0 (1 layer scanned); argmax **ties {0.002, 0.010} at 153/153**; `5w` partial (68 — carriers whose interval index ≡ 2 mod 5), `w/2` and `2w` score 0; detection survives only ±1e-7 (±1e-6 partial, ±1e-5 dead) while **decoding tolerates ±1% at BER 0**, and the tied `w/5` decodes at BER 0.0 |
+
+Gate: **FAIL** — `min_keyless_ber` failed (0.0 against 0.5). The width
+condition "passes" at 0.8 only because the argmax is `w/5`, a
+parity-equivalent subdivision; the artifact records it as a tie
+(`true_width_tied_for_best: true`), not as concealment. Reading the 0.8
+alone would say the search missed, when search, detection and decode
+all land on the same lattice.
+
+All three security claims in the strategy docstring
+(`lwe_strategy.py:13-17`) are recorded **REFUTED**, each with its
+falsification criterion in the artifact: the spacing (public constant,
+keyed branch unreachable, 0/36 in the designed formula), the parity
+mapping (six keys, identical bits), the positions (precision/recall 1.0
+from the weights alone).
+
+**What this does and does not break.** The LWE channel is readable by
+anyone with the model and the source. The message stays AES ciphertext —
+nothing here touches AES. The production default (sign) is unaffected;
+this is specific to LWE. And the fix direction is visible in the same
+numbers: a genuinely secret width would deny the phase attacker its
+lattice (detection dies at 1e-5), so keying the width would matter —
+the defect is that the shipped path never keys it.
+
+### 19.3 Two side findings
+
+- **exp11/exp12's width-forcing hooks are dead.** Measured:
+  `patched(0.002) → 0.01`, `patched(0.05) → 0.01` — the constructor
+  substitutes `DEFAULT_GRID_WIDTH` before the patched `min_magnitude`
+  can reach `_derive_interval_width`. exp11's own artifact predates the
+  constant (its rows genuinely vary: BER 0.5857 → 0.0127 → 0.0 → 0.0,
+  detector 0.706 at 0.05), so the published frontier stands as
+  measured. But a future re-run with `--grid-width` other than 0.010
+  would silently measure the default. exp12's re-run this session used
+  0.010 and is unaffected.
+- **Re-running the public pipeline is the weaker attack.** The
+  embedding changes layer statistics enough to shift the Hamilton
+  allocation (matching on 4/36 layers in one run, 0/36 in another),
+  which misaligns the concatenated stream to chance. The physical
+  center signature needs no allocation at all — which is why the phase
+  tier, not the "knows everything public" tier, is the one that reads
+  the channel.
+
+### 19.4 Development runs — recorded, not hidden
+
+Three runs, because two of them taught something:
+
+1. The width search reported "no spike found" after scanning all 36
+   layers. A bug, not a measurement: the break condition required
+   `median > 0`, but background hits at this tolerance are exactly 0,
+   so `3 × median` was never reachable. Fixed to
+   `best > max(3·median, median + 5)`.
+2. The search then found the spike but reported argmax 0.002 against a
+   true 0.010 with no explanation — which reads as a failed search
+   unless the tie scores are on the record. Added
+   `argmax_candidates`, `true_width_tied_for_best` and
+   `scores_at_published_widths`, plus `w/5` and `5w` points in the
+   decode curve.
+3. Final.
+
+The Kerckhoffs tier varies run to run — a fresh AES key per run means
+different ciphertext bits, hence different stego layout (precision
+0.645 → 0.642 → 0.653, BER 0.487 → 0.498 → 0.494). `claim_audit`
+range-checks it as "chance" (0.4–0.6) instead of pinning a digit;
+everything else in the artifact is deterministic and pinned.
+
+### 19.5 Verification
+
+```bash
+cd nes-llm
+../.venv/bin/python claim_audit.py                    # 39/39
+../.venv/bin/python check_consistency.py              # 9/9
+../.venv/bin/python -m unittest discover -s tests -p 'test_*.py'   # 38 OK
+../.venv/bin/python -m src.experiments.exp13_keyless_recovery      # re-runs
+```
+
+State: 39/39 claims (the 8 new ones are the exp13 section), 9/9
+consistency, 38 tests, manifest unchanged at 35 PASS / 6 FAIL /
+0 NOT_RUN / 0 ERROR — exp13 sits outside the manifest grid, and its
+FAIL is a gate verdict recorded in the artifact and the claim audit,
+not a seventh manifest cell. The six manifest FAILs are still exp2 ×4,
+exp7_neural and exp8.
