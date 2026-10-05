@@ -158,6 +158,19 @@ THRESHOLDS = {
         ),
         "max_ber": 0.0,
     },
+    "exp20": {
+        "description": (
+            "Sign/parity split dial (W5.3): the same four numbers "
+            "exp18 reused, per fraction cell — round trip exp3's "
+            "0.0, robustness exp6's 0.02/0.10, detector exp7's "
+            "0.55. The TRADE-OFF SHAPE across fractions is the "
+            "measurement; per-cell verdicts, no experiment verdict."
+        ),
+        "max_ber": 0.0,
+        "max_ber_at_sigma_0_001": 0.02,
+        "max_ber_at_sigma_0_002": 0.10,
+        "max_detector_accuracy": 0.55,
+    },
 }
 
 

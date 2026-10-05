@@ -307,5 +307,91 @@ class RoundTripTests(unittest.TestCase):
         self.assertIn("BLOCKED", str(ctx.exception))
 
 
+    def test_split_round_trips_without_cover(self):
+        """W5.3: the dial's mixture must round trip like the rest.
+
+        Parity and sign are delegated on disjoint carriers; if the
+        partition, slice boundary, or reassembly order drifted from
+        what the extractor replays, only a full round trip notices.
+        """
+        before = {
+            lid: t.clone() for lid, t in self.residuals.items()
+        }
+        for fraction in (0.0, 0.5, 1.0):
+            with self.subTest(fraction=fraction):
+                config = self._config("split")
+                config.split_fraction = fraction
+                strategy = build(config, "split")
+                result = embed_with(
+                    strategy, self.residuals, self.bits, self.carriers
+                )
+                self.assertIsInstance(result, EmbeddingResult)
+                self.assertGreater(result.bits_embedded, 0)
+
+                recovered = extract_with(
+                    strategy,
+                    result.embedded_weights,
+                    result.carrier_indices,
+                )
+                # Carriers run out before the supplied bits (fixture
+                # supplies more bits than positions), so compare
+                # against the bits actually embedded.
+                self.assertEqual(
+                    result.bits_embedded, len(recovered)
+                )
+                self.assertEqual(
+                    recovered, self.bits[: len(recovered)]
+                )
+
+        # The strategy must not mutate the cover it was handed.
+        for lid, original in before.items():
+            self.assertTrue(
+                torch.equal(self.residuals[lid], original),
+                f"layer {lid} mutated",
+            )
+
+    def test_split_partition_and_spec(self):
+        """W5.3: endpoints are pure mechanisms; the spec is honest."""
+        config = self._config("split")
+
+        config.split_fraction = 0.0
+        pure_sign = build(config, "split")
+        parity, sign = pure_sign.partition(self.carriers)
+        self.assertEqual(parity, {})
+        self.assertTrue(sign)
+
+        config.split_fraction = 1.0
+        pure_parity = build(config, "split")
+        parity, sign = pure_parity.partition(self.carriers)
+        self.assertTrue(parity)
+        self.assertEqual(sign, {})
+
+        # Both endpoints must decode through their own mechanism.
+        for strategy in (pure_sign, pure_parity):
+            result = embed_with(
+                strategy, self.residuals, self.bits, self.carriers
+            )
+            recovered = extract_with(
+                strategy,
+                result.embedded_weights,
+                result.carrier_indices,
+            )
+            self.assertEqual(recovered, self.bits[: len(recovered)])
+
+        s = spec("split")
+        self.assertEqual(s.status, "READY")
+        self.assertFalse(s.extract_needs_cover)
+        self.assertFalse(s.needs_trained_model)
+        # Sign carriers exist for the default fraction (0.5); the
+        # fraction-dependence lives in the notes.
+        self.assertTrue(s.forces_sign_flip)
+        self.assertIn("fraction-dependent", s.notes)
+
+        # A fraction outside [0, 1] must fail loudly at build time.
+        config.split_fraction = 1.5
+        with self.assertRaises(ValueError):
+            build(config, "split")
+
+
 if __name__ == "__main__":
     unittest.main(verbosity=2)

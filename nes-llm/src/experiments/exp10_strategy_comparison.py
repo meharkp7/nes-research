@@ -82,13 +82,16 @@ CANDIDATES = ["sign", "magnitude_aware", "lwe", "neural"]
 
 
 def build_detector_dataset(
-    residuals, strategy_name, rng, family=None, num_layers=None
+    residuals, strategy_name, rng, family=None, num_layers=None,
+    config_overrides=None,
 ):
     """Paired clean/stego patches from this strategy's own embedding.
 
     ``family``/``num_layers`` default to this module's Qwen constants,
     so exp12's positional imports behave exactly as before; exp18 passes
-    the model under test.
+    the model under test. ``config_overrides`` is an extra
+    EmbeddingConfig kwargs dict for per-cell strategy parameters
+    (exp20's split_fraction); None keeps the constructor unchanged.
     """
     dataset = []
     per_embedding = max(PAIRS // EMBEDDINGS_PER_VARIANT, 1)
@@ -99,6 +102,7 @@ def build_detector_dataset(
             embedding_strategy=strategy_name,
             model_family=family or FAMILY,
             num_hidden_layers=num_layers or NUM_LAYERS,
+            **(config_overrides or {}),
         )
 
         result = IntelligentEmbedder(config).embed(
@@ -185,7 +189,7 @@ def train_detector(dataset, device):
 
 
 def measure_extractability(residuals, strategy_name, family=None,
-                           num_layers=None):
+                           num_layers=None, config_overrides=None):
     """Full embed -> decrypt round trip with no access to the cover."""
     from src.embedding.strategy_registry import (
         embed_with,
@@ -199,6 +203,7 @@ def measure_extractability(residuals, strategy_name, family=None,
         embedding_strategy=strategy_name,
         model_family=family or FAMILY,
         num_hidden_layers=num_layers or NUM_LAYERS,
+        **(config_overrides or {}),
     )
 
     result: Dict[str, Any] = {
@@ -284,10 +289,11 @@ def measure_extractability(residuals, strategy_name, family=None,
 
 
 def measure_detectability(residuals, strategy_name, device, family=None,
-                          num_layers=None):
+                          num_layers=None, config_overrides=None):
     dataset = build_detector_dataset(
         residuals, strategy_name, random.Random(SEED),
         family=family, num_layers=num_layers,
+        config_overrides=config_overrides,
     )
 
     accuracy = train_detector(dataset, device)
@@ -329,6 +335,7 @@ def measure_robustness(
     trials=3,
     family=None,
     num_layers=None,
+    config_overrides=None,
 ):
     """BER across the noise grid, via the strategy's own extractor.
 
@@ -352,6 +359,7 @@ def measure_robustness(
                 embedding_strategy=strategy_name,
                 model_family=family or FAMILY,
                 num_hidden_layers=num_layers or NUM_LAYERS,
+                **(config_overrides or {}),
             )
             embedded = IntelligentEmbedder(config).embed(
                 MESSAGE, residuals

@@ -85,11 +85,35 @@ class AdaptiveRoutedExtractor:
         )
 
 
+class SplitExtractor:
+    """Decoder for the sign/parity split (W5.3).
+
+    The partition rule and both companion decoders live on
+    ``SplitStrategy`` (it knows the fraction and the position
+    predicate), so this only dispatches — the same shape as the LWE
+    companion above.
+    """
+
+    def __init__(self, strategy):
+        self.strategy = strategy
+
+    def extract(
+        self,
+        residuals: Dict[int, torch.Tensor],
+        carrier_indices: Dict[int, List[int]],
+        residuals_ref: Optional[Dict[int, torch.Tensor]] = None,
+    ) -> List[int]:
+        return self.strategy.extract(
+            residuals, carrier_indices, residuals_ref
+        )
+
+
 # Strategies whose encoding is not a sign flip, and therefore need an
 # extractor other than SignExtractor.
 NON_SIGN_EXTRACTORS: Dict[str, Callable] = {
     "lwe": LweParityExtractor,
     "adaptive": AdaptiveRoutedExtractor,
+    "split": SplitExtractor,
 }
 
 # Everything else uses sign, which is what production already does.

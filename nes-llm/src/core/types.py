@@ -57,6 +57,9 @@ class EmbeddingConfig:
     min_magnitude:       float = 0.001
     percentile_threshold:int   = 25
     gamma: float = 2.5
+    # W5.3 split dial: fraction of carriers carrying LWE-style parity
+    # (the rest carry sign flips). Only read by SplitStrategy.
+    split_fraction: float = 0.5
 
 
 @dataclass

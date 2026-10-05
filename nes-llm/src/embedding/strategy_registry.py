@@ -159,6 +159,12 @@ def _adaptive(config):
     return AdaptiveStrategy(config)
 
 
+def _split(config):
+    from src.embedding.strategies.split_strategy import SplitStrategy
+
+    return SplitStrategy(config)
+
+
 def _nf4_qae(config):
     raise RuntimeError(
         "nf4_qae is BLOCKED: its reference residual comes from "
@@ -316,6 +322,32 @@ REGISTRY: Dict[str, StrategySpec] = {
             "LWEStrategy with a fresh random secret_key per run, so "
             "its encoding is not bit-identical to the registry's "
             "zero-key lwe."
+        ),
+    ),
+    "split": StrategySpec(
+        name="split",
+        factory=_split,
+        module="src.embedding.strategies.split_strategy",
+        class_name="SplitStrategy",
+        # Fraction-dependent: sign carriers exist whenever
+        # split_fraction > 0 (the default 0.5), and only the exact
+        # value 0.0 makes the encoding pure parity.
+        forces_sign_flip=True,
+        extract_needs_cover=False,
+        needs_trained_model=False,
+        status="READY",
+        notes=(
+            "W5.3 dial: config.split_fraction of carriers carry "
+            "LWE-style parity, the rest production sign flips "
+            "(0.0 = pure lwe, 1.0 = pure sign); mechanisms "
+            "delegated on disjoint carriers, never re-implemented. "
+            "Partition is a keyless position predicate (blake2b "
+            "'nes-split-v1') — public by design, since exp13 "
+            "established the LWE grid width is a public constant "
+            "anyway; forces_sign_flip is fraction-dependent (False "
+            "only at 0.0). Extraction: LWEStrategy.extract "
+            "(stego-std grid, no cover) on parity carriers + "
+            "SignExtractor on the rest, concatenated parity-first."
         ),
     ),
 }
