@@ -330,8 +330,8 @@ REGISTRY: Dict[str, StrategySpec] = {
         module="src.embedding.strategies.split_strategy",
         class_name="SplitStrategy",
         # Fraction-dependent: sign carriers exist whenever
-        # split_fraction > 0 (the default 0.5), and only the exact
-        # value 0.0 makes the encoding pure parity.
+        # split_fraction < 1, and only the exact value 1.0 (pure
+        # parity) makes the encoding sign-flip-free.
         forces_sign_flip=True,
         extract_needs_cover=False,
         needs_trained_model=False,
@@ -339,13 +339,14 @@ REGISTRY: Dict[str, StrategySpec] = {
         notes=(
             "W5.3 dial: config.split_fraction of carriers carry "
             "LWE-style parity, the rest production sign flips "
-            "(0.0 = pure lwe, 1.0 = pure sign); mechanisms "
+            "(0.0 = pure sign, 1.0 = pure parity); mechanisms "
             "delegated on disjoint carriers, never re-implemented. "
             "Partition is a keyless position predicate (blake2b "
             "'nes-split-v1') — public by design, since exp13 "
             "established the LWE grid width is a public constant "
             "anyway; forces_sign_flip is fraction-dependent (False "
-            "only at 0.0). Extraction: LWEStrategy.extract "
+            "only at 1.0, the pure-parity endpoint). Extraction: "
+            "LWEStrategy.extract "
             "(stego-std grid, no cover) on parity carriers + "
             "SignExtractor on the rest, concatenated parity-first."
         ),

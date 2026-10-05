@@ -9,9 +9,9 @@ than a per-scheme guess. Most interesting scientifically."*
 sign carriers through production sign, on disjoint positions. The dial
 is ``split_fraction`` (EmbeddingConfig), swept here:
 
-    f = 0.00   pure parity   (LWE's stealth, LWE's fragility)
+    f = 0.00   pure sign     (sign's robustness, sign's detectability)
     f = 0.25 / 0.50 / 0.75   the dial between them
-    f = 1.00   pure sign     (sign's robustness, sign's detectability)
+    f = 1.00   pure parity   (LWE's stealth, LWE's fragility)
 
 Per fraction, three axes — exp10's own measurement functions, protocol
 unchanged, only the config varies (config_overrides):
@@ -20,8 +20,9 @@ unchanged, only the config varies (config_overrides):
     robustness       BER curve, exp6's sigma grid, 3 trials
     detectability    400-pair carrier-centred neural detector (exp10's)
 
-Anchors: f=0.0 must land near exp18's direct `lwe` cell on the same
-model and f=1.0 near its `sign` cell — exp18's artifact is read for
+Anchors: f=0.0 (pure sign) must land near exp18's direct `sign` cell
+on the same model and f=1.0 (pure parity) near its `lwe` cell —
+exp18's artifact is read for
 the comparison and recorded as a delta (anchors are checked, not
 gated; a missing exp18 artifact is recorded missing, never defaulted).
 
@@ -69,9 +70,10 @@ EXPERIMENT = "exp20"
 
 FRACTIONS = (0.0, 0.25, 0.5, 0.75, 1.0)
 
-# Endpoints are defined to reproduce exp10/exp18's own cells:
-# f=0.0 must behave like `lwe`, f=1.0 like `sign`.
-ANCHOR_FRACTIONS = {0.0: "lwe", 1.0: "sign"}
+# split_fraction is the PARITY share (plan: "parity on a fraction of
+# carriers"), so f=0.0 is pure sign and f=1.0 pure parity: f=0.0 must
+# behave like exp18's `sign` cell, f=1.0 like its `lwe` cell.
+ANCHOR_FRACTIONS = {0.0: "sign", 1.0: "lwe"}
 
 
 def log(message: str) -> None:

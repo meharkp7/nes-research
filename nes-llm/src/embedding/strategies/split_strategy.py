@@ -6,8 +6,8 @@ RESEARCH_PLAN §4 W5.3: *"Parity on a fraction of carriers, sign on the
 rest. Makes the stealth-vs-robustness trade-off an explicit dial rather
 than a per-scheme guess."* The dial is ``split_fraction``:
 
-    0.0  -> pure parity   (LWE's stealth, LWE's fragility)
-    1.0  -> pure sign     (sign's robustness, sign's detectability)
+    0.0  -> pure sign     (sign's robustness, sign's detectability)
+    1.0  -> pure parity   (LWE's stealth, LWE's fragility)
 
 Mechanisms are delegated, never re-implemented (the QaeDictAdapter /
 AdaptiveStrategy rule): parity goes through ``LWEStrategy.embed``, sign
