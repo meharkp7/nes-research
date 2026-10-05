@@ -1566,6 +1566,42 @@ def audit_layer_widths():
         else "; ".join(flip_bad),
     )
 
+    # The numbers as measured, pinned — the three-way verdict a
+    # reader will cite, all recomputable from the rows.
+    by_rule = {c.get("width_rule"): c for c in cells}
+    pl = by_rule.get("per_layer", {})
+    lr = by_rule.get("layer_rank", {})
+    gb = by_rule.get("global", {})
+    a18_curve = anchor.get("exp18_robustness_ber_curve") or {}
+    gb_curve = gb.get("robustness_ber_curve") or {}
+    check(
+        "exp22: the result as measured — per_layer FAILS robustness "
+        "(0.0226 / 0.5763, gates 0.02 / 0.10) with the drift "
+        "diagnosis above; layer_rank PASSES everything "
+        "(0.0015 / 0.0736); detector 0.50 on all three cells (lwe's "
+        "invariant, again); only global and layer_rank win; and the "
+        "global control REPRODUCES exp18's lwe curve bit-for-bit "
+        "(detector delta 0.0)",
+        pl.get("robustness_ber_curve", {}).get("0.001")
+        == 0.022588403536141447
+        and pl.get("robustness_ber_curve", {}).get("0.002")
+        == 0.5762805512220489
+        and pl.get("wins") is False
+        and lr.get("robustness_ber_curve", {}).get("0.001")
+        == 0.0014625585023400937
+        and lr.get("robustness_ber_curve", {}).get("0.002")
+        == 0.07361544461778471
+        and lr.get("wins") is True
+        and gb.get("wins") is True
+        and [c.get("detector_accuracy") for c in cells]
+        == [0.5, 0.5, 0.5]
+        and [c.get("wins") for c in cells] == [True, False, True]
+        and gb_curve == a18_curve
+        and anchor.get("detector_delta_vs_exp18") == 0.0,
+        f"pl={pl.get('robustness_ber_curve')} "
+        f"lr={lr.get('robustness_ber_curve')}",
+    )
+
 
 # ------------------------------------------------------------------ gates
 def audit_thresholds():
