@@ -1,0 +1,140 @@
+{
+  "experiment": "exp14",
+  "title": "W3.2 \u2014 blind-patch adversary",
+  "model_id": "Qwen/Qwen2.5-3B",
+  "family": "qwen",
+  "layers": 36,
+  "status": "PASS",
+  "gate": {
+    "max_blind_detector_accuracy": 0.55,
+    "measured": {
+      "blind_accuracy": 0.5
+    },
+    "status": "PASS"
+  },
+  "arms": {
+    "blind": {
+      "placement": "uniform random aligned position; knows nothing about carrier locations",
+      "metrics": {
+        "accuracy": 0.5,
+        "tp": 0,
+        "tn": 144,
+        "fp": 0,
+        "fn": 144,
+        "pairs": 576,
+        "train_pairs": 432,
+        "test_pairs": 144,
+        "device": "mps"
+      },
+      "positions": 576,
+      "positions_containing_carrier": 4,
+      "fraction_containing_carrier": 0.006944444444444444
+    },
+    "control": {
+      "placement": "exp7 rule: aligned patch containing a carrier",
+      "metrics": {
+        "accuracy": 0.6875,
+        "tp": 101,
+        "tn": 97,
+        "fp": 47,
+        "fn": 43,
+        "pairs": 576,
+        "train_pairs": 432,
+        "test_pairs": 144,
+        "device": "mps"
+      }
+    }
+  },
+  "method": {
+    "embeddings": 12,
+    "patch_pairs_per_arm": 48,
+    "split": "by embedding (sample_id = embed index), 80/20; no stego tensor on both sides",
+    "detector": "MLP 4096 -> 256 -> 64 -> 1 (exp7 module, unchanged)",
+    "epochs": 30,
+    "batch_size": 32,
+    "learning_rate": 0.0001,
+    "seed": 42,
+    "payload_bits": 10000,
+    "strategy": "sign (production default)",
+    "residuals": "shared residual cache (same source exp10/12/13)",
+    "gate_source": "experiment_registry.THRESHOLDS['exp14']"
+  },
+  "per_embedding": [
+    {
+      "embed": 0,
+      "total_bits": 9984,
+      "blind_patches_with_carrier": 0,
+      "control_carriers_sum": 2406
+    },
+    {
+      "embed": 1,
+      "total_bits": 9992,
+      "blind_patches_with_carrier": 1,
+      "control_carriers_sum": 1673
+    },
+    {
+      "embed": 2,
+      "total_bits": 10000,
+      "blind_patches_with_carrier": 0,
+      "control_carriers_sum": 2829
+    },
+    {
+      "embed": 3,
+      "total_bits": 10008,
+      "blind_patches_with_carrier": 1,
+      "control_carriers_sum": 2245
+    },
+    {
+      "embed": 4,
+      "total_bits": 10016,
+      "blind_patches_with_carrier": 0,
+      "control_carriers_sum": 2114
+    },
+    {
+      "embed": 5,
+      "total_bits": 10024,
+      "blind_patches_with_carrier": 0,
+      "control_carriers_sum": 2160
+    },
+    {
+      "embed": 6,
+      "total_bits": 10032,
+      "blind_patches_with_carrier": 0,
+      "control_carriers_sum": 1979
+    },
+    {
+      "embed": 7,
+      "total_bits": 10040,
+      "blind_patches_with_carrier": 0,
+      "control_carriers_sum": 2236
+    },
+    {
+      "embed": 8,
+      "total_bits": 10048,
+      "blind_patches_with_carrier": 1,
+      "control_carriers_sum": 2257
+    },
+    {
+      "embed": 9,
+      "total_bits": 10056,
+      "blind_patches_with_carrier": 1,
+      "control_carriers_sum": 2477
+    },
+    {
+      "embed": 10,
+      "total_bits": 10064,
+      "blind_patches_with_carrier": 0,
+      "control_carriers_sum": 2235
+    },
+    {
+      "embed": 11,
+      "total_bits": 10072,
+      "blind_patches_with_carrier": 0,
+      "control_carriers_sum": 2299
+    }
+  ],
+  "notes": [
+    "The control arm is a validity check, not a second gate: if it does not clearly exceed the blind arm, the blind result carries no information about adversary strength.",
+    "exp7_neural's 70.5% FAIL (exp7_neural_*.json) cut both patches at carrier positions; this experiment changes only where patches are cut."
+  ]
+}
