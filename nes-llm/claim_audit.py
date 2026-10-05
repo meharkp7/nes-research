@@ -545,6 +545,90 @@ def audit_blind():
     )
 
 
+# --------------------------------------------------------- exp15 (W2)
+EXP15_ARTIFACTS = [
+    "exp15_lwe_fidelity_qwen__qwen2.5_3b.json",
+    "exp15_lwe_fidelity_google__gemma_2_2b.json",
+]
+
+
+def audit_lwe_fidelity():
+    arts = [(name, one(name)) for name in EXP15_ARTIFACTS]
+    missing = [n for n, d in arts if not d]
+    check(
+        "exp15: both model artifacts present",
+        not missing,
+        "2/2" if not missing else "missing: " + ", ".join(missing),
+    )
+    if missing:
+        return
+    by_name = dict(arts)
+
+    threshold = THRESHOLDS["exp15"]["max_ppl_degradation_pct"]
+    check(
+        "exp15: gate matches THRESHOLDS['exp15'] (2%), both models PASS",
+        threshold == 2.0
+        and all(
+            d["gate"]["max_ppl_degradation_pct"] == 2.0
+            and d["gate"]["status"] == "PASS"
+            and d["status"] == "PASS"
+            for _, d in arts
+        ),
+        "; ".join(f"{d['status']} {d['gate']['status']}" for _, d in arts),
+    )
+
+    expected = {
+        EXP15_ARTIFACTS[0]: 0.0076998319784398785,
+        EXP15_ARTIFACTS[1]: 0.05011987303172728,
+    }
+    degradations = {
+        n: by_name[n]["metrics"]["lwe_ppl_degradation_pct"]
+        for n in EXP15_ARTIFACTS
+    }
+    check(
+        "exp15: LWE degradation pinned (Qwen 0.0077%, gemma 0.0501%), "
+        "both far under 2%",
+        all(
+            abs(degradations[n] - expected[n]) < 1e-9
+            and degradations[n] < 2.0
+            for n in EXP15_ARTIFACTS
+        ),
+        ", ".join(f"{n.split('_')[2]}={degradations[n]:.4f}%"
+                  for n in EXP15_ARTIFACTS),
+    )
+
+    check(
+        "exp15: exp5 protocol intact — 200 texts, 50k bits, "
+        "reconstruction delta reported separately",
+        all(
+            d["metrics"]["eval_texts"] == 200
+            and d["metrics"]["payload_bits"] == 50_000
+            and d["metrics"]["reconstruction_only_delta_pct"] < -1.0
+            for _, d in arts
+        ),
+        "; ".join(
+            f"recon {d['metrics']['reconstruction_only_delta_pct']:+.2f}%"
+            for _, d in arts
+        ),
+    )
+
+    qwen = by_name[EXP15_ARTIFACTS[0]]
+    sr = qwen["metrics"].get("sign_reverification")
+    check(
+        "exp15: exp5's own numbers reproduce exactly (12.4707 / 11.3494); "
+        "sign re-run agrees in verdict, not in digit",
+        qwen["metrics"]["nf4_baseline_ppl"] == 12.47069538705203
+        and qwen["metrics"]["reconstruction_control_ppl"]
+        == 11.349366735378783
+        and sr is not None
+        and sr["recorded_delta_pct"] == -0.005286623081384053
+        and abs(sr["rerun_delta_vs_control_pct"]) < 0.1
+        and abs(sr["delta_point_difference"]) < 0.1,
+        f"rerun={sr.get('rerun_delta_vs_control_pct') if sr else None}% "
+        f"recorded={sr.get('recorded_delta_pct') if sr else None}%",
+    )
+
+
 # ------------------------------------------------------------------ gates
 def audit_thresholds():
     check(
@@ -580,6 +664,7 @@ def main() -> int:
         ("LWE (exp10, exp12)", audit_lwe),
         ("keyless recovery (exp13)", audit_keyless),
         ("blind-patch adversary (exp14)", audit_blind),
+        ("LWE fidelity (exp15)", audit_lwe_fidelity),
         ("gates", audit_thresholds),
     ):
         print(f"\n{title}")

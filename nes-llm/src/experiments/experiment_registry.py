@@ -107,6 +107,15 @@ THRESHOLDS = {
         ),
         "max_blind_detector_accuracy": 0.55,
     },
+    "exp15": {
+        "description": (
+            "LWE fidelity (W2): three-way perplexity in exp5's "
+            "protocol — only reconstruction-control to embedded is "
+            "attributable to the payload. The 2% number is exp5's own "
+            "threshold, reused, not a new one."
+        ),
+        "max_ppl_degradation_pct": 2.0,
+    },
 }
 
 
