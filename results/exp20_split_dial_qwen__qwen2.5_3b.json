@@ -1,0 +1,238 @@
+{
+  "experiment": "exp20",
+  "title": "W5.3 \u2014 sign/parity split dial (first pass, one model)",
+  "model_id": "Qwen/Qwen2.5-3B",
+  "family": "qwen",
+  "num_layers": 36,
+  "gate": {
+    "description": "Sign/parity split dial (W5.3): the same four numbers exp18 reused, per fraction cell \u2014 round trip exp3's 0.0, robustness exp6's 0.02/0.10, detector exp7's 0.55. The TRADE-OFF SHAPE across fractions is the measurement; per-cell verdicts, no experiment verdict.",
+    "max_ber": 0.0,
+    "max_ber_at_sigma_0_001": 0.02,
+    "max_ber_at_sigma_0_002": 0.1,
+    "max_detector_accuracy": 0.55,
+    "gate_source": "experiment_registry.THRESHOLDS['exp20']"
+  },
+  "cells": [
+    {
+      "split_fraction": 0.0,
+      "extractability": {
+        "strategy": "split",
+        "embed_ok": true,
+        "decrypt_ok": true,
+        "recovered_matches": true,
+        "ber": 0.0,
+        "error": "",
+        "bits_embedded": 10256,
+        "bits_compared": 10256,
+        "bit_errors": 0,
+        "usable_in_production_pipeline": true,
+        "structurally_usable": true
+      },
+      "robustness_ber_curve": {
+        "0.0": 0.0,
+        "0.001": 0.0,
+        "0.002": 0.0,
+        "0.005": 9.750390015600624e-05
+      },
+      "detector_accuracy": 0.7875,
+      "detector_samples": 800,
+      "signal_density": {
+        "mean_changed_values_per_patch": 25.415,
+        "patch_size": 4096,
+        "identical_pair_fraction": 0.0675
+      },
+      "meets_round_trip_gate": true,
+      "meets_robustness_gate": true,
+      "meets_detector_gate": false,
+      "wins": false
+    },
+    {
+      "split_fraction": 0.25,
+      "extractability": {
+        "strategy": "split",
+        "embed_ok": true,
+        "decrypt_ok": false,
+        "recovered_matches": false,
+        "ber": 0.0,
+        "error": "",
+        "bits_embedded": 10256,
+        "bits_compared": 10256,
+        "bit_errors": 0,
+        "usable_in_production_pipeline": false,
+        "note": "Bits recover through the scheme's own extractor, but DecryptPipeline is hardcoded to SignExtractor and cannot read a non-sign scheme. Wiring it up is a separate change, not a scheme defect.",
+        "structurally_usable": true
+      },
+      "robustness_ber_curve": {
+        "0.0": 0.0,
+        "0.001": 0.0,
+        "0.002": 0.0034451378055122203,
+        "0.005": 0.08102574102964119
+      },
+      "detector_accuracy": 0.69375,
+      "detector_samples": 800,
+      "signal_density": {
+        "mean_changed_values_per_patch": 31.8175,
+        "patch_size": 4096,
+        "identical_pair_fraction": 0.035
+      },
+      "meets_round_trip_gate": true,
+      "meets_robustness_gate": true,
+      "meets_detector_gate": false,
+      "wins": false
+    },
+    {
+      "split_fraction": 0.5,
+      "extractability": {
+        "strategy": "split",
+        "embed_ok": true,
+        "decrypt_ok": false,
+        "recovered_matches": false,
+        "ber": 0.0,
+        "error": "",
+        "bits_embedded": 10256,
+        "bits_compared": 10256,
+        "bit_errors": 0,
+        "usable_in_production_pipeline": false,
+        "note": "Bits recover through the scheme's own extractor, but DecryptPipeline is hardcoded to SignExtractor and cannot read a non-sign scheme. Wiring it up is a separate change, not a scheme defect.",
+        "structurally_usable": true
+      },
+      "robustness_ber_curve": {
+        "0.0": 0.0,
+        "0.001": 0.0,
+        "0.002": 0.00672776911076443,
+        "0.005": 0.15945137805512222
+      },
+      "detector_accuracy": 0.7,
+      "detector_samples": 800,
+      "signal_density": {
+        "mean_changed_values_per_patch": 38.305,
+        "patch_size": 4096,
+        "identical_pair_fraction": 0.0325
+      },
+      "meets_round_trip_gate": true,
+      "meets_robustness_gate": true,
+      "meets_detector_gate": false,
+      "wins": false
+    },
+    {
+      "split_fraction": 0.75,
+      "extractability": {
+        "strategy": "split",
+        "embed_ok": true,
+        "decrypt_ok": false,
+        "recovered_matches": false,
+        "ber": 0.0,
+        "error": "",
+        "bits_embedded": 10256,
+        "bits_compared": 10256,
+        "bit_errors": 0,
+        "usable_in_production_pipeline": false,
+        "note": "Bits recover through the scheme's own extractor, but DecryptPipeline is hardcoded to SignExtractor and cannot read a non-sign scheme. Wiring it up is a separate change, not a scheme defect.",
+        "structurally_usable": true
+      },
+      "robustness_ber_curve": {
+        "0.0": 0.0,
+        "0.001": 0.0,
+        "0.002": 0.009490379615184607,
+        "0.005": 0.2376170046801872
+      },
+      "detector_accuracy": 0.5875,
+      "detector_samples": 800,
+      "signal_density": {
+        "mean_changed_values_per_patch": 44.64,
+        "patch_size": 4096,
+        "identical_pair_fraction": 0.02
+      },
+      "meets_round_trip_gate": true,
+      "meets_robustness_gate": true,
+      "meets_detector_gate": false,
+      "wins": false
+    },
+    {
+      "split_fraction": 1.0,
+      "extractability": {
+        "strategy": "split",
+        "embed_ok": true,
+        "decrypt_ok": false,
+        "recovered_matches": false,
+        "ber": 0.0,
+        "error": "",
+        "bits_embedded": 10256,
+        "bits_compared": 10256,
+        "bit_errors": 0,
+        "usable_in_production_pipeline": false,
+        "note": "Bits recover through the scheme's own extractor, but DecryptPipeline is hardcoded to SignExtractor and cannot read a non-sign scheme. Wiring it up is a separate change, not a scheme defect.",
+        "structurally_usable": true
+      },
+      "robustness_ber_curve": {
+        "0.0": 0.0,
+        "0.001": 0.0,
+        "0.002": 0.01267550702028081,
+        "0.005": 0.3174726989079563
+      },
+      "detector_accuracy": 0.5,
+      "detector_samples": 800,
+      "signal_density": {
+        "mean_changed_values_per_patch": 50.9875,
+        "patch_size": 4096,
+        "identical_pair_fraction": 0.0
+      },
+      "meets_round_trip_gate": true,
+      "meets_robustness_gate": true,
+      "meets_detector_gate": true,
+      "wins": true
+    }
+  ],
+  "fractions": [
+    0.0,
+    0.25,
+    0.5,
+    0.75,
+    1.0
+  ],
+  "endpoint_anchors": {
+    "source": "exp18_matrix_qwen__qwen2.5_3b.json",
+    "available": true,
+    "anchors": {
+      "0.0": {
+        "exp18_strategy": "sign",
+        "exp18_detector_accuracy": 0.75,
+        "present": true,
+        "exp20_detector_accuracy": 0.7875,
+        "delta": 0.03749999999999998
+      },
+      "1.0": {
+        "exp18_strategy": "lwe",
+        "exp18_detector_accuracy": 0.5,
+        "present": true,
+        "exp20_detector_accuracy": 0.5,
+        "delta": 0.0
+      }
+    }
+  },
+  "excluded_strategies": {},
+  "method": {
+    "axes_source": "exp10_strategy_comparison measurement functions, same protocol, only EmbeddingConfig.split_fraction varies per cell (config_overrides)",
+    "split_spec": "W5.3 dial: config.split_fraction of carriers carry LWE-style parity, the rest production sign flips (0.0 = pure sign, 1.0 = pure parity); mechanisms delegated on disjoint carriers, never re-implemented. Partition is a keyless position predicate (blake2b 'nes-split-v1') \u2014 public by design, since exp13 established the LWE grid width is a public constant anyway; forces_sign_flip is fraction-dependent (False only at 1.0, the pure-parity endpoint). Extraction: LWEStrategy.extract (stego-std grid, no cover) on parity carriers + SignExtractor on the rest, concatenated parity-first.",
+    "partition_rule": "keyless position predicate: blake2b('nes-split-v1:{layer}:{position}') below fraction -> parity; public by design (exp13: grid width is public too)",
+    "payload_bits": 10000,
+    "detector_pairs": 400,
+    "detector_embeddings": 20,
+    "detector_epochs": 30,
+    "patch_size": 4096,
+    "seed": 42,
+    "robustness_sigmas": [
+      "0.0",
+      "0.001",
+      "0.002",
+      "0.005"
+    ],
+    "robustness_trials": "3 per nonzero sigma, 1 at 0.0",
+    "one_model_per_process": true
+  },
+  "notes": [
+    "Per-cell verdicts only, exp18's rule: a cell failing an axis is reported failing for that axis, never as an experiment error. The dial's SHAPE across fractions is the measurement.",
+    "Detector accuracy is trained on each cell's own embedding (exp10's comparability note): comparable as 'this detector against this fraction'.",
+    "Endpoint anchors vs exp18 are recorded deltas, not gates; a missing anchor stays recorded as missing."
+  ]
+}

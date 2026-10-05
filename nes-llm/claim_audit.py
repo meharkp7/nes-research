@@ -895,7 +895,6 @@ def audit_strategy_matrix():
     )
 
 
-# ------------------------------------------------------------------ gates
 EXP19_ARTIFACTS = [
     "exp19_adaptive_google__gemma_2_2b.json",
     "exp19_adaptive_qwen__qwen2.5_3b.json",
@@ -1032,6 +1031,181 @@ def audit_adaptive_routing():
     )
 
 
+EXP20_ARTIFACT = "exp20_split_dial_qwen__qwen2.5_3b.json"
+EXP20_FRACTIONS = [0.0, 0.25, 0.5, 0.75, 1.0]
+
+
+def audit_split_dial():
+    d = one(EXP20_ARTIFACT)
+    check(
+        "exp20: artifact present (W5.3 first pass, Qwen2.5-3B)",
+        d is not None,
+        EXP20_ARTIFACT if d else "missing: " + EXP20_ARTIFACT,
+    )
+    if not d:
+        return
+
+    gate = THRESHOLDS["exp20"]
+    check(
+        "exp20: gate matches THRESHOLDS['exp20'] — the same four "
+        "numbers exp18 reused (exp3's 0.0, exp6's 0.02/0.10, "
+        "exp7's 0.55)",
+        gate.get("max_ber") == 0.0
+        and gate.get("max_ber_at_sigma_0_001") == 0.02
+        and gate.get("max_ber_at_sigma_0_002") == 0.10
+        and gate.get("max_detector_accuracy") == 0.55
+        and d["gate"]["max_ber"] == gate.get("max_ber")
+        and d["gate"]["max_detector_accuracy"]
+        == gate.get("max_detector_accuracy")
+        and "THRESHOLDS['exp20']" in d["gate"]["gate_source"],
+        f"gate={ {k: v for k, v in gate.items() if k != 'description'} }",
+    )
+
+    cells = d.get("cells", [])
+    check(
+        "exp20: exactly the five dial fractions, in order "
+        "(0.0 / 0.25 / 0.5 / 0.75 / 1.0)",
+        [c.get("split_fraction") for c in cells] == EXP20_FRACTIONS,
+        str([c.get("split_fraction") for c in cells]),
+    )
+
+    # Direction-agnostic: every cell verdict recomputes from the
+    # numbers recorded beside it (the exp18 rule, per cell).
+    inconsistent = []
+    for c in cells:
+        ext = c.get("extractability", {}) or {}
+        curve = c.get("robustness_ber_curve", {}) or {}
+        acc = c.get("detector_accuracy")
+        want_rt = bool(
+            ext.get("structurally_usable")
+            and ext.get("ber") == gate.get("max_ber")
+        )
+        want_rob = bool(
+            curve.get("0.001") is not None
+            and curve.get("0.001") <= gate.get("max_ber_at_sigma_0_001")
+            and curve.get("0.002") is not None
+            and curve.get("0.002") <= gate.get("max_ber_at_sigma_0_002")
+        )
+        want_det = bool(
+            acc is not None and acc <= gate.get("max_detector_accuracy")
+        )
+        if (
+            c.get("meets_round_trip_gate") != want_rt
+            or c.get("meets_robustness_gate") != want_rob
+            or c.get("meets_detector_gate") != want_det
+            or c.get("wins") != (want_rt and want_rob and want_det)
+        ):
+            inconsistent.append(str(c.get("split_fraction")))
+    check(
+        "exp20: every cell's verdict booleans recompute exactly from "
+        "its recorded numbers (no rounding either way)",
+        not inconsistent,
+        "5/5 consistent" if not inconsistent
+        else "inconsistent: " + ", ".join(inconsistent),
+    )
+
+    bers = [
+        c.get("extractability", {}).get("ber") for c in cells
+    ]
+    check(
+        "exp20: all five round trips hold exp3's BER 0.0 "
+        "(the dial must not cost the round trip at any fraction)",
+        len(bers) == 5 and all(b == 0.0 for b in bers),
+        f"bers={bers}",
+    )
+
+    method = d.get("method", {})
+    check(
+        "exp20: protocol pins — payload 10k, 400 pairs / 20 embeds / "
+        "30 epochs / seed 42 (exp10's), keyless partition stated",
+        method.get("payload_bits") == 10_000
+        and method.get("detector_pairs") == 400
+        and method.get("detector_embeddings") == 20
+        and method.get("detector_epochs") == 30
+        and method.get("seed") == 42
+        and "blake2b" in str(method.get("partition_rule"))
+        and "keyless" in str(method.get("partition_rule")),
+        "protocol",
+    )
+
+    # Endpoint anchors: recorded deltas, recomputed — and exp18's
+    # artifact is committed, so 'available' must be true; a missing
+    # exp18 cell stays recorded missing, never defaulted.
+    anchors = d.get("endpoint_anchors", {}) or {}
+    exp18_path = RESULTS / str(anchors.get("source", ""))
+    anchor_bad = []
+    if not anchors.get("available"):
+        anchor_bad.append("exp18 artifact not readable: "
+                          + str(anchors.get("reason", "?")))
+    if anchors.get("available") and not exp18_path.exists():
+        anchor_bad.append("claims available but file absent")
+    for frac in ("0.0", "1.0"):
+        a = (anchors.get("anchors") or {}).get(frac)
+        if not a:
+            anchor_bad.append(f"anchor {frac} absent")
+            continue
+        if not a.get("present") or a.get("exp18_detector_accuracy") is None:
+            anchor_bad.append(f"anchor {frac} not recorded (exp18 cell?)")
+            continue
+        want = a.get("exp20_detector_accuracy")
+        exp18 = a.get("exp18_detector_accuracy")
+        delta = a.get("delta")
+        if want is None or delta is None or abs(
+            delta - (want - exp18)
+        ) > 1e-12:
+            anchor_bad.append(f"anchor {frac} delta drift")
+    check(
+        "exp20: endpoint anchors read from exp18's committed artifact "
+        "with deltas recomputing exactly (f=0 vs sign, f=1 vs lwe); "
+        "nothing defaulted",
+        not anchor_bad,
+        "anchors consistent" if not anchor_bad
+        else "; ".join(anchor_bad),
+    )
+
+    # The dial itself, pinned: exact vectors and the two directional
+    # claims a reader will cite (both recomputable from the rows).
+    det = [c.get("detector_accuracy") for c in cells]
+    s2 = [c.get("robustness_ber_curve", {}).get("0.002") for c in cells]
+    want_det = [0.7875, 0.69375, 0.7, 0.5875, 0.5]
+    want_s2 = [
+        0.0,
+        0.0034451378055122203,
+        0.00672776911076443,
+        0.009490379615184607,
+        0.01267550702028081,
+    ]
+    check(
+        "exp20: the dial's numbers as measured — detector "
+        "[0.7875, 0.69375, 0.70, 0.5875, 0.50] and BER@sigma0.002 "
+        "[0, 0.0034, 0.0067, 0.0095, 0.0127] across parity share "
+        "0.0->1.0",
+        det == want_det and s2 == want_s2,
+        f"det={det} s2={s2}",
+    )
+
+    a10 = (
+        (anchors.get("anchors") or {}).get("1.0") or {}
+    ).get("delta")
+    check(
+        "exp20: both trade-off directions hold — robustness "
+        "(BER@0.002) nondecreasing with parity share, detector falls "
+        "from pure sign to pure parity; only the pure-parity cell "
+        "wins; its detector REPRODUCES exp18's lwe cell exactly "
+        "(delta 0.0)",
+        all(
+            s2[i] <= s2[i + 1] for i in range(len(s2) - 1)
+        )
+        and det[-1] < det[0]
+        and [c.get("wins") for c in cells]
+        == [False, False, False, False, True]
+        and a10 == 0.0,
+        f"monotonic_s2=True det_drop={det[0]}->{det[-1]} "
+        f"anchor_lwe_delta={a10}",
+    )
+
+
+# ------------------------------------------------------------------ gates
 def audit_thresholds():
     check(
         "dequant gate thresholds unchanged (0.95 / 0.5)",
@@ -1071,6 +1245,7 @@ def main() -> int:
         ("QAE round trip (exp17)", audit_qae_round_trip),
         ("strategy matrix (exp18)", audit_strategy_matrix),
         ("adaptive routing (exp19)", audit_adaptive_routing),
+        ("sign/parity split (exp20)", audit_split_dial),
         ("gates", audit_thresholds),
     ):
         print(f"\n{title}")
