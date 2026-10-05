@@ -1,0 +1,54 @@
+{
+  "experiment": "exp21",
+  "title": "W5.2 \u2014 QAE encode + LWE read-out (interop)",
+  "model_id": "Qwen/Qwen2.5-3B",
+  "family": "qwen",
+  "num_layers": 36,
+  "gate": {
+    "description": "QAE encode + LWE read-out (W5.2): the plan called the combination 'plausible', so the interop round trip must hold at exp3's 0.0 \u2014 and the SAME stream read through its own (matched) extractor must also be 0.0, so a failure is attributable to the read-out pairing, not to a broken embed. Two numbers, exp3's, both reused.",
+    "max_ber": 0.0,
+    "max_control_ber": 0.0,
+    "gate_source": "experiment_registry.THRESHOLDS['exp21']"
+  },
+  "readouts": {
+    "matched_control": {
+      "ber": 0.0,
+      "bits_compared": 10256,
+      "bit_errors": 0,
+      "extractor": "SignExtractor (qae's own)",
+      "meets_gate": true
+    },
+    "lwe_interop": {
+      "ber": 0.5432917316692668,
+      "bits_compared": 10256,
+      "bit_errors": 5572,
+      "extractor": "LWEStrategy.extract \u2014 floor(v/0.010)%2, DEFAULT_GRID_WIDTH, stego statistics",
+      "meets_gate": false
+    },
+    "lwe_interop_corrected": {
+      "ber": 0.0,
+      "bits_compared": 10256,
+      "bit_errors": 0,
+      "adapter": "raw read XOR floor(|stego|/0.010)%2 XOR 1 \u2014 the parity(v) = sign(v) XOR cell-parity(|v|) identity, using stego magnitudes only",
+      "meets_gate": true,
+      "role": "structural finding, NOT a gate rescue: the verdict below is the raw interop's"
+    }
+  },
+  "verdict": "FAIL",
+  "premise": {
+    "plan_quote": "W5.2: QAE encode + LWE read-out. Quantization-aware placement, parity decode. Plausible: both mechanisms avoid sign flips.",
+    "status": "half-false as written (exp17): QAE-V1 forces sign flips \u2014 +max(|v|, margin) / -max(|v|, margin), sign-family with a margin floor. The question is therefore whether parity read-out decodes a sign-family stream at all."
+  },
+  "method": {
+    "embed": "single production-path embed (IntelligentEmbedder, strategy=qae); both read-outs decode the SAME stego so the read-out pairing is the only variable",
+    "payload_bits": 10000,
+    "message_len": 1250,
+    "model_note": "exp17's model (same-model comparability)"
+  },
+  "notes": [
+    "The matched control at 0.0 is what makes a non-zero interop BER attributable to the pairing rather than a broken embed (exp17 measured this path at 0.0 over 48,256 bits).",
+    "A FAIL here is the plan's plausibility claim failing, recorded with its number \u2014 exp13's pattern. Neither threshold is ever relaxed.",
+    "Pre-registered prediction (complement, BER near 1.0) MISSED: measured near-chance because carriers are the top-magnitude tail, all above one grid width. The miss and its correction are recorded, not quietly rewritten.",
+    "Read-out C returning 0.0 (if it does) means the parity channel is publicly re-encodable to the sign bit: the 'hybrid' would be sign reading with a relabeling, not a second independent channel."
+  ]
+}

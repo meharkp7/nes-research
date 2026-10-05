@@ -1205,6 +1205,116 @@ def audit_split_dial():
     )
 
 
+# ---------------------------------------------------------------------
+# W5.2 — QAE encode + LWE read-out (exp21)
+# ---------------------------------------------------------------------
+EXP21_ARTIFACT = "exp21_qae_lwe_qwen__qwen2.5_3b.json"
+
+
+def audit_qae_lwe_interop():
+    d = one(EXP21_ARTIFACT)
+    check(
+        "exp21: artifact present (W5.2 interop, Qwen2.5-3B)",
+        d is not None,
+        EXP21_ARTIFACT if d else "missing: " + EXP21_ARTIFACT,
+    )
+    if not d:
+        return
+
+    gate = THRESHOLDS["exp21"]
+    check(
+        "exp21: gate matches THRESHOLDS['exp21'] — both readings at "
+        "exp3's 0.0 (reused), never relaxed",
+        gate.get("max_ber") == 0.0
+        and gate.get("max_control_ber") == 0.0
+        and d["gate"]["max_ber"] == gate.get("max_ber")
+        and d["gate"]["max_control_ber"] == gate.get("max_control_ber")
+        and "THRESHOLDS['exp21']" in d["gate"]["gate_source"],
+        f"max_ber={gate.get('max_ber')} "
+        f"max_control_ber={gate.get('max_control_ber')}",
+    )
+
+    readouts = d.get("readouts", {}) or {}
+    control = readouts.get("matched_control", {}) or {}
+    interop = readouts.get("lwe_interop", {}) or {}
+    fixed = readouts.get("lwe_interop_corrected", {}) or {}
+
+    check(
+        "exp21: the matched control holds exp3's 0.0 over the full "
+        "transmitted stream — a non-zero interop BER is therefore "
+        "attributable to the pairing, not a broken embed",
+        control.get("ber") == 0.0
+        and control.get("bit_errors") == 0
+        and control.get("bits_compared") == 10256
+        and control.get("meets_gate") is True,
+        f"control={control.get('ber')} "
+        f"({control.get('bit_errors')}/{control.get('bits_compared')})",
+    )
+
+    # The measured interop number, pinned — and the verdict recomputes
+    # from the two gate readings beside it.
+    control_ok = bool(
+        control.get("ber") is not None
+        and control.get("ber") == gate.get("max_control_ber")
+    )
+    interop_ok = bool(
+        interop.get("ber") is not None
+        and interop.get("ber") == gate.get("max_ber")
+    )
+    check(
+        "exp21: raw LWE read-out of the qae stream measures BER "
+        "0.5432917316692668 (5572/10256, near chance) — gate FAIL, "
+        "and the artifact's verdict recomputes from the two readings",
+        interop.get("ber") == 0.5432917316692668
+        and interop.get("bit_errors") == 5572
+        and interop.get("meets_gate") is False
+        and d.get("verdict")
+        == ("PASS" if (control_ok and interop_ok) else "FAIL")
+        and d.get("verdict") == "FAIL",
+        f"interop={interop.get('ber')} verdict={d.get('verdict')}",
+    )
+
+    check(
+        "exp21: the public cell-parity correction returns exactly 0.0 "
+        "— the parity(v) = sign(v) XOR cell-parity(|v|) identity is "
+        "measured, not asserted; recorded as structure with an "
+        "explicit 'not a gate rescue' role",
+        fixed.get("ber") == 0.0
+        and fixed.get("bit_errors") == 0
+        and "NOT a gate rescue" in str(fixed.get("role")),
+        f"corrected={fixed.get('ber')}",
+    )
+
+    premise = d.get("premise", {}) or {}
+    check(
+        "exp21: the plan's plausibility claim is quoted verbatim and "
+        "its premise recorded half-false against exp17 (qae forces "
+        "sign flips) — the claim is not silently reworded",
+        "Plausible: both mechanisms avoid sign flips"
+        in str(premise.get("plan_quote"))
+        and "half-false" in str(premise.get("status"))
+        and "exp17" in str(premise.get("status")),
+        str(premise.get("status"))[:60],
+    )
+
+    method = d.get("method", {}) or {}
+    check(
+        "exp21: protocol pins — payload 10k, exp17's model, one "
+        "embed with both read-outs on the SAME stego (pairing is "
+        "the only variable); all three readings compare the same "
+        "bit count",
+        method.get("payload_bits") == 10_000
+        and "SAME stego" in str(method.get("embed"))
+        and "exp17" in str(method.get("model_note"))
+        and d.get("model_id") == "Qwen/Qwen2.5-3B"
+        and control.get("bits_compared")
+        == interop.get("bits_compared")
+        == fixed.get("bits_compared")
+        == 10256,
+        "protocol",
+    )
+
+
 # ------------------------------------------------------------------ gates
 def audit_thresholds():
     check(
@@ -1246,6 +1356,7 @@ def main() -> int:
         ("strategy matrix (exp18)", audit_strategy_matrix),
         ("adaptive routing (exp19)", audit_adaptive_routing),
         ("sign/parity split (exp20)", audit_split_dial),
+        ("QAE/LWE interop (exp21)", audit_qae_lwe_interop),
         ("gates", audit_thresholds),
     ):
         print(f"\n{title}")
