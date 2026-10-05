@@ -479,6 +479,72 @@ def audit_keyless():
     )
 
 
+# --------------------------------------------------------- exp14 (W3.2)
+def audit_blind():
+    d = one("exp14_blind_patch_detector.json")
+    if not d:
+        check("exp14 artifact present", False)
+        return
+
+    gate = d.get("gate", {})
+    check(
+        "exp14: gate matches THRESHOLDS['exp14'], blind PASS at 0.5000",
+        gate.get("max_blind_detector_accuracy")
+        == THRESHOLDS["exp14"]["max_blind_detector_accuracy"]
+        == 0.55
+        and gate.get("measured", {}).get("blind_accuracy") == 0.5
+        and gate.get("status") == "PASS"
+        and d.get("status") == "PASS",
+        f"gate={gate.get('status')} "
+        f"blind={gate.get('measured', {}).get('blind_accuracy')}",
+    )
+
+    blind = d.get("arms", {}).get("blind", {})
+    bm = blind.get("metrics", {})
+    check(
+        "exp14: blind detector learned nothing (576 pairs, tp=fp=0)",
+        bm.get("pairs") == 576
+        and bm.get("accuracy") == 0.5
+        and bm.get("tp") == 0
+        and bm.get("fp") == 0
+        and (bm.get("train_pairs") or 0) + (bm.get("test_pairs") or 0)
+        == 576,
+        f"acc={bm.get('accuracy')} tp={bm.get('tp')} fp={bm.get('fp')} "
+        f"pairs={bm.get('pairs')}",
+    )
+
+    ctl = d.get("arms", {}).get("control", {})
+    cm = ctl.get("metrics", {})
+    check(
+        "exp14: carrier-centered control clears the gate, so the blind "
+        "result is informative",
+        cm.get("accuracy") is not None
+        and cm.get("accuracy") > 0.55
+        and cm.get("accuracy") > (bm.get("accuracy") or 0),
+        f"control={cm.get('accuracy')} blind={bm.get('accuracy')}",
+    )
+
+    check(
+        "exp14: blind positions almost never contain a carrier (4/576)",
+        blind.get("positions") == 576
+        and blind.get("positions_containing_carrier") == 4
+        and (blind.get("fraction_containing_carrier") or 1) < 0.02,
+        f"{blind.get('positions_containing_carrier')}/"
+        f"{blind.get('positions')}",
+    )
+
+    method = d.get("method", {})
+    check(
+        "exp14: detector unchanged from exp7, split by embedding",
+        str(method.get("detector", "")).startswith("MLP 4096")
+        and method.get("epochs") == 30
+        and method.get("batch_size") == 32
+        and method.get("seed") == 42
+        and "by embedding" in str(method.get("split", "")),
+        f"epochs={method.get('epochs')} split={method.get('split')}",
+    )
+
+
 # ------------------------------------------------------------------ gates
 def audit_thresholds():
     check(
@@ -513,6 +579,7 @@ def main() -> int:
         ("non-NF4 formats (exp9)", audit_formats),
         ("LWE (exp10, exp12)", audit_lwe),
         ("keyless recovery (exp13)", audit_keyless),
+        ("blind-patch adversary (exp14)", audit_blind),
         ("gates", audit_thresholds),
     ):
         print(f"\n{title}")

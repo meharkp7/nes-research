@@ -97,6 +97,16 @@ THRESHOLDS = {
         "min_keyless_ber": 0.5,
         "min_width_search_relative_error": 0.01,
     },
+    "exp14": {
+        "description": (
+            "Blind-patch adversary (W3.2): an attacker who does not "
+            "know carrier positions must be at chance. The 55% number "
+            "is exp7_neural's existing gate, reused, not a new "
+            "threshold; the carrier-centered control arm is a "
+            "validity check and carries no gate of its own."
+        ),
+        "max_blind_detector_accuracy": 0.55,
+    },
 }
 
 
