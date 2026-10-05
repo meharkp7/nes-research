@@ -689,6 +689,67 @@ def audit_cross_scheme():
     )
 
 
+# --------------------------------------------------------- exp17 (W1.1)
+def audit_qae_round_trip():
+    d = one("exp17_qae_round_trip.json")
+    if not d:
+        check("exp17 artifact present", False)
+        return
+
+    gate = d.get("gate", {})
+    check(
+        "exp17: gate matches THRESHOLDS['exp17'] (exp3's 0.0), PASS — "
+        "BER 0.0 over 48,256 bits, decrypt and match required",
+        gate.get("max_ber")
+        == THRESHOLDS["exp17"]["max_ber"]
+        == 0.0
+        and gate.get("measured_ber") == 0.0
+        and gate.get("decrypt_ok") is True
+        and gate.get("recovered_matches_original") is True
+        and gate.get("status") == "PASS"
+        and d.get("status") == "PASS",
+        f"ber={gate.get('measured_ber')} status={gate.get('status')}",
+    )
+
+    m = d.get("metrics", {})
+    check(
+        "exp17: full bit comparison, not a stats field — 48,256 "
+        "transmitted = 48,256 extracted, 0 errors",
+        m.get("bits_embedded") == 48_256
+        and m.get("bits_compared") == 48_256
+        and m.get("bit_errors") == 0
+        and m.get("ber") == 0.0,
+        f"compared={m.get('bits_compared')} errors={m.get('bit_errors')}",
+    )
+
+    probes = d.get("probes", {})
+    qae_probe = probes.get("qae", {})
+    nf4_probe = probes.get("nf4_qae", {})
+    check(
+        "exp17: no-cover probe passes for qae, records BLOCKED error "
+        "for nf4_qae (registered, not faked)",
+        qae_probe.get("structurally_usable") is True
+        and qae_probe.get("ber") == 0.0
+        and nf4_probe.get("embed_ok") is False
+        and str(nf4_probe.get("error", "")).startswith(
+            "RuntimeError: nf4_qae is BLOCKED"
+        ),
+        f"qae usable={qae_probe.get('structurally_usable')} "
+        f"nf4 error={str(nf4_probe.get('error'))[:40]}...",
+    )
+
+    method = d.get("method", {})
+    check(
+        "exp17: statuses as registered — qae READY, nf4_qae BLOCKED; "
+        "exp3's exact flow through QaeDictAdapter",
+        method.get("strategy_status")
+        == {"qae": "READY", "nf4_qae": "BLOCKED"}
+        and "QaeDictAdapter" in str(method.get("adapter", ""))
+        and "exp3's exact flow" in str(method.get("round_trip", "")),
+        f"status={method.get('strategy_status')}",
+    )
+
+
 # ------------------------------------------------------------------ gates
 def audit_thresholds():
     check(
@@ -726,6 +787,7 @@ def main() -> int:
         ("blind-patch adversary (exp14)", audit_blind),
         ("LWE fidelity (exp15)", audit_lwe_fidelity),
         ("cross-scheme detector (exp16)", audit_cross_scheme),
+        ("QAE round trip (exp17)", audit_qae_round_trip),
         ("gates", audit_thresholds),
     ):
         print(f"\n{title}")

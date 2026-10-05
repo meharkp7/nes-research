@@ -127,6 +127,14 @@ THRESHOLDS = {
         ),
         "max_cross_scheme_detector_accuracy": 0.55,
     },
+    "exp17": {
+        "description": (
+            "QAE round trip (W1.1): the new dict-adapter must "
+            "survive exp3's exact production round trip. The BER "
+            "number is exp3's own gate, reused, not a new one."
+        ),
+        "max_ber": 0.0,
+    },
 }
 
 

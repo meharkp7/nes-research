@@ -83,6 +83,87 @@ def _neural(config):
     return NeuralStrategy(config)
 
 
+class QaeDictAdapter:
+    """Production dict contract over the per-tensor QAE ABC.
+
+    Per layer it delegates to ``QuantizationStrategy.embed(residual_tensor,
+    positions, bits)`` — the ABC's own code, margins and all — so nothing
+    is re-implemented here. The adapter only does what ``BaseEmbedder``
+    does for every other strategy: walk layers in sorted order, slice the
+    global bit stream, record what was actually written, return an
+    ``EmbeddingResult``.
+
+    The per-tensor class's argument order is (tensor, positions, bits),
+    which differs from both the ABC declaration and intuition; it is
+    matched positionally below on purpose.
+    """
+
+    def __init__(self, config):
+        from src.embedding.strategies.quantization_strategy import (
+            QuantizationStrategy,
+        )
+
+        self.config = config
+        self._inner = QuantizationStrategy()
+
+    def embed(self, residuals, bits, selector_indices):
+        embedded: Dict[int, torch.Tensor] = {}
+        actual: Dict[int, List[int]] = {}
+        bit_idx = 0
+
+        for layer_id in sorted(residuals.keys()):
+            indices = selector_indices.get(layer_id, [])
+            n = min(len(indices), len(bits) - bit_idx)
+
+            if n <= 0:
+                embedded[layer_id] = residuals[layer_id].clone()
+                actual[layer_id] = []
+                continue
+
+            embedded[layer_id] = self._inner.embed(
+                residuals[layer_id],
+                indices[:n],
+                bits[bit_idx:bit_idx + n],
+            )
+            actual[layer_id] = list(indices[:n])
+            bit_idx += n
+
+        total_bits = len(bits)
+        return EmbeddingResult(
+            success=True,
+            embedded_weights=embedded,
+            carrier_indices=actual,
+            layer_allocation={
+                lid: len(idx) for lid, idx in actual.items()
+            },
+            bits_embedded=bit_idx,
+            total_bits=total_bits,
+            efficiency=(bit_idx / total_bits if total_bits else 0.0),
+            metadata={
+                "strategy": "qae",
+                "adapter": "QaeDictAdapter",
+                "margin_scale": getattr(self._inner, "margin_scale", None),
+            },
+        )
+
+
+def _qae(config):
+    return QaeDictAdapter(config)
+
+
+def _nf4_qae(config):
+    raise RuntimeError(
+        "nf4_qae is BLOCKED: its reference residual comes from "
+        "ReferenceBuilder.build(fp16_weight, nf4_weight), but "
+        "strategy.embed only receives (residuals, bits, "
+        "selector_indices), EmbeddingConfig carries no weights or "
+        "model id, and no caller passes IntelligentEmbedder.embed's "
+        "optional weight arguments — the reference depends on the "
+        "absolute weights and cannot be rebuilt from cached "
+        "residuals. See StrategySpec.notes for the full record."
+    )
+
+
 REGISTRY: Dict[str, StrategySpec] = {
     "sign": StrategySpec(
         name="sign",
@@ -147,6 +228,60 @@ REGISTRY: Dict[str, StrategySpec] = {
             "constrained to a sign flip and is the only candidate that "
             "could learn a cover-matching distribution. Requires "
             "NeuralEmbeddingTrainer training before use."
+        ),
+    ),
+    # -----------------------------------------------------------------
+    # W1.1 — the two quantization-aware strategies that implement the
+    # per-tensor EmbeddingStrategy ABC rather than production's dict
+    # contract. The first gets the adapter; the second's adapter is
+    # blocked on what the contract does not carry (recorded, not
+    # hacked around).
+    # -----------------------------------------------------------------
+    "qae": StrategySpec(
+        name="qae",
+        factory=_qae,
+        module="src.embedding.strategies.quantization_strategy",
+        class_name="QuantizationStrategy (via QaeDictAdapter here)",
+        forces_sign_flip=True,
+        extract_needs_cover=False,
+        status="READY",
+        notes=(
+            "Quantization-aware embedding, dict-contract adapter in "
+            "this module (QaeDictAdapter): per layer it delegates to "
+            "the per-tensor ABC's own embed(), so the strategy's "
+            "margin logic runs unmodified. Reading the class: it "
+            "writes +max(|r|, 0.25*std) / -max(|r|, 0.25*std) — that "
+            "is SIGN-FAMILY encoding with a margin floor, and the "
+            "'stays inside the NF4 bucket' property the plan "
+            "attributes to QAE lives in NF4QuantizationStrategy, not "
+            "here. Extraction is sign-based, which is the correct "
+            "counterpart (same polarity as sign)."
+        ),
+    ),
+    "nf4_qae": StrategySpec(
+        name="nf4_qae",
+        factory=_nf4_qae,
+        module="src.embedding.strategies.nf4_quantization_strategy",
+        class_name="NF4QuantizationStrategy (adapter BLOCKED)",
+        forces_sign_flip=False,
+        extract_needs_cover=True,
+        status="BLOCKED",
+        notes=(
+            "Encodes bit = reference_residual +/- 0.25*std, where the "
+            "reference residual comes from ReferenceBuilder.build("
+            "fp16_weight, nf4_weight) — one extra NF4 quantize/"
+            "dequantize cycle. Blocked on the contract, not on "
+            "implementation: strategy.embed receives only (residuals, "
+            "bits, selector_indices), EmbeddingConfig carries no "
+            "model id or weights, and no caller passes "
+            "IntelligentEmbedder.embed's optional fp16_weights/"
+            "quantized_weights (verified by grep). The reference "
+            "depends on the ABSOLUTE weights, so it cannot be "
+            "rebuilt from cached residuals alone. Extraction would "
+            "also need the same reference. Wiring this honestly "
+            "requires extending the shared embed contract for every "
+            "strategy — an author decision, recorded here rather "
+            "than bolted onto one experiment."
         ),
     ),
 }
