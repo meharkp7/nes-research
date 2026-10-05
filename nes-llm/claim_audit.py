@@ -765,6 +765,136 @@ def audit_qae_round_trip():
     )
 
 
+# --------------------------------------------------------- exp18 (W1.3)
+EXP18_ARTIFACTS = [
+    "exp18_matrix_google__gemma_2_2b.json",
+    "exp18_matrix_qwen__qwen2.5_3b.json",
+    "exp18_matrix_meta_llama__llama_3.1_8b.json",
+]
+EXP18_STRATEGIES = ["sign", "magnitude_aware", "lwe", "qae"]
+
+
+def audit_strategy_matrix():
+    arts = [(name, one(name)) for name in EXP18_ARTIFACTS]
+    missing = [n for n, d in arts if not d]
+    check(
+        "exp18: all three first-pass model artifacts present",
+        not missing,
+        "3/3" if not missing else "missing: " + ", ".join(missing),
+    )
+    if missing:
+        return
+
+    gate = THRESHOLDS["exp18"]
+    check(
+        "exp18: every artifact's gate matches THRESHOLDS['exp18'] "
+        "(exp3's 0.0, exp6's 0.02/0.10, exp7's 0.55 — all reused)",
+        gate["max_ber"] == 0.0
+        and gate["max_ber_at_sigma_0_001"] == 0.02
+        and gate["max_ber_at_sigma_0_002"] == 0.10
+        and gate["max_detector_accuracy"] == 0.55
+        and all(
+            d["gate"]["max_ber"] == 0.0
+            and d["gate"]["max_ber_at_sigma_0_001"] == 0.02
+            and d["gate"]["max_ber_at_sigma_0_002"] == 0.10
+            and d["gate"]["max_detector_accuracy"] == 0.55
+            and "THRESHOLDS['exp18']" in d["gate"]["gate_source"]
+            for _, d in arts
+        ),
+        f"gate={gate}",
+    )
+
+    check(
+        "exp18: four READY strategies measured on every model; neural "
+        "and nf4_qae excluded BY NAME with reasons",
+        all(
+            [c["strategy"] for c in d["cells"]] == EXP18_STRATEGIES
+            and sorted(d["excluded_strategies"]) == ["neural", "nf4_qae"]
+            and all(
+                str(d["excluded_strategies"][s]).strip()
+                for s in ("neural", "nf4_qae")
+            )
+            for _, d in arts
+        ),
+        "cells=" + str(
+            [[c["strategy"] for c in d["cells"]] for _, d in arts][0]
+        ),
+    )
+
+    check(
+        "exp18: protocol pins — 800 detector samples per cell "
+        "(400 pairs), payload 10k, 30 epochs, seed 42 (exp10's)",
+        all(
+            all(c.get("detector_samples") == 800 for c in d["cells"])
+            and d["method"]["payload_bits"] == 10_000
+            and d["method"]["detector_pairs"] == 400
+            and d["method"]["detector_epochs"] == 30
+            and d["method"]["seed"] == 42
+            for _, d in arts
+        ),
+        "samples=" + str(
+            [c.get("detector_samples") for _, d in arts
+             for c in d["cells"]][:4]
+        ),
+    )
+
+    # Direction-agnostic consistency: every verdict boolean must be
+    # recomputable from the numbers recorded beside it, so no cell can
+    # be rounded up to a pass or down to a fail after the fact.
+    inconsistent = []
+    for name, d in arts:
+        for c in d["cells"]:
+            ext = c.get("extractability", {}) or {}
+            curve = c.get("robustness_ber_curve", {}) or {}
+            acc = c.get("detector_accuracy")
+            want_rt = bool(
+                ext.get("structurally_usable")
+                and ext.get("ber") == gate["max_ber"]
+            )
+            want_rob = bool(
+                curve.get("0.001") is not None
+                and curve.get("0.001") <= gate["max_ber_at_sigma_0_001"]
+                and curve.get("0.002") is not None
+                and curve.get("0.002") <= gate["max_ber_at_sigma_0_002"]
+            )
+            want_gate = bool(
+                acc is not None
+                and acc <= gate["max_detector_accuracy"]
+            )
+            if (
+                c.get("meets_round_trip_gate") != want_rt
+                or c.get("meets_robustness_gate") != want_rob
+                or c.get("meets_detector_gate") != want_gate
+                or c.get("wins") != (want_rt and want_rob and want_gate)
+            ):
+                inconsistent.append(f"{name}:{c.get('strategy')}")
+    check(
+        "exp18: every cell's verdict booleans recompute exactly from "
+        "its recorded numbers (no rounding either way)",
+        not inconsistent,
+        "12/12 consistent" if not inconsistent
+        else "inconsistent: " + ", ".join(inconsistent),
+    )
+
+    # Headline, pinned: the matrix's citable facts.
+    cells = [c for _, d in arts for c in d["cells"]]
+    bers = [c.get("extractability", {}).get("ber") for c in cells]
+    lwe_dets = [
+        c.get("detector_accuracy")
+        for c in cells if c["strategy"] == "lwe"
+    ]
+    check(
+        "exp18: 12/12 round trips at BER 0.0 and 12/12 robustness "
+        "gates pass; LWE detector exactly 0.50 on all three models "
+        "(third reproduction after exp10/exp12)",
+        len(bers) == 12
+        and all(b == 0.0 for b in bers)
+        and all(c.get("meets_robustness_gate") for c in cells)
+        and lwe_dets == [0.5, 0.5, 0.5],
+        f"ber_set={sorted(set(bers))} lwe_dets={lwe_dets}",
+    )
+
+
 # ------------------------------------------------------------------ gates
 def audit_thresholds():
     check(
@@ -803,6 +933,7 @@ def main() -> int:
         ("LWE fidelity (exp15)", audit_lwe_fidelity),
         ("cross-scheme detector (exp16)", audit_cross_scheme),
         ("QAE round trip (exp17)", audit_qae_round_trip),
+        ("strategy matrix (exp18)", audit_strategy_matrix),
         ("gates", audit_thresholds),
     ):
         print(f"\n{title}")

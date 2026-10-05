@@ -1,0 +1,198 @@
+{
+  "experiment": "exp18",
+  "title": "W1.3 \u2014 strategy x model matrix (one model per run)",
+  "model_id": "Qwen/Qwen2.5-3B",
+  "family": "qwen",
+  "num_layers": 36,
+  "gate": {
+    "description": "Strategy x model matrix (W1.3): per cell, the round trip must hold (exp3's 0.0), robustness must hold at sigma 0.001/0.002 (exp6's 0.02/0.10), and the strategy's own detector must stay at chance (exp7's 0.55). Four numbers, four reused sources, none new.",
+    "max_ber": 0.0,
+    "max_ber_at_sigma_0_001": 0.02,
+    "max_ber_at_sigma_0_002": 0.1,
+    "max_detector_accuracy": 0.55,
+    "gate_source": "experiment_registry.THRESHOLDS['exp18']"
+  },
+  "cells": [
+    {
+      "strategy": "sign",
+      "status": "READY",
+      "forces_sign_flip": true,
+      "extract_needs_cover": false,
+      "extractability": {
+        "strategy": "sign",
+        "embed_ok": true,
+        "decrypt_ok": true,
+        "recovered_matches": true,
+        "ber": 0.0,
+        "error": "",
+        "bits_embedded": 10256,
+        "bits_compared": 10256,
+        "bit_errors": 0,
+        "usable_in_production_pipeline": true,
+        "structurally_usable": true
+      },
+      "robustness_ber_curve": {
+        "0.0": 0.0,
+        "0.001": 0.0,
+        "0.002": 0.0,
+        "0.005": 0.00013000520020800833
+      },
+      "meets_round_trip_gate": true,
+      "meets_robustness_gate": true,
+      "meets_detector_gate": false,
+      "detector_accuracy": 0.75,
+      "detector_samples": 800,
+      "signal_density": {
+        "mean_changed_values_per_patch": 25.4825,
+        "patch_size": 4096,
+        "identical_pair_fraction": 0.0475
+      },
+      "wins": false
+    },
+    {
+      "strategy": "magnitude_aware",
+      "status": "READY",
+      "forces_sign_flip": true,
+      "extract_needs_cover": false,
+      "extractability": {
+        "strategy": "magnitude_aware",
+        "embed_ok": true,
+        "decrypt_ok": true,
+        "recovered_matches": true,
+        "ber": 0.0,
+        "error": "",
+        "bits_embedded": 10256,
+        "bits_compared": 10256,
+        "bit_errors": 0,
+        "usable_in_production_pipeline": true,
+        "structurally_usable": true
+      },
+      "robustness_ber_curve": {
+        "0.0": 0.0,
+        "0.001": 0.0,
+        "0.002": 0.0,
+        "0.005": 0.0
+      },
+      "meets_round_trip_gate": true,
+      "meets_robustness_gate": true,
+      "meets_detector_gate": false,
+      "detector_accuracy": 0.675,
+      "detector_samples": 800,
+      "signal_density": {
+        "mean_changed_values_per_patch": 52.3325,
+        "patch_size": 4096,
+        "identical_pair_fraction": 0.0
+      },
+      "wins": false
+    },
+    {
+      "strategy": "lwe",
+      "status": "READY",
+      "forces_sign_flip": false,
+      "extract_needs_cover": false,
+      "extractability": {
+        "strategy": "lwe",
+        "embed_ok": true,
+        "decrypt_ok": false,
+        "recovered_matches": false,
+        "ber": 0.0,
+        "error": "",
+        "bits_embedded": 10256,
+        "bits_compared": 10256,
+        "bit_errors": 0,
+        "usable_in_production_pipeline": false,
+        "note": "Bits recover through the scheme's own extractor, but DecryptPipeline is hardcoded to SignExtractor and cannot read a non-sign scheme. Wiring it up is a separate change, not a scheme defect.",
+        "structurally_usable": true
+      },
+      "robustness_ber_curve": {
+        "0.0": 0.0,
+        "0.001": 0.0,
+        "0.002": 0.01267550702028081,
+        "0.005": 0.3174726989079563
+      },
+      "meets_round_trip_gate": true,
+      "meets_robustness_gate": true,
+      "meets_detector_gate": true,
+      "detector_accuracy": 0.5,
+      "detector_samples": 800,
+      "signal_density": {
+        "mean_changed_values_per_patch": 50.9075,
+        "patch_size": 4096,
+        "identical_pair_fraction": 0.0
+      },
+      "wins": true
+    },
+    {
+      "strategy": "qae",
+      "status": "READY",
+      "forces_sign_flip": true,
+      "extract_needs_cover": false,
+      "extractability": {
+        "strategy": "qae",
+        "embed_ok": true,
+        "decrypt_ok": true,
+        "recovered_matches": true,
+        "ber": 0.0,
+        "error": "",
+        "bits_embedded": 10256,
+        "bits_compared": 10256,
+        "bit_errors": 0,
+        "usable_in_production_pipeline": true,
+        "structurally_usable": true
+      },
+      "robustness_ber_curve": {
+        "0.0": 0.0,
+        "0.001": 0.0,
+        "0.002": 0.0,
+        "0.005": 6.500260010400417e-05
+      },
+      "meets_round_trip_gate": true,
+      "meets_robustness_gate": true,
+      "meets_detector_gate": false,
+      "detector_accuracy": 0.725,
+      "detector_samples": 800,
+      "signal_density": {
+        "mean_changed_values_per_patch": 25.3875,
+        "patch_size": 4096,
+        "identical_pair_fraction": 0.0675
+      },
+      "wins": false
+    }
+  ],
+  "excluded_strategies": {
+    "neural": "NEEDS_TRAINING \u2014 train_sampled() never run (W1.2, not in \u00a77's suggested order); registering it here untrained would measure a load error, not a strategy.",
+    "nf4_qae": "BLOCKED \u2014 exp17: reference residual needs the fp16/nf4 weight tensors neither strategy.embed nor EmbeddingConfig carries."
+  },
+  "method": {
+    "axes_source": "exp10_strategy_comparison measurement functions, parametrised by model (family/num_layers); protocol identical to exp10/exp12",
+    "payload_bits": 10000,
+    "detector_pairs": 400,
+    "detector_embeddings": 20,
+    "detector_epochs": 30,
+    "patch_size": 4096,
+    "seed": 42,
+    "robustness_sigmas": [
+      "0.0",
+      "0.001",
+      "0.002",
+      "0.005"
+    ],
+    "robustness_trials": "3 per nonzero sigma, 1 at 0.0",
+    "one_model_per_process": true,
+    "first_pass_models": [
+      "google/gemma-2-2b",
+      "Qwen/Qwen2.5-3B",
+      "meta-llama/Llama-3.1-8B"
+    ],
+    "strategy_notes": {
+      "sign": "Production default. Writes carrier as +/-|r| selected by the bit. Passes BER/PPL/robustness but is detected at 70.5% by a carrier-centered MLP; the sweep in exp7_neural_parameter_study shows retuning does not help.",
+      "magnitude_aware": "Per-carrier adaptive margin, but still 'boosted if bit == 1 else -boosted'. Same structural sign leak as sign, with a larger perturbation, so it is expected to be at least as detectable rather than less.",
+      "lwe": "LWE-inspired parity/grid encoding, not lattice LWE: there is no matrix A and no SIS/LWE instance, so the post-quantum claim in its docstring is not supported by the implementation. Phase 3 removed the cover dependency: the grid width is derived from the stego tensor's own std, which is valid because the embedding is sparse (~0.001% of values). Requires LweParityExtractor rather than the sign-based one production uses.",
+      "qae": "Quantization-aware embedding, dict-contract adapter in this module (QaeDictAdapter): per layer it delegates to the per-tensor ABC's own embed(), so the strategy's margin logic runs unmodified. Reading the class: it writes +max(|r|, 0.25*std) / -max(|r|, 0.25*std) \u2014 that is SIGN-FAMILY encoding with a margin floor, and the 'stays inside the NF4 bucket' property the plan attributes to QAE lives in NF4QuantizationStrategy, not here. Extraction is sign-based, which is the correct counterpart (same polarity as sign)."
+    }
+  },
+  "notes": [
+    "Per-cell verdicts only: a cell that fails an axis is reported failing for that axis, never as an experiment error. 'wins' = round trip + robustness + under detector gate, exp10's definition.",
+    "Detector accuracy is strategy-specific (each strategy's own dataset), comparable as 'this detector against this embedding' \u2014 exp10's comparability note applies."
+  ]
+}
