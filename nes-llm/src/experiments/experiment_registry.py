@@ -171,6 +171,18 @@ THRESHOLDS = {
         "max_ber_at_sigma_0_002": 0.10,
         "max_detector_accuracy": 0.55,
     },
+    "exp21": {
+        "description": (
+            "QAE encode + LWE read-out (W5.2): the plan called the "
+            "combination 'plausible', so the interop round trip must "
+            "hold at exp3's 0.0 — and the SAME stream read through "
+            "its own (matched) extractor must also be 0.0, so a "
+            "failure is attributable to the read-out pairing, not "
+            "to a broken embed. Two numbers, exp3's, both reused."
+        ),
+        "max_ber": 0.0,
+        "max_control_ber": 0.0,
+    },
 }
 
 
