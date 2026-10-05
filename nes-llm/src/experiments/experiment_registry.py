@@ -116,6 +116,17 @@ THRESHOLDS = {
         ),
         "max_ppl_degradation_pct": 2.0,
     },
+    "exp16": {
+        "description": (
+            "Cross-scheme detector (W3.1): BOTH cross directions — "
+            "sign-trained tested on LWE, and LWE-trained tested on "
+            "sign — must stay at chance. The 55% number is "
+            "exp7_neural's existing gate, reused, not a new "
+            "threshold; within-scheme controls carry no gate but "
+            "claim_audit requires them to clear the line."
+        ),
+        "max_cross_scheme_detector_accuracy": 0.55,
+    },
 }
 
 

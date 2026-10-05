@@ -629,6 +629,66 @@ def audit_lwe_fidelity():
     )
 
 
+# --------------------------------------------------------- exp16 (W3.1)
+def audit_cross_scheme():
+    d = one("exp16_cross_scheme_detector.json")
+    if not d:
+        check("exp16 artifact present", False)
+        return
+
+    gate = d.get("gate", {})
+    cross = gate.get("measured_cross", {})
+    check(
+        "exp16: gate matches THRESHOLDS['exp16'], both cross directions "
+        "at chance (0.5000), PASS as pre-registered",
+        gate.get("max_cross_scheme_detector_accuracy")
+        == THRESHOLDS["exp16"]["max_cross_scheme_detector_accuracy"]
+        == 0.55
+        and cross.get("sign_to_lwe") == 0.5
+        and cross.get("lwe_to_sign") == 0.5
+        and gate.get("status") == "PASS"
+        and d.get("status") == "PASS",
+        f"cross={cross} status={gate.get('status')}",
+    )
+
+    results = d.get("results", {})
+    within = d.get("within_scheme_controls", {})
+    check(
+        "exp16: sign pipeline validated (62.85% within-scheme, clears "
+        "the 55% line) — so sign->LWE at chance is informative",
+        within.get("sign_to_sign", 0) > 0.55
+        and abs(within.get("sign_to_sign", 0) - 0.6284722222222222) < 1e-9
+        and results.get("sign_to_sign", {}).get("pairs") == 144,
+        f"sign within={within.get('sign_to_sign')}",
+    )
+
+    check(
+        "exp16: LWE control collapsed at 0.5000 — recorded, and "
+        "consistent with exp12's measured LWE detector accuracy of "
+        "50.00%; LWE->sign direction read as NOT established",
+        within.get("lwe_to_lwe") == 0.5
+        and results.get("lwe_to_lwe", {}).get("tp") == 0
+        and results.get("lwe_to_lwe", {}).get("fp") == 0
+        and d.get("controls_valid") is False,
+        f"lwe within={within.get('lwe_to_lwe')} "
+        f"controls_valid={d.get('controls_valid')}",
+    )
+
+    method = d.get("method", {})
+    check(
+        "exp16: 432 pairs per scheme, split by embedding, detector "
+        "unchanged from exp7",
+        method.get("pairs_per_scheme") == 432
+        and method.get("pairs_per_scheme") >= 400
+        and str(method.get("split", "")).startswith("4 embeds train")
+        and method.get("epochs") == 30
+        and method.get("batch_size") == 32
+        and method.get("seed") == 42,
+        f"pairs={method.get('pairs_per_scheme')} "
+        f"split={method.get('split')}",
+    )
+
+
 # ------------------------------------------------------------------ gates
 def audit_thresholds():
     check(
@@ -665,6 +725,7 @@ def main() -> int:
         ("keyless recovery (exp13)", audit_keyless),
         ("blind-patch adversary (exp14)", audit_blind),
         ("LWE fidelity (exp15)", audit_lwe_fidelity),
+        ("cross-scheme detector (exp16)", audit_cross_scheme),
         ("gates", audit_thresholds),
     ):
         print(f"\n{title}")
