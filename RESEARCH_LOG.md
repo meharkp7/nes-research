@@ -1844,3 +1844,99 @@ added with the exp10 guard), manifest unchanged at 35 PASS / 6 FAIL /
 0 NOT_RUN / 0 ERROR — exp18 is the sixth standalone artifact outside
 the manifest grid. W1.3's first pass closes: the breadth deliverable
 now has a table, and the table has one axis.
+
+## 25. W5.1 — adaptive routing as designed (exp19)
+
+Suggested order item 7a (`RESEARCH_PLAN` §7). W5.1 was
+*"tests someone else's design and gives a baseline for anything
+better"* — `AdaptiveStrategy` estimates σ from first-order residual
+differences and routes: σ < 0.0005 → lwe, σ < 0.003 → neural, else
+sign. The plan called it cheap; it was (one embed per model, plus
+two fallbacks for the one failure).
+
+### 25.1 What was built
+
+- **`adaptive` joined `REGISTRY`** (seventh strategy): lazy factory,
+  `needs_trained_model: true` for the neural branch,
+  `forces_sign_flip` **branch-dependent** and said so in the notes
+  (sign flips, lwe/neural do not — the artifact records which branch
+  fired), plus the lwe-branch caveat: the design builds `LWEStrategy`
+  with a fresh `os.urandom(32)` key per run, so adaptive-lwe is
+  self-consistent but **not bit-identical** to the registry's
+  zero-key lwe. Recorded, not "fixed" — that is the design's own
+  constructor.
+- **`AdaptiveRoutedExtractor`** in `extractors.py`: only the strategy
+  knows which branch fired, so the decoder is fetched from it at call
+  time (`get_extractor`), forwarding the cover when a caller has one
+  and defaulting to the stego tensor — what an extractor really
+  holds, which `LWEStrategy.extract` documents as equivalent for
+  sparse payloads (Phase 3's no-cover derivation).
+- **`THRESHOLDS["exp19"]`** = exp3's `max_ber: 0.0`, reused. The
+  **routing choice is measurement, not gate**; a route to an
+  unavailable branch is recorded as the design's own failure.
+- **Two defects found by the first run, fixed in the module, not
+  patched around:** `IntelligentEmbedder`'s `EmbedResult` wrapper
+  drops the inner `EmbeddingResult.metadata` where the design parked
+  `estimated_sigma` (recomputed via the deterministic
+  `estimate_noise` — same value the routing used, recorded in
+  `method.sigma_recompute`), and `routing.thresholds` was left
+  empty (now read from the strategy's class constants). All three
+  artifacts were re-run from the final code so none is a hybrid of
+  two versions.
+
+### 25.2 The routing — three models, three branches
+
+| model | σ_est | routed branch | route available | round trip BER | gate |
+|---|---|---|---|---|---|
+| gemma-2-2b (26L) | **0.000448** | **lwe** | yes | `adaptive->lwe`: **0.0** | PASS |
+| Qwen2.5-3B (36L) | **0.001554** | **neural** | **no** — `EmbeddingError` (no trained model) | fallbacks: `sign` **0.0**, `lwe` **0.0** | PASS |
+| Llama-3.1-8B (32L) | **0.007736** | **sign** | yes | `adaptive->sign`: **0.0** (pipeline recovered) | PASS |
+
+Four round trips ran, four at exp3's 0.0. The failure cell is the
+interesting one: the middle bracket routes to a branch the design
+ships without (it says: train a model, pass `neural_model_path`),
+so on Qwen **the design as written does not embed at all**. The
+`EmbeddingError` text is kept verbatim in the artifact; the
+experiment then round-tripped the design's available branches as
+its baseline — the design itself has no automatic fallback, it
+raises.
+
+### 25.3 The reading
+
+1. **The router discriminates on real data.** Three models fell into
+   three different brackets — the thresholds are not decorative,
+   and a 17× spread in estimated residual noise (0.000448 → 0.007736)
+   exists across these three families. Any "one scheme for all
+   models" claim has to beat a router that would pick differently
+   per model.
+2. **Design-as-written fails closed on the middle bracket.** The
+   failure is the design's own (recorded, never patched), and the
+   fallback branches — both available, both 0.0 — show what the
+   design *would* do if it had one.
+3. **σ-estimator agrees with intuition about size:** the smallest,
+   quietest residuals route to fidelity (lwe), the noisiest to
+   robustness (sign). No contradiction to chase.
+4. **Scope:** routing + round trip only. Detectability of the routed
+   primitives is exp18's axis (lwe 0.50, sign-family 0.59–0.84 —
+   so the router picks *detectable* branches on two of three models
+   when it picks sign; stealth is not in this design's objective).
+   No detector, no perplexity, no new gate.
+
+### 25.4 Verification
+
+```bash
+cd nes-llm
+../.venv/bin/python claim_audit.py                    # 71/71 (7 new)
+../.venv/bin/python check_consistency.py              # 9/9
+../.venv/bin/python -m unittest discover -s tests -p 'test_*.py'   # 40 OK
+../.venv/bin/python -m src.experiments.exp19_adaptive_routing \
+    --model Qwen/Qwen2.5-3B                           # re-runs one model
+```
+
+State: 71/71 claims (the 7 new pin the gate, branch-recomputes-from-σ
+consistency with the three-way split, Qwen's failure as recorded,
+gate-status recomputation, protocol pins, pipeline-flag
+consistency), 9/9 consistency, 40 tests, manifest unchanged at
+35 PASS / 6 FAIL / 0 NOT_RUN / 0 ERROR — exp19 is the seventh
+standalone artifact outside the manifest grid. W5.1 closes; W5.3
+(sign/parity split) is the highest-value remaining W5 item.
