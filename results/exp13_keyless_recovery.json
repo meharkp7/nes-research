@@ -1,0 +1,321 @@
+{
+  "experiment": "exp13_keyless_recovery",
+  "title": "W4.2 \u2014 keyless recovery of the LWE grid",
+  "model_id": "Qwen/Qwen2.5-3B",
+  "family": "qwen",
+  "layers": 36,
+  "status": "FAIL",
+  "gate": {
+    "min_keyless_ber": 0.5,
+    "min_width_search_relative_error": 0.01,
+    "measured": {
+      "keyless_ber": 0.0,
+      "width_search_relative_error": 0.8
+    },
+    "failed_conditions": [
+      "min_keyless_ber"
+    ],
+    "status": "FAIL",
+    "strongest_attacker": "phase_stream"
+  },
+  "attacker_model": {
+    "holds": [
+      "released model",
+      "public source"
+    ],
+    "does_not_hold": [
+      "any key",
+      "cover residuals",
+      "carrier map",
+      "the original message"
+    ],
+    "notes": [
+      "AES-256-GCM encrypts the payload before embedding; reading the bits yields ciphertext. This experiment tests channel key-gating, not message confidentiality.",
+      "The embedded bitstream is AES ciphertext and shows no structure, so no known-plaintext aid is available or used."
+    ]
+  },
+  "claims_tested": [
+    {
+      "claim": "the grid spacing is key-derived and secret",
+      "source": "lwe_strategy.py:17",
+      "verdict": "REFUTED",
+      "criterion": "any key-independent width in the shipped path",
+      "evidence": "distinct widths across 36 layers x 5 keys: [0.01]; keyed_branch_active=False; designed control: 0/36 layers key-dependent (floor dominates on every layer)"
+    },
+    {
+      "claim": "the interval parity mapping is secret without the key",
+      "source": "lwe_strategy.py:15-16",
+      "verdict": "REFUTED",
+      "criterion": "two different keys decode to different bits",
+      "evidence": "max pairwise BER across 6 keys = 0.0"
+    },
+    {
+      "claim": "carrier positions are secret without the key",
+      "source": "lwe_strategy.py:14",
+      "verdict": "REFUTED",
+      "criterion": "phase detection reaches precision >= 0.90 and recall >= 0.90 from the weights alone",
+      "evidence": "precision=1.0 recall=1.0 at tol 1e-06"
+    }
+  ],
+  "shipped_path": {
+    "registry_factory": "strategy_registry._lwe(config) \u2014 passes neither secret_key nor grid_width",
+    "grid_width_property": 0.01,
+    "secret_key_is_all_zero_default": true,
+    "keyed_branch_active": false,
+    "keyed_branch_note": "_derive_interval_width only consults HMAC output when grid_width is None; the constructor always substitutes DEFAULT_GRID_WIDTH, so HMAC is computed and discarded.",
+    "distinct_widths_all_layers": [
+      0.01
+    ],
+    "widths_across_keys": {
+      "registry_default": [
+        0.01
+      ],
+      "random_a": [
+        0.01
+      ],
+      "random_b": [
+        0.01
+      ],
+      "random_c": [
+        0.01
+      ],
+      "random_d": [
+        0.01
+      ]
+    },
+    "width_identical_across_keys": true,
+    "width_forcing_hooks": {
+      "requested_0.002": {
+        "resulting_grid_width": 0.01,
+        "effective": false
+      },
+      "requested_0.05": {
+        "resulting_grid_width": 0.01,
+        "effective": false
+      }
+    },
+    "width_forcing_hook_effective": false
+  },
+  "designed_path_control": {
+    "reachable": false,
+    "note": "Control only: this is what the advertised formula max(std*alpha*HMAC_scale, min_magnitude*2) would yield if grid_width were None. The shipped path never takes it.",
+    "relative_spread_all": 0.0,
+    "layers_key_dependent": 0,
+    "layers_total": 36,
+    "max_within_layer_relative_spread": 0.0,
+    "floor_dominated_fraction": 1.0,
+    "floor_value": 0.002
+  },
+  "key_invariance": {
+    "ber_vs_transmitted": {
+      "embedder_key": 0.0,
+      "registry_default": 0.0,
+      "random_a": 0.0,
+      "random_b": 0.0,
+      "random_c": 0.0,
+      "random_d": 0.0
+    },
+    "stream_lengths": {
+      "embedder_key": 10256,
+      "registry_default": 10256,
+      "random_a": 10256,
+      "random_b": 10256,
+      "random_c": 10256,
+      "random_d": 10256
+    },
+    "max_pairwise_ber": 0.0,
+    "keys_decode_identically": true
+  },
+  "attack_tiers": {
+    "kerckhoffs_exact_size": {
+      "label": "knows_exact_payload_size",
+      "assumes": [
+        "public source and protocol",
+        "payload size 10256 bits (config value, not a secret)",
+        "the released model only \u2014 no key, no cover, no carrier map"
+      ],
+      "attacker_total_bits": 10256,
+      "positions": {
+        "true_positives": 6695,
+        "false_positives": 3561,
+        "false_negatives": 3561,
+        "precision": 0.6527886115444618,
+        "recall": 0.6527886115444618
+      },
+      "layers_with_matching_allocation": 0,
+      "layers_total": 36,
+      "recovered_bits": 10256,
+      "transmitted_bits": 10256,
+      "keyless_ber": 0.49434477379095165
+    },
+    "kerckhoffs_nominal_size": {
+      "label": "knows_nominal_payload_size",
+      "assumes": [
+        "public source and protocol",
+        "payload size 10000 bits (config value, not a secret)",
+        "the released model only \u2014 no key, no cover, no carrier map"
+      ],
+      "attacker_total_bits": 10000,
+      "positions": {
+        "true_positives": 6683,
+        "false_positives": 3317,
+        "false_negatives": 3573,
+        "precision": 0.6683,
+        "recall": 0.6516185647425897
+      },
+      "layers_with_matching_allocation": 1,
+      "layers_total": 36,
+      "recovered_bits": 10000,
+      "transmitted_bits": 10256,
+      "keyless_ber": 0.4999
+    },
+    "phase_detection": {
+      "knowledge": [
+        "public source and the public width constant",
+        "the released model only \u2014 no key, no cover, no payload size, no carrier map, no protocol parameters"
+      ],
+      "width_used": 0.01,
+      "per_tolerance": {
+        "1e-05": {
+          "detected_in_stego": 10256,
+          "detected_in_clean_control": 0,
+          "true_positives": 10256,
+          "false_positives": 0,
+          "total_true_carriers": 10256,
+          "precision": 1.0,
+          "recall": 1.0,
+          "conditional_ber": null,
+          "conditional_compared": 0
+        },
+        "1e-06": {
+          "detected_in_stego": 10256,
+          "detected_in_clean_control": 0,
+          "true_positives": 10256,
+          "false_positives": 0,
+          "total_true_carriers": 10256,
+          "precision": 1.0,
+          "recall": 1.0,
+          "conditional_ber": 0.0,
+          "conditional_compared": 10256
+        },
+        "1e-07": {
+          "detected_in_stego": 10256,
+          "detected_in_clean_control": 0,
+          "true_positives": 10256,
+          "false_positives": 0,
+          "total_true_carriers": 10256,
+          "precision": 1.0,
+          "recall": 1.0,
+          "conditional_ber": null,
+          "conditional_compared": 0
+        }
+      },
+      "stream_ber_primary_tol": 0.0,
+      "stream_length": 10256,
+      "transmitted_length": 10256,
+      "layers_with_detected_candidates": 36
+    }
+  },
+  "width_search": {
+    "spike_found": true,
+    "winner_layer": 0,
+    "layers_scanned": 1,
+    "scan": [
+      {
+        "layer": 0,
+        "best_width": 0.002,
+        "best_score": 153,
+        "median_score": 0
+      }
+    ],
+    "candidate_count": 65,
+    "argmax_width": 0.002,
+    "argmax_candidates": [
+      0.002,
+      0.01
+    ],
+    "true_width_tied_for_best": true,
+    "scores_at_published_widths": {
+      "0.002": 153,
+      "0.005": 0,
+      "0.01": 153,
+      "0.02": 0,
+      "0.05": 68
+    },
+    "true_width": 0.01,
+    "relative_error": 0.8,
+    "argmax_score": 153,
+    "median_score": 0,
+    "spike_margin": null,
+    "score_at_true_width": 153,
+    "offset_tolerance_curve": {
+      "0": 153,
+      "+1e-07": 153,
+      "-1e-07": 153,
+      "+1e-06": 68,
+      "-1e-06": 85,
+      "+1e-05": 0,
+      "-1e-05": 0,
+      "+1e-04": 0,
+      "-1e-04": 0,
+      "+1e-03": 0,
+      "-1e-03": 0,
+      "+1e-02": 0,
+      "-1e-02": 0,
+      "+1e-01": 0,
+      "-1e-01": 0,
+      "+8e-01": 0,
+      "-8e-01": 153
+    },
+    "decode_ber_vs_width_offset": {
+      "0": 0.0,
+      "+1e-07": 0.0,
+      "-1e-07": 0.0,
+      "+1e-06": 0.0,
+      "-1e-06": 0.0,
+      "+1e-05": 0.0,
+      "-1e-05": 0.0,
+      "+1e-04": 0.0,
+      "-1e-04": 0.0,
+      "+1e-03": 0.0,
+      "-1e-03": 0.0,
+      "+1e-02": 0.0,
+      "-1e-02": 0.0,
+      "+1e-01": 0.0093603744149766,
+      "-1e-01": 0.03656396255850234,
+      "+8e-01": 0.8054797191887676,
+      "-8e-01": 0.0
+    },
+    "note": "The spike exists only when the guess lands within ~1e-6 relative of the true width: at larger offsets the encoded carriers no longer sit on the candidate lattice, so a blind search must resolve the width to ~1e-6 to detect anything. Odd subdivisions tie with the true width (w/5 = 0.002 has the same centers for every carrier), so even a search that hits cannot distinguish the true scalar from its w/5 multiple; even subdivisions (w/2, 2w) score nothing."
+  },
+  "method": {
+    "payload_bits_nominal": 10000,
+    "payload_bits_actual": 10256,
+    "message": "1250x 'A' (same as exp10)",
+    "seed": 42,
+    "phase_tols": [
+      1e-05,
+      1e-06,
+      1e-07
+    ],
+    "search_grid": {
+      "explicit_published_frontier": [
+        0.002,
+        0.005,
+        0.01,
+        0.02,
+        0.05
+      ],
+      "log_points": 61,
+      "span": "1e-3 .. 1e-1"
+    },
+    "gate_source": "experiment_registry.THRESHOLDS['exp13']"
+  },
+  "findings": [
+    "The shipped LWE path uses one public constant (0.01) for every layer and every key; the HMAC branch the docstring describes is unreachable, and even the designed formula would be key-independent on 0/36 layers (the min_magnitude floor dominates).",
+    "An attacker with the weights and the public constant reads the whole channel: 10256 of 10256 carriers located (precision 1.0, recall 1.0) and 10256 bits at BER 0.0, with no key, no cover and no payload parameters. The clean control produces zero candidate positions at every tolerance tested.",
+    "Re-running the public QACI selection on the stego weights is a weaker attack: precision 0.6527886115444618, only 0/36 layer allocations match, and the stream reads at BER 0.49434477379095165 (chance) because shifted allocations misalign it. The physical center signature, not the public pipeline, is what exposes the channel.",
+    "The width search ties the true width with its 1/5 subdivision (odd subdivisions preserve every center); detection needs ~1e-6 relative precision while decoding itself tolerates a wrong width of +/-1% at BER 0.",
+    "exp11/exp12's grid-width forcing hooks (alpha/min_magnitude patches) no longer change the width under the current constructor; exp11's frontier predates the default and its rows vary, so that artifact stands, but a re-run with a different --grid-width would silently measure the default."
+  ]
+}
