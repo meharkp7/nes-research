@@ -14,7 +14,6 @@ Also tests ablation study, full experiment suite API, and benchmark gates.
 
 import os
 import torch
-import pytest
 
 from src.core.types import EmbeddingConfig
 from src.embedding.intelligent_embedder  import IntelligentEmbedder
