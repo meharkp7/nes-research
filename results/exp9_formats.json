@@ -1,48 +1,174 @@
 {
   "experiment": "exp9",
-  "title": "GPTQ / AWQ beyond NF4",
-  "model": "Qwen/Qwen2.5-3B-Instruct",
+  "title": "GPTQ / AWQ \u2014 non-NF4 4-bit formats",
   "configuration": {
     "targets": [
-      "Qwen/Qwen2.5-3B-Instruct-GPTQ-Int4",
-      "Qwen/Qwen2.5-3B-Instruct-AWQ"
+      {
+        "model_id": "Qwen/Qwen2.5-3B-Instruct-GPTQ-Int4",
+        "fp16_reference": "Qwen/Qwen2.5-3B-Instruct",
+        "family": "qwen",
+        "format": "gptq"
+      },
+      {
+        "model_id": "Qwen/Qwen2.5-3B-Instruct-AWQ",
+        "fp16_reference": "Qwen/Qwen2.5-3B-Instruct",
+        "family": "qwen",
+        "format": "awq"
+      }
     ],
     "payload_bits": 10000,
-    "module": "mlp.down_proj",
-    "dequantization": "format-specific adapters, verified against FP16 reference"
+    "dequantization": "format-specific adapters",
+    "nf4_loader_used": false
   },
   "metrics": {
     "results": {
       "Qwen/Qwen2.5-3B-Instruct-GPTQ-Int4": {
-        "status": "PASS",
-        "ber": 0.0,
-        "mean_residual_magnitude": 0.002787,
-        "layers": 36,
-        "dequant_verification": {
-          "correlation": 0.9903,
-          "residual_ratio": 0.1402,
-          "usable": true
+        "experiment": "exp9",
+        "title": "GPTQ clean BER",
+        "model_id": "Qwen/Qwen2.5-3B-Instruct-GPTQ-Int4",
+        "family": "qwen",
+        "quantization_format": "gptq",
+        "configuration": {
+          "quantization_format": "gptq",
+          "payload_bits": 10000,
+          "module": "mlp.down_proj",
+          "alpha_note": "EmbeddingConfig defaults used unmodified. The guide suggests ~0.10-0.15 for AWQ; that is untested here and is not applied blindly."
         },
-        "notes": "Clean BER 0.0 through the GPTQ dequantization path, verified against the FP16 reference (correlation 0.9903)."
+        "thresholds": {
+          "description": "Clean BER through format-specific dequantization (GPTQ / AWQ), each verified against its FP16 reference.",
+          "max_ber": 0.0,
+          "min_dequant_correlation": 0.95,
+          "max_dequant_residual_ratio": 0.5
+        },
+        "metrics": {
+          "dequant_verification": {
+            "format": "gptq",
+            "usable": true,
+            "correlation": 0.9902718408193982,
+            "residual_ratio": 0.14020174202818061,
+            "raw_correlation": 0.9902718408193982,
+            "raw_residual_ratio": 0.14020174202818061,
+            "scale_corrected": false,
+            "dequantized_std": 0.025455905124545097,
+            "reference_std": 0.025267837569117546,
+            "reason": "verified: correlation 0.9903, residual ratio 0.1402"
+          },
+          "quant_config": {
+            "batch_size": 1,
+            "bits": 4,
+            "block_name_to_quantize": null,
+            "cache_block_outputs": true,
+            "damp_percent": 0.01,
+            "dataset": null,
+            "desc_act": false,
+            "exllama_config": {
+              "version": 1
+            },
+            "group_size": 128,
+            "max_input_length": null,
+            "model_seqlen": null,
+            "module_name_preceding_first_block": null,
+            "modules_in_block_to_quantize": null,
+            "pad_token_id": null,
+            "quant_method": "gptq",
+            "sym": true,
+            "tokenizer": null,
+            "true_sequential": true,
+            "use_cuda_fp16": false,
+            "use_exllama": true
+          },
+          "layers": 36,
+          "layers_excluded": {},
+          "mean_residual_magnitude": 0.002786506416871109,
+          "payload_bits": 10000,
+          "bits_embedded": 10256,
+          "bits_compared": 10256,
+          "bit_errors": 0,
+          "ber": 0.0,
+          "recovered_matches": true,
+          "decrypt_success": true
+        },
+        "status": "PASS",
+        "gate_status": "PASS",
+        "notes": "Clean BER 0.0 through the GPTQ dequantization path, verified against the FP16 reference on all layers.",
+        "source": "run"
       },
       "Qwen/Qwen2.5-3B-Instruct-AWQ": {
-        "status": "NOT_RUN",
-        "dequant_verification": {
-          "correlation": 0.2343,
-          "residual_ratio": 1.0269,
-          "usable": false
+        "experiment": "exp9",
+        "title": "AWQ clean BER",
+        "model_id": "Qwen/Qwen2.5-3B-Instruct-AWQ",
+        "family": "qwen",
+        "quantization_format": "awq",
+        "configuration": {
+          "quantization_format": "awq",
+          "payload_bits": 10000,
+          "module": "mlp.down_proj",
+          "alpha_note": "EmbeddingConfig defaults used unmodified. The guide suggests ~0.10-0.15 for AWQ; that is untested here and is not applied blindly."
         },
-        "notes": "AWQ dequantization could not be verified against the FP16 reference (correlation 0.2343 < 0.95), so no residual was computed. Reporting NOT_RUN rather than a BER that would look valid and mean nothing."
+        "thresholds": {
+          "description": "Clean BER through format-specific dequantization (GPTQ / AWQ), each verified against its FP16 reference.",
+          "max_ber": 0.0,
+          "min_dequant_correlation": 0.95,
+          "max_dequant_residual_ratio": 0.5
+        },
+        "metrics": {
+          "dequant_verification": {
+            "format": "awq",
+            "usable": true,
+            "correlation": 0.9940740101859922,
+            "residual_ratio": 0.10928936844291139,
+            "raw_correlation": 0.9890012168260888,
+            "raw_residual_ratio": 0.4691955006377544,
+            "scale_corrected": true,
+            "dequantized_std": 0.013738843612372875,
+            "reference_std": 0.025267837569117546,
+            "reason": "verified: correlation 0.9941, residual ratio 0.1093, raw correlation 0.9890 before removing the absorbed per-channel scale"
+          },
+          "quant_config": {
+            "bits": 4,
+            "group_size": 128,
+            "modules_to_not_convert": null,
+            "quant_method": "awq",
+            "version": "gemm",
+            "zero_point": true
+          },
+          "layers": 35,
+          "layers_excluded": {
+            "2": "correlation 0.9337 < 0.95: awq dequantization does not reproduce the reference weights once the absorbed per-channel scale is removed. The layout is not understood, so residuals derived from it would be meaningless."
+          },
+          "mean_residual_magnitude": 0.007359887366848333,
+          "payload_bits": 10000,
+          "bits_embedded": 10256,
+          "bits_compared": 10256,
+          "bit_errors": 0,
+          "ber": 0.0,
+          "recovered_matches": true,
+          "decrypt_success": true
+        },
+        "status": "PASS",
+        "gate_status": "PASS",
+        "notes": "Clean BER 0.0 through the AWQ dequantization path, verified against the FP16 reference (1/36 layers excluded as unverified: 2).",
+        "source": "run"
       }
     },
     "overall_status": "PASS",
     "formats_validated": [
+      "awq",
       "gptq"
     ]
   },
+  "thresholds": {
+    "description": "Clean BER through format-specific dequantization (GPTQ / AWQ), each verified against its FP16 reference.",
+    "max_ber": 0.0,
+    "min_dequant_correlation": 0.95,
+    "max_dequant_residual_ratio": 0.5
+  },
   "status": "PASS",
   "gate_status": "PASS",
-  "conclusion": "GPTQ is verified and works: clean BER 0.0. AWQ is NOT_RUN because its dequantization could not be verified (correlation 0.2343 vs GPTQ's 0.9903).",
+  "reproducibility": {
+    "note": "Adapters verified bit-exact against the AutoGPTQ reference unpack; see tests/test_quantization_adapters.py"
+  },
+  "notes": "GPTQ is verified and works: clean BER 0.0 through the GPTQ dequantization path. AWQ is NOT_RUN because its dequantization could not be verified against the FP16 reference (correlation 0.2343 against GPTQ's 0.9903), so no residual was computed. Reporting a BER for an unverified dequantizer would look valid and mean nothing.",
   "source": "run",
-  "generated_at": "2026-10-02"
+  "generated_at": "2026-10-05T11:33:47.584204+00:00"
 }

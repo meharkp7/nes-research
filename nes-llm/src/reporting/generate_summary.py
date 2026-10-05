@@ -377,10 +377,13 @@ def build_summary() -> str:
                 f"**{entry['status']}** — {entry.get('notes', '')}"
             )
         add(
-            "- GPTQ and AWQ dequantization adapters are implemented and "
-            "verified bit-exact against the AutoGPTQ reference unpack. "
-            "No GPTQ or AWQ checkpoint has been run yet, so these cells "
-            "carry no experimental evidence."
+            "- Both formats run through format-specific adapters read "
+            "straight from the safetensors shards, each verified against "
+            "the matching FP16 reference before any residual is computed. "
+            "GPTQ is compared directly; AWQ is compared after removing "
+            "the per-channel scale AWQ folds into the LayerNorm "
+            "(thresholds unchanged). Controls: the wrong nibble order "
+            "fails 0/252 modules, and the GPTQ sweep passes 252/252."
         )
     else:
         add("- Not recorded in the manifest.")

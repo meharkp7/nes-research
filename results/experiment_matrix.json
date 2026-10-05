@@ -11,11 +11,11 @@
       "exp7_neural": "FAIL",
       "exp8": "FAIL"
     },
-    "Qwen/Qwen2.5-3B-AWQ": {
-      "exp9": "NOT_RUN"
+    "Qwen/Qwen2.5-3B-Instruct-AWQ": {
+      "exp9": "PASS"
     },
-    "Qwen/Qwen2.5-3B-GPTQ-Int4": {
-      "exp9": "NOT_RUN"
+    "Qwen/Qwen2.5-3B-Instruct-GPTQ-Int4": {
+      "exp9": "PASS"
     },
     "Qwen/Qwen2.5-7B": {
       "exp1": "PASS",
@@ -61,9 +61,9 @@
     }
   },
   "coverage": {
-    "PASS": 33,
+    "PASS": 35,
     "FAIL": 6,
-    "NOT_RUN": 2,
+    "NOT_RUN": 0,
     "MISSING_ARTIFACT": 0,
     "IMPLEMENTED_ONLY": 0,
     "ERROR": 0

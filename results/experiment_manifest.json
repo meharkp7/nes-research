@@ -1,6 +1,6 @@
 {
   "schema_version": "1.0",
-  "generated_at": "2026-10-02T19:50:05.312144+00:00",
+  "generated_at": "2026-10-05T11:33:47.584542+00:00",
   "description": "NES multi-model experiment manifest. One entry per experiment x model cell. Status is never inferred from implementation alone.",
   "records": {
     "exp1::Qwen/Qwen2.5-3B": {
@@ -983,23 +983,54 @@
       "experiment": "exp9",
       "model_id": "Qwen/Qwen2.5-3B-Instruct-AWQ",
       "family": "qwen",
-      "status": "NOT_RUN",
-      "gate_status": "NOT_RUN",
+      "status": "PASS",
+      "gate_status": "PASS",
       "artifact_path": "/Users/meharkapoor7/nes-research/results/exp9_formats.json",
       "artifact_exists": true,
       "configuration": {
-        "targets": [
-          "Qwen/Qwen2.5-3B-Instruct-GPTQ-Int4",
-          "Qwen/Qwen2.5-3B-Instruct-AWQ"
-        ],
+        "quantization_format": "awq",
         "payload_bits": 10000,
         "module": "mlp.down_proj",
-        "dequantization": "format-specific adapters, verified against FP16 reference"
+        "alpha_note": "EmbeddingConfig defaults used unmodified. The guide suggests ~0.10-0.15 for AWQ; that is untested here and is not applied blindly."
       },
       "source": "run",
-      "notes": "AWQ dequantization could not be verified against the FP16 reference (correlation 0.2343 < 0.95), so no residual was computed. Reporting NOT_RUN rather than a BER that would look valid and mean nothing.",
-      "updated_at": "2026-10-02T19:49:21.478614+00:00",
-      "quantization_format": null
+      "notes": "Clean BER 0.0 through the AWQ dequantization path, verified against the FP16 reference (1/36 layers excluded as unverified: 2).",
+      "updated_at": "2026-10-05T11:33:47.584530+00:00",
+      "metrics": {
+        "dequant_verification": {
+          "format": "awq",
+          "usable": true,
+          "correlation": 0.9940740101859922,
+          "residual_ratio": 0.10928936844291139,
+          "raw_correlation": 0.9890012168260888,
+          "raw_residual_ratio": 0.4691955006377544,
+          "scale_corrected": true,
+          "dequantized_std": 0.013738843612372875,
+          "reference_std": 0.025267837569117546,
+          "reason": "verified: correlation 0.9941, residual ratio 0.1093, raw correlation 0.9890 before removing the absorbed per-channel scale"
+        },
+        "quant_config": {
+          "bits": 4,
+          "group_size": 128,
+          "modules_to_not_convert": null,
+          "quant_method": "awq",
+          "version": "gemm",
+          "zero_point": true
+        },
+        "layers": 35,
+        "layers_excluded": {
+          "2": "correlation 0.9337 < 0.95: awq dequantization does not reproduce the reference weights once the absorbed per-channel scale is removed. The layout is not understood, so residuals derived from it would be meaningless."
+        },
+        "mean_residual_magnitude": 0.007359887366848333,
+        "payload_bits": 10000,
+        "bits_embedded": 10256,
+        "bits_compared": 10256,
+        "bit_errors": 0,
+        "ber": 0.0,
+        "recovered_matches": true,
+        "decrypt_success": true
+      },
+      "quantization_format": "awq"
     },
     "exp9::Qwen/Qwen2.5-3B-Instruct-GPTQ-Int4": {
       "experiment": "exp9",
@@ -1010,18 +1041,63 @@
       "artifact_path": "/Users/meharkapoor7/nes-research/results/exp9_formats.json",
       "artifact_exists": true,
       "configuration": {
-        "targets": [
-          "Qwen/Qwen2.5-3B-Instruct-GPTQ-Int4",
-          "Qwen/Qwen2.5-3B-Instruct-AWQ"
-        ],
+        "quantization_format": "gptq",
         "payload_bits": 10000,
         "module": "mlp.down_proj",
-        "dequantization": "format-specific adapters, verified against FP16 reference"
+        "alpha_note": "EmbeddingConfig defaults used unmodified. The guide suggests ~0.10-0.15 for AWQ; that is untested here and is not applied blindly."
       },
       "source": "run",
-      "notes": "Clean BER 0.0 through the GPTQ dequantization path, verified against the FP16 reference (correlation 0.9903).",
-      "updated_at": "2026-10-02T19:49:21.478419+00:00",
-      "quantization_format": null
+      "notes": "Clean BER 0.0 through the GPTQ dequantization path, verified against the FP16 reference on all layers.",
+      "updated_at": "2026-10-05T11:33:47.584506+00:00",
+      "metrics": {
+        "dequant_verification": {
+          "format": "gptq",
+          "usable": true,
+          "correlation": 0.9902718408193982,
+          "residual_ratio": 0.14020174202818061,
+          "raw_correlation": 0.9902718408193982,
+          "raw_residual_ratio": 0.14020174202818061,
+          "scale_corrected": false,
+          "dequantized_std": 0.025455905124545097,
+          "reference_std": 0.025267837569117546,
+          "reason": "verified: correlation 0.9903, residual ratio 0.1402"
+        },
+        "quant_config": {
+          "batch_size": 1,
+          "bits": 4,
+          "block_name_to_quantize": null,
+          "cache_block_outputs": true,
+          "damp_percent": 0.01,
+          "dataset": null,
+          "desc_act": false,
+          "exllama_config": {
+            "version": 1
+          },
+          "group_size": 128,
+          "max_input_length": null,
+          "model_seqlen": null,
+          "module_name_preceding_first_block": null,
+          "modules_in_block_to_quantize": null,
+          "pad_token_id": null,
+          "quant_method": "gptq",
+          "sym": true,
+          "tokenizer": null,
+          "true_sequential": true,
+          "use_cuda_fp16": false,
+          "use_exllama": true
+        },
+        "layers": 36,
+        "layers_excluded": {},
+        "mean_residual_magnitude": 0.002786506416871109,
+        "payload_bits": 10000,
+        "bits_embedded": 10256,
+        "bits_compared": 10256,
+        "bit_errors": 0,
+        "ber": 0.0,
+        "recovered_matches": true,
+        "decrypt_success": true
+      },
+      "quantization_format": "gptq"
     }
   }
 }

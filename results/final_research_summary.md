@@ -1,6 +1,6 @@
 # NES Multi-Model Research — Final Summary
 
-Generated: 2026-10-02T19:40:19.669759+00:00
+Generated: 2026-10-05T11:33:47.589212+00:00
 
 This summary is generated from `results/experiment_manifest.json`. Every number below corresponds to a saved artifact.
 
@@ -8,9 +8,8 @@ This summary is generated from `results/experiment_manifest.json`. Every number 
 
 | Status | Cells |
 | --- | --- |
-| PASS | 33 |
+| PASS | 35 |
 | FAIL | 6 |
-| NOT_RUN | 2 |
 
 Total cells: 41. PASS and FAIL both represent completed experiments; only FAIL means the experiment ran and its gate was not met.
 
@@ -100,9 +99,9 @@ Total cells: 41. PASS and FAIL both represent completed experiments; only FAIL m
 
 ### 4.5 Non-NF4 formats (Exp9)
 
-- `Qwen/Qwen2.5-3B-AWQ` (AWQ): **NOT_RUN** — Checkpoint Qwen/Qwen2.5-3B-AWQ is not in the local model cache. Exp9 needs a real AWQ checkpoint; downloading it is an explicit step, not something a suite run does implicitly.
-- `Qwen/Qwen2.5-3B-GPTQ-Int4` (GPTQ): **NOT_RUN** — Checkpoint Qwen/Qwen2.5-3B-GPTQ-Int4 is not in the local model cache. Exp9 needs a real GPTQ checkpoint; downloading it is an explicit step, not something a suite run does implicitly.
-- GPTQ and AWQ dequantization adapters are implemented and verified bit-exact against the AutoGPTQ reference unpack. No GPTQ or AWQ checkpoint has been run yet, so these cells carry no experimental evidence.
+- `Qwen/Qwen2.5-3B-Instruct-AWQ` (AWQ): **PASS** — Clean BER 0.0 through the AWQ dequantization path, verified against the FP16 reference (1/36 layers excluded as unverified: 2).
+- `Qwen/Qwen2.5-3B-Instruct-GPTQ-Int4` (GPTQ): **PASS** — Clean BER 0.0 through the GPTQ dequantization path, verified against the FP16 reference on all layers.
+- Both formats run through format-specific adapters read straight from the safetensors shards, each verified against the matching FP16 reference before any residual is computed. GPTQ is compared directly; AWQ is compared after removing the per-channel scale AWQ folds into the LayerNorm (thresholds unchanged). Controls: the wrong nibble order fails 0/252 modules, and the GPTQ sweep passes 252/252.
 
 ## 5. Why the FAILs fail
 
