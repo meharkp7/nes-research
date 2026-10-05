@@ -971,7 +971,7 @@ evidence; this is the version that survives.
 **Coverage: 35 PASS, 6 FAIL, 0 NOT_RUN, 0 ERROR.**
 Every registry model now has cells, and no cell is left unrun. 9/9
 consistency checks pass, the test suite runs clean (38 tests, OK), and
-`nes-llm/claim_audit.py` re-derives 49 MEASURED claims from the
+`nes-llm/claim_audit.py` re-derives 53 MEASURED claims from the
 artifacts on disk rather than from this prose — its failures, when it
 has any, are the findings below.
 
@@ -1009,8 +1009,8 @@ Four claims did not survive the final audit, and **all four are now
 closed** — three by rewording the claim, one by producing the artifact
 that should have existed. They are recorded rather than quietly
 corrected, because a document that only ever gets righter is not an
-audit. The audit is `nes-llm/claim_audit.py`: 49 checks, re-derived from
-`results/*.json`, **49/49 passing at the time of writing**.
+audit. The audit is `nes-llm/claim_audit.py`: 53 checks, re-derived from
+`results/*.json`, **53/53 passing at the time of writing**.
 
 **1. exp12 coverage — closed by re-running it.** §7 and its commit
 message state *5 of 5 measured models pass both gates*, with a six-row
@@ -1140,7 +1140,7 @@ Four sentences were.
 
 ### 18.1 `claim_audit.py`
 
-`nes-llm/claim_audit.py` makes this section executable: 49 checks, each
+`nes-llm/claim_audit.py` makes this section executable: 53 checks, each
 re-deriving one MEASURED claim from `results/*.json`. It exits non-zero
 on any claim it cannot verify — a number it cannot find is UNVERIFIED,
 never assumed true — and it reads its gate values from
@@ -1221,7 +1221,7 @@ name.
 cd nes-llm
 python run_nes_experiments.py --audit   # cell states   35 PASS / 6 FAIL / 0 NOT_RUN
 python check_consistency.py             # cross-artifact 9/9
-python claim_audit.py                   # MEASURED claims 49/49
+python claim_audit.py                   # MEASURED claims 53/53
 python -m unittest discover -s tests -p 'test_*.py'   # 38 tests, OK
 ```
 
@@ -1230,7 +1230,7 @@ anyone holding the report can re-derive it rather than trust it.
 
 ### 18.6 State at this commit
 
-35 PASS / 6 FAIL / 0 NOT_RUN / 0 ERROR; 49/49 claims verified; 9/9
+35 PASS / 6 FAIL / 0 NOT_RUN / 0 ERROR; 53/53 claims verified; 9/9
 consistency checks; 38 tests. All four findings closed, and the warning
 marker is now absent from both documents — which is what makes it worth
 keeping as a marker rather than deleting: its presence in either
@@ -1349,13 +1349,13 @@ everything else in the artifact is deterministic and pinned.
 
 ```bash
 cd nes-llm
-../.venv/bin/python claim_audit.py                    # 49/49
+../.venv/bin/python claim_audit.py                    # 53/53
 ../.venv/bin/python check_consistency.py              # 9/9
 ../.venv/bin/python -m unittest discover -s tests -p 'test_*.py'   # 38 OK
 ../.venv/bin/python -m src.experiments.exp13_keyless_recovery      # re-runs
 ```
 
-State: 49/49 claims, 9/9
+State: 53/53 claims, 9/9
 consistency, 38 tests, manifest unchanged at 35 PASS / 6 FAIL /
 0 NOT_RUN / 0 ERROR — exp13 sits outside the manifest grid, and its
 FAIL is a gate verdict recorded in the artifact and the claim audit,
@@ -1438,13 +1438,13 @@ arms and the split reproducible.
 
 ```bash
 cd nes-llm
-../.venv/bin/python claim_audit.py                    # 49/49
+../.venv/bin/python claim_audit.py                    # 53/53
 ../.venv/bin/python check_consistency.py              # 9/9
 ../.venv/bin/python -m unittest discover -s tests -p 'test_*.py'   # 38 OK
 ../.venv/bin/python -m src.experiments.exp14_blind_patch_detector  # re-runs
 ```
 
-State: 49/49 claims, 9/9 consistency, 38 tests, manifest unchanged at
+State: 53/53 claims, 9/9 consistency, 38 tests, manifest unchanged at
 35 PASS / 6 FAIL / 0 NOT_RUN / 0 ERROR — exp14, like exp13, sits
 outside the manifest grid, and its PASS is a gate verdict in the
 artifact and the claim audit, not a 36th cell.
@@ -1538,17 +1538,120 @@ experiment.
 
 ```bash
 cd nes-llm
-../.venv/bin/python claim_audit.py                    # 49/49 (5 new)
+../.venv/bin/python claim_audit.py                    # 53/53 (5 new)
 ../.venv/bin/python check_consistency.py              # 9/9
 ../.venv/bin/python -m unittest discover -s tests -p 'test_*.py'   # 38 OK
 ../.venv/bin/python -m src.experiments.exp15_lwe_fidelity \
     --model Qwen/Qwen2.5-3B                           # re-runs
 ```
 
-State: 49/49 claims, 9/9 consistency, 38 tests, manifest unchanged at
+State: 53/53 claims, 9/9 consistency, 38 tests, manifest unchanged at
 35 PASS / 6 FAIL / 0 NOT_RUN / 0 ERROR — exp15 is the third standalone
 gate outside the manifest grid. Scope: LWE's *fidelity* is now
 established on two models; its key-gating remains refuted (exp13) and
 its detectability numbers (exp10–12) unchanged. W2's two deliverables
 — "PPL for LWE on ≥2 models" and "re-verify sign's number
 reproduces" — are both closed.
+
+## 22. W3.1 — cross-scheme detector (exp16)
+
+Suggested order item 4 (`RESEARCH_PLAN` §7). §0 "Not established" #2
+said every detectability number uses a detector trained against the
+scheme it tests, and §3 calls cross-scheme *"the claim's main
+weakness."* This is the measurement.
+
+### 22.1 What was built
+
+`nes-llm/src/experiments/exp16_cross_scheme_detector.py` — standalone,
+same mould as exp13–15. Two datasets, four evaluations:
+
+| train | test | role |
+|---|---|---|
+| sign | sign | within-scheme control |
+| sign | LWE | **cross** |
+| LWE | LWE | within-scheme control |
+| LWE | sign | **cross** |
+
+Design decisions worth stating:
+
+- **Placement is carrier-centred in both schemes**, held fixed —
+  exp14 proved blind placement is chance, so placement cannot be the
+  variable. Only the scheme varies. That isolates transfer.
+- 6 embeddings per scheme × 72 pairs = **432 pairs per scheme** (≥
+  the 400-pair floor), split **by embedding** (4 train / 2 test) so
+  no stego tensor is on both sides.
+- Detector, epochs, batch, lr, seed imported from exp7's module —
+  identical training loop to exp7/exp14.
+- Gate `THRESHOLDS["exp16"].max_cross_scheme_detector_accuracy =
+  0.55` — exp7's number, reused. Pre-registered: **both** cross
+  directions must be at/below it; the within-scheme controls carry
+  no gate but the artifact records whether they cleared the line
+  (`controls_valid`), and the reading rule was pre-stated in the
+  module docstring: cross numbers are not read without a valid
+  control.
+
+### 22.2 The measurement
+
+| train → test | accuracy | confusion | reading |
+|---|---|---|---|
+| sign → sign | **62.85%** | 85/96/48/59 | control **clears** the 55% line — pipeline validated |
+| **sign → LWE** | **50.00%** | tp=29, fp=29 — no signal | **no transfer; informative** (its control passed) |
+| LWE → LWE | **50.00%** | tp=0, fp=0 — learned nothing | control **collapsed** |
+| **LWE → sign** | **50.00%** | same collapsed model | **NOT established** |
+
+Gate: **PASS** as pre-registered (both cross directions 0.5000 ≤
+0.55). The artifact also records `controls_valid: false`, because the
+pre-registered strong condition — *both* within-scheme controls
+clearing the line — did not hold.
+
+### 22.3 The reading — directional, and the collapsed control is not a bug
+
+The collapse of `lwe_to_lwe` is **not a broken pipeline**: it
+reproduces exp12's independently measured LWE detector accuracy of
+**50.00%** (§1, `exp12_lwe_cross_model.json`). LWE's modifications are
+9.4× smaller than sign's (§3 W2's prior table), and this detector
+cannot learn them even in its own scheme — that is a *detectability*
+fact about LWE, already on the record, not an exp16 failure.
+
+So the conclusion splits:
+
+- **sign → LWE: established.** The sign detector demonstrably works
+  (62.85% on its own scheme) and scores chance on LWE. Structure
+  learned from sign does not transfer.
+- **LWE → sign: not established.** The LWE-trained detector never
+  learned LWE, so its 50% on sign says nothing about transfer. What
+  it does say is consistent with §22.2's note: there is nothing in
+  LWE's patches *for this detector to learn* — which is why a
+  LWE-trained generic detector is empty-handed either way.
+
+The honest one-sentence summary for citation: *a sign-trained
+neural detector does not transfer to LWE (62.85% → 50.00%, control
+validated); the reverse direction is uninformative because LWE is not
+detectable by this detector even in its own scheme, matching exp12's
+50.00%.* Not "cross-scheme established in both directions" — the
+artifact's own `controls_valid: false` forbids that reading, and
+`claim_audit` pins the asymmetry so it cannot be quietly rounded off
+into a stronger claim.
+
+What would have been reported if the numbers had come out the other
+way: cross > 55% in either direction would have meant the schemes
+share detectable structure and a generic detector catches both — a
+worse result for the stealth claim, recorded the same way. The gate
+was written to be able to fail.
+
+### 22.4 Verification
+
+```bash
+cd nes-llm
+../.venv/bin/python claim_audit.py                    # 53/53 (4 new)
+../.venv/bin/python check_consistency.py              # 9/9
+../.venv/bin/python -m unittest discover -s tests -p 'test_*.py'   # 38 OK
+../.venv/bin/python -m src.experiments.exp16_cross_scheme_detector  # re-runs
+```
+
+State: 53/53 claims, 9/9 consistency, 38 tests, manifest unchanged at
+35 PASS / 6 FAIL / 0 NOT_RUN / 0 ERROR — exp16 is the fourth
+standalone gate outside the manifest grid. Scope: one transfer
+direction measured and negative (no transfer), one uninformative by
+the control's own collapse; Not-established #2 is annotated, not
+deleted.
