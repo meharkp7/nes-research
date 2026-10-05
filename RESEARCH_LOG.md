@@ -971,7 +971,7 @@ evidence; this is the version that survives.
 **Coverage: 35 PASS, 6 FAIL, 0 NOT_RUN, 0 ERROR.**
 Every registry model now has cells, and no cell is left unrun. 9/9
 consistency checks pass, the test suite runs clean (38 tests, OK), and
-`nes-llm/claim_audit.py` re-derives 57 MEASURED claims from the
+`nes-llm/claim_audit.py` re-derives 64 MEASURED claims from the
 artifacts on disk rather than from this prose — its failures, when it
 has any, are the findings below.
 
@@ -1009,8 +1009,8 @@ Four claims did not survive the final audit, and **all four are now
 closed** — three by rewording the claim, one by producing the artifact
 that should have existed. They are recorded rather than quietly
 corrected, because a document that only ever gets righter is not an
-audit. The audit is `nes-llm/claim_audit.py`: 57 checks, re-derived from
-`results/*.json`, **57/57 passing at the time of writing**.
+audit. The audit is `nes-llm/claim_audit.py`: 64 checks, re-derived from
+`results/*.json`, **64/64 passing at the time of writing**.
 
 **1. exp12 coverage — closed by re-running it.** §7 and its commit
 message state *5 of 5 measured models pass both gates*, with a six-row
@@ -1140,7 +1140,7 @@ Four sentences were.
 
 ### 18.1 `claim_audit.py`
 
-`nes-llm/claim_audit.py` makes this section executable: 57 checks, each
+`nes-llm/claim_audit.py` makes this section executable: 64 checks, each
 re-deriving one MEASURED claim from `results/*.json`. It exits non-zero
 on any claim it cannot verify — a number it cannot find is UNVERIFIED,
 never assumed true — and it reads its gate values from
@@ -1221,7 +1221,7 @@ name.
 cd nes-llm
 python run_nes_experiments.py --audit   # cell states   35 PASS / 6 FAIL / 0 NOT_RUN
 python check_consistency.py             # cross-artifact 9/9
-python claim_audit.py                   # MEASURED claims 57/57
+python claim_audit.py                   # MEASURED claims 64/64
 python -m unittest discover -s tests -p 'test_*.py'   # 38 tests, OK
 ```
 
@@ -1230,7 +1230,7 @@ anyone holding the report can re-derive it rather than trust it.
 
 ### 18.6 State at this commit
 
-35 PASS / 6 FAIL / 0 NOT_RUN / 0 ERROR; 57/57 claims verified; 9/9
+35 PASS / 6 FAIL / 0 NOT_RUN / 0 ERROR; 64/64 claims verified; 9/9
 consistency checks; 38 tests. All four findings closed, and the warning
 marker is now absent from both documents — which is what makes it worth
 keeping as a marker rather than deleting: its presence in either
@@ -1349,13 +1349,13 @@ everything else in the artifact is deterministic and pinned.
 
 ```bash
 cd nes-llm
-../.venv/bin/python claim_audit.py                    # 57/57
+../.venv/bin/python claim_audit.py                    # 64/64
 ../.venv/bin/python check_consistency.py              # 9/9
 ../.venv/bin/python -m unittest discover -s tests -p 'test_*.py'   # 38 OK
 ../.venv/bin/python -m src.experiments.exp13_keyless_recovery      # re-runs
 ```
 
-State: 57/57 claims, 9/9
+State: 64/64 claims, 9/9
 consistency, 38 tests, manifest unchanged at 35 PASS / 6 FAIL /
 0 NOT_RUN / 0 ERROR — exp13 sits outside the manifest grid, and its
 FAIL is a gate verdict recorded in the artifact and the claim audit,
@@ -1438,13 +1438,13 @@ arms and the split reproducible.
 
 ```bash
 cd nes-llm
-../.venv/bin/python claim_audit.py                    # 57/57
+../.venv/bin/python claim_audit.py                    # 64/64
 ../.venv/bin/python check_consistency.py              # 9/9
 ../.venv/bin/python -m unittest discover -s tests -p 'test_*.py'   # 38 OK
 ../.venv/bin/python -m src.experiments.exp14_blind_patch_detector  # re-runs
 ```
 
-State: 57/57 claims, 9/9 consistency, 38 tests, manifest unchanged at
+State: 64/64 claims, 9/9 consistency, 38 tests, manifest unchanged at
 35 PASS / 6 FAIL / 0 NOT_RUN / 0 ERROR — exp14, like exp13, sits
 outside the manifest grid, and its PASS is a gate verdict in the
 artifact and the claim audit, not a 36th cell.
@@ -1538,14 +1538,14 @@ experiment.
 
 ```bash
 cd nes-llm
-../.venv/bin/python claim_audit.py                    # 57/57 (5 new)
+../.venv/bin/python claim_audit.py                    # 64/64 (5 new)
 ../.venv/bin/python check_consistency.py              # 9/9
 ../.venv/bin/python -m unittest discover -s tests -p 'test_*.py'   # 38 OK
 ../.venv/bin/python -m src.experiments.exp15_lwe_fidelity \
     --model Qwen/Qwen2.5-3B                           # re-runs
 ```
 
-State: 57/57 claims, 9/9 consistency, 38 tests, manifest unchanged at
+State: 64/64 claims, 9/9 consistency, 38 tests, manifest unchanged at
 35 PASS / 6 FAIL / 0 NOT_RUN / 0 ERROR — exp15 is the third standalone
 gate outside the manifest grid. Scope: LWE's *fidelity* is now
 established on two models; its key-gating remains refuted (exp13) and
@@ -1643,13 +1643,13 @@ was written to be able to fail.
 
 ```bash
 cd nes-llm
-../.venv/bin/python claim_audit.py                    # 57/57 (4 new)
+../.venv/bin/python claim_audit.py                    # 64/64 (4 new)
 ../.venv/bin/python check_consistency.py              # 9/9
 ../.venv/bin/python -m unittest discover -s tests -p 'test_*.py'   # 38 OK
 ../.venv/bin/python -m src.experiments.exp16_cross_scheme_detector  # re-runs
 ```
 
-State: 57/57 claims, 9/9 consistency, 38 tests, manifest unchanged at
+State: 64/64 claims, 9/9 consistency, 38 tests, manifest unchanged at
 35 PASS / 6 FAIL / 0 NOT_RUN / 0 ERROR — exp16 is the fourth
 standalone gate outside the manifest grid. Scope: one transfer
 direction measured and negative (no transfer), one uninformative by
@@ -1727,15 +1727,120 @@ to NF4"*, not a stealth claim about other schemes.
 
 ```bash
 cd nes-llm
-../.venv/bin/python claim_audit.py                    # 57/57 (4 new)
+../.venv/bin/python claim_audit.py                    # 64/64 (4 new)
 ../.venv/bin/python check_consistency.py              # 9/9
 ../.venv/bin/python -m unittest discover -s tests -p 'test_*.py'   # 38 OK
 ../.venv/bin/python -m src.experiments.exp17_qae_round_trip        # re-runs
 ```
 
-State: 57/57 claims, 9/9 consistency, 38 tests, manifest unchanged at
+State: 64/64 claims, 9/9 consistency, 38 tests, manifest unchanged at
 35 PASS / 6 FAIL / 0 NOT_RUN / 0 ERROR — exp17 is the fifth standalone
 gate outside the manifest grid. What W1.1 promised ("adds two
 strategies cheaply") is delivered as: one wired and measured, one
 registered with its blocker diagnosed — which is the honest maximum
 the current contract allows.
+
+## 24. W1.3 — strategy × model matrix, first pass (exp18)
+
+Suggested order item 6 (`RESEARCH_PLAN` §7). §2 W1.3 is the
+*"breadth deliverable"*: all viable strategies × models, one table,
+four axes — extractability, BER, robustness, detectability — with the
+plan's own cost control: first pass on 3 models, one per size class,
+one model per process.
+
+### 24.1 What was built
+
+`nes-llm/src/experiments/exp18_strategy_model_matrix.py`. The design
+decision that matters: **the four axes are exp10's own three
+measurement functions**, parametrised by model (`family`/`num_layers`
+kwargs added, defaulting to exp10's Qwen constants so exp12's
+positional imports are byte-compatible). The protocol — 400 pairs / 20
+embeds / 30 epochs detector, exp6's σ grid with 3 trials, exp10's
+round trip — is unchanged, which makes the table *an extension of
+exp10/exp12*, not a parallel dialect with its own dialect drift.
+
+- **Models:** gemma-2-2b (26L, small), Qwen2.5-3B (36L, mid),
+  Llama-3.1-8B (32L, large). The plan's small-class pick TinyLlama
+  has an incomplete cache → SKIPPED under the standing rule;
+  gemma-2-2b (the exp15 second model) takes the slot.
+- **Strategies:** the four READY ones — sign, magnitude_aware, lwe,
+  qae. Excluded **by name** in every artifact: `neural`
+  (NEEDS_TRAINING — W1.2, never trained) and `nf4_qae` (BLOCKED —
+  exp17's contract diagnosis).
+- **Gates:** `THRESHOLDS["exp18"]` — four reused numbers, none new:
+  exp3's 0.0 round trip, exp6's 0.02 @ σ=0.001 and 0.10 @ σ=0.002,
+  exp7's 0.55 detector. Verdicts are **per cell**; a cell failing an
+  axis is data, not an experiment error.
+
+### 24.2 The matrix — 12 cells
+
+Detector accuracy (the separating axis); gate 0.55, ✓ = under gate:
+
+| model | sign | magnitude_aware | lwe | qae |
+|---|---|---|---|---|
+| gemma-2-2b (26L) | 0.781 ✗ | 0.781 ✗ | **0.500 ✓** | 0.838 ✗ |
+| Qwen2.5-3B (36L) | 0.750 ✗ | 0.675 ✗ | **0.500 ✓** | 0.725 ✗ |
+| Llama-3.1-8B (32L) | 0.606 ✗ | 0.594 ✗ | **0.500 ✓** | 0.594 ✗ |
+| **wins** | 0/3 | 0/3 | **3/3** | 0/3 |
+
+The other two axes do not separate anything:
+
+- **Round trip: 12/12 at BER 0.0** (own extractor, no cover).
+- **Robustness: 12/12 gates pass** — σ=0.001 is 0.0 in every cell;
+  σ=0.002 ranges 0.0–0.0127 (LWE is the highest at ~0.0127, 8× under
+  the 0.10 gate). At the un-gated σ=0.005, LWE pays for its smaller
+  perturbation (BER 0.31–0.32 vs sign-family ≤0.09 on gemma) — a
+  trade-off recorded, not gated.
+
+### 24.3 The reading
+
+1. **Only detectability discriminates.** Every strategy round-trips
+   and survives the noise gates on every model — the four-axis table
+   collapses to one axis. The strategy choice is a stealth choice.
+2. **LWE = exactly 0.50 on all three models** — the third
+   independent reproduction of the chance-level reading (exp10's
+   Qwen, exp12's 5-model sweep, now exp18's three). The detector
+   gradient (gemma 0.78–0.84 strongest, Llama 0.59–0.61 weakest)
+   applies only to the sign family; LWE sits on chance
+   model-independently.
+3. **qae never wins anywhere, and is the *worst*-detected strategy
+   on the two smaller models** (0.838 gemma, 0.725 Qwen). exp17's
+   structural reading predicted this: qae is sign-family with a
+   margin floor, and the floor *amplifies* the sign signal at weak
+   carriers rather than hiding it. The plan's W5.2 premise
+   (*"QAE encode + LWE read-out … both mechanisms avoid sign
+   flips"*) is therefore half-false as written — QAE-V1 does force
+   sign flips. Any W5.2 build must state that, or use a mechanism
+   that does not (nf4_qae, which is blocked).
+4. **Pipeline flag:** `usable_in_production_pipeline` is false for
+   LWE on all three models — `DecryptPipeline` is hardcoded to the
+   sign extractor (exp10's recorded note: a wiring gap, not a scheme
+   defect; its own extractor round-trips at BER 0.0).
+
+**Side finding, recorded not fixed:** exp10's artifact rows are
+post-Phase-3 (`lwe wins=True`) but its stored `conclusion` string is
+pre-fix stale (*"LWE needs the cover"*) and contradicts the rows
+beneath it. Artifacts are records, so it was not edited;
+`claim_audit` pins the rows and reports
+`conclusion_stale=True` so nobody cites the conclusion field.
+
+**Scope:** first pass — 3 of the 7-model grid; widening remains.
+`neural` remains untrained (W1.2). Cell verdicts only; the detector
+number is strategy-specific (exp10's comparability note carries).
+
+### 24.4 Verification
+
+```bash
+cd nes-llm
+../.venv/bin/python claim_audit.py                    # 64/64 (6 new)
+../.venv/bin/python check_consistency.py              # 9/9
+../.venv/bin/python -m unittest discover -s tests -p 'test_*.py'   # 40 OK
+../.venv/bin/python -m src.experiments.exp18_strategy_model_matrix \
+    --model Qwen/Qwen2.5-3B                           # re-runs one model
+```
+
+State: 64/64 claims, 9/9 consistency, 40 tests (two adapter tests
+added with the exp10 guard), manifest unchanged at 35 PASS / 6 FAIL /
+0 NOT_RUN / 0 ERROR — exp18 is the sixth standalone artifact outside
+the manifest grid. W1.3's first pass closes: the breadth deliverable
+now has a table, and the table has one axis.

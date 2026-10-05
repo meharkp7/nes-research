@@ -78,6 +78,7 @@ correcting them.
 | exp15 | LWE fidelity (W2): three-way perplexity in exp5's protocol, per model | embedding-specific PPL Δ < 2% (exp5's number, reused) | **PASS ×2** — +0.0077% (Qwen2.5-3B), +0.0501% (gemma-2-2b) |
 | exp16 | cross-scheme detector (W3.1): train on one scheme, test on the other | both cross directions ≤ 55% (exp7's number, reused) | **PASS** — sign→LWE 50.00% with 62.85% control; LWE-side control collapsed (exp12-consistent), `controls_valid: false` |
 | exp17 | QAE round trip (W1.1): the dict-adapter over the per-tensor ABC, exp3's production path | BER 0.0 (exp3's number, reused) | **PASS** — 0.0 over 48,256 bits, decrypt + match; `nf4_qae` registered BLOCKED with recorded diagnosis |
+| exp18 | strategy × model matrix (W1.3, first pass): exp10's three axes × 4 strategies × 3 models | round trip 0.0, robustness 0.02/0.10, detector ≤ 55% (exp3/exp6/exp7's numbers, reused) | **12/12 round trips BER 0.0, 12/12 robustness pass — only detectability separates**: LWE 0.50 ×3 (wins 3/3), sign-family 0.59–0.84 everywhere; `neural`/`nf4_qae` excluded by name |
 
 Thresholds live in `experiment_registry.THRESHOLDS`. No experiment edits its
 own, and `claim_audit.py` pins them, so a gate cannot be quietly relaxed.
@@ -89,14 +90,15 @@ PASSes are gate verdicts outside the manifest grid (standalone artifacts, like
 exp12), so coverage stays 35 PASS / 6 FAIL — exp13's scope caveat is that the
 payload is AES-GCM ciphertext: the *channel* is readable, the *message* is not,
 exp16's is that one cross direction is uninformative by its own recorded
-control, and exp17's is that `qae` round-trips but produced no stealth number.
+control, exp17's is that `qae` round-trips but produced no stealth number, and
+exp18 carries per-cell verdicts (a measurement table, not one gate verdict).
 
 ## Reading order
 
 1. `../RESEARCH_LOG.md` — what was done, what broke, what was decided (§16 is
-   the AWQ story, §17 the final state and claim-audit findings, §19–§23 the
+   the AWQ story, §17 the final state and claim-audit findings, §19–§24 the
    Phase-B results so far: W4.2 keyless recovery, W3.2 blind patches, W2 LWE
-   fidelity, W3.1 cross-scheme, W1.1 QAE round trip).
+   fidelity, W3.1 cross-scheme, W1.1 QAE round trip, W1.3 strategy matrix).
 2. `../RESEARCH_PLAN.md` — every claim sorted MEASURED / FAIL / NOT_RUN, and
    what to do next (Phases A–D).
 3. `../results/final_research_summary.md` — the generated report.

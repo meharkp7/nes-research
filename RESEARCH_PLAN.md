@@ -36,11 +36,12 @@ Read `RESEARCH_LOG.md` first for how we got here and which mistakes to not repea
 | **LWE fidelity measured on 2 models (W2)** | embedding-specific PPL Δ **+0.0077%** (Qwen2.5-3B) and **+0.0501%** (gemma-2-2b) vs 2% gate → both **PASS**; exp5's own baseline/control reproduce exactly (12.4707 / 11.3494) | `results/exp15_lwe_fidelity_*.json` |
 | **Cross-scheme transfer measured (W3.1)** | sign-trained detector: **62.85%** within-scheme → **50.00%** on LWE (control-validated: no transfer); reverse direction uninformative — LWE-trained control collapsed to 50.00%, reproducing exp12's detector 50.00% → gate **PASS**, `controls_valid: false`, conclusion scoped directional | `results/exp16_cross_scheme_detector.json` |
 | **QAE adapter wired, round trip run (W1.1)** | `qae` **READY** via `QaeDictAdapter`: **BER 0.0 over 48,256 bits** through exp3's production path, no-cover probe usable → gate **PASS**; `nf4_qae` registered **BLOCKED** (reference needs weight tensors the embed contract doesn't carry — diagnosed, probe error recorded) | `results/exp17_qae_round_trip.json` |
+| **Strategy × model matrix, first pass (W1.3)** | 4 READY strategies × 3 models: **12/12 round trips BER 0.0, 12/12 robustness gates pass — only detectability separates**; LWE detector **0.50 on all three models** (3/3 wins), sign-family 0.59–0.84 everywhere (qae worst: 0.84/0.73); `neural` + `nf4_qae` excluded by name | `results/exp18_matrix_*.json` |
 | **NES round-trips at BER 0.0 through three 4-bit formats: NF4, GPTQ, AWQ** | GPTQ corr 0.9903 / AWQ corr 0.9941 (raw 0.9890) | `results/exp9_formats.json` |
 | 9 model ids covered, 0 ERROR | 35 PASS / 6 FAIL / **0 NOT_RUN** | `results/experiment_manifest.json` |
 
 **How those rows are kept honest.** `nes-llm/claim_audit.py` re-derives every
-MEASURED row above from disk: **57/57 pass**, with `check_consistency.py` at
+MEASURED row above from disk: **64/64 pass**, with `check_consistency.py` at
 9/9 and a 38-test suite running green. Four claims in this document failed
 that audit while it was being built — a coverage figure with no artifact
 behind it, an average reported as a maximum, a count lifted from a different
@@ -109,13 +110,13 @@ any session that touches a result.
 cd nes-llm
 ../.venv/bin/python run_nes_experiments.py --audit    # manifest matrix
 ../.venv/bin/python check_consistency.py              # 9/9 must pass
-../.venv/bin/python claim_audit.py                    # 57/57 must pass
+../.venv/bin/python claim_audit.py                    # 64/64 must pass
 ```
 
 `claim_audit.py` is this section made executable: each row is re-derived from
 the artifact it names — counts included, because every claim that failed this
 audit failed on a count while the values underneath stayed correct — and it
-exits non-zero on anything it cannot verify. It passes **57/57** as written.
+exits non-zero on anything it cannot verify. It passes **64/64** as written.
 
 Four claims in this document failed it. Three are corrected in the audit notes
 below (exp12 coverage, exp6 robustness, exp2's count) and the fourth — the
@@ -141,6 +142,7 @@ record.
 | **LWE fidelity (W2)** | three-way PPL, exp5's protocol: LWE Δ vs control **+0.0077%** (Qwen2.5-3B), **+0.0501%** (gemma-2-2b); reconstruction alone −8.99% / −5.27%; sign re-run +0.0529% vs recorded −0.0053% (same verdict, fresh-AES-key digit) | `exp15_lwe_fidelity_*.json` |
 | **Cross-scheme detector (W3.1)** | 432 pairs/scheme, split by embedding, carrier-centred both: sign→sign **0.6285** (control clears), **sign→LWE 0.5000** (no transfer), lwe→lwe **0.5000** (collapsed = exp12's 50.00%), lwe→sign **0.5000** (uninformative); gate PASS, `controls_valid: false` | `exp16_cross_scheme_detector.json` |
 | **QAE round trip (W1.1)** | `qae` READY (dict adapter over the per-tensor ABC): **BER 0.0** / 48,256 bits, decrypt + match, no-cover probe usable; distortion 24,076 values changed, mean \|Δ\| 0.0355; `nf4_qae` BLOCKED with recorded diagnosis | `exp17_qae_round_trip.json` |
+| **Strategy × model matrix (W1.3, first pass)** | exp10's three axes × 4 strategies × 3 models: round trip **12/12 BER 0.0**, robustness **12/12 pass** (σ0.001 all 0.0); detector — LWE **0.5000 ×3** (wins 3/3), sign 0.61–0.78, magnitude_aware 0.59–0.78, qae **0.59–0.84** (0/9 for the sign family); pipeline flag false for LWE (sign-only DecryptPipeline, known wiring gap) | `exp18_matrix_*.json` |
 | **GPTQ round trip** | BER **0.0**, 10,256/10,256 bits, corr 0.9903, 36/36 layers | `exp9_formats.json` |
 | **AWQ round trip** | BER **0.0**, 10,256/10,256 bits, corr 0.9941, **35/36 layers** | `exp9_formats.json` |
 | Suite coverage | 35 PASS / 6 FAIL / 0 NOT_RUN / 0 ERROR | `experiment_manifest.json` |
@@ -191,7 +193,7 @@ model — including the pair that exposed the staleness.
 
 `python nes-llm/claim_audit.py` re-derives every MEASURED claim in this
 section from `results/*.json` and exits non-zero on any it cannot
-verify. All 57 checks pass at the time of writing. Run it before citing
+verify. All 64 checks pass at the time of writing. Run it before citing
 any number here.
 
 ### FAIL — measured, gate did not pass, not rewritten
@@ -211,7 +213,7 @@ any number here.
 |---|---|---|
 | GPTQ + AWQ dequantizers | `src/quantization/adapters.py` | 20 tests in `tests/test_quantization_adapters.py` |
 | `verify_dequantization` gate | `adapters.py` | includes the absorbed-scale correction and the NaN-safe comparison |
-| `claim_audit.py` | `nes-llm/claim_audit.py` | 57 checks re-deriving every MEASURED claim — counts included — and exiting non-zero on any it cannot verify |
+| `claim_audit.py` | `nes-llm/claim_audit.py` | 64 checks re-deriving every MEASURED claim — counts included — and exiting non-zero on any it cannot verify |
 | `QuantizationStrategy`, `NF4QuantizationStrategy` | strategy registry | per-tensor ABC, needs an adapter; **never run** |
 | Neural strategy `train_sampled()` | adaptive strategy | **never run** |
 | `adaptive_strategy` noise routing | strategy registry | **never run** |
@@ -232,7 +234,7 @@ any number here.
 
 | item | why it matters |
 |---|---|
-| Strategy × model matrix | breadth deliverable; 3 of 7 models first |
+| Strategy × model matrix — **first pass measured (exp18, 3 models)** | breadth deliverable; widening to the full 7-model grid remains |
 | Model surgery (LoRA merge, fine-tune, re-quantize, prune, merge) | determines viability |
 | Pareto frontier | the strongest publishable framing |
 | Robustness / detectability for GPTQ and AWQ | Exp9's channel was clean |
@@ -331,7 +333,7 @@ distribution's mean and std. A sign flip satisfies both trivially, and nothing
 penalises the sign leak. The encoder may converge to the same sign-based solution.
 Running it answers this either way.
 
-#### W1.3 Full strategy × model matrix
+#### W1.3 Full strategy × model matrix — **done (first pass), exp18**
 
 All viable strategies × 7 models, one table, four axes: extractability, BER,
 robustness (BER @ σ=0.001/0.002), detectability.
@@ -339,6 +341,19 @@ robustness (BER @ σ=0.001/0.002), detectability.
 **Cost control:** detectability is ~10 min/model/strategy. Full 7×5 ≈ 6 h of pure
 compute that will thrash 26 GB RAM. **First pass on 3 models** (one per size class:
 TinyLlama 1.1B, Qwen2.5-3B, Llama-3.1-8B), then widen. Run one model per process.
+
+**First pass done — exp18, 12 cells** (TinyLlama skipped under the incomplete-cache
+rule; gemma-2-2b took the small slot). The four axes came from exp10's own
+measurement functions, parametrised by model — protocol unchanged, so the table
+extends exp10/exp12 instead of starting a parallel dialect. Result: **round trip
+12/12 at BER 0.0 and robustness 12/12 pass — only detectability separates
+strategies.** LWE scores **exactly 0.50 on all three models** (3/3 wins; third
+reproduction after exp10/exp12); the sign family fails the gate everywhere
+(0.59–0.84), with **qae worst** (0.84/0.73/0.59) — exp17's margin floor amplifies
+the sign signal rather than hiding it, which also makes W5.2's *"both mechanisms
+avoid sign flips"* premise half-false as written. Excluded by name: `neural`
+(untrained, W1.2), `nf4_qae` (blocked, exp17). Widening to the full 7-model grid
+remains open (NOT_RUN row annotated). Full record: `RESEARCH_LOG.md` §24.
 
 #### W1.4 Dead or duplicate code
 
@@ -623,7 +638,7 @@ invalidate later work.
 | 3 | **W2** LWE perplexity — **done, exp15: PASS ×2** | biggest hole; invalidates the strategy choice if it fails (it did not: 0.008% / 0.050%) |
 | 4 | **W3.1** cross-scheme detector — **done, exp16: PASS (scoped)** | the claim's main weakness (sign→LWE: no transfer, control-validated; reverse uninformative) |
 | 5 | **W1.1** QAE adapter + round trip — **done, exp17: `qae` PASS, `nf4_qae` BLOCKED** | adds two strategies cheaply (one wired, one's blocker diagnosed) |
-| 6 | **W1.3** strategy × model matrix (3 models) | the breadth deliverable |
+| 6 | **W1.3** strategy × model matrix (3 models) — **done, exp18: one axis decides** | the breadth deliverable (first pass; 7-model widening remains) |
 | 7 | **W5** hybrids | most interesting science |
 | 8 | **W6** model surgery | determines viability |
 | 9 | **W7** Pareto frontier | the strongest publishable framing |
