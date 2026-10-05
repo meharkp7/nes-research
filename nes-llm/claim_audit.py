@@ -374,6 +374,111 @@ def audit_lwe():
     )
 
 
+# --------------------------------------------------------- exp13 (W4.2)
+def audit_keyless():
+    d = one("exp13_keyless_recovery.json")
+    if not d:
+        check("exp13 artifact present", False)
+        return
+
+    shipped = d.get("shipped_path", {})
+    check(
+        "exp13: shipped path is one public constant, key ignored",
+        shipped.get("grid_width_property") == 0.01
+        and shipped.get("keyed_branch_active") is False
+        and shipped.get("distinct_widths_all_layers") == [0.01]
+        and shipped.get("width_identical_across_keys") is True
+        and shipped.get("secret_key_is_all_zero_default") is True,
+        f"w={shipped.get('grid_width_property')} "
+        f"distinct={shipped.get('distinct_widths_all_layers')} "
+        f"keyed_branch={shipped.get('keyed_branch_active')}",
+    )
+
+    designed = d.get("designed_path_control", {})
+    check(
+        "exp13: designed HMAC formula key-independent on 0/36 layers",
+        designed.get("layers_key_dependent") == 0
+        and designed.get("layers_total") == 36
+        and designed.get("floor_dominated_fraction") == 1.0,
+        f"key-dependent={designed.get('layers_key_dependent')}/"
+        f"{designed.get('layers_total')}",
+    )
+
+    inv = d.get("key_invariance", {})
+    check(
+        "exp13: six keys decode identical streams (max pairwise BER 0.0)",
+        inv.get("keys_decode_identically") is True
+        and inv.get("max_pairwise_ber") == 0.0
+        and all(v == 0.0 for v in inv.get("ber_vs_transmitted", {}).values()),
+        f"max_pairwise={inv.get('max_pairwise_ber')} "
+        f"bers={inv.get('ber_vs_transmitted')}",
+    )
+
+    phase = d.get("attack_tiers", {}).get("phase_detection", {})
+    primary = (phase.get("per_tolerance") or {}).get("1e-06", {})
+    check(
+        "exp13: keyless read of all 10256 bits at BER 0.0 "
+        "(precision/recall 1.0, clean control 0)",
+        phase.get("stream_ber_primary_tol") == 0.0
+        and phase.get("stream_length") == 10256
+        and phase.get("transmitted_length") == 10256
+        and primary.get("precision") == 1.0
+        and primary.get("recall") == 1.0
+        and primary.get("detected_in_clean_control") == 0,
+        f"ber={phase.get('stream_ber_primary_tol')} "
+        f"len={phase.get('stream_length')}/"
+        f"{phase.get('transmitted_length')} "
+        f"p={primary.get('precision')} r={primary.get('recall')} "
+        f"clean={primary.get('detected_in_clean_control')}",
+    )
+
+    # Nondeterministic by construction: the AES key is fresh per run,
+    # so the payload bits and the stego layout differ slightly. The
+    # claim is "at chance", not a specific digit.
+    kc = d.get("attack_tiers", {}).get("kerckhoffs_exact_size", {})
+    kc_ber = kc.get("keyless_ber")
+    check(
+        "exp13: public-pipeline re-run reads at chance (0.4 <= BER <= 0.6)",
+        kc_ber is not None and 0.4 <= kc_ber <= 0.6,
+        f"ber={kc_ber} "
+        f"precision={dig(kc, 'positions', 'precision')} "
+        f"alloc_match={kc.get('layers_with_matching_allocation')}",
+    )
+
+    ws = d.get("width_search", {})
+    check(
+        "exp13: search spikes on the true lattice, tied with w/5",
+        ws.get("spike_found") is True
+        and ws.get("argmax_width") == 0.002
+        and ws.get("true_width") == 0.01
+        and ws.get("true_width_tied_for_best") is True
+        and ws.get("argmax_score") == ws.get("score_at_true_width"),
+        f"argmax={ws.get('argmax_width')} "
+        f"scores={ws.get('argmax_score')}/"
+        f"{ws.get('score_at_true_width')}",
+    )
+
+    gate = d.get("gate", {})
+    check(
+        "exp13: gate FAIL stands and matches THRESHOLDS['exp13']",
+        gate.get("status") == "FAIL"
+        and gate.get("min_keyless_ber")
+        == THRESHOLDS["exp13"]["min_keyless_ber"]
+        and gate.get("min_width_search_relative_error")
+        == THRESHOLDS["exp13"]["min_width_search_relative_error"]
+        and "min_keyless_ber" in (gate.get("failed_conditions") or []),
+        f"status={gate.get('status')} failed={gate.get('failed_conditions')}",
+    )
+
+    claims = d.get("claims_tested", [])
+    check(
+        "exp13: all three docstring security claims recorded REFUTED",
+        len(claims) == 3
+        and all(c.get("verdict") == "REFUTED" for c in claims),
+        "; ".join(f"{c.get('verdict')} {c.get('claim')}" for c in claims),
+    )
+
+
 # ------------------------------------------------------------------ gates
 def audit_thresholds():
     check(
@@ -407,6 +512,7 @@ def main() -> int:
         ("NF4 grid (exp3-exp8)", audit_nf4_grid),
         ("non-NF4 formats (exp9)", audit_formats),
         ("LWE (exp10, exp12)", audit_lwe),
+        ("keyless recovery (exp13)", audit_keyless),
         ("gates", audit_thresholds),
     ):
         print(f"\n{title}")

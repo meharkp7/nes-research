@@ -87,6 +87,16 @@ THRESHOLDS = {
         "min_dequant_correlation": 0.95,
         "max_dequant_residual_ratio": 0.5,
     },
+    "exp13": {
+        "description": (
+            "Keyless recovery (W4.2): without any key, an attacker "
+            "holding only the released model must be at chance reading "
+            "the embedded bitstream, and must not locate the LWE grid "
+            "width to within 1% from the weights alone."
+        ),
+        "min_keyless_ber": 0.5,
+        "min_width_search_relative_error": 0.01,
+    },
 }
 
 
