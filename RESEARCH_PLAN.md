@@ -39,11 +39,12 @@ Read `RESEARCH_LOG.md` first for how we got here and which mistakes to not repea
 | **Strategy × model matrix, first pass (W1.3)** | 4 READY strategies × 3 models: **12/12 round trips BER 0.0, 12/12 robustness gates pass — only detectability separates**; LWE detector **0.50 on all three models** (3/3 wins), sign-family 0.59–0.84 everywhere (qae worst: 0.84/0.73); `neural` + `nf4_qae` excluded by name | `results/exp18_matrix_*.json` |
 | **Adaptive routing as designed (W5.1)** | three models → **three different branches** (gemma σ=0.000448→lwe, Qwen σ=0.001554→neural, Llama σ=0.007736→sign); every round trip that ran holds BER 0.0; Qwen's neural route fails design-as-written (no trained model) and is **recorded as the design's own**, both available branches round-trip 0.0 as its fallback | `results/exp19_adaptive_*.json` |
 | **Sign/parity split dial measured (W5.3)** | five parity shares × exp10's three axes: all round trips **BER 0.0**; BER@σ0.002 rises **0 → 0.0127** and detector falls **0.7875 → 0.50** with parity share — the stealth/robustness trade-off is a dial; pure parity **reproduces exp18's lwe cell exactly**, only it wins all gates | `results/exp20_split_dial_*.json` |
+| **QAE encode + LWE read-out (W5.2)** | plan called it plausible; measured **0.5433 vs the 0.0 gate → FAIL (the finding)**, matched control **0.0**; the public correction returns **0.0** — `parity(v) = sign(v) ⊕ cell-parity(|v|)` measured: the "hybrid" is sign reading plus a public relabeling | `results/exp21_qae_lwe_*.json` |
 | **NES round-trips at BER 0.0 through three 4-bit formats: NF4, GPTQ, AWQ** | GPTQ corr 0.9903 / AWQ corr 0.9941 (raw 0.9890) | `results/exp9_formats.json` |
 | 9 model ids covered, 0 ERROR | 35 PASS / 6 FAIL / **0 NOT_RUN** | `results/experiment_manifest.json` |
 
 **How those rows are kept honest.** `nes-llm/claim_audit.py` re-derives every
-MEASURED row above from disk: **80/80 pass**, with `check_consistency.py` at
+MEASURED row above from disk: **87/87 pass**, with `check_consistency.py` at
 9/9 and a 42-test suite running green. Four claims in this document failed
 that audit while it was being built — a coverage figure with no artifact
 behind it, an average reported as a maximum, a count lifted from a different
@@ -112,13 +113,13 @@ any session that touches a result.
 cd nes-llm
 ../.venv/bin/python run_nes_experiments.py --audit    # manifest matrix
 ../.venv/bin/python check_consistency.py              # 9/9 must pass
-../.venv/bin/python claim_audit.py                    # 80/80 must pass
+../.venv/bin/python claim_audit.py                    # 87/87 must pass
 ```
 
 `claim_audit.py` is this section made executable: each row is re-derived from
 the artifact it names — counts included, because every claim that failed this
 audit failed on a count while the values underneath stayed correct — and it
-exits non-zero on anything it cannot verify. It passes **80/80** as written.
+exits non-zero on anything it cannot verify. It passes **87/87** as written.
 
 Four claims in this document failed it. Three are corrected in the audit notes
 below (exp12 coverage, exp6 robustness, exp2's count) and the fourth — the
@@ -147,6 +148,7 @@ record.
 | **Strategy × model matrix (W1.3, first pass)** | exp10's three axes × 4 strategies × 3 models: round trip **12/12 BER 0.0**, robustness **12/12 pass** (σ0.001 all 0.0); detector — LWE **0.5000 ×3** (wins 3/3), sign 0.61–0.78, magnitude_aware 0.59–0.78, qae **0.59–0.84** (0/9 for the sign family); pipeline flag false for LWE (sign-only DecryptPipeline, known wiring gap) | `exp18_matrix_*.json` |
 | **Adaptive routing as designed (W5.1)** | three models → **three different branches**: gemma σ **0.000448**→lwe, Qwen σ **0.001554**→neural (route fails design-as-written — no trained model — `EmbeddingError` recorded, forced sign/lwe fallbacks both **0.0**), Llama σ **0.007736**→sign; all four round trips that ran **BER 0.0**; each branch recomputes exactly from recorded σ + thresholds | `exp19_adaptive_*.json` |
 | **Sign/parity split dial (W5.3)** | 5 fractions × Qwen2.5-3B: round trips **5/5 BER 0.0**, σ0.001 **0.0 everywhere**; detector **[0.7875, 0.6938, 0.70, 0.5875, 0.50]**, BER@σ0.002 **[0, 0.0034, 0.0067, 0.0095, 0.0127]** across parity share 0→1 (stealth↑ robustness↓); only pure parity wins; its detector **= exp18's lwe cell (delta 0.0)**, pure-sign endpoint +0.0375 from exp18's sign cell (fresh-key variance, mechanism verified bit-identical) | `exp20_split_dial_*.json` |
+| **QAE encode + LWE read-out (W5.2)** | one embed, same stego, three readings: matched **0.0** (control), raw LWE parity **0.5433** (5,572/10,256 — gate 0.0, **verdict FAIL**), public cell-parity correction **0.0**; `parity(v)=sign(v)⊕cell-parity(|v|)` measured, not asserted; complement prediction missed (carriers all ≥ one grid width: sampled min 0.013 > 0.010) — miss recorded | `exp21_qae_lwe_*.json` |
 | **GPTQ round trip** | BER **0.0**, 10,256/10,256 bits, corr 0.9903, 36/36 layers | `exp9_formats.json` |
 | **AWQ round trip** | BER **0.0**, 10,256/10,256 bits, corr 0.9941, **35/36 layers** | `exp9_formats.json` |
 | Suite coverage | 35 PASS / 6 FAIL / 0 NOT_RUN / 0 ERROR | `experiment_manifest.json` |
@@ -197,7 +199,7 @@ model — including the pair that exposed the staleness.
 
 `python nes-llm/claim_audit.py` re-derives every MEASURED claim in this
 section from `results/*.json` and exits non-zero on any it cannot
-verify. All 80 checks pass at the time of writing. Run it before citing
+verify. All 87 checks pass at the time of writing. Run it before citing
 any number here.
 
 ### FAIL — measured, gate did not pass, not rewritten
@@ -217,7 +219,7 @@ any number here.
 |---|---|---|
 | GPTQ + AWQ dequantizers | `src/quantization/adapters.py` | 20 tests in `tests/test_quantization_adapters.py` |
 | `verify_dequantization` gate | `adapters.py` | includes the absorbed-scale correction and the NaN-safe comparison |
-| `claim_audit.py` | `nes-llm/claim_audit.py` | 80 checks re-deriving every MEASURED claim — counts included — and exiting non-zero on any it cannot verify |
+| `claim_audit.py` | `nes-llm/claim_audit.py` | 87 checks re-deriving every MEASURED claim — counts included — and exiting non-zero on any it cannot verify |
 | `QuantizationStrategy`, `NF4QuantizationStrategy` | strategy registry | per-tensor ABC, needs an adapter; **never run** |
 | Neural strategy `train_sampled()` | adaptive strategy | **never run** |
 | `adaptive_strategy` noise routing | strategy registry | **never run** |
@@ -489,8 +491,13 @@ Increasing ambition. Each is a separate artifact; none replaces an existing resu
   Qwen→neural (fails as written without a trained model — recorded, its
   available branches round-trip 0.0), Llama→sign; every round trip 0.0.
   Baseline for anything better. Cheap, as promised.
-- **W5.2 — QAE encode + LWE read-out.** Quantization-aware placement, parity decode.
-  Plausible: both mechanisms avoid sign flips.
+- **W5.2 — QAE encode + LWE read-out — done, exp21: FAIL, the finding.**
+  The premise *"both mechanisms avoid sign flips"* was half-false
+  (exp17: qae flips signs); the combination measures **0.5433** vs the
+  0.0 gate (matched control 0.0 — attributable to the pairing), and the
+  public correction `raw ⊕ cell-parity(|stego|) ⊕ 1` returns **0.0**:
+  `parity(v) = sign(v) ⊕ cell-parity(|v|)` measured — a "hybrid" would
+  be sign reading plus a public relabeling, not a second channel.
 - **W5.3 — sign/parity split — done, exp20: it is a dial.** Parity on a
   fraction of carriers, sign on the rest: robustness falls and
   detectability falls monotonically with parity share (σ0.002 0→0.0127,
@@ -648,7 +655,7 @@ invalidate later work.
 | 4 | **W3.1** cross-scheme detector — **done, exp16: PASS (scoped)** | the claim's main weakness (sign→LWE: no transfer, control-validated; reverse uninformative) |
 | 5 | **W1.1** QAE adapter + round trip — **done, exp17: `qae` PASS, `nf4_qae` BLOCKED** | adds two strategies cheaply (one wired, one's blocker diagnosed) |
 | 6 | **W1.3** strategy × model matrix (3 models) — **done, exp18: one axis decides** | the breadth deliverable (first pass; 7-model widening remains) |
-| 7 | **W5** hybrids — **7a done, exp19: three models, three branches (lwe/neural/sign); W5.3 done, exp20: the stealth/robustness trade-off is a parity-share dial** | most interesting science (W5.3 was the flagship and holds; W5.2's premise stays half-false from exp17) |
+| 7 | **W5** hybrids — **7a done, exp19 (adaptive); W5.3 done, exp20 (parity-share dial); W5.2 done, exp21 (FAIL = finding: interop 0.5433 vs 0.0, parity ≡ sign ⊕ public relabeling)** | most interesting science — only W5.4 (per-layer selection) left |
 | 8 | **W6** model surgery | determines viability |
 | 9 | **W7** Pareto frontier | the strongest publishable framing |
 | 10 | **W1.4** consolidation | cleanup; do before W8 |

@@ -2058,3 +2058,90 @@ unchanged at 35 PASS / 6 FAIL / 0 NOT_RUN / 0 ERROR — exp20 is the
 eighth standalone artifact outside the manifest grid. W5.3 closes;
 W5.2's premise (QAE/LWE both avoid sign flips) remains half-false
 from exp17 and is next in the W5 list.
+
+## 27. W5.2 — QAE encode + LWE read-out (exp21)
+
+Suggested order item 7 continues (`RESEARCH_PLAN` §4 W5.2): *"QAE
+encode + LWE read-out. Quantization-aware placement, parity decode.
+Plausible: both mechanisms avoid sign flips."* The premise was already
+recorded half-false by exp17 — QAE-V1 **forces sign flips**
+(`+max(|v|, margin)` / `-max(|v|, margin)`, sign-family with a margin
+floor) — so the honest reading of the item is the question it
+actually asks: **can the LWE parity read-out decode a QAE-encoded
+stream at all?**
+
+### 27.1 What was built
+
+- **One production-path embed, three readings of the same stego** so
+  the read-out pairing is the only variable: the matched control
+  (qae's own `SignExtractor`), the raw LWE parity read-out
+  (`floor(v/0.010)%2`, `DEFAULT_GRID_WIDTH`, stego statistics), and
+  a public cell-parity correction of the raw reading.
+- **Gate:** `THRESHOLDS["exp21"]` — both readings at exp3's 0.0,
+  both reused. The control at 0.0 is what makes a non-zero interop
+  BER attributable to the pairing rather than a broken embed; the
+  verdict is the **raw** interop's, and the correction is recorded
+  as structure with an explicit *"not a gate rescue"* role.
+
+### 27.2 The numbers
+
+| reading | BER | errors / compared | gate 0.0 |
+|---|---|---|---|
+| matched control (qae's extractor) | **0.0** | 0 / 10,256 | ✓ |
+| raw LWE parity read-out | **0.5433** | 5,572 / 10,256 | ✗ |
+| public cell-parity correction | **0.0** | 0 / 10,256 | (structure) |
+
+**Verdict: FAIL** — the plan's *"plausible"* claim fails as written,
+recorded with its number (exp13's pattern: the property that should
+hold does not, and the gate stays at 0.0).
+
+### 27.3 The reading
+
+1. **A pre-registered prediction missed, and the miss is data.**
+   Before the run the module predicted the *complement* (BER near
+   1.0): typical residuals (std ≈ 0.002) sit below one grid width
+   (w = 0.010), where parity mirrors sign exactly. Measured: 0.5433,
+   near chance. Correction verified against the cache — QACI selects
+   the **top-magnitude tail**, and the sampled top-tail carriers are
+   *all* above one grid width (min 0.013 > 0.010, median 0.021), so
+   no complement regime exists for the values that actually get
+   written. Prediction, miss, and correction are all recorded.
+2. **The structure the numbers expose.** For any non-multiple of w,
+   `parity(v) = sign(v) ⊕ cell-parity(|v|)` — an algebraic identity,
+   not a property of qae. Read-out C applies exactly that
+   (`raw ⊕ floor(|stego|/0.010)%2 ⊕ 1`, stego magnitudes only) and
+   returns **0.0**: the identity is *measured*, not asserted.
+3. **What this says about the plan item.** The LWE read-out of a qae
+   stream is the sign bit XOR a per-carrier constant any extractor
+   can recompute from the stego it already holds — so a "QAE encode +
+   LWE read-out" hybrid would be **sign reading with a public
+   relabeling**, not a second independent channel. The premise
+   *"both mechanisms avoid sign flips"* dissolves on both halves:
+   qae flips signs (exp17), and parity read-out of *any* value
+   carries the sign bit in re-encodable form (here). The raw
+   combination still fails the round trip — 0.5433 vs 0.0 gate.
+4. **Run-to-run.** The raw interop BER reproduced bit-for-bit across
+   runs (5,572/10,256 both times): the error count equals the
+   odd-cell fraction of the carrier set, which is payload-independent
+   (fresh AES keys change the stream, not the QACI-selected
+   positions). exp15's fresh-key variance does not move this number.
+
+### 27.4 Verification
+
+```bash
+cd nes-llm
+../.venv/bin/python claim_audit.py                    # 87/87 (7 new)
+../.venv/bin/python check_consistency.py              # 9/9
+../.venv/bin/python -m unittest discover -s tests -p 'test_*.py'   # 42 OK
+../.venv/bin/python -m src.experiments.exp21_qae_lwe_readout \
+    --model Qwen/Qwen2.5-3B                           # re-runs the pair
+```
+
+State: 87/87 claims (7 new: artifact, gate = exp3's 0.0 × 2,
+matched control, raw interop exact number + verdict recompute,
+corrected exactly 0.0 with its not-a-rescue role, premise quoted
+verbatim and half-false against exp17, protocol pins), 9/9
+consistency, 42 tests, manifest unchanged at 35 PASS / 6 FAIL /
+0 NOT_RUN / 0 ERROR — exp21 is the ninth standalone artifact outside
+the manifest grid. W5.2 closes with a FAIL that is the finding.
+W5.4 (per-layer strategy selection) is the last W5 item.
