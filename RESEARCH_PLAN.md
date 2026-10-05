@@ -34,6 +34,16 @@ Read `RESEARCH_LOG.md` first for how we got here and which mistakes to not repea
 | **NES round-trips at BER 0.0 through three 4-bit formats: NF4, GPTQ, AWQ** | GPTQ corr 0.9903 / AWQ corr 0.9941 (raw 0.9890) | `results/exp9_formats.json` |
 | 9 model ids covered, 0 ERROR | 35 PASS / 6 FAIL / **0 NOT_RUN** | `results/experiment_manifest.json` |
 
+**How those rows are kept honest.** `nes-llm/claim_audit.py` re-derives every
+MEASURED row above from disk: **31/31 pass**, with `check_consistency.py` at
+9/9 and a 38-test suite running green. Four claims in this document failed
+that audit while it was being built — a coverage figure with no artifact
+behind it, an average reported as a maximum, a count lifted from a different
+measurement, and a grid count wearing a suite's name. All four are closed,
+none by changing a result: exp7_neural still fails at 70.5%, exp2 still fails
+on 4 models, and every threshold is asserted unchanged by the audit itself.
+Full reasoning in `RESEARCH_LOG.md` §17–§18; the corrections sit in §1 below.
+
 **Two of those rows need the scope stated, or they read as more than they are.**
 
 **"Three 4-bit formats" (Exp9).** This is the defensible form of *"NES works
@@ -82,7 +92,19 @@ any session that touches a result.
 cd nes-llm
 ../.venv/bin/python run_nes_experiments.py --audit    # manifest matrix
 ../.venv/bin/python check_consistency.py              # 9/9 must pass
+../.venv/bin/python claim_audit.py                    # 31/31 must pass
 ```
+
+`claim_audit.py` is this section made executable: each row is re-derived from
+the artifact it names — counts included, because every claim that failed this
+audit failed on a count while the values underneath stayed correct — and it
+exits non-zero on anything it cannot verify. It passes **31/31** as written.
+
+Four claims in this document failed it. Three are corrected in the audit notes
+below (exp12 coverage, exp6 robustness, exp2's count) and the fourth — the
+retired *"7 models covered, 0 errors"* — in §0. Each is recorded rather than
+silently edited: `RESEARCH_LOG.md` §17 holds the reasoning, §18 the session
+record.
 
 ### MEASURED — number in `results/*.json`
 
@@ -147,7 +169,7 @@ model — including the pair that exposed the staleness.
 
 `python nes-llm/claim_audit.py` re-derives every MEASURED claim in this
 section from `results/*.json` and exits non-zero on any it cannot
-verify. All 30 checks pass at the time of writing. Run it before citing
+verify. All 31 checks pass at the time of writing. Run it before citing
 any number here.
 
 ### FAIL — measured, gate did not pass, not rewritten
@@ -164,8 +186,9 @@ any number here.
 
 | item | where | note |
 |---|---|---|
-| GPTQ + AWQ dequantizers | `src/quantization/adapters.py` | 18 tests in `tests/test_quantization_adapters.py` |
+| GPTQ + AWQ dequantizers | `src/quantization/adapters.py` | 20 tests in `tests/test_quantization_adapters.py` |
 | `verify_dequantization` gate | `adapters.py` | includes the absorbed-scale correction and the NaN-safe comparison |
+| `claim_audit.py` | `nes-llm/claim_audit.py` | 31 checks re-deriving every MEASURED claim — counts included — and exiting non-zero on any it cannot verify |
 | `QuantizationStrategy`, `NF4QuantizationStrategy` | strategy registry | per-tensor ABC, needs an adapter; **never run** |
 | Neural strategy `train_sampled()` | adaptive strategy | **never run** |
 | `adaptive_strategy` noise routing | strategy registry | **never run** |
@@ -220,13 +243,13 @@ this audit. **This phase is complete.**
 | cell | status | note |
 |---|---|---|
 | exp1 residual extraction / QACI | PASS ×7 | NF4 grid |
-| exp2 residual fingerprint | FAIL ×6, PASS ×1 | threshold tracks quantization format; unchanged |
+| exp2 residual fingerprint | FAIL ×4, PASS ×3 | threshold tracks quantization format; unchanged (§1 audit note) |
 | exp3 round trip | PASS ×7 | BER 0.0 |
 | exp4 capacity | PASS | ≥ 10M bits at BER 0 |
 | exp5 fidelity | PASS | +0.0053% PPL |
 | exp6 robustness | PASS ×7 | under both gates; BER 0.0 on 6 of 7 models (Mistral-7B 0.00115) |
 | exp7 statistical | PASS ×7 | below the 55% gate |
-| exp7 neural | **FAIL** ×7 | 70.5% vs 55%; structural, not a fluke |
+| exp7 neural | **FAIL** ×1 (Qwen2.5-3B) | 70.5% vs 55%; structural, not a fluke (100× α, 5× γ, 10× payload sweep) |
 | exp8 cross-model | **FAIL** | correctly inherits the neural FAIL |
 | exp9 GPTQ | **PASS** | BER 0.0, corr 0.9903, 36/36 layers |
 | exp9 AWQ | **PASS** | BER 0.0, corr 0.9941, **35/36 layers** (layer 2 excluded) |
@@ -466,6 +489,9 @@ than a surprise.
 ---
 
 ## 6. How to resume
+
+`nes-llm/README.md` is the entry point: package layout, one line per experiment
+with its gate and current state, and these same commands. Then:
 
 ```bash
 cd nes-llm

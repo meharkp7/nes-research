@@ -84,6 +84,28 @@ def audit_manifest():
         str(records.get("exp7_neural::Qwen/Qwen2.5-3B", {}).get("status")),
     )
 
+    # Cell counts: the W0 table in RESEARCH_PLAN states these, and two of
+    # its numbers went stale ("exp2 FAIL x6", "exp7_neural FAIL x7") while
+    # every value around them stayed correct. A count stated in prose is
+    # a claim, so it gets a check like any other.
+    cells = Counter(key.split("::", 1)[0] for key in records)
+    check(
+        "cell counts match the tables (exp1/2/3/6/7 are 7 cells, "
+        "exp4/5/7_neural/8 are 1, exp9 is 2)",
+        all(cells.get(name) == 7 for name in ("exp1", "exp2", "exp3", "exp6", "exp7"))
+        and all(
+            cells.get(name) == count
+            for name, count in (
+                ("exp4", 1),
+                ("exp5", 1),
+                ("exp7_neural", 1),
+                ("exp8", 1),
+                ("exp9", 2),
+            )
+        ),
+        str(dict(cells)),
+    )
+
 
 # ------------------------------------------------------------------ exp3-7
 def audit_nf4_grid():

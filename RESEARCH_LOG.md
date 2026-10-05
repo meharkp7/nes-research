@@ -971,7 +971,7 @@ evidence; this is the version that survives.
 **Coverage: 35 PASS, 6 FAIL, 0 NOT_RUN, 0 ERROR.**
 Every registry model now has cells, and no cell is left unrun. 9/9
 consistency checks pass, the test suite runs clean (38 tests, OK), and
-`nes-llm/claim_audit.py` re-derives 30 MEASURED claims from the
+`nes-llm/claim_audit.py` re-derives 31 MEASURED claims from the
 artifacts on disk rather than from this prose — its failures, when it
 has any, are the findings below.
 
@@ -1009,8 +1009,8 @@ Four claims did not survive the final audit, and **all four are now
 closed** — three by rewording the claim, one by producing the artifact
 that should have existed. They are recorded rather than quietly
 corrected, because a document that only ever gets righter is not an
-audit. The audit is `nes-llm/claim_audit.py`: 30 checks, re-derived from
-`results/*.json`, **30/30 passing at the time of writing**.
+audit. The audit is `nes-llm/claim_audit.py`: 31 checks, re-derived from
+`results/*.json`, **31/31 passing at the time of writing**.
 
 **1. exp12 coverage — closed by re-running it.** §7 and its commit
 message state *5 of 5 measured models pass both gates*, with a six-row
@@ -1140,7 +1140,7 @@ Four sentences were.
 
 ### 18.1 `claim_audit.py`
 
-`nes-llm/claim_audit.py` makes this section executable: 30 checks, each
+`nes-llm/claim_audit.py` makes this section executable: 31 checks, each
 re-deriving one MEASURED claim from `results/*.json`. It exits non-zero
 on any claim it cannot verify — a number it cannot find is UNVERIFIED,
 never assumed true — and it reads its gate values from
@@ -1221,7 +1221,7 @@ name.
 cd nes-llm
 python run_nes_experiments.py --audit   # cell states   35 PASS / 6 FAIL / 0 NOT_RUN
 python check_consistency.py             # cross-artifact 9/9
-python claim_audit.py                   # MEASURED claims 30/30
+python claim_audit.py                   # MEASURED claims 31/31
 python -m unittest discover -s tests -p 'test_*.py'   # 38 tests, OK
 ```
 
@@ -1230,7 +1230,7 @@ anyone holding the report can re-derive it rather than trust it.
 
 ### 18.6 State at this commit
 
-35 PASS / 6 FAIL / 0 NOT_RUN / 0 ERROR; 30/30 claims verified; 9/9
+35 PASS / 6 FAIL / 0 NOT_RUN / 0 ERROR; 31/31 claims verified; 9/9
 consistency checks; 38 tests. All four findings closed, and the warning
 marker is now absent from both documents — which is what makes it worth
 keeping as a marker rather than deleting: its presence in either
