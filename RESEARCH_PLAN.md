@@ -35,11 +35,12 @@ Read `RESEARCH_LOG.md` first for how we got here and which mistakes to not repea
 | **Neural detectability is carrier-conditioned (W3.2)** | blind adversary **50.0%** (constant predictor, 4/576 positions held a carrier) vs carrier-centered control **68.75%** → gate **PASS**; exp7's 70.5% is the handed-locations number | `results/exp14_blind_patch_detector.json` |
 | **LWE fidelity measured on 2 models (W2)** | embedding-specific PPL Δ **+0.0077%** (Qwen2.5-3B) and **+0.0501%** (gemma-2-2b) vs 2% gate → both **PASS**; exp5's own baseline/control reproduce exactly (12.4707 / 11.3494) | `results/exp15_lwe_fidelity_*.json` |
 | **Cross-scheme transfer measured (W3.1)** | sign-trained detector: **62.85%** within-scheme → **50.00%** on LWE (control-validated: no transfer); reverse direction uninformative — LWE-trained control collapsed to 50.00%, reproducing exp12's detector 50.00% → gate **PASS**, `controls_valid: false`, conclusion scoped directional | `results/exp16_cross_scheme_detector.json` |
+| **QAE adapter wired, round trip run (W1.1)** | `qae` **READY** via `QaeDictAdapter`: **BER 0.0 over 48,256 bits** through exp3's production path, no-cover probe usable → gate **PASS**; `nf4_qae` registered **BLOCKED** (reference needs weight tensors the embed contract doesn't carry — diagnosed, probe error recorded) | `results/exp17_qae_round_trip.json` |
 | **NES round-trips at BER 0.0 through three 4-bit formats: NF4, GPTQ, AWQ** | GPTQ corr 0.9903 / AWQ corr 0.9941 (raw 0.9890) | `results/exp9_formats.json` |
 | 9 model ids covered, 0 ERROR | 35 PASS / 6 FAIL / **0 NOT_RUN** | `results/experiment_manifest.json` |
 
 **How those rows are kept honest.** `nes-llm/claim_audit.py` re-derives every
-MEASURED row above from disk: **53/53 pass**, with `check_consistency.py` at
+MEASURED row above from disk: **57/57 pass**, with `check_consistency.py` at
 9/9 and a 38-test suite running green. Four claims in this document failed
 that audit while it was being built — a coverage figure with no artifact
 behind it, an average reported as a maximum, a count lifted from a different
@@ -108,13 +109,13 @@ any session that touches a result.
 cd nes-llm
 ../.venv/bin/python run_nes_experiments.py --audit    # manifest matrix
 ../.venv/bin/python check_consistency.py              # 9/9 must pass
-../.venv/bin/python claim_audit.py                    # 53/53 must pass
+../.venv/bin/python claim_audit.py                    # 57/57 must pass
 ```
 
 `claim_audit.py` is this section made executable: each row is re-derived from
 the artifact it names — counts included, because every claim that failed this
 audit failed on a count while the values underneath stayed correct — and it
-exits non-zero on anything it cannot verify. It passes **53/53** as written.
+exits non-zero on anything it cannot verify. It passes **57/57** as written.
 
 Four claims in this document failed it. Three are corrected in the audit notes
 below (exp12 coverage, exp6 robustness, exp2's count) and the fourth — the
@@ -139,6 +140,7 @@ record.
 | **Blind-patch adversary (W3.2)** | blind accuracy **0.5000** (tp=0, fp=0 — learned nothing) vs carrier-centered control **0.6875**; 4/576 blind positions contained a carrier; 576 pairs/arm, split by embedding | `exp14_blind_patch_detector.json` |
 | **LWE fidelity (W2)** | three-way PPL, exp5's protocol: LWE Δ vs control **+0.0077%** (Qwen2.5-3B), **+0.0501%** (gemma-2-2b); reconstruction alone −8.99% / −5.27%; sign re-run +0.0529% vs recorded −0.0053% (same verdict, fresh-AES-key digit) | `exp15_lwe_fidelity_*.json` |
 | **Cross-scheme detector (W3.1)** | 432 pairs/scheme, split by embedding, carrier-centred both: sign→sign **0.6285** (control clears), **sign→LWE 0.5000** (no transfer), lwe→lwe **0.5000** (collapsed = exp12's 50.00%), lwe→sign **0.5000** (uninformative); gate PASS, `controls_valid: false` | `exp16_cross_scheme_detector.json` |
+| **QAE round trip (W1.1)** | `qae` READY (dict adapter over the per-tensor ABC): **BER 0.0** / 48,256 bits, decrypt + match, no-cover probe usable; distortion 24,076 values changed, mean \|Δ\| 0.0355; `nf4_qae` BLOCKED with recorded diagnosis | `exp17_qae_round_trip.json` |
 | **GPTQ round trip** | BER **0.0**, 10,256/10,256 bits, corr 0.9903, 36/36 layers | `exp9_formats.json` |
 | **AWQ round trip** | BER **0.0**, 10,256/10,256 bits, corr 0.9941, **35/36 layers** | `exp9_formats.json` |
 | Suite coverage | 35 PASS / 6 FAIL / 0 NOT_RUN / 0 ERROR | `experiment_manifest.json` |
@@ -189,7 +191,7 @@ model — including the pair that exposed the staleness.
 
 `python nes-llm/claim_audit.py` re-derives every MEASURED claim in this
 section from `results/*.json` and exits non-zero on any it cannot
-verify. All 53 checks pass at the time of writing. Run it before citing
+verify. All 57 checks pass at the time of writing. Run it before citing
 any number here.
 
 ### FAIL — measured, gate did not pass, not rewritten
@@ -209,7 +211,7 @@ any number here.
 |---|---|---|
 | GPTQ + AWQ dequantizers | `src/quantization/adapters.py` | 20 tests in `tests/test_quantization_adapters.py` |
 | `verify_dequantization` gate | `adapters.py` | includes the absorbed-scale correction and the NaN-safe comparison |
-| `claim_audit.py` | `nes-llm/claim_audit.py` | 53 checks re-deriving every MEASURED claim — counts included — and exiting non-zero on any it cannot verify |
+| `claim_audit.py` | `nes-llm/claim_audit.py` | 57 checks re-deriving every MEASURED claim — counts included — and exiting non-zero on any it cannot verify |
 | `QuantizationStrategy`, `NF4QuantizationStrategy` | strategy registry | per-tensor ABC, needs an adapter; **never run** |
 | Neural strategy `train_sampled()` | adaptive strategy | **never run** |
 | `adaptive_strategy` noise routing | strategy registry | **never run** |
@@ -292,7 +294,7 @@ how cheaply each could invalidate the rest.
 
 ### W1. Complete the strategy set
 
-#### W1.1 Quantization-aware strategies (never run)
+#### W1.1 Quantization-aware strategies (never run) — **done, exp17: `qae` PASS / `nf4_qae` BLOCKED**
 
 `QuantizationStrategy` and `NF4QuantizationStrategy` encode bits **relative to the
 NF4 centroid** — move the value but keep it inside its quantization bucket. That is
@@ -306,6 +308,18 @@ Needs an adapter in `strategy_registry.py`.
 **Trap to avoid:** QAE is quantization-*aware*. It uses knowledge of NF4 that LWE
 and sign do not. If QAE wins, the honest statement is "QAE is well-matched to NF4",
 not "LWE is stealthy". Any comparison must state this.
+
+**Done — exp17.** `qae` wired via `QaeDictAdapter` (per-layer delegation to the
+ABC's own `embed()`, `BaseEmbedder`-shaped result — nothing re-implemented):
+**BER 0.0 over 48,256 bits** through exp3's exact production path, decrypt + match,
+no-cover probe `structurally_usable` → gate PASS (exp3's 0.0). The trap note above
+stands: the class writes `±max(|r|, 0.25·std)` — sign-family with a margin floor —
+so exp17 establishes *wiring and round trip*, not a stealth number (no PPL /
+robustness / detectability measured yet). `nf4_qae` registered **BLOCKED**: its
+`ReferenceBuilder` reference depends on the absolute fp16/nf4 weights, which
+neither `strategy.embed` nor `EmbeddingConfig` carries and no caller supplies —
+residuals alone cannot rebuild it; the probe's recorded `RuntimeError` is the
+measurement of that status. Full record: `RESEARCH_LOG.md` §23.
 
 #### W1.2 Neural strategy (written, never run)
 
@@ -608,7 +622,7 @@ invalidate later work.
 | 2 | **W3.2** blind-patch adversary — **done, exp14: PASS** | cheapest test of the central claim (it was: 50.0% blind vs 68.75% control) |
 | 3 | **W2** LWE perplexity — **done, exp15: PASS ×2** | biggest hole; invalidates the strategy choice if it fails (it did not: 0.008% / 0.050%) |
 | 4 | **W3.1** cross-scheme detector — **done, exp16: PASS (scoped)** | the claim's main weakness (sign→LWE: no transfer, control-validated; reverse uninformative) |
-| 5 | **W1.1** QAE adapter + round trip | adds two strategies cheaply |
+| 5 | **W1.1** QAE adapter + round trip — **done, exp17: `qae` PASS, `nf4_qae` BLOCKED** | adds two strategies cheaply (one wired, one's blocker diagnosed) |
 | 6 | **W1.3** strategy × model matrix (3 models) | the breadth deliverable |
 | 7 | **W5** hybrids | most interesting science |
 | 8 | **W6** model surgery | determines viability |

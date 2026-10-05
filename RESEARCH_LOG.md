@@ -971,7 +971,7 @@ evidence; this is the version that survives.
 **Coverage: 35 PASS, 6 FAIL, 0 NOT_RUN, 0 ERROR.**
 Every registry model now has cells, and no cell is left unrun. 9/9
 consistency checks pass, the test suite runs clean (38 tests, OK), and
-`nes-llm/claim_audit.py` re-derives 53 MEASURED claims from the
+`nes-llm/claim_audit.py` re-derives 57 MEASURED claims from the
 artifacts on disk rather than from this prose — its failures, when it
 has any, are the findings below.
 
@@ -1009,8 +1009,8 @@ Four claims did not survive the final audit, and **all four are now
 closed** — three by rewording the claim, one by producing the artifact
 that should have existed. They are recorded rather than quietly
 corrected, because a document that only ever gets righter is not an
-audit. The audit is `nes-llm/claim_audit.py`: 53 checks, re-derived from
-`results/*.json`, **53/53 passing at the time of writing**.
+audit. The audit is `nes-llm/claim_audit.py`: 57 checks, re-derived from
+`results/*.json`, **57/57 passing at the time of writing**.
 
 **1. exp12 coverage — closed by re-running it.** §7 and its commit
 message state *5 of 5 measured models pass both gates*, with a six-row
@@ -1140,7 +1140,7 @@ Four sentences were.
 
 ### 18.1 `claim_audit.py`
 
-`nes-llm/claim_audit.py` makes this section executable: 53 checks, each
+`nes-llm/claim_audit.py` makes this section executable: 57 checks, each
 re-deriving one MEASURED claim from `results/*.json`. It exits non-zero
 on any claim it cannot verify — a number it cannot find is UNVERIFIED,
 never assumed true — and it reads its gate values from
@@ -1221,7 +1221,7 @@ name.
 cd nes-llm
 python run_nes_experiments.py --audit   # cell states   35 PASS / 6 FAIL / 0 NOT_RUN
 python check_consistency.py             # cross-artifact 9/9
-python claim_audit.py                   # MEASURED claims 53/53
+python claim_audit.py                   # MEASURED claims 57/57
 python -m unittest discover -s tests -p 'test_*.py'   # 38 tests, OK
 ```
 
@@ -1230,7 +1230,7 @@ anyone holding the report can re-derive it rather than trust it.
 
 ### 18.6 State at this commit
 
-35 PASS / 6 FAIL / 0 NOT_RUN / 0 ERROR; 53/53 claims verified; 9/9
+35 PASS / 6 FAIL / 0 NOT_RUN / 0 ERROR; 57/57 claims verified; 9/9
 consistency checks; 38 tests. All four findings closed, and the warning
 marker is now absent from both documents — which is what makes it worth
 keeping as a marker rather than deleting: its presence in either
@@ -1349,13 +1349,13 @@ everything else in the artifact is deterministic and pinned.
 
 ```bash
 cd nes-llm
-../.venv/bin/python claim_audit.py                    # 53/53
+../.venv/bin/python claim_audit.py                    # 57/57
 ../.venv/bin/python check_consistency.py              # 9/9
 ../.venv/bin/python -m unittest discover -s tests -p 'test_*.py'   # 38 OK
 ../.venv/bin/python -m src.experiments.exp13_keyless_recovery      # re-runs
 ```
 
-State: 53/53 claims, 9/9
+State: 57/57 claims, 9/9
 consistency, 38 tests, manifest unchanged at 35 PASS / 6 FAIL /
 0 NOT_RUN / 0 ERROR — exp13 sits outside the manifest grid, and its
 FAIL is a gate verdict recorded in the artifact and the claim audit,
@@ -1438,13 +1438,13 @@ arms and the split reproducible.
 
 ```bash
 cd nes-llm
-../.venv/bin/python claim_audit.py                    # 53/53
+../.venv/bin/python claim_audit.py                    # 57/57
 ../.venv/bin/python check_consistency.py              # 9/9
 ../.venv/bin/python -m unittest discover -s tests -p 'test_*.py'   # 38 OK
 ../.venv/bin/python -m src.experiments.exp14_blind_patch_detector  # re-runs
 ```
 
-State: 53/53 claims, 9/9 consistency, 38 tests, manifest unchanged at
+State: 57/57 claims, 9/9 consistency, 38 tests, manifest unchanged at
 35 PASS / 6 FAIL / 0 NOT_RUN / 0 ERROR — exp14, like exp13, sits
 outside the manifest grid, and its PASS is a gate verdict in the
 artifact and the claim audit, not a 36th cell.
@@ -1538,14 +1538,14 @@ experiment.
 
 ```bash
 cd nes-llm
-../.venv/bin/python claim_audit.py                    # 53/53 (5 new)
+../.venv/bin/python claim_audit.py                    # 57/57 (5 new)
 ../.venv/bin/python check_consistency.py              # 9/9
 ../.venv/bin/python -m unittest discover -s tests -p 'test_*.py'   # 38 OK
 ../.venv/bin/python -m src.experiments.exp15_lwe_fidelity \
     --model Qwen/Qwen2.5-3B                           # re-runs
 ```
 
-State: 53/53 claims, 9/9 consistency, 38 tests, manifest unchanged at
+State: 57/57 claims, 9/9 consistency, 38 tests, manifest unchanged at
 35 PASS / 6 FAIL / 0 NOT_RUN / 0 ERROR — exp15 is the third standalone
 gate outside the manifest grid. Scope: LWE's *fidelity* is now
 established on two models; its key-gating remains refuted (exp13) and
@@ -1643,15 +1643,99 @@ was written to be able to fail.
 
 ```bash
 cd nes-llm
-../.venv/bin/python claim_audit.py                    # 53/53 (4 new)
+../.venv/bin/python claim_audit.py                    # 57/57 (4 new)
 ../.venv/bin/python check_consistency.py              # 9/9
 ../.venv/bin/python -m unittest discover -s tests -p 'test_*.py'   # 38 OK
 ../.venv/bin/python -m src.experiments.exp16_cross_scheme_detector  # re-runs
 ```
 
-State: 53/53 claims, 9/9 consistency, 38 tests, manifest unchanged at
+State: 57/57 claims, 9/9 consistency, 38 tests, manifest unchanged at
 35 PASS / 6 FAIL / 0 NOT_RUN / 0 ERROR — exp16 is the fourth
 standalone gate outside the manifest grid. Scope: one transfer
 direction measured and negative (no transfer), one uninformative by
 the control's own collapse; Not-established #2 is annotated, not
 deleted.
+
+## 23. W1.1 — the quantization-aware strategies (exp17)
+
+Suggested order item 5 (`RESEARCH_PLAN` §7 #5). §2 W1.1: two
+strategies on disk, never run — `QuantizationStrategy` and
+`NF4QuantizationStrategy` implement the per-tensor ABC, not
+production's dict contract, so *"needs an adapter in
+strategy_registry.py."*
+
+### 23.1 What was built
+
+Two registry entries and one adapter, in
+`nes-llm/src/embedding/strategy_registry.py`:
+
+- **`qae` (READY)** — `QaeDictAdapter`: per layer it delegates to the
+  ABC's own `embed(residual_tensor, positions, bits)` so the
+  strategy's margin logic (0.25 × layer std) runs *unmodified*; the
+  adapter only does what `BaseEmbedder` does for every other strategy
+  (sorted-layer walk, global bit-stream slicing,
+  `EmbeddingResult` wrapping). Nothing is re-implemented, so nothing
+  can drift.
+- **`nf4_qae` (BLOCKED)** — registered with a raising factory and the
+  full diagnosis in `StrategySpec.notes`. The reference residual
+  comes from `ReferenceBuilder.build(fp16_weight, nf4_weight)` — one
+  extra NF4 quantize/dequantize cycle over the *absolute* weights —
+  but `strategy.embed` receives only `(residuals, bits,
+  selector_indices)`, `EmbeddingConfig` carries no weights or model
+  id, and a grep confirmed no caller passes `IntelligentEmbedder
+  .embed`'s optional `fp16_weights`/`quantized_weights`. The
+  reference cannot be rebuilt from cached residuals. Wiring it
+  honestly means extending the shared contract for *every* strategy —
+  an author decision, recorded instead of bolted onto one experiment.
+  The probe's recorded `RuntimeError` *is* the measurement of that
+  status.
+
+The probes (`probe_extraction`) catch exceptions per strategy, and
+`test_every_spec_has_notes` only checks notes, so a raising factory
+degrades into data rather than breaking anything.
+
+### 23.2 The measurement — exp17
+
+`nes-llm/src/experiments/exp17_qae_round_trip.py` runs **exp3's exact
+production path** (same `DecryptPipeline`, same honest BER against the
+transmitted bit sequence rather than a stats field) with
+`embedding_strategy="qae"`, plus a no-cover probe for both registered
+strategies. Gate `THRESHOLDS["exp17"].max_ber = 0.0` — exp3's own
+number, reused, with exp3's decrypt-and-match conditions.
+
+| quantity | value |
+|---|---|
+| round trip | **BER 0.0 over 48,256 bits**, 0 errors; decrypt OK, message matches → **PASS** |
+| no-cover probe, qae | embed ✓, extract-without-cover ✓, BER 0.0, `structurally_usable: true` |
+| no-cover probe, nf4_qae | `embed_ok: false`, error = the BLOCKED diagnosis verbatim |
+| values changed | 24,076 of 811,597,824 (2.97e-05) — carriers whose sign already matched the bit are written unchanged |
+| mean \|Δ\| over changed | 0.0355 (max 0.160) |
+
+**Structural reading, stated before anyone over-reads it:** the
+adapter round-trips, and the encoding class is sign-family — the
+class writes `+max(|r|, 0.25·std)` / `−max(|r|, 0.25·std)`, so
+QAE-V1 forces a sign flip exactly as sign does (`forces_sign_flip:
+True` in the registry). The *"stays inside the NF4 bucket"* property
+the plan attributes to QAE lives in `NF4QuantizationStrategy` — the
+class that is blocked. So exp17 establishes **wiring and round trip**,
+not a stealth result: no PPL, robustness or detectability number was
+produced for qae, and the plan's trap note stands — if a later
+comparison has QAE win, the honest statement is *"QAE is well-matched
+to NF4"*, not a stealth claim about other schemes.
+
+### 23.3 Verification
+
+```bash
+cd nes-llm
+../.venv/bin/python claim_audit.py                    # 57/57 (4 new)
+../.venv/bin/python check_consistency.py              # 9/9
+../.venv/bin/python -m unittest discover -s tests -p 'test_*.py'   # 38 OK
+../.venv/bin/python -m src.experiments.exp17_qae_round_trip        # re-runs
+```
+
+State: 57/57 claims, 9/9 consistency, 38 tests, manifest unchanged at
+35 PASS / 6 FAIL / 0 NOT_RUN / 0 ERROR — exp17 is the fifth standalone
+gate outside the manifest grid. What W1.1 promised ("adds two
+strategies cheaply") is delivered as: one wired and measured, one
+registered with its blocker diagnosed — which is the honest maximum
+the current contract allows.

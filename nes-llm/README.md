@@ -77,25 +77,26 @@ correcting them.
 | exp14 | blind-patch adversary (W3.2): detector cut at positions that know nothing about carriers | blind accuracy ≤ 55% (exp7's number, reused) | **PASS** — 50.0% blind vs 68.75% carrier-centered control; exp7's 70.5% is placement-conditioned |
 | exp15 | LWE fidelity (W2): three-way perplexity in exp5's protocol, per model | embedding-specific PPL Δ < 2% (exp5's number, reused) | **PASS ×2** — +0.0077% (Qwen2.5-3B), +0.0501% (gemma-2-2b) |
 | exp16 | cross-scheme detector (W3.1): train on one scheme, test on the other | both cross directions ≤ 55% (exp7's number, reused) | **PASS** — sign→LWE 50.00% with 62.85% control; LWE-side control collapsed (exp12-consistent), `controls_valid: false` |
+| exp17 | QAE round trip (W1.1): the dict-adapter over the per-tensor ABC, exp3's production path | BER 0.0 (exp3's number, reused) | **PASS** — 0.0 over 48,256 bits, decrypt + match; `nf4_qae` registered BLOCKED with recorded diagnosis |
 
 Thresholds live in `experiment_registry.THRESHOLDS`. No experiment edits its
 own, and `claim_audit.py` pins them, so a gate cannot be quietly relaxed.
 
 A FAIL above is a result, not a bug: each was investigated and the verdict is
 recorded rather than rewritten. The six current **manifest** FAILs are exp2 ×4,
-exp7_neural, and exp8 inheriting it. exp13's FAIL and exp14's/exp15's/exp16's
+exp7_neural, and exp8 inheriting it. exp13's FAIL and exp14's/exp15's/exp16's/exp17's
 PASSes are gate verdicts outside the manifest grid (standalone artifacts, like
 exp12), so coverage stays 35 PASS / 6 FAIL — exp13's scope caveat is that the
 payload is AES-GCM ciphertext: the *channel* is readable, the *message* is not,
-and exp16's is that one cross direction is uninformative by its own recorded
-control.
+exp16's is that one cross direction is uninformative by its own recorded
+control, and exp17's is that `qae` round-trips but produced no stealth number.
 
 ## Reading order
 
 1. `../RESEARCH_LOG.md` — what was done, what broke, what was decided (§16 is
-   the AWQ story, §17 the final state and claim-audit findings, §19–§22 the
+   the AWQ story, §17 the final state and claim-audit findings, §19–§23 the
    Phase-B results so far: W4.2 keyless recovery, W3.2 blind patches, W2 LWE
-   fidelity, W3.1 cross-scheme).
+   fidelity, W3.1 cross-scheme, W1.1 QAE round trip).
 2. `../RESEARCH_PLAN.md` — every claim sorted MEASURED / FAIL / NOT_RUN, and
    what to do next (Phases A–D).
 3. `../results/final_research_summary.md` — the generated report.
