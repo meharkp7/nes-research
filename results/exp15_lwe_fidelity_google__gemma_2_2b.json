@@ -1,0 +1,69 @@
+{
+  "experiment": "exp15",
+  "title": "W2 \u2014 LWE fidelity (three-way PPL)",
+  "model_id": "google/gemma-2-2b",
+  "family": "gemma",
+  "status": "PASS",
+  "gate": {
+    "max_ppl_degradation_pct": 2.0,
+    "measured_lwe_ppl_degradation_pct": 0.05011987303172728,
+    "status": "PASS",
+    "gate_source": "experiment_registry.THRESHOLDS['exp15']"
+  },
+  "configuration": {
+    "dataset": "wikitext/wikitext-2-raw-v1 validation",
+    "num_texts": 200,
+    "min_text_length": 50,
+    "max_length": 512,
+    "batch_size": 4,
+    "payload_bits": 50000,
+    "strategy": "lwe",
+    "protocol": "three-way: NF4 baseline, reconstruction control, embedded (exp5's protocol, unchanged)"
+  },
+  "metrics": {
+    "nf4_baseline_ppl": 17.448091530865618,
+    "reconstruction_control_ppl": 16.52862633647675,
+    "lwe_embedded_ppl": 16.536910463010482,
+    "lwe_embedding_specific_delta_pct": 0.05011987303172728,
+    "lwe_ppl_degradation_pct": 0.05011987303172728,
+    "reconstruction_only_delta_pct": -5.269717852879987,
+    "absolute_delta_vs_baseline_pct": -5.222239155745253,
+    "threshold_pct": 2.0,
+    "eval_texts": 200,
+    "payload_bits": 50000,
+    "embedding_distortion": {
+      "total_values": 552075264,
+      "changed_values": 48256,
+      "changed_ratio": 8.740837191358024e-05,
+      "max_abs_delta": 0.009999959729611874,
+      "mean_abs_delta_over_changed": 0.00501084473942572
+    },
+    "sign_reverification": null
+  },
+  "reproducibility": {
+    "model_id": "google/gemma-2-2b",
+    "family": "gemma",
+    "expected_layers": 26,
+    "actual_layers": 26,
+    "layer_count_matches_expected": true,
+    "random_seed": 42,
+    "device": "mps",
+    "software_versions": {
+      "python": "3.14.3",
+      "platform": "macOS-26.3-arm64-arm-64bit-Mach-O",
+      "torch": "2.13.0",
+      "transformers": "5.16.1",
+      "bitsandbytes": "0.50.2",
+      "accelerate": "1.14.0",
+      "numpy": "2.5.2"
+    },
+    "platform_notes": [
+      "Apple Silicon/MPS: NF4 dequantization must stay on CPU. Moving large dequantized tensors to MPS raises RuntimeError: Invalid buffer size.",
+      "MPS has no native int8/uint8 dequantize; PYTORCH_ENABLE_MPS_FALLBACK is set to 1."
+    ],
+    "residual_source": null,
+    "residual_definition": "R = W_FP16 - dequantize(W_NF4)",
+    "timestamp": "2026-10-05T16:05:31.935362+00:00"
+  },
+  "notes": "LWE embedding-specific degradation is 0.050120% (threshold 2.0%). Reconstruction alone moves PPL by -5.270% relative to the NF4 baseline; that component is not attributable to any payload. This measures fidelity of the LWE strategy only \u2014 exp13 refuted its key-gating separately."
+}

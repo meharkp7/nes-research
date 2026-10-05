@@ -1,0 +1,83 @@
+{
+  "experiment": "exp15",
+  "title": "W2 \u2014 LWE fidelity (three-way PPL)",
+  "model_id": "Qwen/Qwen2.5-3B",
+  "family": "qwen",
+  "status": "PASS",
+  "gate": {
+    "max_ppl_degradation_pct": 2.0,
+    "measured_lwe_ppl_degradation_pct": 0.0076998319784398785,
+    "status": "PASS",
+    "gate_source": "experiment_registry.THRESHOLDS['exp15']"
+  },
+  "configuration": {
+    "dataset": "wikitext/wikitext-2-raw-v1 validation",
+    "num_texts": 200,
+    "min_text_length": 50,
+    "max_length": 512,
+    "batch_size": 4,
+    "payload_bits": 50000,
+    "strategy": "lwe",
+    "protocol": "three-way: NF4 baseline, reconstruction control, embedded (exp5's protocol, unchanged)"
+  },
+  "metrics": {
+    "nf4_baseline_ppl": 12.47069538705203,
+    "reconstruction_control_ppl": 11.349366735378783,
+    "lwe_embedded_ppl": 11.350240617548025,
+    "lwe_embedding_specific_delta_pct": 0.0076998319784398785,
+    "lwe_ppl_degradation_pct": 0.0076998319784398785,
+    "reconstruction_only_delta_pct": -8.991709097774056,
+    "absolute_delta_vs_baseline_pct": -8.984701612288136,
+    "threshold_pct": 2.0,
+    "eval_texts": 200,
+    "payload_bits": 50000,
+    "embedding_distortion": {
+      "total_values": 811597824,
+      "changed_values": 48256,
+      "changed_ratio": 5.945802042958656e-05,
+      "max_abs_delta": 0.00998535193502903,
+      "mean_abs_delta_over_changed": 0.004998710742640243
+    },
+    "sign_reverification": {
+      "rerun_embedded_ppl": 11.355373122804254,
+      "rerun_delta_vs_control_pct": 0.052922665779643496,
+      "recorded": {
+        "baseline_ppl": 12.4707,
+        "reconstruction_control_ppl": 11.3494,
+        "embedded_ppl": 11.3488,
+        "ppl_delta_pct": -0.005286623081384053,
+        "ppl_degradation_pct": 0.005286623081384053,
+        "threshold_pct": 2.0,
+        "source": "prior_completed_exp5_run"
+      },
+      "recorded_delta_pct": -0.005286623081384053,
+      "delta_point_difference": 0.05820928886102755
+    }
+  },
+  "reproducibility": {
+    "model_id": "Qwen/Qwen2.5-3B",
+    "family": "qwen",
+    "expected_layers": 36,
+    "actual_layers": 36,
+    "layer_count_matches_expected": true,
+    "random_seed": 42,
+    "device": "mps",
+    "software_versions": {
+      "python": "3.14.3",
+      "platform": "macOS-26.3-arm64-arm-64bit-Mach-O",
+      "torch": "2.13.0",
+      "transformers": "5.16.1",
+      "bitsandbytes": "0.50.2",
+      "accelerate": "1.14.0",
+      "numpy": "2.5.2"
+    },
+    "platform_notes": [
+      "Apple Silicon/MPS: NF4 dequantization must stay on CPU. Moving large dequantized tensors to MPS raises RuntimeError: Invalid buffer size.",
+      "MPS has no native int8/uint8 dequantize; PYTORCH_ENABLE_MPS_FALLBACK is set to 1."
+    ],
+    "residual_source": null,
+    "residual_definition": "R = W_FP16 - dequantize(W_NF4)",
+    "timestamp": "2026-10-05T15:39:34.820963+00:00"
+  },
+  "notes": "LWE embedding-specific degradation is 0.007700% (threshold 2.0%). Reconstruction alone moves PPL by -8.992% relative to the NF4 baseline; that component is not attributable to any payload. This measures fidelity of the LWE strategy only \u2014 exp13 refuted its key-gating separately."
+}
