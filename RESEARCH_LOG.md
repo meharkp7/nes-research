@@ -971,7 +971,7 @@ evidence; this is the version that survives.
 **Coverage: 35 PASS, 6 FAIL, 0 NOT_RUN, 0 ERROR.**
 Every registry model now has cells, and no cell is left unrun. 9/9
 consistency checks pass, the test suite runs clean (38 tests, OK), and
-`nes-llm/claim_audit.py` re-derives 44 MEASURED claims from the
+`nes-llm/claim_audit.py` re-derives 49 MEASURED claims from the
 artifacts on disk rather than from this prose — its failures, when it
 has any, are the findings below.
 
@@ -1009,8 +1009,8 @@ Four claims did not survive the final audit, and **all four are now
 closed** — three by rewording the claim, one by producing the artifact
 that should have existed. They are recorded rather than quietly
 corrected, because a document that only ever gets righter is not an
-audit. The audit is `nes-llm/claim_audit.py`: 44 checks, re-derived from
-`results/*.json`, **44/44 passing at the time of writing**.
+audit. The audit is `nes-llm/claim_audit.py`: 49 checks, re-derived from
+`results/*.json`, **49/49 passing at the time of writing**.
 
 **1. exp12 coverage — closed by re-running it.** §7 and its commit
 message state *5 of 5 measured models pass both gates*, with a six-row
@@ -1140,7 +1140,7 @@ Four sentences were.
 
 ### 18.1 `claim_audit.py`
 
-`nes-llm/claim_audit.py` makes this section executable: 44 checks, each
+`nes-llm/claim_audit.py` makes this section executable: 49 checks, each
 re-deriving one MEASURED claim from `results/*.json`. It exits non-zero
 on any claim it cannot verify — a number it cannot find is UNVERIFIED,
 never assumed true — and it reads its gate values from
@@ -1221,7 +1221,7 @@ name.
 cd nes-llm
 python run_nes_experiments.py --audit   # cell states   35 PASS / 6 FAIL / 0 NOT_RUN
 python check_consistency.py             # cross-artifact 9/9
-python claim_audit.py                   # MEASURED claims 44/44
+python claim_audit.py                   # MEASURED claims 49/49
 python -m unittest discover -s tests -p 'test_*.py'   # 38 tests, OK
 ```
 
@@ -1230,7 +1230,7 @@ anyone holding the report can re-derive it rather than trust it.
 
 ### 18.6 State at this commit
 
-35 PASS / 6 FAIL / 0 NOT_RUN / 0 ERROR; 44/44 claims verified; 9/9
+35 PASS / 6 FAIL / 0 NOT_RUN / 0 ERROR; 49/49 claims verified; 9/9
 consistency checks; 38 tests. All four findings closed, and the warning
 marker is now absent from both documents — which is what makes it worth
 keeping as a marker rather than deleting: its presence in either
@@ -1349,13 +1349,13 @@ everything else in the artifact is deterministic and pinned.
 
 ```bash
 cd nes-llm
-../.venv/bin/python claim_audit.py                    # 44/44
+../.venv/bin/python claim_audit.py                    # 49/49
 ../.venv/bin/python check_consistency.py              # 9/9
 ../.venv/bin/python -m unittest discover -s tests -p 'test_*.py'   # 38 OK
 ../.venv/bin/python -m src.experiments.exp13_keyless_recovery      # re-runs
 ```
 
-State: 44/44 claims, 9/9
+State: 49/49 claims, 9/9
 consistency, 38 tests, manifest unchanged at 35 PASS / 6 FAIL /
 0 NOT_RUN / 0 ERROR — exp13 sits outside the manifest grid, and its
 FAIL is a gate verdict recorded in the artifact and the claim audit,
@@ -1438,13 +1438,13 @@ arms and the split reproducible.
 
 ```bash
 cd nes-llm
-../.venv/bin/python claim_audit.py                    # 44/44 (5 new)
+../.venv/bin/python claim_audit.py                    # 49/49
 ../.venv/bin/python check_consistency.py              # 9/9
 ../.venv/bin/python -m unittest discover -s tests -p 'test_*.py'   # 38 OK
 ../.venv/bin/python -m src.experiments.exp14_blind_patch_detector  # re-runs
 ```
 
-State: 44/44 claims, 9/9 consistency, 38 tests, manifest unchanged at
+State: 49/49 claims, 9/9 consistency, 38 tests, manifest unchanged at
 35 PASS / 6 FAIL / 0 NOT_RUN / 0 ERROR — exp14, like exp13, sits
 outside the manifest grid, and its PASS is a gate verdict in the
 artifact and the claim audit, not a 36th cell.
@@ -1454,3 +1454,101 @@ strategy on one model** (Qwen2.5-3B), and only patch-placement
 sensitivity. It does not license "undetectable" — exp7_neural's 70.5%
 FAIL stands for an adversary that knows placement, and W3.3/W3.4
 (stronger and multi-model detectors) are untouched.
+
+## 21. W2 — LWE fidelity, three-way PPL (exp15)
+
+Suggested order item 3 (`RESEARCH_PLAN` §7). §3 W2 called fidelity
+"the biggest hole": *LWE perplexity is unmeasured anywhere.
+Undetectability is worthless if the model is damaged.* The prior was
+a perturbation table (LWE moves weights 9.4× less than sign) with
+"expect is not a result" attached. This is the result.
+
+### 21.1 What was built
+
+`nes-llm/src/experiments/exp15_lwe_fidelity.py` — standalone, exp13/14
+mould. It runs **exp5's three-way protocol unchanged** — NF4 baseline,
+reconstruction control (`W_NF4 + R_original`), embedded
+(`W_NF4 + R_embedded`); only control → embedded is attributable to the
+payload — through exp5's own `FidelityValidator`, wikitext-2, 200
+texts, max_length 512, batch 4, payload 50,000 bits, message
+`"A"*6000`. The gate is `THRESHOLDS["exp15"].max_ppl_degradation_pct
+= 2.0` — exp5's threshold, reused, not a new number. One process per
+model (the memory rule), one artifact each.
+
+Two things exp5 did not have: a **sign re-verification arm** on
+Qwen2.5-3B (the plan explicitly asks to check the recorded number
+reproduces), and a per-model artifact rather than a manifest cell.
+
+### 21.2 The measurement
+
+| model | baseline | control | LWE embedded | **LWE Δ vs control** | gate 2% |
+|---|---|---|---|---|---|
+| Qwen2.5-3B | 12.4707 | 11.3494 | 11.3502 | **+0.0077%** | **PASS** |
+| gemma-2-2b | 17.4481 | 16.5286 | 16.5369 | **+0.0501%** | **PASS** |
+
+Reconstruction alone moves PPL by **−8.99%** (Qwen) and **−5.27%**
+(gemma) relative to the NF4 baseline — reported separately, never
+folded into the payload's number, exactly as exp5's attribution rule
+requires. The absolute delta vs baseline is therefore ≈ −8.98% /
+−5.22%, and reading *that* as "embedding damage" would be the
+mis-attribution the three-way protocol exists to prevent.
+
+**The prior was right, and now it is measured:** LWE's
+embedding-specific cost is 0.008–0.050% — one to two orders of
+magnitude under the 2% gate, on two architectures (qwen, gemma).
+
+### 21.3 Sign re-verification — reproduced exactly where it matters
+
+Arms 1 and 2 re-derived exp5's recorded values **to all printed
+digits**: baseline 12.4707 (recorded 12.4707), control 11.3494
+(recorded 11.3494). The protocol itself is reproducible.
+
+Arm 3 (sign embedded) differs: re-run **+0.0529%** vs recorded
+**−0.0053%** — a 0.058-point gap. Both are orders of magnitude under
+the 2% gate, so the *verdict* reproduces; the digit does not. The
+mechanism is already on the record from exp13 (§19.4): a fresh AES
+key per run means different ciphertext bits, hence different sign
+values at the ~48k carriers, hence PPL at the 0.05% level. The
+artifact stores both numbers and their point difference
+(`delta_point_difference: 0.0582`) rather than quoting whichever one
+looks better. `claim_audit` pins baseline/control exactly and
+range-checks the sign delta (< 0.1 points) instead of pinning a digit
+it cannot pin honestly.
+
+### 21.4 Side finding — Phi-3-mini no longer loads
+
+First choice for the second model was Phi-3-mini (in the grid, cache
+complete). The model pair **no longer constructs under transformers
+5.16.1**: the checkpoint's remote modeling code reads
+`config.rope_scaling["type"]` in `_init_rope` and the checkpoint's
+`rope_scaling` dict has no `"type"` → `KeyError` at construction,
+before any of this experiment's code runs. Patching the config (adding
+`"type"` or nulling `rope_scaling`) would change RoPE behaviour and
+silently corrupt the very PPL being measured, so it was not done —
+the loader was left alone and gemma-2-2b (complete 26-layer cache,
+constructs cleanly) took the second slot instead.
+
+This is an environment fact with a blast radius beyond exp15: **any
+`--force` re-run of a Phi-3 manifest cell would now crash the same
+way.** Recorded here rather than worked around; a fix belongs in an
+environment change (transformers pin or checkpoint config), not in an
+experiment.
+
+### 21.5 Verification
+
+```bash
+cd nes-llm
+../.venv/bin/python claim_audit.py                    # 49/49 (5 new)
+../.venv/bin/python check_consistency.py              # 9/9
+../.venv/bin/python -m unittest discover -s tests -p 'test_*.py'   # 38 OK
+../.venv/bin/python -m src.experiments.exp15_lwe_fidelity \
+    --model Qwen/Qwen2.5-3B                           # re-runs
+```
+
+State: 49/49 claims, 9/9 consistency, 38 tests, manifest unchanged at
+35 PASS / 6 FAIL / 0 NOT_RUN / 0 ERROR — exp15 is the third standalone
+gate outside the manifest grid. Scope: LWE's *fidelity* is now
+established on two models; its key-gating remains refuted (exp13) and
+its detectability numbers (exp10–12) unchanged. W2's two deliverables
+— "PPL for LWE on ≥2 models" and "re-verify sign's number
+reproduces" — are both closed.

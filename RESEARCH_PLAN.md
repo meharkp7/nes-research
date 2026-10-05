@@ -33,11 +33,12 @@ Read `RESEARCH_LOG.md` first for how we got here and which mistakes to not repea
 | LWE passes both gates on 5/5 measured models | BER 0.0000, detector 50.00%; TinyLlama SKIPPED (incomplete cache) | `results/exp12_lwe_cross_model.json` |
 | **LWE channel is not key-gated (W4.2)** | keyless read of all 10,256 bits at **BER 0.0**, positions at precision/recall 1.0; grid width is one public constant → gate **FAIL** | `results/exp13_keyless_recovery.json` |
 | **Neural detectability is carrier-conditioned (W3.2)** | blind adversary **50.0%** (constant predictor, 4/576 positions held a carrier) vs carrier-centered control **68.75%** → gate **PASS**; exp7's 70.5% is the handed-locations number | `results/exp14_blind_patch_detector.json` |
+| **LWE fidelity measured on 2 models (W2)** | embedding-specific PPL Δ **+0.0077%** (Qwen2.5-3B) and **+0.0501%** (gemma-2-2b) vs 2% gate → both **PASS**; exp5's own baseline/control reproduce exactly (12.4707 / 11.3494) | `results/exp15_lwe_fidelity_*.json` |
 | **NES round-trips at BER 0.0 through three 4-bit formats: NF4, GPTQ, AWQ** | GPTQ corr 0.9903 / AWQ corr 0.9941 (raw 0.9890) | `results/exp9_formats.json` |
 | 9 model ids covered, 0 ERROR | 35 PASS / 6 FAIL / **0 NOT_RUN** | `results/experiment_manifest.json` |
 
 **How those rows are kept honest.** `nes-llm/claim_audit.py` re-derives every
-MEASURED row above from disk: **44/44 pass**, with `check_consistency.py` at
+MEASURED row above from disk: **49/49 pass**, with `check_consistency.py` at
 9/9 and a 38-test suite running green. Four claims in this document failed
 that audit while it was being built — a coverage figure with no artifact
 behind it, an average reported as a maximum, a count lifted from a different
@@ -67,6 +68,9 @@ phrasing, *"7 models covered, 0 errors"*, conflated the two and is retired.
 ### Not established — and load-bearing
 
 1. **LWE perplexity is unmeasured on any model.** Only sign's was measured.
+   *(Closed by exp15: LWE embedding-specific PPL Δ is +0.0077% on
+   Qwen2.5-3B and +0.0501% on gemma-2-2b against the 2% gate — both
+   PASS, with exp5's baseline/control reproducing exactly.)*
 2. **Every detectability number uses a detector trained against the same scheme it
    tests.** Cross-scheme is untested.
 3. **Clean and stego patches are both cut at carrier positions.** The detector is
@@ -97,13 +101,13 @@ any session that touches a result.
 cd nes-llm
 ../.venv/bin/python run_nes_experiments.py --audit    # manifest matrix
 ../.venv/bin/python check_consistency.py              # 9/9 must pass
-../.venv/bin/python claim_audit.py                    # 44/44 must pass
+../.venv/bin/python claim_audit.py                    # 49/49 must pass
 ```
 
 `claim_audit.py` is this section made executable: each row is re-derived from
 the artifact it names — counts included, because every claim that failed this
 audit failed on a count while the values underneath stayed correct — and it
-exits non-zero on anything it cannot verify. It passes **44/44** as written.
+exits non-zero on anything it cannot verify. It passes **49/49** as written.
 
 Four claims in this document failed it. Three are corrected in the audit notes
 below (exp12 coverage, exp6 robustness, exp2's count) and the fourth — the
@@ -126,6 +130,7 @@ record.
 | LWE both gates | BER 0.0, detector 50.00%, **5 of 5** measured models pass (TinyLlama skipped) | `exp12_lwe_cross_model.json` |
 | **LWE keyless recovery (W4.2)** | phase attacker: precision 1.0, recall 1.0, **stream BER 0.0 over 10,256 bits**, no key/cover/params; clean control 0 candidates; shipped width = 0.010 on 36 layers × 6 keys, `keyed_branch_active: false` | `exp13_keyless_recovery.json` |
 | **Blind-patch adversary (W3.2)** | blind accuracy **0.5000** (tp=0, fp=0 — learned nothing) vs carrier-centered control **0.6875**; 4/576 blind positions contained a carrier; 576 pairs/arm, split by embedding | `exp14_blind_patch_detector.json` |
+| **LWE fidelity (W2)** | three-way PPL, exp5's protocol: LWE Δ vs control **+0.0077%** (Qwen2.5-3B), **+0.0501%** (gemma-2-2b); reconstruction alone −8.99% / −5.27%; sign re-run +0.0529% vs recorded −0.0053% (same verdict, fresh-AES-key digit) | `exp15_lwe_fidelity_*.json` |
 | **GPTQ round trip** | BER **0.0**, 10,256/10,256 bits, corr 0.9903, 36/36 layers | `exp9_formats.json` |
 | **AWQ round trip** | BER **0.0**, 10,256/10,256 bits, corr 0.9941, **35/36 layers** | `exp9_formats.json` |
 | Suite coverage | 35 PASS / 6 FAIL / 0 NOT_RUN / 0 ERROR | `experiment_manifest.json` |
@@ -176,7 +181,7 @@ model — including the pair that exposed the staleness.
 
 `python nes-llm/claim_audit.py` re-derives every MEASURED claim in this
 section from `results/*.json` and exits non-zero on any it cannot
-verify. All 44 checks pass at the time of writing. Run it before citing
+verify. All 49 checks pass at the time of writing. Run it before citing
 any number here.
 
 ### FAIL — measured, gate did not pass, not rewritten
@@ -196,7 +201,7 @@ any number here.
 |---|---|---|
 | GPTQ + AWQ dequantizers | `src/quantization/adapters.py` | 20 tests in `tests/test_quantization_adapters.py` |
 | `verify_dequantization` gate | `adapters.py` | includes the absorbed-scale correction and the NaN-safe comparison |
-| `claim_audit.py` | `nes-llm/claim_audit.py` | 44 checks re-deriving every MEASURED claim — counts included — and exiting non-zero on any it cannot verify |
+| `claim_audit.py` | `nes-llm/claim_audit.py` | 49 checks re-deriving every MEASURED claim — counts included — and exiting non-zero on any it cannot verify |
 | `QuantizationStrategy`, `NF4QuantizationStrategy` | strategy registry | per-tensor ABC, needs an adapter; **never run** |
 | Neural strategy `train_sampled()` | adaptive strategy | **never run** |
 | `adaptive_strategy` noise routing | strategy registry | **never run** |
@@ -217,7 +222,6 @@ any number here.
 
 | item | why it matters |
 |---|---|
-| LWE perplexity on any model | undetectability is worthless if the model is damaged |
 | Cross-scheme detector (train sign → test LWE) | the claim's main weakness |
 | Strategy × model matrix | breadth deliverable; 3 of 7 models first |
 | Model surgery (LoRA merge, fine-tune, re-quantize, prune, merge) | determines viability |
@@ -346,6 +350,19 @@ LWE perturbs **9.4× less** than sign. Expect excellent PPL. Expect is not a res
 - chunked layer-by-layer reconstruction
 
 Then: PPL for LWE on ≥2 models, and re-verify sign's number reproduces.
+
+**Done — exp15, both models PASS.** The blocker did not recur (flushed
+per-stage logging; the stall's worst symptom was also block-buffered
+stdout). LWE embedding-specific PPL Δ: **+0.0077%** (Qwen2.5-3B) and
+**+0.0501%** (gemma-2-2b), both orders of magnitude under the 2% gate —
+the prior was right. Sign re-verification: exp5's baseline and control
+reproduce to every printed digit (12.4707 / 11.3494); the sign arm's
+*verdict* reproduces (+0.053% vs recorded −0.005%, both « 2%) while
+the digit varies with the fresh-AES-key payload (§21.3). One environment
+finding on the way: Phi-3-mini's model pair no longer constructs under
+transformers 5.16.1 (`rope_scaling["type"]` KeyError) — not patched,
+because patching config would corrupt the measurement; gemma-2-2b took
+the second slot. Full record: `RESEARCH_LOG.md` §21.
 
 ---
 
@@ -571,7 +588,7 @@ invalidate later work.
 |---|---|---|
 | 1 | **W4.2** key/scale recoverability — **done, exp13: FAIL** | cheap; potential break of the security property (it was) |
 | 2 | **W3.2** blind-patch adversary — **done, exp14: PASS** | cheapest test of the central claim (it was: 50.0% blind vs 68.75% control) |
-| 3 | **W2** LWE perplexity | biggest hole; invalidates the strategy choice if it fails |
+| 3 | **W2** LWE perplexity — **done, exp15: PASS ×2** | biggest hole; invalidates the strategy choice if it fails (it did not: 0.008% / 0.050%) |
 | 4 | **W3.1** cross-scheme detector | the claim's main weakness |
 | 5 | **W1.1** QAE adapter + round trip | adds two strategies cheaply |
 | 6 | **W1.3** strategy × model matrix (3 models) | the breadth deliverable |
