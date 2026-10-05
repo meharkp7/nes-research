@@ -189,10 +189,21 @@ green; the handoff forbids that and it would falsify the work.
 
 Gate: mean `mag_mean > 0.002` for ≥80% of layers.
 
-**Measured across all 7 profiles: 1/7 pass** (Mistral-7B at 81.2%). Six
-fail, including the 3B model with the largest residuals of the set.
+**Measured across all 7 exp2 cells: 3 pass, 4 fail.** gemma-2-9b (88.1% of
+layers above threshold), Phi-3-mini (100%) and Mistral-7B (81.2%) pass;
+Qwen2.5-3B (11.1%), Qwen2.5-7B (75%), TinyLlama (0%) and Llama-3.1-8B
+(68.8%) fail.
 
-A criterion no model meets is a statement about the criterion.
+> **⚠ Audit correction (§17, finding 2).** This section previously read
+> *"1/7 pass (Mistral-7B at 81.2%). Six fail."* That was the
+> `exp2_criterion_calibration` snapshot, which measured a different set of
+> files — it contains `gemma-2-2b` and no Phi-3 — and was taken before
+> gemma-2-9b and Llama-3.1-8B were re-run (its recorded values, 0.000382
+> and 0.000879, against today's 0.003605 and 0.022642). The cells above are
+> what the manifest reports; they are what any claim about exp2 must match.
+
+A criterion that 4 of 7 models fail is a statement about the criterion as
+much as about the models.
 
 I checked whether the module choice explained it — `down_proj`,
 `gate_proj`, `up_proj` all sit at ~0.0019 for Qwen2.5-3B, so no.
@@ -986,11 +997,12 @@ Plus, outside the NF4 grid:
 
 ### Claim audit findings
 
-Three claims did not survive the final audit. All are recorded rather
+Four claims did not survive the final audit. All are recorded rather
 than quietly corrected, because a document that only ever gets righter
 is not an audit. The audit is now `nes-llm/claim_audit.py`, which
-re-derives all 25 MEASURED claims from the artifacts on disk; it found
-two of these three without anyone reading the prose again.
+re-derives every MEASURED claim from the artifacts on disk; three of
+these four were caught by it or by re-running the suite's own audit
+before this section existed.
 
 **1. exp12 coverage — open.** §7 and its commit message state *5 of 5
 measured models pass both gates*, with a six-row table.
@@ -1008,7 +1020,30 @@ which is also what the 5-row table reports. The claim is worded "every
 model it was measured on" until exp12 is re-run across all six cached
 models. **Do not cite 5/5 until that run lands.**
 
-**2. exp6 stated as "BER 0 at σ=0.001" — closed.** Reworded in three
+**2. exp2's count — open (count corrected, artifact still pending).**
+§4.1 said *"1/7 pass … Six fail"* and both documents said exp2 fails on
+**6 of 7 models**. The manifest says **4 of 7 fail** and **3 pass**:
+gemma-2-9b at 88.1% of layers above threshold, Phi-3-mini at 100%,
+Mistral-7B at 81.2%; Qwen2.5-3B at 11.1%, Qwen2.5-7B at 75%, TinyLlama
+at 0%, Llama-3.1-8B at 68.8%. Neither earlier figure came from the
+cells.
+
+There were two figures because there are two measurements.
+`exp2_criterion_calibration.json` reads the legacy
+`residual_profile_*.json` files — a set containing `gemma-2-2b` and no
+Phi-3 — and it was written in the window between 11:22 and 11:34 on
+Oct 2, before gemma-2-9b (11:47) and Llama-3.1-8B (11:34) were re-run.
+Five of its seven rows still match today's profiles exactly; those two
+do not, by an order of magnitude. Its `finding` string compounds this:
+it says *"Zero of 7 …"* while `models_passing` in the same object says
+`1`, because the word was hard-coded.
+
+The counts in the documents are now the manifest's. What remains is
+regenerating the calibration artifact, whose generator now counts
+instead of asserting; two `claim_audit.py` checks stay red until it is
+run.
+
+**3. exp6 stated as "BER 0 at σ=0.001" — closed.** Reworded in three
 places in `RESEARCH_PLAN.md`. Six of seven models are exactly 0.0;
 Mistral-7B is **0.00115** at σ=0.001 and **0.01074** at σ=0.002. Both
 numbers are comfortably inside the 0.02 / 0.10 gates, so every cell
@@ -1017,7 +1052,7 @@ the result: "BER 0" turned a passing measurement into an absolute, and
 the seventh model was the one that made it false. The audit now checks
 the gate *and* the 6-of-7 count.
 
-**3. "7 models covered, 0 errors" — closed.** Retired as misleading.
+**4. "7 models covered, 0 errors" — closed.** Retired as misleading.
 Those 33 cells are the **NF4** grid (`bitsandbytes`, nf4, group 64). The
 GPTQ and AWQ cells sit on separate checkpoints with separate
 dequantizers; no NF4 cell was reused to produce them. The current figure
@@ -1027,15 +1062,18 @@ stated wherever the number appears.
 The audit's lesson is the session's own: the number that looks finished
 is the one worth re-reading. "5 of 5" was written from console output,
 and console output is not an artifact. "BER 0" was written from the six
-models that were zero, and an average is not a maximum. Both failures
-have the same shape — a claim widened one word past its evidence — so
-`claim_audit.py` checks the counts as well as the values.
+models that were zero, and an average is not a maximum. exp2's "6 of 7"
+was written from a diagnostic that measured a different set of files
+than the cells it was standing in for. All four have the same shape — a
+claim widened one word past its evidence, or lifted from a source that
+was never the record — so `claim_audit.py` checks the counts as well as
+the values, and names the models behind them.
 
 ### The failures, and why none were "fixed"
 
 | failure | verdict |
 |---|---|
-| exp2 (6 of 7 models) | criterion is quantization-format dependent (FP4 passes, NF4 fails); threshold left unchanged — a research decision, not a code fix |
+| exp2 (4 of 7 models) | criterion is quantization-format dependent (FP4 passes, NF4 fails); threshold left unchanged — a research decision, not a code fix |
 | exp7 neural, sign embedding | 70.5% vs 55%; proved structural across a 100× alpha and 5× gamma sweep. LWE at grid width 0.010 reaches 50.00% and passes on every model it was measured on ⚠ |
 | exp8 | FAIL is correct: it aggregates and inherits the neural FAIL |
 

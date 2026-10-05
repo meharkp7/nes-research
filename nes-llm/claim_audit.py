@@ -87,6 +87,65 @@ def audit_manifest():
 
 # ------------------------------------------------------------------ exp3-7
 def audit_nf4_grid():
+    # exp2: the claim read "fails on 6 of 7 models" and the manifest says 4.
+    records = manifest_mod.load().get("records", {})
+    exp2 = {
+        key.split("::", 1)[1]: rec.get("status")
+        for key, rec in records.items()
+        if key.startswith("exp2::")
+    }
+    failed = sorted(m for m, s in exp2.items() if s == "FAIL")
+    check(
+        "exp2 fails on 4 of 7 models (claim said 6 of 7)",
+        len(exp2) == 7 and len(failed) == 4,
+        f"n={len(exp2)} FAIL={len(failed)} {failed}",
+    )
+    check(
+        "exp2 PASS cells are gemma-2-9b, Phi-3-mini, Mistral-7B",
+        sorted(m for m, s in exp2.items() if s == "PASS")
+        == [
+            "google/gemma-2-9b",
+            "microsoft/Phi-3-mini-4k-instruct",
+            "mistralai/Mistral-7B-v0.3",
+        ],
+        str(sorted(m for m, s in exp2.items() if s == "PASS")),
+    )
+
+    # The calibration is a separate measurement over the legacy profile
+    # files. It used to say "Zero of 7" in its own `finding` while its
+    # own `models_passing` said 1, and it predates the gemma-2-9b and
+    # Llama-3.1-8B re-runs, so its per-model rows disagreed with exp2.
+    cal = one("exp2_criterion_calibration.json")
+    if not cal:
+        check("calibration artifact present", False)
+    else:
+        rows = cal.get("per_model", [])
+        gates = [r for r in rows if r.get("meets_exp2_gate")]
+        check(
+            "calibration's models_passing matches its own rows",
+            cal.get("models_passing") == len(gates)
+            and cal.get("models_tested") == len(rows),
+            f"says {cal.get('models_passing')}/{cal.get('models_tested')}, "
+            f"rows give {len(gates)}/{len(rows)}",
+        )
+        check(
+            "calibration's finding string states its own count",
+            str(cal.get("finding", "")).startswith(f"{len(gates)} of "),
+            f"finding={str(cal.get('finding', ''))[:60]!r}",
+        )
+        by_model = {r.get("model"): r for r in rows}
+        disagree = [
+            m
+            for m, status in exp2.items()
+            if m in by_model
+            and (status == "PASS") != bool(by_model[m].get("meets_exp2_gate"))
+        ]
+        check(
+            "calibration and exp2 agree on every shared model",
+            not disagree,
+            f"disagree={disagree}",
+        )
+
     docs = load("exp3_*.json")
     bers = [dig(d, "metrics", "ber") for d in docs]
     check(

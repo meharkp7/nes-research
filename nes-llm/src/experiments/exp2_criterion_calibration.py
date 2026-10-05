@@ -2,16 +2,17 @@
 Diagnostic for Exp2: is the FAIL a model defect or a criterion mismatch?
 
 Exp2 requires mean residual magnitude > 0.002 for at least 80% of
-layers. Measured across every profiled model, **zero of seven satisfy
-it** — including the 3B model with the largest residuals of the set. A
-criterion no model meets is a statement about the criterion, not about
-seven broken models.
+layers. Measured across every profiled model, only a minority satisfy
+it, and the count is read from ``models_passing`` rather than written
+into this text: this module once asserted "zero of seven" in two places
+while its own artifact reported one, because a hard-coded count in a
+docstring goes stale the moment the measurement changes.
 
 This module records the evidence and quantifies what the threshold is
 actually sensitive to. It does not change the 0.002 threshold, does not
 rewrite any Exp2 verdict, and does not report a PASS: the gates in
 ``experiment_registry.THRESHOLDS`` are unchanged and every Exp2 cell
-keeps its measured FAIL.
+keeps its measured status.
 """
 
 import json
@@ -217,12 +218,13 @@ def main() -> int:
                 "models_tested": len(profiles),
                 "per_quant_format": formats,
                 "finding": (
-                    "Zero of "
-                    f"{len(profiles)} profiled models meet the "
-                    "mag_mean > 0.002 criterion under NF4. The same "
-                    "statistic under FP4 clears it. The threshold is "
-                    "therefore sensitive to the quantization format "
-                    "rather than being a per-model property."
+                    f"{len(passing)} of {len(profiles)} profiled models "
+                    "meet the exp2 gate (>=80% of layers with "
+                    "mag_mean > 0.002) under NF4. Probed on "
+                    f"{MODEL_ID} alone, FP4 puts 100% of probed layers "
+                    "above the threshold where NF4 puts 0%, so the "
+                    "threshold tracks the quantization format rather "
+                    "than the model."
                 ),
                 "resolution": (
                     "Reported as a finding. The Exp2 threshold is NOT "

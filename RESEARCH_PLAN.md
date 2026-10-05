@@ -63,8 +63,11 @@ phrasing, *"7 models covered, 0 errors"*, conflated the two and is retired.
 5. **LWE is LWE-*inspired*.** Key-derived grid and parity encoding; no lattice, no
    matrix A, no SIS/LWE instance. The post-quantum claim in `lwe_strategy.py` is
    unsupported.
-6. **exp2's threshold fails on 6 of 7 models** because it tracks the quantization
-   format, not the model. Unresolved and an author decision.
+6. **exp2's threshold fails on 4 of 7 models** (Qwen2.5-3B, Qwen2.5-7B,
+   TinyLlama, Llama-3.1-8B; gemma-2-9b, Phi-3 and Mistral-7B pass). The calibration
+   shows the threshold tracks the quantization format — NF4 puts 0% of probed layers
+   above it on Qwen2.5-3B where FP4 puts 100% — but three models clear it under NF4,
+   so format is not the whole story. Unresolved and an author decision.
 7. **GPTQ and AWQ have no robustness or detectability numbers.** Exp9 measured a
    clean channel only.
 
@@ -123,15 +126,31 @@ threshold moved. Only the claim was wrong — an average presented as a
 maximum — and the row above now says what the seven numbers actually
 are.
 
-`python nes-llm/claim_audit.py` re-derives all 25 claims in this
-section from `results/*.json` and exits non-zero on any that fail,
+**Audit note on exp2's count (raised, count corrected, artifact open).**
+Both documents said exp2 fails on **6 of 7** models, and `RESEARCH_LOG`
+§4.1 said *"1/7 pass, six fail"*. The manifest says **4 of 7 fail**:
+Qwen2.5-3B, Qwen2.5-7B, TinyLlama and Llama-3.1-8B fail; gemma-2-9b,
+Phi-3-mini and Mistral-7B pass. Neither older figure came from the cells.
+
+Two figures existed because two measurements exist.
+`exp2_criterion_calibration.json` is a *separate* run over the legacy
+`residual_profile_*.json` files — a set that contains `gemma-2-2b` and no
+Phi-3 — written at a moment when gemma-2-9b and Llama-3.1-8B still carried
+their pre-rerun values (0.000382 / 0.000879 against today's 0.003605 /
+0.022642). Its own `finding` string also read *"Zero of 7"* while its own
+`models_passing` read `1`, because "Zero" was hard-coded rather than
+counted. The generator is fixed; regenerating the artifact is what remains,
+and two `claim_audit.py` checks hold that open.
+
+`python nes-llm/claim_audit.py` re-derives every MEASURED claim in this
+section from `results/*.json` and exits non-zero on any it cannot verify,
 including the still-open ⚠. Run it before citing any number here.
 
 ### FAIL — measured, gate did not pass, not rewritten
 
 | cell | number | why it stands |
 |---|---|---|
-| `exp2` on 6 of 7 models | mean magnitude < 0.002 | threshold tracks quantization format; changing it is an author decision |
+| `exp2` on 4 of 7 models | ≥ 80% of layers with mag_mean > 0.002 | threshold tracks quantization format; changing it is an author decision |
 | `exp7_neural`, sign | 70.5% vs 55% | proved structural across a 100× α and 5× γ sweep |
 | `exp8` cross-model | FAIL | correctly inherits the neural FAIL rather than averaging it away |
 | AWQ `model.layers.2.mlp.down_proj` | corr 0.9337 | excluded from Exp9's residual set and named in `metrics.layers_excluded` |

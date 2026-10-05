@@ -84,10 +84,29 @@ def _diagnostic_section(add) -> None:
     if calibration:
         add("### 5.1 Exp2 residual-magnitude gate")
         add("")
+
+        # Headline from the manifest: the cells are the record, not the
+        # diagnostic. The calibration is a separate, older measurement
+        # over a different set of profile files.
+        records = manifest_mod.load().get("records", {})
+        cells = [
+            (key.split("::", 1)[1], rec.get("status"))
+            for key, rec in records.items()
+            if key.startswith("exp2::")
+        ]
+        passed = sorted(m for m, s in cells if s == manifest_mod.PASS)
+        failed = sorted(m for m, s in cells if s == manifest_mod.FAIL)
+        add(
+            f"- Of the suite's {len(cells)} exp2 cells: "
+            f"**{len(passed)} PASS / {len(failed)} FAIL**. "
+            f"Passing: {', '.join(passed) or 'none'}."
+        )
         add(
             f"- {calibration.get('models_passing', 0)}/"
-            f"{calibration.get('models_tested', 0)} profiled models "
-            "meet the `mag_mean > 0.002` criterion."
+            f"{calibration.get('models_tested', 0)} of the models in "
+            "the legacy `residual_profile_*.json` set meet the same gate. "
+            "That set is not the suite's: it includes `gemma-2-2b` and "
+            "has no Phi-3."
         )
         for row in calibration.get("per_quant_format", []):
             if "error" in row:
@@ -446,6 +465,31 @@ def build_summary() -> str:
     add(
         "Superseded artifact versions are preserved under "
         "`results/_archive/` rather than overwritten in place."
+    )
+    add("")
+
+    # ---------------------------------------------------------------
+    add("## 9. Verifying this report")
+    add("")
+    add(
+        "Nothing above is asserted without an artifact. These three "
+        "commands re-derive it; none of them reruns an experiment."
+    )
+    add("")
+    add("```bash")
+    add("cd nes-llm")
+    add("../.venv/bin/python run_nes_experiments.py --audit  # cell states")
+    add("../.venv/bin/python check_consistency.py            # cross-artifact")
+    add("../.venv/bin/python claim_audit.py                  # measured claims")
+    add("```")
+    add("")
+    add(
+        "`claim_audit.py` is the strictest of the three. It encodes 25 "
+        "claims and checks each against the file it is supposed to come "
+        "from -- including counts, such as how many models were measured "
+        "or how many layers were compared -- and exits non-zero on any it "
+        "cannot verify rather than assuming it. Writing it found one "
+        "claim that was true of six models and stated for seven."
     )
     add("")
 
