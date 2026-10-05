@@ -194,13 +194,16 @@ layers above threshold), Phi-3-mini (100%) and Mistral-7B (81.2%) pass;
 Qwen2.5-3B (11.1%), Qwen2.5-7B (75%), TinyLlama (0%) and Llama-3.1-8B
 (68.8%) fail.
 
-> **⚠ Audit correction (§17, finding 2).** This section previously read
-> *"1/7 pass (Mistral-7B at 81.2%). Six fail."* That was the
-> `exp2_criterion_calibration` snapshot, which measured a different set of
-> files — it contains `gemma-2-2b` and no Phi-3 — and was taken before
-> gemma-2-9b and Llama-3.1-8B were re-run (its recorded values, 0.000382
-> and 0.000879, against today's 0.003605 and 0.022642). The cells above are
-> what the manifest reports; they are what any claim about exp2 must match.
+> **Audit correction (§17, finding 2 — closed).** This section previously
+> read *"1/7 pass (Mistral-7B at 81.2%). Six fail."* That was the
+> `exp2_criterion_calibration` snapshot: a different set of files (the
+> legacy `residual_profile_*.json` profiles, then without Phi-3), written
+> between 11:22 and 11:34 on Oct 2, before gemma-2-9b and Llama-3.1-8B
+> were re-run — its recorded values for those two, 0.000382 and 0.000879,
+> against today's 0.003605 and 0.022642. It has since been regenerated
+> from the profiles as they stand (eight now, Phi-3 included) and agrees
+> with exp2 on every shared model. The cells above are what the manifest
+> reports; they are what any claim about exp2 must match.
 
 A criterion that 4 of 7 models fail is a statement about the criterion as
 much as about the models.
@@ -479,12 +482,14 @@ model.
 layers. Same 55% gate and same detector architecture as the recorded 70.5%
 sign result.
 
-> **⚠ Audit finding (§17).** The artifact for this run,
-> `results/exp12_lwe_cross_model.json`, contains three measured models,
-> not five: Qwen2.5-3B and Mistral-7B are absent from the file
-> altogether. Every row above that *is* in the file matches exactly. The
-> coverage claim is unverified until exp12 is re-run; the per-model
-> numbers for the three that are present stand.
+> **Audit note (§17, finding 1 — closed).** At audit time the artifact
+> for this run held **three** measured models: Qwen2.5-3B and Mistral-7B
+> were absent from the file altogether, not SKIPPED, and no archived
+> version had ever contained them. It has been re-run across all six
+> cached models and now records **five measured, one skipped**
+> (TinyLlama, incomplete cache) at BER 0.0000 / detector 50.00% on every
+> measured row. The table above is now backed by the artifact rather
+> than by console output, which is the only reason 5/5 is citable.
 
 Why the exactly-50.00% readings are credible, given I was fooled twice by
 this number earlier: the same detector, same code, same settings returns
@@ -583,7 +588,7 @@ the substantive result of this work:
 | 3c. Grid width found to be floor-pinned | alpha was a **no-op**; sweeping it would have proved nothing |
 | 3d. Frontier swept | width 0.005–0.020 satisfies **both** gates |
 | 3e. `DEFAULT_GRID_WIDTH = 0.010` set | middle of the window, margin both sides |
-| 3f. Confirmed across models | **5 of 5 measured models pass both gates** ⚠ coverage unverified, see §17 |
+| 3f. Confirmed across models | **5 of 5 measured models pass both gates** (re-run closes the audit finding, §17) |
 
 Measured comparison, sign vs LWE at the chosen width:
 
@@ -996,55 +1001,59 @@ Plus, outside the NF4 grid:
 | exp8 cross-model | FAIL (driven by the neural detector) |
 | exp9 GPTQ | **PASS, BER 0.0**, dequant corr 0.9903, 36/36 layers |
 | exp9 AWQ | **PASS, BER 0.0**, dequant corr 0.9941 (raw 0.9890), 35/36 layers |
-| exp10/exp11/exp12 strategies | LWE grid width passes both gates on every model it was measured on ⚠ |
+| exp10/exp11/exp12 strategies | LWE grid width passes both gates on **5 of 5** measured models |
 
 ### Claim audit findings
 
-Four claims did not survive the final audit. All are recorded rather
-than quietly corrected, because a document that only ever gets righter
-is not an audit. The audit is now `nes-llm/claim_audit.py`, which
-re-derives every MEASURED claim from the artifacts on disk; three of
-these four were caught by it or by re-running the suite's own audit
-before this section existed.
+Four claims did not survive the final audit, and **all four are now
+closed** — three by rewording the claim, one by producing the artifact
+that should have existed. They are recorded rather than quietly
+corrected, because a document that only ever gets righter is not an
+audit. The audit is `nes-llm/claim_audit.py`: 30 checks, re-derived from
+`results/*.json`, **30/30 passing at the time of writing**.
 
-**1. exp12 coverage — open.** §7 and its commit message state *5 of 5
-measured models pass both gates*, with a six-row table.
-`results/exp12_lwe_cross_model.json` holds **four entries, three
+**1. exp12 coverage — closed by re-running it.** §7 and its commit
+message state *5 of 5 measured models pass both gates*, with a six-row
+table. `results/exp12_lwe_cross_model.json` held **four entries, three
 measured**: TinyLlama SKIPPED (0-layer cache), then Qwen2.5-7B,
-Llama-3.1-8B and gemma-2-9b. Qwen2.5-3B and Mistral-7B are not in the
+Llama-3.1-8B and gemma-2-9b. Qwen2.5-3B and Mistral-7B were not in the
 file at all — not SKIPPED, absent — and no archived version of that
 artifact ever contained them, although `cache_status` reports both
-caches complete today. Two independent records disagree and only one is
-an artifact.
+caches complete. Two independent records disagreed and only one was an
+artifact.
 
-This is a coverage discrepancy, not a contradiction: every model that
-*is* in the file passes both gates at BER 0.0000 / detector 50.00%,
-which is also what the 5-row table reports. The claim is worded "every
-model it was measured on" until exp12 is re-run across all six cached
-models. **Do not cite 5/5 until that run lands.**
+The claim was never contradicted: every model that *was* in the file
+passed both gates at BER 0.0000 / detector 50.00%, which is also what
+the 5-row table reported. It was a coverage gap, not a wrong number.
+exp12 was re-run across all six cached models with no `--models`
+filter, and the artifact now records **five measured, one skipped** at
+the same BER and detector accuracy. **5/5 is citable again** — because
+the file says so, not because the table did.
 
-**2. exp2's count — open (count corrected, artifact still pending).**
-§4.1 said *"1/7 pass … Six fail"* and both documents said exp2 fails on
-**6 of 7 models**. The manifest says **4 of 7 fail** and **3 pass**:
-gemma-2-9b at 88.1% of layers above threshold, Phi-3-mini at 100%,
-Mistral-7B at 81.2%; Qwen2.5-3B at 11.1%, Qwen2.5-7B at 75%, TinyLlama
-at 0%, Llama-3.1-8B at 68.8%. Neither earlier figure came from the
-cells.
+**2. exp2's count — closed by re-running the calibration.** §4.1 said
+*"1/7 pass … Six fail"* and both documents said exp2 fails on **6 of 7
+models**. The manifest says **4 of 7 fail** and **3 pass**: gemma-2-9b
+at 88.1% of layers above threshold, Phi-3-mini at 100%, Mistral-7B at
+81.2%; Qwen2.5-3B at 11.1%, Qwen2.5-7B at 75%, TinyLlama at 0%,
+Llama-3.1-8B at 68.8%. Neither earlier figure came from the cells.
 
 There were two figures because there are two measurements.
 `exp2_criterion_calibration.json` reads the legacy
-`residual_profile_*.json` files — a set containing `gemma-2-2b` and no
-Phi-3 — and it was written in the window between 11:22 and 11:34 on
-Oct 2, before gemma-2-9b (11:47) and Llama-3.1-8B (11:34) were re-run.
-Five of its seven rows still match today's profiles exactly; those two
-do not, by an order of magnitude. Its `finding` string compounds this:
-it says *"Zero of 7 …"* while `models_passing` in the same object says
-`1`, because the word was hard-coded.
+`residual_profile_*.json` files — the suite's models plus `gemma-2-2b`,
+eight profiles — and the copy on disk had been written between 11:22
+and 11:34 on Oct 2, before gemma-2-9b (11:47) and Llama-3.1-8B (11:34)
+were re-run. Five of its seven rows matched today's profiles exactly;
+those two did not, by an order of magnitude (0.000382 vs 0.003605,
+0.000879 vs 0.022642). Its `finding` string compounded this: it said
+*"Zero of 7 …"* while `models_passing` in the same object said `1`,
+because the word was hard-coded rather than counted.
 
-The counts in the documents are now the manifest's. What remains is
-regenerating the calibration artifact, whose generator now counts
-instead of asserting; two `claim_audit.py` checks stay red until it is
-run.
+Both halves were fixed rather than edited around. The generator now
+counts and labels the FP4 comparison for what it is — one model, five
+probed layers. The artifact was regenerated from the profiles as they
+stand and reports **3 of 8**, agreeing with exp2 on **every** shared
+model, gemma-2-9b and Llama-3.1-8B included — the pair that exposed the
+staleness. The two `claim_audit.py` checks that held this open pass.
 
 **3. exp6 stated as "BER 0 at σ=0.001" — closed.** Reworded in three
 places in `RESEARCH_PLAN.md`. Six of seven models are exactly 0.0;
@@ -1077,7 +1086,7 @@ the values, and names the models behind them.
 | failure | verdict |
 |---|---|
 | exp2 (4 of 7 models) | criterion is quantization-format dependent (FP4 passes, NF4 fails); threshold left unchanged — a research decision, not a code fix |
-| exp7 neural, sign embedding | 70.5% vs 55%; proved structural across a 100× alpha and 5× gamma sweep. LWE at grid width 0.010 reaches 50.00% and passes on every model it was measured on ⚠ |
+| exp7 neural, sign embedding | 70.5% vs 55%; proved structural across a 100× alpha and 5× gamma sweep. LWE at grid width 0.010 reaches 50.00% and passes on **5 of 5** measured models |
 | exp8 | FAIL is correct: it aggregates and inherits the neural FAIL |
 
 ### Open, deliberately not done

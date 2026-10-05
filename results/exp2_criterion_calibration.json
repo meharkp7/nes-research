@@ -22,19 +22,19 @@
       "model": "google/gemma-2-9b",
       "family": "gemma",
       "layers": 42,
-      "mean_mag_mean": 0.0003824094462851506,
-      "layers_above_threshold": 0,
-      "fraction_above_threshold": 0.0,
-      "meets_exp2_gate": false
+      "mean_mag_mean": 0.0036046363786140104,
+      "layers_above_threshold": 37,
+      "fraction_above_threshold": 0.8809523809523809,
+      "meets_exp2_gate": true
     },
     {
       "file": "residual_profile_llama_Llama-3.1-8B.json",
       "model": "meta-llama/Llama-3.1-8B",
       "family": "llama",
       "layers": 32,
-      "mean_mag_mean": 0.0008794921632215846,
-      "layers_above_threshold": 0,
-      "fraction_above_threshold": 0.0,
+      "mean_mag_mean": 0.022642060235739336,
+      "layers_above_threshold": 22,
+      "fraction_above_threshold": 0.6875,
       "meets_exp2_gate": false
     },
     {
@@ -58,6 +58,16 @@
       "meets_exp2_gate": true
     },
     {
+      "file": "residual_profile_phi3_phi-3-mini-4k-instruct.json",
+      "model": "microsoft/Phi-3-mini-4k-instruct",
+      "family": "phi3",
+      "layers": 32,
+      "mean_mag_mean": 0.002933094358013477,
+      "layers_above_threshold": 32,
+      "fraction_above_threshold": 1.0,
+      "meets_exp2_gate": true
+    },
+    {
       "file": "residual_profile_qwen_Qwen2.5-3B.json",
       "model": "Qwen/Qwen2.5-3B",
       "family": "qwen",
@@ -78,8 +88,8 @@
       "meets_exp2_gate": false
     }
   ],
-  "models_passing": 1,
-  "models_tested": 7,
+  "models_passing": 3,
+  "models_tested": 8,
   "per_quant_format": [
     {
       "quant_format": "nf4_double_quant",
@@ -121,7 +131,7 @@
       ]
     }
   ],
-  "finding": "Zero of 7 profiled models meet the mag_mean > 0.002 criterion under NF4. The same statistic under FP4 clears it. The threshold is therefore sensitive to the quantization format rather than being a per-model property.",
+  "finding": "3 of 8 profiled models meet the exp2 gate (>=80% of layers with mag_mean > 0.002) under NF4. Probed on Qwen/Qwen2.5-3B alone, FP4 puts 100% of probed layers above the threshold where NF4 puts 0%, so the threshold tracks the quantization format rather than the model.",
   "resolution": "Reported as a finding. The Exp2 threshold is NOT changed and no Exp2 verdict is rewritten: whether to recalibrate the criterion is a research decision, recorded here for the authors rather than applied silently.",
   "changes_any_gate": false
 }

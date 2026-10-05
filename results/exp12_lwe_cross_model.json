@@ -14,6 +14,28 @@
       "reason": "residual cache incomplete"
     },
     {
+      "model_id": "Qwen/Qwen2.5-3B",
+      "layers": 36,
+      "status": "MEASURED",
+      "grid_width": 0.01,
+      "ber_at_sigma_0_001": 0.0,
+      "meets_robustness_gate": true,
+      "detector_accuracy": 0.5,
+      "meets_detector_gate": true,
+      "satisfies_both_gates": true,
+      "robustness_ber_curve": {
+        "0.0": 0.0,
+        "0.001": 0.0,
+        "0.002": 0.01267550702028081,
+        "0.005": 0.3174726989079563
+      },
+      "signal_density": {
+        "mean_changed_values_per_patch": 50.9075,
+        "patch_size": 4096,
+        "identical_pair_fraction": 0.0
+      }
+    },
+    {
       "model_id": "Qwen/Qwen2.5-7B",
       "layers": 28,
       "status": "MEASURED",
@@ -30,7 +52,29 @@
         "0.005": 0.3159126365054602
       },
       "signal_density": {
-        "mean_changed_values_per_patch": 20.4425,
+        "mean_changed_values_per_patch": 20.4375,
+        "patch_size": 4096,
+        "identical_pair_fraction": 0.0
+      }
+    },
+    {
+      "model_id": "mistralai/Mistral-7B-v0.3",
+      "layers": 32,
+      "status": "MEASURED",
+      "grid_width": 0.01,
+      "ber_at_sigma_0_001": 0.0,
+      "meets_robustness_gate": true,
+      "detector_accuracy": 0.5,
+      "meets_detector_gate": true,
+      "satisfies_both_gates": true,
+      "robustness_ber_curve": {
+        "0.0": 0.0,
+        "0.001": 0.0,
+        "0.002": 0.013000520020800831,
+        "0.005": 0.312760010400416
+      },
+      "signal_density": {
+        "mean_changed_values_per_patch": 15.5575,
         "patch_size": 4096,
         "identical_pair_fraction": 0.0
       }
@@ -52,7 +96,7 @@
         "0.005": 0.3164001560062403
       },
       "signal_density": {
-        "mean_changed_values_per_patch": 35.6275,
+        "mean_changed_values_per_patch": 35.635,
         "patch_size": 4096,
         "identical_pair_fraction": 0.0
       }
@@ -80,8 +124,8 @@
       }
     }
   ],
-  "models_passing": 3,
-  "models_measured": 3,
-  "conclusion": "The LWE grid width 0.01 satisfies both the robustness and detectability gates on 3 of 3 cached models.",
+  "models_passing": 5,
+  "models_measured": 5,
+  "conclusion": "The LWE grid width 0.01 satisfies both the robustness and detectability gates on 5 of 5 cached models.",
   "changes_any_gate": false
 }

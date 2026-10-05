@@ -86,8 +86,8 @@ def _diagnostic_section(add) -> None:
         add("")
 
         # Headline from the manifest: the cells are the record, not the
-        # diagnostic. The calibration is a separate, older measurement
-        # over a different set of profile files.
+        # diagnostic. The calibration is a separate measurement over the
+        # legacy profile files, and its model set differs; say how.
         records = manifest_mod.load().get("records", {})
         cells = [
             (key.split("::", 1)[1], rec.get("status"))
@@ -101,12 +101,20 @@ def _diagnostic_section(add) -> None:
             f"**{len(passed)} PASS / {len(failed)} FAIL**. "
             f"Passing: {', '.join(passed) or 'none'}."
         )
+
+        suite = {m for m, _ in cells}
+        profiled = {r.get("model") for r in calibration.get("per_model", [])}
+        extra, absent = sorted(profiled - suite), sorted(suite - profiled)
+        scope = []
+        if extra:
+            scope.append("also profiles " + ", ".join(f"`{m}`" for m in extra))
+        if absent:
+            scope.append("has no " + ", ".join(f"`{m}`" for m in absent))
         add(
             f"- {calibration.get('models_passing', 0)}/"
-            f"{calibration.get('models_tested', 0)} of the models in "
-            "the legacy `residual_profile_*.json` set meet the same gate. "
-            "That set is not the suite's: it includes `gemma-2-2b` and "
-            "has no Phi-3."
+            f"{calibration.get('models_tested', 0)} of the models in the "
+            "legacy `residual_profile_*.json` set meet the same gate "
+            f"({'; '.join(scope) if scope else 'same model set as the suite'})."
         )
         for row in calibration.get("per_quant_format", []):
             if "error" in row:

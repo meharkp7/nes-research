@@ -1,6 +1,6 @@
 # NES Multi-Model Research — Final Summary
 
-Generated: 2026-10-05T11:33:47.589212+00:00
+Generated: 2026-10-05T13:40:46.495827+00:00
 
 This summary is generated from `results/experiment_manifest.json`. Every number below corresponds to a saved artifact.
 
@@ -109,11 +109,12 @@ A FAIL is a measurement, not a bug. Each was investigated to determine whether i
 
 ### 5.1 Exp2 residual-magnitude gate
 
-- 1/7 profiled models meet the `mag_mean > 0.002` criterion.
+- Of the suite's 7 exp2 cells: **3 PASS / 4 FAIL**. Passing: google/gemma-2-9b, microsoft/Phi-3-mini-4k-instruct, mistralai/Mistral-7B-v0.3.
+- 3/8 of the models in the legacy `residual_profile_*.json` set meet the same gate (also profiles `google/gemma-2-2b`).
 - `nf4_double_quant`: mean magnitude 0.001879, 0% of probed layers above threshold
 - `nf4_single_quant`: mean magnitude 0.001877, 0% of probed layers above threshold
 - `fp4`: mean magnitude 0.002526, 100% of probed layers above threshold
-- Zero of 7 profiled models meet the mag_mean > 0.002 criterion under NF4. The same statistic under FP4 clears it. The threshold is therefore sensitive to the quantization format rather than being a per-model property.
+- 3 of 8 profiled models meet the exp2 gate (>=80% of layers with mag_mean > 0.002) under NF4. Probed on Qwen/Qwen2.5-3B alone, FP4 puts 100% of probed layers above the threshold where NF4 puts 0%, so the threshold tracks the quantization format rather than the model.
 - The threshold was **not** changed and no Exp2 verdict was rewritten. Recalibrating it is a research decision for the authors, not something to apply silently.
 
 ### 5.2 Exp7 neural-detector gate
@@ -203,4 +204,17 @@ Falcon and MoE families are not validated. Their presence in the registry does n
 - `results/verify_residual_cache_qwen__qwen2.5-7b.json`
 
 Superseded artifact versions are preserved under `results/_archive/` rather than overwritten in place.
+
+## 9. Verifying this report
+
+Nothing above is asserted without an artifact. These three commands re-derive it; none of them reruns an experiment.
+
+```bash
+cd nes-llm
+../.venv/bin/python run_nes_experiments.py --audit  # cell states
+../.venv/bin/python check_consistency.py            # cross-artifact
+../.venv/bin/python claim_audit.py                  # measured claims
+```
+
+`claim_audit.py` is the strictest of the three. It encodes 25 claims and checks each against the file it is supposed to come from -- including counts, such as how many models were measured or how many layers were compared -- and exits non-zero on any it cannot verify rather than assuming it. Writing it found one claim that was true of six models and stated for seven.
 
