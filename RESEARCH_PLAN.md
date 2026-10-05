@@ -32,11 +32,12 @@ Read `RESEARCH_LOG.md` first for how we got here and which mistakes to not repea
 | LWE grid encoding is extractable without the cover | BER 0.5036 → 0.0000 (`extract_needs_cover: false`) | `results/exp10_*.json` |
 | LWE passes both gates on 5/5 measured models | BER 0.0000, detector 50.00%; TinyLlama SKIPPED (incomplete cache) | `results/exp12_lwe_cross_model.json` |
 | **LWE channel is not key-gated (W4.2)** | keyless read of all 10,256 bits at **BER 0.0**, positions at precision/recall 1.0; grid width is one public constant → gate **FAIL** | `results/exp13_keyless_recovery.json` |
+| **Neural detectability is carrier-conditioned (W3.2)** | blind adversary **50.0%** (constant predictor, 4/576 positions held a carrier) vs carrier-centered control **68.75%** → gate **PASS**; exp7's 70.5% is the handed-locations number | `results/exp14_blind_patch_detector.json` |
 | **NES round-trips at BER 0.0 through three 4-bit formats: NF4, GPTQ, AWQ** | GPTQ corr 0.9903 / AWQ corr 0.9941 (raw 0.9890) | `results/exp9_formats.json` |
 | 9 model ids covered, 0 ERROR | 35 PASS / 6 FAIL / **0 NOT_RUN** | `results/experiment_manifest.json` |
 
 **How those rows are kept honest.** `nes-llm/claim_audit.py` re-derives every
-MEASURED row above from disk: **39/39 pass**, with `check_consistency.py` at
+MEASURED row above from disk: **44/44 pass**, with `check_consistency.py` at
 9/9 and a 38-test suite running green. Four claims in this document failed
 that audit while it was being built — a coverage figure with no artifact
 behind it, an average reported as a maximum, a count lifted from a different
@@ -69,7 +70,10 @@ phrasing, *"7 models covered, 0 errors"*, conflated the two and is retired.
 2. **Every detectability number uses a detector trained against the same scheme it
    tests.** Cross-scheme is untested.
 3. **Clean and stego patches are both cut at carrier positions.** The detector is
-   handed the carrier locations.
+   handed the carrier locations. *(Partly resolved by exp14: a blind adversary
+   given neither class at carrier positions scores **50.0%** — a constant
+   predictor — while the carrier-centered control on the same embeddings scores
+   68.75%. The 70.5% FAIL stands, and is now known to be placement-conditioned.)*
 4. **The 55% detectability gate is self-chosen.** It is not a security property.
 5. **LWE is LWE-*inspired*.** Key-derived grid and parity encoding; no lattice, no
    matrix A, no SIS/LWE instance. The post-quantum claim in `lwe_strategy.py` is
@@ -93,13 +97,13 @@ any session that touches a result.
 cd nes-llm
 ../.venv/bin/python run_nes_experiments.py --audit    # manifest matrix
 ../.venv/bin/python check_consistency.py              # 9/9 must pass
-../.venv/bin/python claim_audit.py                    # 39/39 must pass
+../.venv/bin/python claim_audit.py                    # 44/44 must pass
 ```
 
 `claim_audit.py` is this section made executable: each row is re-derived from
 the artifact it names — counts included, because every claim that failed this
 audit failed on a count while the values underneath stayed correct — and it
-exits non-zero on anything it cannot verify. It passes **39/39** as written.
+exits non-zero on anything it cannot verify. It passes **44/44** as written.
 
 Four claims in this document failed it. Three are corrected in the audit notes
 below (exp12 coverage, exp6 robustness, exp2's count) and the fourth — the
@@ -121,6 +125,7 @@ record.
 | LWE extractable without cover | 0.5036 → 0.0000, `extract_needs_cover: false` | `exp10_*.json` |
 | LWE both gates | BER 0.0, detector 50.00%, **5 of 5** measured models pass (TinyLlama skipped) | `exp12_lwe_cross_model.json` |
 | **LWE keyless recovery (W4.2)** | phase attacker: precision 1.0, recall 1.0, **stream BER 0.0 over 10,256 bits**, no key/cover/params; clean control 0 candidates; shipped width = 0.010 on 36 layers × 6 keys, `keyed_branch_active: false` | `exp13_keyless_recovery.json` |
+| **Blind-patch adversary (W3.2)** | blind accuracy **0.5000** (tp=0, fp=0 — learned nothing) vs carrier-centered control **0.6875**; 4/576 blind positions contained a carrier; 576 pairs/arm, split by embedding | `exp14_blind_patch_detector.json` |
 | **GPTQ round trip** | BER **0.0**, 10,256/10,256 bits, corr 0.9903, 36/36 layers | `exp9_formats.json` |
 | **AWQ round trip** | BER **0.0**, 10,256/10,256 bits, corr 0.9941, **35/36 layers** | `exp9_formats.json` |
 | Suite coverage | 35 PASS / 6 FAIL / 0 NOT_RUN / 0 ERROR | `experiment_manifest.json` |
@@ -171,7 +176,7 @@ model — including the pair that exposed the staleness.
 
 `python nes-llm/claim_audit.py` re-derives every MEASURED claim in this
 section from `results/*.json` and exits non-zero on any it cannot
-verify. All 39 checks pass at the time of writing. Run it before citing
+verify. All 44 checks pass at the time of writing. Run it before citing
 any number here.
 
 ### FAIL — measured, gate did not pass, not rewritten
@@ -191,7 +196,7 @@ any number here.
 |---|---|---|
 | GPTQ + AWQ dequantizers | `src/quantization/adapters.py` | 20 tests in `tests/test_quantization_adapters.py` |
 | `verify_dequantization` gate | `adapters.py` | includes the absorbed-scale correction and the NaN-safe comparison |
-| `claim_audit.py` | `nes-llm/claim_audit.py` | 39 checks re-deriving every MEASURED claim — counts included — and exiting non-zero on any it cannot verify |
+| `claim_audit.py` | `nes-llm/claim_audit.py` | 44 checks re-deriving every MEASURED claim — counts included — and exiting non-zero on any it cannot verify |
 | `QuantizationStrategy`, `NF4QuantizationStrategy` | strategy registry | per-tensor ABC, needs an adapter; **never run** |
 | Neural strategy `train_sampled()` | adaptive strategy | **never run** |
 | `adaptive_strategy` noise routing | strategy registry | **never run** |
@@ -214,7 +219,6 @@ any number here.
 |---|---|
 | LWE perplexity on any model | undetectability is worthless if the model is damaged |
 | Cross-scheme detector (train sign → test LWE) | the claim's main weakness |
-| Blind-patch adversary | both patch classes are cut at carrier positions today |
 | Strategy × model matrix | breadth deliverable; 3 of 7 models first |
 | Model surgery (LoRA merge, fine-tune, re-quantize, prune, merge) | determines viability |
 | Pareto frontier | the strongest publishable framing |
@@ -352,15 +356,23 @@ The detectability claim is only as good as the adversary.
 | test | what it answers | cost |
 |---|---|---|
 | **W3.1 cross-scheme** | train on sign, test on LWE | moderate |
-| **W3.2 blind patches** | adversary that doesn't know carrier positions | low |
+| **W3.2 blind patches** | adversary that doesn't know carrier positions | low — **done, exp14** |
 | **W3.3 stronger detector** | wider/deeper, more epochs, more pairs | low |
 | **W3.4 multi-model detector** | trained on model A, tested on B | high |
 | **W3.5 active cleaner** | can an attacker remove the embedding? | high |
 
-**W3.2 is the cheapest high-value item.** Both clean and stego patches are currently
-cut *at carrier positions* — the detector is handed the answer. Carriers are ~0.001%
+**W3.2 was the cheapest high-value item.** Both clean and stego patches were cut
+*at carrier positions* — the detector is handed the answer. Carriers are ~0.001%
 of positions, so a blind detector sees little per-patch signal, but could still
-catch an aggregate distribution shift.
+catch an aggregate distribution shift. **Done — `results/exp14_blind_patch_detector.json`,
+gate PASS.** It catches nothing: 50.0% (a constant all-clean predictor, tp=fp=0),
+against 68.75% for the carrier-centered control cut from the *same* embeddings
+with the *same* detector. Only 4 of 576 blind positions contained a carrier at
+all — QACI's magnitude selection clusters carriers into dense aligned blocks,
+which the blind adversary almost never lands in. Side finding, and the
+verdict's one caveat: this measures placement sensitivity for the production
+sign strategy on Qwen2.5-3B; exp7_neural's 70.5% FAIL still stands for an
+adversary that knows placement. Full record: `RESEARCH_LOG.md` §20.
 
 **W3.5 matters for the threat model.** If a defender can strip the payload on sight,
 the mechanism is not durable even if it is undetectable.
@@ -558,7 +570,7 @@ invalidate later work.
 | # | Item | Why here |
 |---|---|---|
 | 1 | **W4.2** key/scale recoverability — **done, exp13: FAIL** | cheap; potential break of the security property (it was) |
-| 2 | **W3.2** blind-patch adversary | cheapest test of the central claim |
+| 2 | **W3.2** blind-patch adversary — **done, exp14: PASS** | cheapest test of the central claim (it was: 50.0% blind vs 68.75% control) |
 | 3 | **W2** LWE perplexity | biggest hole; invalidates the strategy choice if it fails |
 | 4 | **W3.1** cross-scheme detector | the claim's main weakness |
 | 5 | **W1.1** QAE adapter + round trip | adds two strategies cheaply |

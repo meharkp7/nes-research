@@ -74,22 +74,23 @@ correcting them.
 | exp9 | GPTQ / AWQ clean BER through *their own* dequantizers | BER 0, corr ≥ 0.95, residual ratio ≤ 0.5 | PASS — GPTQ 36/36 layers, AWQ 35/36 |
 | exp10–12 | LWE-style strategy: extractability, grid width, cross-model | BER ≤ 0.02, detector ≤ 55% | measured; see `../RESEARCH_PLAN.md` §1 |
 | exp13 | keyless recovery of the LWE grid (W4.2): can an attacker read the channel without the key? | attacker BER ≥ 0.5 **and** width not locatable to 1% | **FAIL** — full keyless read at BER 0.0, width is a public constant |
+| exp14 | blind-patch adversary (W3.2): detector cut at positions that know nothing about carriers | blind accuracy ≤ 55% (exp7's number, reused) | **PASS** — 50.0% blind vs 68.75% carrier-centered control; exp7's 70.5% is placement-conditioned |
 
 Thresholds live in `experiment_registry.THRESHOLDS`. No experiment edits its
 own, and `claim_audit.py` pins them, so a gate cannot be quietly relaxed.
 
 A FAIL above is a result, not a bug: each was investigated and the verdict is
 recorded rather than rewritten. The six current **manifest** FAILs are exp2 ×4,
-exp7_neural, and exp8 inheriting it. exp13's FAIL is a gate verdict outside the
-manifest grid (standalone artifact, like exp12), so coverage stays 35 PASS /
-6 FAIL — its scope caveat is that the payload is AES-GCM ciphertext: the
-*channel* is readable, the *message* is not.
+exp7_neural, and exp8 inheriting it. exp13's FAIL and exp14's PASS are gate
+verdicts outside the manifest grid (standalone artifacts, like exp12), so
+coverage stays 35 PASS / 6 FAIL — exp13's scope caveat is that the payload is
+AES-GCM ciphertext: the *channel* is readable, the *message* is not.
 
 ## Reading order
 
 1. `../RESEARCH_LOG.md` — what was done, what broke, what was decided (§16 is
    the AWQ story, §17 the final state and claim-audit findings, §19 the first
-   Phase-B result: W4.2 keyless recovery).
+   Phase-B result: W4.2 keyless recovery, §20 the second: W3.2 blind patches).
 2. `../RESEARCH_PLAN.md` — every claim sorted MEASURED / FAIL / NOT_RUN, and
    what to do next (Phases A–D).
 3. `../results/final_research_summary.md` — the generated report.

@@ -971,7 +971,7 @@ evidence; this is the version that survives.
 **Coverage: 35 PASS, 6 FAIL, 0 NOT_RUN, 0 ERROR.**
 Every registry model now has cells, and no cell is left unrun. 9/9
 consistency checks pass, the test suite runs clean (38 tests, OK), and
-`nes-llm/claim_audit.py` re-derives 39 MEASURED claims from the
+`nes-llm/claim_audit.py` re-derives 44 MEASURED claims from the
 artifacts on disk rather than from this prose — its failures, when it
 has any, are the findings below.
 
@@ -1009,8 +1009,8 @@ Four claims did not survive the final audit, and **all four are now
 closed** — three by rewording the claim, one by producing the artifact
 that should have existed. They are recorded rather than quietly
 corrected, because a document that only ever gets righter is not an
-audit. The audit is `nes-llm/claim_audit.py`: 39 checks, re-derived from
-`results/*.json`, **39/39 passing at the time of writing**.
+audit. The audit is `nes-llm/claim_audit.py`: 44 checks, re-derived from
+`results/*.json`, **44/44 passing at the time of writing**.
 
 **1. exp12 coverage — closed by re-running it.** §7 and its commit
 message state *5 of 5 measured models pass both gates*, with a six-row
@@ -1140,7 +1140,7 @@ Four sentences were.
 
 ### 18.1 `claim_audit.py`
 
-`nes-llm/claim_audit.py` makes this section executable: 39 checks, each
+`nes-llm/claim_audit.py` makes this section executable: 44 checks, each
 re-deriving one MEASURED claim from `results/*.json`. It exits non-zero
 on any claim it cannot verify — a number it cannot find is UNVERIFIED,
 never assumed true — and it reads its gate values from
@@ -1221,7 +1221,7 @@ name.
 cd nes-llm
 python run_nes_experiments.py --audit   # cell states   35 PASS / 6 FAIL / 0 NOT_RUN
 python check_consistency.py             # cross-artifact 9/9
-python claim_audit.py                   # MEASURED claims 39/39
+python claim_audit.py                   # MEASURED claims 44/44
 python -m unittest discover -s tests -p 'test_*.py'   # 38 tests, OK
 ```
 
@@ -1230,7 +1230,7 @@ anyone holding the report can re-derive it rather than trust it.
 
 ### 18.6 State at this commit
 
-35 PASS / 6 FAIL / 0 NOT_RUN / 0 ERROR; 39/39 claims verified; 9/9
+35 PASS / 6 FAIL / 0 NOT_RUN / 0 ERROR; 44/44 claims verified; 9/9
 consistency checks; 38 tests. All four findings closed, and the warning
 marker is now absent from both documents — which is what makes it worth
 keeping as a marker rather than deleting: its presence in either
@@ -1349,15 +1349,108 @@ everything else in the artifact is deterministic and pinned.
 
 ```bash
 cd nes-llm
-../.venv/bin/python claim_audit.py                    # 39/39
+../.venv/bin/python claim_audit.py                    # 44/44
 ../.venv/bin/python check_consistency.py              # 9/9
 ../.venv/bin/python -m unittest discover -s tests -p 'test_*.py'   # 38 OK
 ../.venv/bin/python -m src.experiments.exp13_keyless_recovery      # re-runs
 ```
 
-State: 39/39 claims (the 8 new ones are the exp13 section), 9/9
+State: 44/44 claims, 9/9
 consistency, 38 tests, manifest unchanged at 35 PASS / 6 FAIL /
 0 NOT_RUN / 0 ERROR — exp13 sits outside the manifest grid, and its
 FAIL is a gate verdict recorded in the artifact and the claim audit,
 not a seventh manifest cell. The six manifest FAILs are still exp2 ×4,
 exp7_neural and exp8.
+
+## 20. W3.2 — the blind-patch adversary (exp14)
+
+Suggested order item 2 (`RESEARCH_PLAN` §7). §3 W3.2 asks what happens
+when the detector stops being handed the answer: both exp7_neural patch
+classes are cut *at carrier positions*, and §0's load-bearing
+"Not established" #3 says so in as many words. Carriers are ~0.001% of
+positions, so a blind adversary's patches should almost never contain
+signal — "could still catch an aggregate distribution shift" was the
+plan's hypothesis.
+
+### 20.1 What was built
+
+`nes-llm/src/experiments/exp14_blind_patch_detector.py` — standalone,
+same mould as exp13 (artifact + claim-audit checks, not a manifest
+cell). Gate in `THRESHOLDS["exp14"]`: `max_blind_detector_accuracy ≤
+0.55`, the *same* self-chosen 55% number exp7_neural already uses —
+reused, not invented. Only the blind arm is gated.
+
+Two arms cut from the same 12 embeddings (48 patch pairs each, 576 per
+arm — above the suite's 400-pair floor):
+
+- **blind** — patch position drawn uniformly at random, independent of
+  the carrier set. The adversary knows nothing about placement;
+- **control** — exp7's rule, an aligned patch containing a carrier.
+  Positive control: if this arm does not clearly exceed the gate, the
+  blind number carries no information and the artifact says so.
+
+Everything else is exp7's code *imported unchanged* — `Detector`,
+`ResidualDataset`, `evaluate`, `split_by_sample_id`, 30 epochs, batch
+32, lr 1e-4, seed 42 — so the only variable between the arms, and
+against exp7 itself, is where patches are cut. One deliberate
+tightening: the split is **by embedding** (`sample_id` = embed index,
+9 train / 3 test), so no stego tensor appears on both sides of
+train/test. exp7 split by pair while every pair came from the same
+model's structure.
+
+### 20.2 The measurement
+
+| arm | placement | accuracy | detail |
+|---|---|---|---|
+| **blind** | uniform random | **0.5000** | confusion matrix **tp=0, fp=0, fn=144, tn=144** — a constant all-clean predictor; the detector learned nothing |
+| control | carrier-centered (exp7 rule) | **0.6875** | 101/144 stego caught — clears the 55% gate and sits near exp7's 70.5% |
+| blind exposure | — | **4/576** positions contained any carrier (0.69%) | even those 4 did not produce a single true positive |
+
+Gate: **PASS** (0.5000 ≤ 0.55). Split: 432 train / 144 test pairs per
+arm. Message length varied by one byte per embedding (total_bits
+9984 → 10072) so the Hamilton allocation shifts and the control arm is
+not carved from one fixed carrier set.
+
+**Reading.** The control clears the gate, so the pipeline is validated
+and the blind result is informative: exp7's 70.5% FAIL is
+**carrier-conditioned**. An adversary without carrier positions lands on
+exactly chance — not "barely above", but a collapsed constant
+predictor. §0's "the detector is handed the answer" is now measured:
+handing it the answer is what made the difference (50.0% vs 68.75%,
+same embeddings, same detector, same training loop).
+
+### 20.3 Side finding — carriers cluster
+
+The control patches average **~45 carriers each** (per-embedding sums
+1673–2829 over 48 patches), while uniform positions average ~0.05.
+QACI selects by magnitude, so carriers concentrate in a few
+high-magnitude aligned blocks rather than spreading uniformly. That
+explains both numbers at once: a blind patch hits one of those blocks
+4 times in 576, and a carrier-centered patch is not "one carrier plus
+4095 cover" but a block dense with them — which is exactly why the
+carrier-centered detector works so well and why the blind one never
+sees the signal.
+
+### 20.4 Verification
+
+One run, exit 0 — no development runs this time; the seeds make both
+arms and the split reproducible.
+
+```bash
+cd nes-llm
+../.venv/bin/python claim_audit.py                    # 44/44 (5 new)
+../.venv/bin/python check_consistency.py              # 9/9
+../.venv/bin/python -m unittest discover -s tests -p 'test_*.py'   # 38 OK
+../.venv/bin/python -m src.experiments.exp14_blind_patch_detector  # re-runs
+```
+
+State: 44/44 claims, 9/9 consistency, 38 tests, manifest unchanged at
+35 PASS / 6 FAIL / 0 NOT_RUN / 0 ERROR — exp14, like exp13, sits
+outside the manifest grid, and its PASS is a gate verdict in the
+artifact and the claim audit, not a 36th cell.
+
+Scope note for any citation: this measures the **production sign
+strategy on one model** (Qwen2.5-3B), and only patch-placement
+sensitivity. It does not license "undetectable" — exp7_neural's 70.5%
+FAIL stands for an adversary that knows placement, and W3.3/W3.4
+(stronger and multi-model detectors) are untouched.
