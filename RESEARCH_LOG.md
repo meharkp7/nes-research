@@ -965,7 +965,10 @@ evidence; this is the version that survives.
 
 **Coverage: 35 PASS, 6 FAIL, 0 NOT_RUN, 0 ERROR.**
 Every registry model now has cells, and no cell is left unrun. 9/9
-consistency checks pass.
+consistency checks pass, the test suite runs clean (38 tests, OK), and
+`nes-llm/claim_audit.py` re-derives 30 MEASURED claims from the
+artifacts on disk rather than from this prose — its failures, when it
+has any, are the findings below.
 
 Of the 41 cells: 33 sit on the 7-model NF4 grid, 2 are the quantized
 checkpoints outside it (Exp9's GPTQ and AWQ targets), and 6 are FAIL.

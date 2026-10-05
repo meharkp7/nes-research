@@ -474,8 +474,7 @@ cd nes-llm
 ../.venv/bin/python run_nes_experiments.py --audit
 ../.venv/bin/python check_consistency.py
 ../.venv/bin/python claim_audit.py            # every MEASURED claim vs disk
-../.venv/bin/python tests/test_strategy_registry.py
-../.venv/bin/python tests/test_quantization_adapters.py
+../.venv/bin/python -m unittest discover -s tests -p 'test_*.py'
 
 # diagnostics
 ../.venv/bin/python -m src.model.verify_residual_cache <model> <family> <n_layers>
