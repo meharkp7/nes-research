@@ -896,6 +896,142 @@ def audit_strategy_matrix():
 
 
 # ------------------------------------------------------------------ gates
+EXP19_ARTIFACTS = [
+    "exp19_adaptive_google__gemma_2_2b.json",
+    "exp19_adaptive_qwen__qwen2.5_3b.json",
+    "exp19_adaptive_meta_llama__llama_3.1_8b.json",
+]
+# The citable finding: three first-pass models, three different
+# branches, exactly what a sigma-bracket router predicts.
+EXP19_ROUTES = {
+    "exp19_adaptive_google__gemma_2_2b.json": ("lwe", True),
+    "exp19_adaptive_qwen__qwen2.5_3b.json": ("neural", False),
+    "exp19_adaptive_meta_llama__llama_3.1_8b.json": ("sign", True),
+}
+
+
+def audit_adaptive_routing():
+    arts = [(name, one(name)) for name in EXP19_ARTIFACTS]
+    missing = [n for n, d in arts if not d]
+    check(
+        "exp19: all three first-pass model artifacts present",
+        not missing,
+        "3/3" if not missing else "missing: " + ", ".join(missing),
+    )
+    if missing:
+        return
+
+    gate = THRESHOLDS["exp19"]
+    check(
+        "exp19: every artifact's gate matches THRESHOLDS['exp19'] "
+        "(exp3's 0.0 reused; routing choice is measurement, not gate)",
+        gate.get("max_ber") == 0.0
+        and all(
+            d["gate"]["max_ber"] == 0.0
+            and "THRESHOLDS['exp19']" in d["gate"]["gate_source"]
+            for _, d in arts
+        ),
+        f"gate={gate.get('max_ber')}",
+    )
+
+    # Direction-agnostic: each selected branch must be recomputable
+    # from the recorded sigma and thresholds, and the three routes
+    # must be the three distinct branches the probe found.
+    recomputed, bad = [], []
+    for name, d in arts:
+        sigma = dig(d, "routing", "estimated_sigma")
+        th = dig(d, "routing", "thresholds") or {}
+        want = None
+        if sigma is not None and th.get("lwe") is not None:
+            want = (
+                "lwe" if sigma < th["lwe"]
+                else "neural" if sigma < th.get("neural", float("inf"))
+                else "sign"
+            )
+        got = dig(d, "routing", "selected_branch")
+        if want is None or want != got:
+            bad.append(f"{name}:{sigma}->{got} (want {want})")
+        if got:
+            recomputed.append(got)
+    check(
+        "exp19: each branch recomputes exactly from its recorded "
+        "sigma and thresholds; three models -> three DIFFERENT "
+        "branches (lwe / neural / sign)",
+        not bad and sorted(recomputed) == ["lwe", "neural", "sign"],
+        f"routes={sorted(recomputed)}" if not bad else "; ".join(bad),
+    )
+
+    by_name = dict(arts)
+    qwen = by_name["exp19_adaptive_qwen__qwen2.5_3b.json"]
+    check(
+        "exp19: Qwen's design route (neural) failing is recorded as "
+        "the design's own — EmbeddingError text kept, both available "
+        "branches round-tripped as fallback; gemma/llama routes "
+        "available",
+        dig(qwen, "routing", "design_route_available") is False
+        and "Neural" in str(dig(qwen, "routing", "failure"))
+        and qwen.get("forced_fallbacks") == ["sign", "lwe"]
+        and sorted(qwen.get("round_trips", {}))
+        == ["forced->lwe", "forced->sign"]
+        and all(
+            dig(by_name[n], "routing", "design_route_available") is True
+            for n in EXP19_ARTIFACTS
+            if n != "exp19_adaptive_qwen__qwen2.5_3b.json"
+        ),
+        f"failure={dig(qwen, 'routing', 'failure')!r:.80}",
+    )
+
+    # Verdict booleans recompute from recorded numbers; every
+    # measured round trip holds exp3's gate.
+    status_bad, bers = [], []
+    for name, d in arts:
+        trips = d.get("round_trips", {}) or {}
+        measured = [t.get("ber") for t in trips.values()]
+        bers.extend(measured)
+        want = bool(measured) and all(b == 0.0 for b in measured)
+        if d["gate"]["measured_round_trips"] != measured:
+            status_bad.append(f"{name}: gate list drift")
+        if (d["gate"]["status"] == "PASS") != want:
+            status_bad.append(f"{name}: status")
+    check(
+        "exp19: every round trip that ran holds BER 0.0 and each "
+        "gate status recomputes exactly from its measured list",
+        not status_bad and bool(bers) and all(b == 0.0 for b in bers),
+        f"{len(bers)}/{len(bers)} at 0.0"
+        if not status_bad and all(b == 0.0 for b in bers)
+        else "; ".join(status_bad) or f"bers={bers}",
+    )
+
+    check(
+        "exp19: protocol pins — payload 10k (exp10's), deterministic "
+        "sigma recompute recorded (EmbedResult drops inner metadata), "
+        "lwe fresh-random-key caveat in method",
+        all(
+            dig(d, "method", "payload_bits") == 10_000
+            and "deterministic" in str(dig(d, "method", "sigma_recompute"))
+            and "os.urandom" in str(dig(d, "method", "lwe_key"))
+            for _, d in arts
+        ),
+        "payload/method pins",
+    )
+
+    pipe_bad = []
+    for name, d in arts:
+        for tname, t in (d.get("round_trips", {}) or {}).items():
+            if t.get("pipeline_attempted"):
+                if t.get("pipeline_ok") is not True:
+                    pipe_bad.append(f"{name}:{tname}:ok={t.get('pipeline_ok')}")
+            elif not str(t.get("pipeline_note", "")).strip():
+                pipe_bad.append(f"{name}:{tname}:no-note")
+    check(
+        "exp19: DecryptPipeline attempted only where it is the right "
+        "decoder (sign routes, all recovered) and every non-attempt "
+        "carries the exp10 sign-only note",
+        not pipe_bad,
+        "flags consistent" if not pipe_bad else "; ".join(pipe_bad),
+    )
+
+
 def audit_thresholds():
     check(
         "dequant gate thresholds unchanged (0.95 / 0.5)",
@@ -934,6 +1070,7 @@ def main() -> int:
         ("cross-scheme detector (exp16)", audit_cross_scheme),
         ("QAE round trip (exp17)", audit_qae_round_trip),
         ("strategy matrix (exp18)", audit_strategy_matrix),
+        ("adaptive routing (exp19)", audit_adaptive_routing),
         ("gates", audit_thresholds),
     ):
         print(f"\n{title}")

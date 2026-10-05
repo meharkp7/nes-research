@@ -1,0 +1,63 @@
+{
+  "experiment": "exp19",
+  "title": "W5.1 \u2014 adaptive meta-strategy as designed",
+  "model_id": "Qwen/Qwen2.5-3B",
+  "family": "qwen",
+  "num_layers": 36,
+  "gate": {
+    "max_ber": 0.0,
+    "measured_round_trips": [
+      0.0,
+      0.0
+    ],
+    "status": "PASS",
+    "gate_source": "experiment_registry.THRESHOLDS['exp19']"
+  },
+  "routing": {
+    "estimated_sigma": 0.0015537014235055976,
+    "selected_branch": "neural",
+    "thresholds": {
+      "lwe": 0.0005,
+      "neural": 0.003
+    },
+    "design_route_available": false,
+    "failure": "EmbeddingError: Neural strategy selected but no trained model available. Train with NeuralEmbeddingTrainer and pass neural_model_path."
+  },
+  "round_trips": {
+    "forced->sign": {
+      "ber": 0.0,
+      "bits_compared": 10256,
+      "bit_errors": 0,
+      "pipeline_attempted": true,
+      "pipeline_ok": true,
+      "pipeline_note": ""
+    },
+    "forced->lwe": {
+      "ber": 0.0,
+      "bits_compared": 10256,
+      "bit_errors": 0,
+      "pipeline_attempted": false,
+      "pipeline_ok": null,
+      "pipeline_note": "not attempted: DecryptPipeline is sign-only (exp10's wiring note)"
+    }
+  },
+  "forced_fallbacks": [
+    "sign",
+    "lwe"
+  ],
+  "method": {
+    "estimator": "AdaptiveStrategy.estimate_noise: median |delta| of adjacent residuals / sqrt(2), median across layers",
+    "routing_rule": "sigma < 0.0005 -> lwe; sigma < 0.003 -> neural; else sign (AdaptiveStrategy class constants)",
+    "embed_path": "production: IntelligentEmbedder with the new registry entry 'adaptive'",
+    "extract_path": "extract_with(strategy_name=...) -> AdaptiveRoutedExtractor -> the selected branch's own companion decoder, cover withheld (residuals_ref = None)",
+    "payload_bits": 10000,
+    "message_len": 1250,
+    "sigma_recompute": "estimated_sigma is recomputed via estimate_noise after embed: IntelligentEmbedder's EmbedResult wrapper drops the inner result's metadata (deterministic median statistic, so the value equals the routing input)",
+    "lwe_key": "fresh os.urandom(32) per run (the design's own constructor); self-consistent round trip, not bit-identical to registry lwe"
+  },
+  "notes": [
+    "Routing choice is measurement, not gate \u2014 the gate covers only round trips that run.",
+    "A routing failure (neural branch without a trained model) is the design's own outcome, recorded, never patched: the design says train a model and pass neural_model_path.",
+    "No detector/perplexity axis here \u2014 exp18 owns detectability of the routed primitives."
+  ]
+}

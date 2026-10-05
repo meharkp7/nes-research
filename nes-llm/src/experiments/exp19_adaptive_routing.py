@@ -163,15 +163,22 @@ def main() -> int:
     routing: Dict[str, Any] = {
         "estimated_sigma": None,
         "selected_branch": None,
-        "thresholds": {},
+        "thresholds": {
+            "lwe": ie.strategy.NOISE_THRESHOLD_LWE,
+            "neural": ie.strategy.NOISE_THRESHOLD_NEURAL,
+        },
         "design_route_available": False,
         "failure": None,
     }
     try:
         result = ie.embed(MESSAGE, residuals)
-        routing["estimated_sigma"] = result.metadata.get(
-            "estimated_sigma"
-        )
+        # IntelligentEmbedder's EmbedResult wrapper does not carry the
+        # inner EmbeddingResult's metadata (where AdaptiveStrategy
+        # parked estimated_sigma), so the estimate is recomputed from
+        # the same residuals — estimate_noise is a deterministic
+        # median statistic, so the value is identical to the one the
+        # routing decision used.
+        routing["estimated_sigma"] = ie.strategy.estimate_noise(residuals)
         routing["selected_branch"] = ie.strategy.selected_strategy
         routing["design_route_available"] = True
         round_trips[f"adaptive->{routing['selected_branch']}"] = _round_trip(
@@ -241,6 +248,12 @@ def main() -> int:
             ),
             "payload_bits": PAYLOAD_BITS,
             "message_len": len(MESSAGE),
+            "sigma_recompute": (
+                "estimated_sigma is recomputed via estimate_noise after "
+                "embed: IntelligentEmbedder's EmbedResult wrapper drops "
+                "the inner result's metadata (deterministic median "
+                "statistic, so the value equals the routing input)"
+            ),
             "lwe_key": (
                 "fresh os.urandom(32) per run (the design's own "
                 "constructor); self-consistent round trip, not "
