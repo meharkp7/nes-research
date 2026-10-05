@@ -986,9 +986,11 @@ Plus, outside the NF4 grid:
 
 ### Claim audit findings
 
-Two claims did not survive the final audit. Both are recorded rather
+Three claims did not survive the final audit. All are recorded rather
 than quietly corrected, because a document that only ever gets righter
-is not an audit.
+is not an audit. The audit is now `nes-llm/claim_audit.py`, which
+re-derives all 25 MEASURED claims from the artifacts on disk; it found
+two of these three without anyone reading the prose again.
 
 **1. exp12 coverage — open.** §7 and its commit message state *5 of 5
 measured models pass both gates*, with a six-row table.
@@ -1006,7 +1008,16 @@ which is also what the 5-row table reports. The claim is worded "every
 model it was measured on" until exp12 is re-run across all six cached
 models. **Do not cite 5/5 until that run lands.**
 
-**2. "7 models covered, 0 errors" — closed.** Retired as misleading.
+**2. exp6 stated as "BER 0 at σ=0.001" — closed.** Reworded in three
+places in `RESEARCH_PLAN.md`. Six of seven models are exactly 0.0;
+Mistral-7B is **0.00115** at σ=0.001 and **0.01074** at σ=0.002. Both
+numbers are comfortably inside the 0.02 / 0.10 gates, so every cell
+still reads PASS and no gate moved. What was wrong was the claim, not
+the result: "BER 0" turned a passing measurement into an absolute, and
+the seventh model was the one that made it false. The audit now checks
+the gate *and* the 6-of-7 count.
+
+**3. "7 models covered, 0 errors" — closed.** Retired as misleading.
 Those 33 cells are the **NF4** grid (`bitsandbytes`, nf4, group 64). The
 GPTQ and AWQ cells sit on separate checkpoints with separate
 dequantizers; no NF4 cell was reused to produce them. The current figure
@@ -1015,7 +1026,10 @@ stated wherever the number appears.
 
 The audit's lesson is the session's own: the number that looks finished
 is the one worth re-reading. "5 of 5" was written from console output,
-and console output is not an artifact.
+and console output is not an artifact. "BER 0" was written from the six
+models that were zero, and an average is not a maximum. Both failures
+have the same shape — a claim widened one word past its evidence — so
+`claim_audit.py` checks the counts as well as the values.
 
 ### The failures, and why none were "fixed"
 

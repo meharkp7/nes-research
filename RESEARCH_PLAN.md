@@ -25,7 +25,7 @@ Read `RESEARCH_LOG.md` first for how we got here and which mistakes to not repea
 |---|---|---|
 | Sign embedding round-trips at BER 0 | 48,256 bits compared, 0 errors | `results/exp3_*.json` |
 | Sign capacity ≥ 10M bits at BER 0 | 4 sizes, all BER 0 | `results/exp4_*.json` |
-| Sign robustness BER 0 at σ=0.001 | gate σ=0.001/0.002 both pass | `results/exp6_*.json` |
+| Sign robustness under both noise gates | σ=0.001 ≤ 0.0012, σ=0.002 ≤ 0.0108; BER 0.0 on **6 of 7** models | `results/exp6_*.json` ⚠ see audit note |
 | Sign fidelity 0.0053% PPL delta | 3-way protocol, Qwen3B only | `results/exp5_*.json` |
 | Sign is detected at 70.5% | carrier-centered MLP | `results/exp7_neural_*.json` |
 | Sign detection is structural | α×100, γ×5, payload×10 → 69.4–74.4% | `results/exp7_neural_parameter_study.json` |
@@ -87,7 +87,7 @@ cd nes-llm
 |---|---|---|
 | Sign round trip | BER 0.0, 48,256 bits | `exp3_*.json` |
 | Sign capacity | ≥ 10M bits at BER 0 | `exp4_*.json` |
-| Sign robustness | BER 0.0 @ σ=0.001 and 0.002 | `exp6_*.json` |
+| Sign robustness | every model under the 0.02 / 0.10 gates; BER 0.0 on 6 of 7 at σ=0.001 (Mistral-7B 0.00115) | `exp6_*.json` |
 | Sign fidelity | +0.0053% PPL | `exp5_*.json` |
 | Sign detectability (neural) | **70.5%** vs 55% gate → FAIL | `exp7_neural_*.json` |
 | Sign detection structural | 69.4–74.4% across α×100, γ×5, payload×10 | `exp7_neural_parameter_study.json` |
@@ -114,6 +114,18 @@ passes, BER 0.0000, detector 50.00%), which is why this is a coverage
 discrepancy rather than a contradiction. The row above is worded so it
 is true either way, and `exp12` is being re-run across all six cached
 models to close the finding. Do not cite "5/5" until it does.
+
+**Audit note on the ⚠ on robustness (raised, closed).** This row and
+two others read *"BER 0 at σ=0.001"*. It is 0.0 on six of seven models;
+**Mistral-7B is 0.00115 at σ=0.001 and 0.01074 at σ=0.002**, both
+inside the 0.02 / 0.10 gates, so every cell still reads PASS and no
+threshold moved. Only the claim was wrong — an average presented as a
+maximum — and the row above now says what the seven numbers actually
+are.
+
+`python nes-llm/claim_audit.py` re-derives all 25 claims in this
+section from `results/*.json` and exits non-zero on any that fail,
+including the still-open ⚠. Run it before citing any number here.
 
 ### FAIL — measured, gate did not pass, not rewritten
 
@@ -189,7 +201,7 @@ this audit. **This phase is complete.**
 | exp3 round trip | PASS ×7 | BER 0.0 |
 | exp4 capacity | PASS | ≥ 10M bits at BER 0 |
 | exp5 fidelity | PASS | +0.0053% PPL |
-| exp6 robustness | PASS ×7 | BER 0.0 @ σ=0.001 |
+| exp6 robustness | PASS ×7 | under both gates; BER 0.0 on 6 of 7 models (Mistral-7B 0.00115) |
 | exp7 statistical | PASS ×7 | below the 55% gate |
 | exp7 neural | **FAIL** ×7 | 70.5% vs 55%; structural, not a fluke |
 | exp8 cross-model | **FAIL** | correctly inherits the neural FAIL |
@@ -442,6 +454,7 @@ cd nes-llm
 # audit, verify, report
 ../.venv/bin/python run_nes_experiments.py --audit
 ../.venv/bin/python check_consistency.py
+../.venv/bin/python claim_audit.py            # every MEASURED claim vs disk
 ../.venv/bin/python tests/test_strategy_registry.py
 ../.venv/bin/python tests/test_quantization_adapters.py
 
@@ -473,6 +486,9 @@ Residuals 1.0–8.6 GB; run **one model per process**.
    (`metrics.layers_excluded`), never embedded into and never silently dropped.
 9. NaN compares False against every threshold. Write `not (x >= limit)`, not
    `x < limit`, or an all-zero dequantization passes as verified.
+10. A number in these documents comes from `results/*.json`, never from console
+    output, and `python claim_audit.py` must exit 0 for it to be cited. Two claims
+    in this repo failed that rule before it existed.
 
 ---
 
