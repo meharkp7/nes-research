@@ -1,10 +1,21 @@
 """
 Experiment 9 — GPTQ / AWQ.
 
-Tests whether NES works beyond NF4 by extracting residuals from a
-non-NF4 quantized model and running the same embed/extract/decrypt path.
+Extracts residuals from GPTQ and AWQ checkpoints and runs the same
+embed/extract/decrypt path used for NF4.
 
-Two constraints shape this module:
+The claim this experiment can support is narrow, and is written that way
+everywhere it appears: a payload round-trips at BER 0.0 through a
+non-NF4 4-bit format, read by a format-specific dequantizer that was
+verified against its own FP16 reference *first*. One model
+(Qwen2.5-3B-Instruct), one payload size (10,256 bits), one module type
+(`mlp.down_proj`), and a clean channel — no noise, no patch, no
+adversary. It says nothing about robustness or detectability for these
+formats; those were measured for NF4 sign embedding only. The unqualified
+sentence it used to open with, "NES works beyond NF4", is broader than
+the evidence — see `RESEARCH_LOG.md` §16.
+
+Three constraints shape this module:
 
 1.  A GPTQ or AWQ checkpoint must never be read through the NF4 loader.
     The previous implementation in ``src/model/exp9_alternative_quant.py``
@@ -18,9 +29,22 @@ Two constraints shape this module:
 2.  A missing checkpoint yields NOT_RUN with a reason. It never yields a
     PASS, and it is never quietly skipped from the table.
 
-GPTQ and AWQ checkpoints are downloaded on demand; each dequantizer is verified
-honest run of this experiment currently reports NOT_RUN for every target.
-That is the correct state, not a bug to paper over (§25 rule 13).
+3.  The dequantizer is verified against the FP16 reference before any
+    residual is computed, and every layer is re-checked before its own
+    residual is used. A layer that fails is excluded and named in
+    ``metrics.layers_excluded`` rather than silently embedded into. A
+    dequantizer that is subtly wrong yields a residual of the right shape
+    and plausible magnitude -- on the real AWQ checkpoint the first
+    attempt produced correlation 0.2343 where GPTQ reached 0.9903, and
+    the gate is what noticed.
+
+Verification for AWQ compares after removing the per-channel scale AWQ
+folds into the LayerNorm; the thresholds are unchanged. See
+``verify_dequantization`` for the measurement behind that and for the
+control (wrong nibble order: 0/252 modules pass) that keeps it honest.
+
+A missing checkpoint, or a dequantizer that cannot be verified, yields
+NOT_RUN with a reason (§25 rule 13).
 """
 
 import gc
@@ -32,7 +56,10 @@ os.environ.setdefault("PYTORCH_ENABLE_MPS_FALLBACK", "1")
 import torch  # noqa: E402
 from transformers import AutoModelForCausalLM, AutoTokenizer  # noqa: E402
 
-from src.experiments.experiment_registry import gate_for  # noqa: E402
+from src.experiments.experiment_registry import (  # noqa: E402
+    THRESHOLDS,
+    gate_for,
+)
 from src.experiments.model_context import ModelContext  # noqa: E402
 from src.model.registry import get_layer_module, get_num_layers  # noqa: E402
 from src.quantization.adapters import (  # noqa: E402
@@ -41,6 +68,15 @@ from src.quantization.adapters import (  # noqa: E402
 )
 
 EXPERIMENT = "exp9"
+
+# The dequantizer gate, read from the single source of truth rather than
+# restated here. Ground rule 2 says thresholds live in
+# `experiment_registry.THRESHOLDS` and that no experiment edits its own;
+# that has to be true of the dequant gate too, not only of `max_ber`.
+# `tests/test_quantization_adapters.py` asserts these equal the defaults
+# on `verify_dequantization`, so the two cannot drift apart unnoticed.
+DEQUANT_MIN_CORRELATION = THRESHOLDS["exp9"]["min_dequant_correlation"]
+DEQUANT_MAX_RESIDUAL_RATIO = THRESHOLDS["exp9"]["max_dequant_residual_ratio"]
 
 PAYLOAD_BITS = 10_000
 MESSAGE = "A" * 1_250
@@ -266,7 +302,10 @@ def run_target(
     ref_w = reference_model.model.layers[0].mlp.down_proj.weight
 
     verification = verify_dequantization(
-        probe, ref_w, expected_format=expected_format
+        probe, ref_w, expected_format=expected_format,
+        module_name="model.layers.0.mlp.down_proj",
+        min_correlation=DEQUANT_MIN_CORRELATION,
+        max_residual_ratio=DEQUANT_MAX_RESIDUAL_RATIO,
     )
     print(
         f"  [exp9] {expected_format} verification: "
@@ -299,6 +338,7 @@ def run_target(
     )
 
     residuals: Dict[int, torch.Tensor] = {}
+    excluded: Dict[str, str] = {}
 
     for layer_id in range(n_layers):
         packed = load_packed_module(model_id, layer_id, "down_proj")
@@ -306,6 +346,30 @@ def run_target(
             reference_model.model.layers[layer_id]
             .mlp.down_proj.weight
         )
+
+        # The probe above proves the *dequantizer* is right. This proves
+        # each residual about to be used is one. A checkpoint can be
+        # correct in 35 of 36 layers and still carry a layer whose stored
+        # scales disagree with its own indices; embedding into that
+        # residual would report a clean BER over a tensor that is mostly
+        # quantization damage rather than the untouched reference.
+        check = verify_dequantization(
+            packed,
+            fp16_w,
+            expected_format=expected_format,
+            module_name=f"model.layers.{layer_id}.mlp.down_proj",
+            min_correlation=DEQUANT_MIN_CORRELATION,
+            max_residual_ratio=DEQUANT_MAX_RESIDUAL_RATIO,
+        )
+        if not check["usable"]:
+            excluded[str(layer_id)] = check["reason"]
+            print(
+                f"    layer {layer_id} EXCLUDED: "
+                f"{check['reason'][:110]}",
+                flush=True,
+            )
+            continue
+
         residual, _fmt = _residual(
             packed, fp16_w, expected_format
         )
@@ -318,6 +382,26 @@ def run_target(
                 flush=True,
             )
 
+    if not residuals:
+        return {
+            **base,
+            "metrics": {
+                "dequant_verification": verification,
+                "layers_excluded": excluded,
+            },
+            "status": "NOT_RUN",
+            "gate_status": "NOT_RUN",
+            "notes": (
+                f"Every {expected_format.upper()} layer failed "
+                "verification against the FP16 reference, so no residual "
+                "was computed: "
+                + "; ".join(f"layer {k}: {v}" for k, v in list(excluded.items())[:3])
+                + " Reporting NOT_RUN rather than a BER over "
+                "unverified weights."
+            ),
+            "source": "run",
+        }
+
     mean_mag = sum(
         float(r.abs().mean()) for r in residuals.values()
     ) / len(residuals)
@@ -325,6 +409,12 @@ def run_target(
         f"  [exp9] mean |residual| across layers: {mean_mag:.6f}",
         flush=True,
     )
+    if excluded:
+        print(
+            f"  [exp9] {len(excluded)}/{n_layers} layers excluded as "
+            f"unverified: {sorted(int(k) for k in excluded)}",
+            flush=True,
+        )
 
     # --- Embed / extract / decrypt --------------------------------
     try:
@@ -372,6 +462,7 @@ def run_target(
                 "dequant_verification": verification,
                 "quant_config": quant_cfg,
                 "layers": len(residuals),
+                "layers_excluded": excluded,
                 "mean_residual_magnitude": mean_mag,
                 "payload_bits": PAYLOAD_BITS,
                 "bits_embedded": result.bits_embedded,
@@ -386,7 +477,15 @@ def run_target(
             "notes": (
                 f"Clean BER {ber} through the {expected_format.upper()} "
                 "dequantization path, verified against the FP16 "
-                "reference."
+                "reference"
+                + (
+                    f" ({len(excluded)}/{n_layers} layers excluded as "
+                    f"unverified: "
+                    f"{', '.join(sorted(excluded, key=int))})"
+                    if excluded
+                    else " on all layers"
+                )
+                + "."
             ),
             "source": "run",
         }
@@ -437,7 +536,7 @@ def run(
 
     return {
         "experiment": EXPERIMENT,
-        "title": "GPTQ / AWQ beyond NF4",
+        "title": "GPTQ / AWQ — non-NF4 4-bit formats",
         "configuration": {
             "targets": targets,
             "payload_bits": PAYLOAD_BITS,
