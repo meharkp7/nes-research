@@ -2145,3 +2145,142 @@ consistency, 42 tests, manifest unchanged at 35 PASS / 6 FAIL /
 0 NOT_RUN / 0 ERROR — exp21 is the ninth standalone artifact outside
 the manifest grid. W5.2 closes with a FAIL that is the finding.
 W5.4 (per-layer strategy selection) is the last W5 item.
+
+## 28. W5.4 — per-layer LWE grid width (exp22)
+
+Suggested order item 7 closes (`RESEARCH_PLAN` §4 W5.4): *"Per-layer
+strategy selection. Different grid width per layer, keyed by layer
+noise. Layers differ: Qwen2.5-7B spans 0.0012–0.0130, Phi-3 spans
+0.0026–0.0031."*
+
+### 28.1 Scoping, before any code
+
+Two measurements decided the design:
+
+1. **Is there a dial?** Qwen2.5-3B's per-layer residual std spans
+   **0.00114–0.00262 — 2.30×**, median 0.00241 (the plan's ~10× quote
+   is the 7B). A real but modest dial: two quiet outliers below a
+   tight pack.
+2. **Can embed and extract agree on a width?** Embed sees *original*
+   layer std; the extractor sees *stego* std. Measured directly: an
+   LWE embed moves per-layer std by at most **0.0153%**, and zero
+   4-decimal buckets flip — so `round(std, 4)` coarsening makes the
+   two views bucket-identical on this model (the gate's BER 0.0
+   would catch any edge case).
+
+### 28.2 What was built
+
+- `EmbeddingConfig.lwe_width_rule` — `"global"` (default: the shipped
+  absolute 0.010, byte-compatible with exp10/11/12) or `"per_layer"`:
+  `w_l = clip(4.0 × round(std_l, 4), 0.005, 0.020)` — proportional to
+  the layer's own noise (equalizing grid-to-noise ratio: a global
+  grid is 8.77σ wide on the quietest layer, 3.81σ on the noisiest),
+  clipped to exp11's measured window, scale 4.0 putting the median
+  layer at ~0.0096 ≈ the global default.
+- **exp22**: cells = width rules, exp10's three axes each via
+  `config_overrides`, `THRESHOLDS["exp22"]` = exp10's four reused
+  numbers (0.0 / 0.02 / 0.10 / 0.55), per-cell verdicts (exp18's
+  rule), deltas against the global control as the measurement; the
+  global cell anchored to exp18's committed lwe cell (recorded,
+  never gated); the widths table recorded so the artifact shows what
+  the extractor computes.
+
+### 28.3 Run 1: the design's own failure, diagnosed not smoothed
+
+The global control reproduced exp18's lwe cell **bit-for-bit**
+(σ0.002 = 0.01267550702028081, detector 0.50 — lwe's invariant, now
+measured in six separate experiments) and won. per_layer round-tripped
+at **0.0** and hid (detector 0.50) — then **collapsed under noise**:
+**0.0223 at σ0.001** (gate 0.02, fails narrowly) and **0.5747 at
+σ0.002** (near chance, against global's 0.0127).
+
+Pre-registration honesty: the prediction said per_layer "can only
+match or trail global's" robustness — right direction — but attributed
+it to quiet layers sitting at the window floor. The actual cause was
+verified numerically and it is different:
+
+**The extractor sizes the grid from the tensor it receives, and the
+robustness measurement hands it the *noisy* tensor.** Noise inflates
+std through `√(std² + σ²)` (quiet layer 0.00114 → 0.00230 at
+σ=0.001), and at 4-decimal precision **36/36 layers bucket
+differently at every σ tested** — the extractor's grid drifts wider
+than the embedder's (0.0096 → 0.0104 at σ0.001; 0.0096 → 0.0124 at
+σ0.002), and carriers at high cell indices decode with the wrong
+parity. Every number coheres: σ0 (no inflation) = exact 0.0;
+mismatch grows with σ, BER tracks it. Embedding drift (0.0153%,
+§28.1) was never the problem — **magnitude-keying is unbuildable at
+extract time**: the statistic moves under exactly the perturbation
+the gate measures.
+
+### 28.4 `layer_rank`: the keying noise cannot move
+
+Run 1's diagnosis is preserved in the artifact as
+`noise_bucket_flips` (recomputed analytically from its own recorded
+stds), and it suggested the fix: `√(std² + σ²)` is **strictly
+monotone**, so the *rank order* of layer noise is preserved exactly
+under any σ. Widths keyed to rank are therefore identical at embed
+and extract by construction, while still running different widths
+per layer: a fixed ladder `[0.005, 0.010]` by rank (ties on layer
+id; constants, so no endpoint depends on either side's view).
+
+| rule | round trip | σ0.001 | σ0.002 | σ0.005 | detector | wins |
+|---|---|---|---|---|---|---|
+| global | **0.0** | 0.0 | 0.0127 | 0.3175 | 0.50 | **yes** |
+| per_layer | **0.0** | 0.0226 ✗ | 0.5763 ✗ | 0.6606 | 0.50 | no |
+| layer_rank | **0.0** | 0.0015 ✓ | 0.0736 ✓ | 0.4269 | 0.50 | **yes** |
+
+Deltas vs global: layer_rank +0.0015/+0.0609 (robustness), detector
+0.0; per_layer +0.0226/+0.5636, detector 0.0.
+
+### 28.5 The reading
+
+1. **The plan's literal design fails, with its cause in numbers.**
+   Widths keyed to *measured* layer noise cannot survive the
+   robustness gate, because the extractor's measurement of layer
+   noise is contaminated by the attack being measured. exp22
+   records the failure mode (36/36 bucket flips per σ, recomputable
+   from the artifact) rather than a verdict without a mechanism.
+2. **The salvageable half passes.** Rank-keyed heterogeneity
+   round-trips at 0.0 and clears both robustness gates — agreement
+   by construction, tested against the same protocol.
+3. **But heterogeneity does not move the frontier.** The lwe
+   detector is **width-blind** — 0.50 on all three cells, seventh+
+   reproduction of an invariant now spanning exp10/12/16/18/20 and
+   exp22 — and the ladder's sub-default median width *costs*
+   robustness (σ0.002: 0.0127 → 0.0736). The shipped **global
+   0.010 stays the best point of the three** on this model: W5.4's
+   answer is "the dial exists and is buildable, and it does not
+   help" — a complete negative result, not a half-tested one.
+4. **Control discipline held throughout.** The global cell equals
+   exp18's lwe cell exactly (detector delta 0.0, curve bit-identical)
+   in both runs; per_cell verdicts [True, False, True] recompute from
+   the rows; unknown width rules fail loudly at build time.
+
+### 28.6 Verification
+
+```bash
+cd nes-llm
+../.venv/bin/python claim_audit.py                    # 98/98 (11 new)
+../.venv/bin/python check_consistency.py              # 9/9
+../.venv/bin/python -m unittest discover -s tests -p 'test_*.py'   # 46 OK
+../.venv/bin/python -m src.experiments.exp22_layer_widths \
+    --model Qwen/Qwen2.5-3B                           # 3 cells, ~22 min
+```
+
+State: 98/98 claims (11 new: artifact, gate = exp10's four reused,
+three rules + overrides, widths recomputed from the artifact's own
+stds for all three rules, 3 verdicts, 3 round trips, protocol pins,
+anchor with recomputed delta, both deltas vs control, the 36/36
+diagnosis recomputed analytically, and the pinned result table),
+9/9 consistency, 46 tests (4 new: global default byte-compatible,
+per-layer rule with a cross-instance round trip, bucket stability
+under the measured drift band, rank agreement under
+`√(std²+σ²)` distortion + loud failure for unknown rules), manifest
+unchanged at 35 PASS / 6 FAIL / 0 NOT_RUN / 0 ERROR — exp22 is the
+tenth standalone artifact outside the manifest grid. **All of §7
+item 7 (W5) is now closed: 7a/exp19, W5.3/exp20, W5.2/exp21,
+W5.4/exp22.** Next in the suggested order: W6 model surgery, whose
+environment probe already recorded the blockers — `peft`, `gptqmodel`
+and `trl` absent (`bitsandbytes` present, NF4 reachable), so W6.3's
+GPTQ leg and the LoRA-typed paths are blocked as designed, not
+patched.

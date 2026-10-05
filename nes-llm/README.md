@@ -82,6 +82,7 @@ correcting them.
 | exp19 | adaptive routing as designed (W5.1): σ-estimator routes to lwe/neural/sign, round trip through the routed branch | BER 0.0 for every round trip that runs (exp3's number, reused); routing choice is measurement, not gate | **three models → three branches** (gemma→lwe, Qwen→neural, Llama→sign); Qwen's route fails design-as-written (no trained model) — recorded, fallback branches both 0.0 |
 | exp20 | sign/parity split dial (W5.3): parity share of carriers sweeps 0.0→1.0, exp10's three axes per cell | round trip 0.0, robustness 0.02/0.10, detector ≤ 55% (exp3/exp6/exp7's numbers, reused) | **the trade-off is a dial**: BER@σ0.002 0→0.0127 and detector 0.7875→0.50 with parity share; all 5 round trips 0.0; only pure parity wins, reproducing exp18's lwe cell exactly (delta 0.0) |
 | exp21 | QAE encode + LWE read-out (W5.2): one embed, same stego, matched vs parity read-out vs public correction | round trip 0.0 for BOTH readings (exp3's number, reused) | **FAIL is the finding**: raw interop **0.5433** (5,572/10,256) vs 0.0 gate, matched control 0.0 — attributable to the pairing; public correction returns 0.0, measuring `parity(v) = sign(v) ⊕ cell-parity(|v|)` (the "hybrid" = sign reading + public relabeling) |
+| exp22 | per-layer LWE grid width (W5.4): three width rules (global / magnitude-keyed / rank-keyed), exp10's three axes per cell | exp10's four numbers per cell (0.0, 0.02/0.10, 0.55 — reused) | **the dial is buildable and does not help**: global **wins** (0.0/0.0127, det 0.50, = exp18's lwe cell bit-for-bit); per_layer round-trips 0.0 but **fails robustness (0.0226/0.5763)** — cause measured: the extractor grids the *noisy* tensor, 36/36 buckets move per σ; layer_rank **wins** (0.0015/0.0736) yet costs robustness vs the global default; detector 0.50 on all three (width-blind) |
 
 Thresholds live in `experiment_registry.THRESHOLDS`. No experiment edits its
 own, and `claim_audit.py` pins them, so a gate cannot be quietly relaxed.
@@ -101,14 +102,18 @@ the design's own failure. exp20's per-cell verdicts are exp18's rule applied
 to five fractions of one scheme; the fraction sweep itself is the result.
 exp21's FAIL is the plan's own plausibility claim failing as written —
 interop 0.5433 vs the 0.0 gate, with its matched control at 0.0.
+exp22 carries per-cell verdicts (exp18's rule over three width rules):
+its per_layer cell fails both robustness gates with the cause
+measured and recorded, not smoothed.
 
 ## Reading order
 
 1. `../RESEARCH_LOG.md` — what was done, what broke, what was decided (§16 is
-   the AWQ story, §17 the final state and claim-audit findings, §19–§27 the
+   the AWQ story, §17 the final state and claim-audit findings, §19–§28 the
    Phase-B results so far: W4.2 keyless recovery, W3.2 blind patches, W2 LWE
    fidelity, W3.1 cross-scheme, W1.1 QAE round trip, W1.3 strategy matrix,
-   W5.1 adaptive routing, W5.3 split dial, W5.2 QAE/LWE interop).
+   W5.1 adaptive routing, W5.3 split dial, W5.2 QAE/LWE interop, W5.4
+   per-layer grid width — W5 fully closed).
 2. `../RESEARCH_PLAN.md` — every claim sorted MEASURED / FAIL / NOT_RUN, and
    what to do next (Phases A–D).
 3. `../results/final_research_summary.md` — the generated report.

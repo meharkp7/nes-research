@@ -40,12 +40,13 @@ Read `RESEARCH_LOG.md` first for how we got here and which mistakes to not repea
 | **Adaptive routing as designed (W5.1)** | three models → **three different branches** (gemma σ=0.000448→lwe, Qwen σ=0.001554→neural, Llama σ=0.007736→sign); every round trip that ran holds BER 0.0; Qwen's neural route fails design-as-written (no trained model) and is **recorded as the design's own**, both available branches round-trip 0.0 as its fallback | `results/exp19_adaptive_*.json` |
 | **Sign/parity split dial measured (W5.3)** | five parity shares × exp10's three axes: all round trips **BER 0.0**; BER@σ0.002 rises **0 → 0.0127** and detector falls **0.7875 → 0.50** with parity share — the stealth/robustness trade-off is a dial; pure parity **reproduces exp18's lwe cell exactly**, only it wins all gates | `results/exp20_split_dial_*.json` |
 | **QAE encode + LWE read-out (W5.2)** | plan called it plausible; measured **0.5433 vs the 0.0 gate → FAIL (the finding)**, matched control **0.0**; the public correction returns **0.0** — `parity(v) = sign(v) ⊕ cell-parity(|v|)` measured: the "hybrid" is sign reading plus a public relabeling | `results/exp21_qae_lwe_*.json` |
+| **Per-layer LWE grid width (W5.4)** | three width rules × exp10's axes: magnitude-keyed `per_layer` round-trips **0.0** but **fails robustness (0.0226 / 0.5763 vs gates 0.02 / 0.10)** — cause measured: the extractor sizes its grid from the *noisy* tensor, `√(std²+σ²)` moves **36/36 layer buckets** at every σ; rank-keyed `layer_rank` passes every gate (**0.0015 / 0.0736**); detector **0.50 on all three** (width-blind) and the ladder's sub-default widths cost robustness (σ0.002 0.0127→0.0736) → **global 0.010 stays the best point**; control = exp18's lwe cell bit-for-bit | `results/exp22_layer_widths_*.json` |
 | **NES round-trips at BER 0.0 through three 4-bit formats: NF4, GPTQ, AWQ** | GPTQ corr 0.9903 / AWQ corr 0.9941 (raw 0.9890) | `results/exp9_formats.json` |
 | 9 model ids covered, 0 ERROR | 35 PASS / 6 FAIL / **0 NOT_RUN** | `results/experiment_manifest.json` |
 
 **How those rows are kept honest.** `nes-llm/claim_audit.py` re-derives every
-MEASURED row above from disk: **87/87 pass**, with `check_consistency.py` at
-9/9 and a 42-test suite running green. Four claims in this document failed
+MEASURED row above from disk: **98/98 pass**, with `check_consistency.py` at
+9/9 and a 46-test suite running green. Four claims in this document failed
 that audit while it was being built — a coverage figure with no artifact
 behind it, an average reported as a maximum, a count lifted from a different
 measurement, and a grid count wearing a suite's name. All four are closed,
@@ -113,13 +114,13 @@ any session that touches a result.
 cd nes-llm
 ../.venv/bin/python run_nes_experiments.py --audit    # manifest matrix
 ../.venv/bin/python check_consistency.py              # 9/9 must pass
-../.venv/bin/python claim_audit.py                    # 87/87 must pass
+../.venv/bin/python claim_audit.py                    # 98/98 must pass
 ```
 
 `claim_audit.py` is this section made executable: each row is re-derived from
 the artifact it names — counts included, because every claim that failed this
 audit failed on a count while the values underneath stayed correct — and it
-exits non-zero on anything it cannot verify. It passes **87/87** as written.
+exits non-zero on anything it cannot verify. It passes **98/98** as written.
 
 Four claims in this document failed it. Three are corrected in the audit notes
 below (exp12 coverage, exp6 robustness, exp2's count) and the fourth — the
@@ -149,6 +150,7 @@ record.
 | **Adaptive routing as designed (W5.1)** | three models → **three different branches**: gemma σ **0.000448**→lwe, Qwen σ **0.001554**→neural (route fails design-as-written — no trained model — `EmbeddingError` recorded, forced sign/lwe fallbacks both **0.0**), Llama σ **0.007736**→sign; all four round trips that ran **BER 0.0**; each branch recomputes exactly from recorded σ + thresholds | `exp19_adaptive_*.json` |
 | **Sign/parity split dial (W5.3)** | 5 fractions × Qwen2.5-3B: round trips **5/5 BER 0.0**, σ0.001 **0.0 everywhere**; detector **[0.7875, 0.6938, 0.70, 0.5875, 0.50]**, BER@σ0.002 **[0, 0.0034, 0.0067, 0.0095, 0.0127]** across parity share 0→1 (stealth↑ robustness↓); only pure parity wins; its detector **= exp18's lwe cell (delta 0.0)**, pure-sign endpoint +0.0375 from exp18's sign cell (fresh-key variance, mechanism verified bit-identical) | `exp20_split_dial_*.json` |
 | **QAE encode + LWE read-out (W5.2)** | one embed, same stego, three readings: matched **0.0** (control), raw LWE parity **0.5433** (5,572/10,256 — gate 0.0, **verdict FAIL**), public cell-parity correction **0.0**; `parity(v)=sign(v)⊕cell-parity(|v|)` measured, not asserted; complement prediction missed (carriers all ≥ one grid width: sampled min 0.013 > 0.010) — miss recorded | `exp21_qae_lwe_*.json` |
+| **Per-layer LWE grid width (W5.4)** | 3 rules × Qwen2.5-3B: round trips **3/3 BER 0.0**; **global** 0.0/0.0127, detector 0.50, wins; **per_layer** (magnitude-keyed) 0.0226/0.5763 → **FAILs both robustness gates** with the verified cause in-artifact (`noise_bucket_flips`: extractor's grid drifts under noise, 36/36 buckets move per σ); **layer_rank** (rank-keyed, agreement by construction) 0.0015/0.0736, **wins**; detector **0.50 ×3** (width-blind); deltas +0.0015/+0.0609 (rank) and +0.0226/+0.5636 (magnitude) vs global; control = exp18's lwe curve bit-for-bit, anchor delta 0.0 | `exp22_layer_widths_*.json` |
 | **GPTQ round trip** | BER **0.0**, 10,256/10,256 bits, corr 0.9903, 36/36 layers | `exp9_formats.json` |
 | **AWQ round trip** | BER **0.0**, 10,256/10,256 bits, corr 0.9941, **35/36 layers** | `exp9_formats.json` |
 | Suite coverage | 35 PASS / 6 FAIL / 0 NOT_RUN / 0 ERROR | `experiment_manifest.json` |
@@ -199,7 +201,7 @@ model — including the pair that exposed the staleness.
 
 `python nes-llm/claim_audit.py` re-derives every MEASURED claim in this
 section from `results/*.json` and exits non-zero on any it cannot
-verify. All 87 checks pass at the time of writing. Run it before citing
+verify. All 98 checks pass at the time of writing. Run it before citing
 any number here.
 
 ### FAIL — measured, gate did not pass, not rewritten
@@ -219,7 +221,7 @@ any number here.
 |---|---|---|
 | GPTQ + AWQ dequantizers | `src/quantization/adapters.py` | 20 tests in `tests/test_quantization_adapters.py` |
 | `verify_dequantization` gate | `adapters.py` | includes the absorbed-scale correction and the NaN-safe comparison |
-| `claim_audit.py` | `nes-llm/claim_audit.py` | 87 checks re-deriving every MEASURED claim — counts included — and exiting non-zero on any it cannot verify |
+| `claim_audit.py` | `nes-llm/claim_audit.py` | 98 checks re-deriving every MEASURED claim — counts included — and exiting non-zero on any it cannot verify |
 | `QuantizationStrategy`, `NF4QuantizationStrategy` | strategy registry | per-tensor ABC, needs an adapter; **never run** |
 | Neural strategy `train_sampled()` | adaptive strategy | **never run** |
 | `adaptive_strategy` noise routing | strategy registry | **never run** |
@@ -503,9 +505,15 @@ Increasing ambition. Each is a separate artifact; none replaces an existing resu
   detectability falls monotonically with parity share (σ0.002 0→0.0127,
   detector 0.7875→0.50); pure parity reproduces exp18's lwe cell
   exactly and is the only cell winning all gates. First pass, 1 model.
-- **W5.4 — per-layer strategy selection.** Different grid width per layer, keyed by
-  layer noise. Layers differ: Qwen2.5-7B spans 0.0012–0.0130, Phi-3 spans
-  0.0026–0.0031.
+- **W5.4 — per-layer strategy selection — done, exp22: buildable, and it does not
+  help.** Magnitude-keyed widths (`clip(4.0·round(std,4), 0.005, 0.020)`)
+  round-trip 0.0 but **fail both robustness gates** (0.0226/0.5763): the
+  extractor sizes its grid from the tensor it receives, and under noise that
+  std is inflated — 36/36 layer buckets move at every σ (recorded, recomputed
+  from the artifact). Rank-keyed widths (noise cannot move order) **pass
+  every gate** — but the detector is width-blind (0.50 ×3) and the ladder's
+  sub-default median costs robustness (σ0.002 0.0127→0.0736): **the shipped
+  global 0.010 stays the best point of the three.**
 
 ### W6. Model surgery
 
@@ -655,7 +663,7 @@ invalidate later work.
 | 4 | **W3.1** cross-scheme detector — **done, exp16: PASS (scoped)** | the claim's main weakness (sign→LWE: no transfer, control-validated; reverse uninformative) |
 | 5 | **W1.1** QAE adapter + round trip — **done, exp17: `qae` PASS, `nf4_qae` BLOCKED** | adds two strategies cheaply (one wired, one's blocker diagnosed) |
 | 6 | **W1.3** strategy × model matrix (3 models) — **done, exp18: one axis decides** | the breadth deliverable (first pass; 7-model widening remains) |
-| 7 | **W5** hybrids — **7a done, exp19 (adaptive); W5.3 done, exp20 (parity-share dial); W5.2 done, exp21 (FAIL = finding: interop 0.5433 vs 0.0, parity ≡ sign ⊕ public relabeling)** | most interesting science — only W5.4 (per-layer selection) left |
+| 7 | **W5** hybrids — **all done: 7a/exp19 (adaptive), W5.3/exp20 (parity-share dial), W5.2/exp21 (FAIL = finding: interop 0.5433 vs 0.0, parity ≡ sign ⊕ public relabeling), W5.4/exp22 (buildable but does not help: magnitude-keying fails the noise gate with cause measured, rank-keying passes, global width stays best)** | most interesting science — closed; only the 7-model widening of exp18 remains in the whole programme |
 | 8 | **W6** model surgery | determines viability |
 | 9 | **W7** Pareto frontier | the strongest publishable framing |
 | 10 | **W1.4** consolidation | cleanup; do before W8 |
