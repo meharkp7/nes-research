@@ -1,0 +1,87 @@
+{
+  "experiment": "exp17",
+  "title": "W1.1 \u2014 QAE round trip (adapter -> production path)",
+  "model_id": "Qwen/Qwen2.5-3B",
+  "family": "qwen",
+  "status": "PASS",
+  "gate": {
+    "max_ber": 0.0,
+    "measured_ber": 0.0,
+    "decrypt_ok": true,
+    "recovered_matches_original": true,
+    "status": "PASS",
+    "gate_source": "experiment_registry.THRESHOLDS['exp17']"
+  },
+  "metrics": {
+    "payload_bits_requested": 50000,
+    "bits_embedded": 48256,
+    "bits_transmitted": 48256,
+    "bits_extracted": 48256,
+    "bits_compared": 48256,
+    "bit_errors": 0,
+    "ber": 0.0,
+    "decrypt_success": true,
+    "recovered_matches_original": true,
+    "layers_used": 36,
+    "total_values": 811597824,
+    "changed_values": 24076,
+    "changed_ratio": 2.9664939072088987e-05,
+    "max_abs_delta": 0.16015625,
+    "mean_abs_delta_over_changed": 0.03546278966703097
+  },
+  "probes": {
+    "qae": {
+      "strategy": "qae",
+      "embed_ok": true,
+      "extract_without_cover_ok": true,
+      "recovered_bits": 48256,
+      "bit_errors": 0,
+      "ber": 0.0,
+      "error": "",
+      "bits_embedded": 48256,
+      "carriers_used": 48256,
+      "bits_compared": 48256,
+      "structurally_usable": true
+    },
+    "nf4_qae": {
+      "strategy": "nf4_qae",
+      "embed_ok": false,
+      "extract_without_cover_ok": false,
+      "recovered_bits": 0,
+      "bit_errors": null,
+      "ber": null,
+      "error": "RuntimeError: nf4_qae is BLOCKED: its reference residual comes from ReferenceBuilder.build(fp16_weight, nf4_weight), but strategy.embed only receives (residuals, bits, selector_indices), EmbeddingConfig carries no weights or model id, and no caller passes IntelligentEmbedder.embed's optional weight arguments \u2014 the reference depends on the absolute weights and cannot be rebuilt from cached residuals. See StrategySpec.notes for the full record.",
+      "structurally_usable": false
+    }
+  },
+  "structural": [
+    {
+      "strategy": "qae",
+      "status": "READY",
+      "forces_sign_flip": true,
+      "extract_needs_cover": false,
+      "needs_trained_model": false,
+      "class": "src.embedding.strategies.quantization_strategy.QuantizationStrategy (via QaeDictAdapter here)",
+      "notes": "Quantization-aware embedding, dict-contract adapter in this module (QaeDictAdapter): per layer it delegates to the per-tensor ABC's own embed(), so the strategy's margin logic runs unmodified. Reading the class: it writes +max(|r|, 0.25*std) / -max(|r|, 0.25*std) \u2014 that is SIGN-FAMILY encoding with a margin floor, and the 'stays inside the NF4 bucket' property the plan attributes to QAE lives in NF4QuantizationStrategy, not here. Extraction is sign-based, which is the correct counterpart (same polarity as sign)."
+    },
+    {
+      "strategy": "nf4_qae",
+      "status": "BLOCKED",
+      "forces_sign_flip": false,
+      "extract_needs_cover": true,
+      "needs_trained_model": false,
+      "class": "src.embedding.strategies.nf4_quantization_strategy.NF4QuantizationStrategy (adapter BLOCKED)",
+      "notes": "Encodes bit = reference_residual +/- 0.25*std, where the reference residual comes from ReferenceBuilder.build(fp16_weight, nf4_weight) \u2014 one extra NF4 quantize/dequantize cycle. Blocked on the contract, not on implementation: strategy.embed receives only (residuals, bits, selector_indices), EmbeddingConfig carries no model id or weights, and no caller passes IntelligentEmbedder.embed's optional fp16_weights/quantized_weights (verified by grep). The reference depends on the ABSOLUTE weights, so it cannot be rebuilt from cached residuals alone. Extraction would also need the same reference. Wiring this honestly requires extending the shared embed contract for every strategy \u2014 an author decision, recorded here rather than bolted onto one experiment."
+    }
+  ],
+  "method": {
+    "adapter": "QaeDictAdapter in strategy_registry \u2014 per-layer delegation to QuantizationStrategy.embed, BaseEmbedder-shaped result wrapping",
+    "round_trip": "exp3's exact flow: DecryptPipeline, BER compared against the transmitted bit sequence",
+    "probe": "probe_extraction without the cover (residuals_ref deliberately withheld)",
+    "strategy_status": {
+      "qae": "READY",
+      "nf4_qae": "BLOCKED"
+    }
+  },
+  "notes": "qae is measured through the production path; nf4_qae is registered BLOCKED and its probe error records why (reference residual needs weight tensors the contract does not carry). Per plan \u00a72 W1.1: QAE is quantization-aware \u2014 any comparison it wins must be stated as 'well-matched to NF4', not as a stealth claim about other schemes."
+}
