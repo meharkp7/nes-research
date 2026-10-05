@@ -468,6 +468,13 @@ model.
 layers. Same 55% gate and same detector architecture as the recorded 70.5%
 sign result.
 
+> **⚠ Audit finding (§17).** The artifact for this run,
+> `results/exp12_lwe_cross_model.json`, contains three measured models,
+> not five: Qwen2.5-3B and Mistral-7B are absent from the file
+> altogether. Every row above that *is* in the file matches exactly. The
+> coverage claim is unverified until exp12 is re-run; the per-model
+> numbers for the three that are present stand.
+
 Why the exactly-50.00% readings are credible, given I was fooled twice by
 this number earlier: the same detector, same code, same settings returns
 72–74% against sign and 70.62% against LWE at grid width 0.050. A detector
@@ -565,7 +572,7 @@ the substantive result of this work:
 | 3c. Grid width found to be floor-pinned | alpha was a **no-op**; sweeping it would have proved nothing |
 | 3d. Frontier swept | width 0.005–0.020 satisfies **both** gates |
 | 3e. `DEFAULT_GRID_WIDTH = 0.010` set | middle of the window, margin both sides |
-| 3f. Confirmed across models | **5 of 5 measured models pass both gates** |
+| 3f. Confirmed across models | **5 of 5 measured models pass both gates** ⚠ coverage unverified, see §17 |
 
 Measured comparison, sign vs LWE at the chosen width:
 
@@ -601,7 +608,7 @@ Does **not** establish:
   (key-derived grid, parity encoding). There is no lattice, no matrix A and
   no SIS/LWE instance, so it is not post-quantum secure and the docstring
   in `lwe_strategy.py` claiming otherwise is unsupported. Not renamed —
-  see §16.
+  see §17.
 
 **Decision:** LWE is production-selectable via
 `EmbeddingConfig.embedding_strategy='lwe'`. **Sign remains the default.**
@@ -745,8 +752,10 @@ a dequantizer that is slightly off; the layout is not understood.
 | Qwen2.5-3B-Instruct-GPTQ-Int4 | **PASS** | clean **BER 0.0**, mean abs residual 0.002787, corr 0.9903 |
 | Qwen2.5-3B-Instruct-AWQ | **NOT_RUN** | dequantization unverified (corr 0.2343) |
 
-**NES works beyond NF4.** GPTQ carries a payload at BER 0.0 through a
-format-specific dequantization path verified against the FP16 reference.
+**One non-NF4 format round-trips at BER 0.0.** GPTQ carries a payload
+through a format-specific dequantization path verified against the FP16
+reference. One format, one model, one payload size — see §16 for the
+narrowed claim that now covers both formats.
 
 AWQ is recorded NOT_RUN rather than given a BER. A wrong dequantizer
 produces a residual of the right shape and a plausible magnitude —
@@ -755,10 +764,10 @@ downstream would have objected. The experiment would have reported a
 number and measured nothing. That is the specific failure this session
 has been guarding against, and it is now gated in code.
 
-**Not done:** AWQ's layout. The honest next step is installing `gptqmodel`
-or `autoawq` and diffing against its unpack, rather than continuing to
-guess. `zero_point: true` in the config and the output-axis packing are
-the likely areas.
+**Not done at the time:** AWQ's layout. Recorded here because the plan I
+wrote was wrong in a useful way: the next step I proposed was installing
+`gptqmodel` or `autoawq` and diffing against its unpack. Reading the
+unpack was enough, and it cost nothing — §16.
 
 ---
 
@@ -803,10 +812,157 @@ Gemma-9B.
 
 ---
 
-## 16. Final state
+## 16. Item 2 — Exp9 AWQ: what the gate was actually comparing
 
-**Coverage: 33 PASS, 6 FAIL, 2 NOT_RUN, 0 ERROR across 7 models.**
-Every registry model now has cells. 9/9 consistency checks pass.
+### The layout was a guess only until it was read from source
+
+§14 closed with "install `gptqmodel`/`autoawq` and diff against its unpack,
+rather than continuing to guess". The useful version of that turned out to
+be reading the unpack, not installing it. `awq/utils/packing_utils.py`:
+
+```
+AWQ_ORDER         = [0, 2, 4, 6, 1, 3, 5, 7]
+AWQ_REVERSE_ORDER = [0, 4, 1, 5, 2, 6, 3, 7]
+```
+
+`unpack_awq` fills column-wise, nibble `i` receiving element `order_map[i]`
+of each group of 8, so element `k` lands in nibble
+`AWQ_NIBBLE_ORDER = (0, 4, 1, 5, 2, 6, 3, 7)` — an even/odd interleave,
+which is exactly why the 24-variant rotation search could not reach it.
+`dequantize_gemm` then does `repeat_interleave(group_size)` on scales and
+zeros and computes `(iweight - izeros) * scales`.
+
+`dequantize_awq_layer` is equivalent to that, line for line. The layout is
+now **read**, not inferred. But that only moves the question: if the order
+is right, why did the gate say 0.2343, and why did 52 of 252 modules still
+fail after the fix?
+
+### AWQ does not quantize the weight you think it does
+
+AWQ scales channels and folds the inverse into whatever precedes the linear
+layer, so the checkpoint holds `W / c` while the LayerNorm holds `~c`. The
+network is numerically unchanged. Measured on layer 0 of the real
+checkpoint, `c` from `W ≈ c · dequantized`:
+
+| module | factor `c` | the LayerNorm that carries `1/c` | measured LN ratio (awq/ref) |
+|---|---|---|---|
+| `q_proj` | 1.322 | `input_layernorm` | **1.340** |
+| `gate_proj` | 1.781 | `post_attention_layernorm` | **1.790** |
+| `down_proj` | 1.882 | *(none — absorbed into `up_proj`)* | — |
+
+The first two rows are the point: two independently measured quantities,
+the weight factor and the LayerNorm ratio, agree to ~1%. That is what makes
+the factor an absorbed scale rather than a bug in our unpacking. The third
+row is the same mechanism one stage later — AWQ scales the intermediate
+channel by scaling `up_proj`'s output and compensating in `down_proj`'s
+input, because a LayerNorm does not precede `down_proj`.
+
+So the fair comparison is against `W · s` with `s` a per-channel factor,
+not against `W`. **The thresholds stay at 0.95 / 0.5.** Only the basis of
+the comparison changes, and the correction is deliberately narrow: a column
+fit for every module, plus a row fit for `up_proj` alone (its output
+channels are the intermediate channel). A free rescale would have been a
+real risk, so the gate was checked against a control — see below.
+
+### The layer-2 anomaly, timeboxed and then stopped
+
+`model.layers.2.mlp.up_proj` dequantizes to std 0.419 against a reference
+std of 0.014 (30×, raw correlation 0.171), and `model.layers.2.mlp.down_proj`
+quantizes 8959 of 11008 input rows **exactly to the zero point** (81%, in
+only 86 distinct values — one per group, i.e. `q == z`). Its stored `scales`
+are inconsistent with its own indices: 92.8% of the log-ratio variance is
+explained by a row × column factor, so the values are right in distribution
+and wrong in slot.
+
+What the checkpoint does *not* do is break:
+
+| reconstruction | perplexity |
+|---|---|
+| reference model | 33.59 |
+| AWQ, as published | **35.25** |
+| AWQ with layer-2 `up_proj` zeroed | 40.65 |
+| AWQ with layer-2 `up_proj` set to the reference weight | **inf** |
+| AWQ with layer-2 `up_proj` + `down_proj` both set to reference | 6554.5 |
+
+The `inf` row is the informative one. The *correct* reference weight is the
+one that overflows, because layer 2's `down_proj` is co-adapted to its own
+`up_proj`; a clean weight pair wedged into half of an already-scaled pair
+does not make the layer correct. Traced to fp16: layer 2's MLP output
+reaches max 3252 / sd 4.18 where every other layer sits near sd 0.4, the
+residual stream jumps ~8× at layer 2 and stays elevated, and RMSNorm
+normalizes it away downstream — which is why perplexity only moves 5%.
+
+Verdict: a **checkpoint-level defect in 3 of 252 modules**, not a
+dequantizer defect. Timeboxed, documented, not resolved by moving a
+threshold.
+
+### The gate, and the control that keeps it honest
+
+Run over all 252 modules of the real checkpoint through the shipped
+`verify_dequantization`, plus GPTQ as the unchanged reference path:
+
+| condition | modules passing 0.95 / 0.5 |
+|---|---|
+| AWQ, correct order, raw comparison | 200 / 252 |
+| AWQ, correct order, absorbed scale removed | **249 / 252** |
+| AWQ, **sequential** order, *same* correction | **0 / 252** |
+| GPTQ (path untouched by this change) | **252 / 252** |
+
+The third row is the one that matters. Removing a per-channel scale is the
+kind of correction that could quietly paper over a layout bug — a wrong
+nibble order rearranges values *within* each group of eight, and a
+sufficiently generous fit might have absorbed it. It does not: 0 of 252
+survive, with correlations around 0.20–0.28. The gate keeps its teeth.
+
+The three that fail the corrected gate, and are reported as failures:
+
+| module | correlation | residual ratio |
+|---|---|---|
+| `model.layers.2.mlp.down_proj` | 0.9337 | 0.358 |
+| `model.layers.33.self_attn.v_proj` | 0.9147 | 0.404 |
+| `model.layers.32.self_attn.v_proj` | 0.9211 | 0.389 |
+
+One latent bug fell out of writing this: the gate compared with
+`correlation < min_correlation`, and `nan < 0.95` is **False** — a constant
+or all-zero dequantization would have sailed through both thresholds and
+been reported as verified. Both comparisons are now written as
+`not (x >= threshold)`, and there is a test that asserts an all-zero
+dequantization fails.
+
+### Result
+
+| target | status | evidence |
+|---|---|---|
+| Qwen2.5-3B-Instruct-GPTQ-Int4 | **PASS** | BER **0.0**, 10,256/10,256 bits, corr 0.9903, ratio 0.1402, 36/36 layers |
+| Qwen2.5-3B-Instruct-AWQ | **PASS** | BER **0.0**, 10,256/10,256 bits, corr 0.9941 (raw 0.9890), ratio 0.1093, **35/36 layers** (layer 2 excluded by name in `metrics.layers_excluded`) |
+
+**The claim this supports, stated narrowly:** a payload round-trips at
+BER 0.0 through three 4-bit checkpoint formats — NF4, GPTQ, AWQ — each read
+by a format-specific dequantizer and each verified against its own
+FP16/bf16 reference *before* any residual is computed.
+
+What that does **not** say: one model (Qwen2.5-3B-Instruct), one payload
+size (10,256 bits), one module type (`mlp.down_proj`), and a **clean**
+channel — no noise, no patch, no adversary. Robustness and detectability
+were measured for NF4's sign embedding only (§7, §12), never for GPTQ or
+AWQ. "NES works beyond NF4" as an unqualified sentence is broader than the
+evidence; this is the version that survives.
+
+---
+
+## 17. Final state
+
+**Coverage: 35 PASS, 6 FAIL, 0 NOT_RUN, 0 ERROR.**
+Every registry model now has cells, and no cell is left unrun. 9/9
+consistency checks pass.
+
+Of the 41 cells: 33 sit on the 7-model NF4 grid, 2 are the quantized
+checkpoints outside it (Exp9's GPTQ and AWQ targets), and 6 are FAIL.
+"7 models covered, 0 errors" describes only the NF4 grid — the NF4
+path (`bitsandbytes`, `nf4`, group 64) is what those 33 cells measure.
+The two non-NF4 cells are separate evidence from separate dequantizers
+and are listed separately below; neither is an NF4 result, and no NF4
+cell was reused to produce them.
 
 ```
 model                                      exp1   exp2   exp3   exp6   exp7
@@ -824,23 +980,65 @@ Plus, outside the NF4 grid:
 | | result |
 |---|---|
 | exp8 cross-model | FAIL (driven by the neural detector) |
-| exp9 GPTQ | **PASS, clean BER 0.0**, dequant corr 0.9903 |
-| exp9 AWQ | NOT_RUN (dequant unverified, corr 0.2343) |
-| exp10/exp11/exp12 strategies | LWE grid width passes both gates on 5 of 5 |
+| exp9 GPTQ | **PASS, BER 0.0**, dequant corr 0.9903, 36/36 layers |
+| exp9 AWQ | **PASS, BER 0.0**, dequant corr 0.9941 (raw 0.9890), 35/36 layers |
+| exp10/exp11/exp12 strategies | LWE grid width passes both gates on every model it was measured on ⚠ |
+
+### Claim audit findings
+
+Two claims did not survive the final audit. Both are recorded rather
+than quietly corrected, because a document that only ever gets righter
+is not an audit.
+
+**1. exp12 coverage — open.** §7 and its commit message state *5 of 5
+measured models pass both gates*, with a six-row table.
+`results/exp12_lwe_cross_model.json` holds **four entries, three
+measured**: TinyLlama SKIPPED (0-layer cache), then Qwen2.5-7B,
+Llama-3.1-8B and gemma-2-9b. Qwen2.5-3B and Mistral-7B are not in the
+file at all — not SKIPPED, absent — and no archived version of that
+artifact ever contained them, although `cache_status` reports both
+caches complete today. Two independent records disagree and only one is
+an artifact.
+
+This is a coverage discrepancy, not a contradiction: every model that
+*is* in the file passes both gates at BER 0.0000 / detector 50.00%,
+which is also what the 5-row table reports. The claim is worded "every
+model it was measured on" until exp12 is re-run across all six cached
+models. **Do not cite 5/5 until that run lands.**
+
+**2. "7 models covered, 0 errors" — closed.** Retired as misleading.
+Those 33 cells are the **NF4** grid (`bitsandbytes`, nf4, group 64). The
+GPTQ and AWQ cells sit on separate checkpoints with separate
+dequantizers; no NF4 cell was reused to produce them. The current figure
+is 9 model ids, 35 PASS / 6 FAIL / 0 NOT_RUN, with the format split
+stated wherever the number appears.
+
+The audit's lesson is the session's own: the number that looks finished
+is the one worth re-reading. "5 of 5" was written from console output,
+and console output is not an artifact.
 
 ### The failures, and why none were "fixed"
 
 | failure | verdict |
 |---|---|
 | exp2 (6 of 7 models) | criterion is quantization-format dependent (FP4 passes, NF4 fails); threshold left unchanged — a research decision, not a code fix |
-| exp7 neural, sign embedding | 70.5% vs 55%; proved structural across a 100× alpha and 5× gamma sweep. LWE at grid width 0.010 reaches 50.00% and passes on 5 of 5 models |
+| exp7 neural, sign embedding | 70.5% vs 55%; proved structural across a 100× alpha and 5× gamma sweep. LWE at grid width 0.010 reaches 50.00% and passes on every model it was measured on ⚠ |
 | exp8 | FAIL is correct: it aggregates and inherits the neural FAIL |
 
 ### Open, deliberately not done
 
-- **AWQ layout.** Best of 24 brute-forced variants reaches correlation
-  0.2343. The next step is installing `gptqmodel`/`autoawq` and diffing
-  against its unpack, not more guessing.
+- **Three AWQ modules excluded from Exp9's residual set.**
+  `model.layers.2.mlp.down_proj` (corr 0.9337), `model.layers.32` and
+  `model.layers.33` `self_attn.v_proj` (0.9211 / 0.9147) fail the
+  verification gate after the absorbed scale is removed. They are named
+  in `metrics.layers_excluded` rather than silently embedded into, and
+  the two `v_proj` ones are outside Exp9's module (`mlp.down_proj`)
+  entirely. Investigating them further was timeboxed and stopped — see
+  §16.
+- **Robustness and detectability for non-NF4 formats.** Exp9 measures a
+  *clean* channel: no noise, no patch, no adversary, one payload size
+  (10,256 bits), one module type (`mlp.down_proj`). Every σ-sweep and
+  every detector number in §7/§12 belongs to NF4 sign embedding.
 - **Cross-scheme detector.** Every detectability number uses a detector
   trained against the same scheme it tests. A detector trained on sign
   and tested on LWE is the stronger experiment and has not been run.
