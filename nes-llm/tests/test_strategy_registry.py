@@ -257,6 +257,55 @@ class RoundTripTests(unittest.TestCase):
             extractor_for("sign", None), SignBasedExtractor
         )
 
+    def test_qae_round_trips_without_cover(self):
+        """W1.1: the dict adapter must behave like any other strategy.
+
+        ``QaeDictAdapter`` wraps the per-tensor ABC; if its stream
+        slicing or layer order drifted from ``BaseEmbedder``'s, the
+        bits would decode in the wrong order and only a round trip
+        would notice.
+        """
+        strategy = build(self._config("qae"), "qae")
+        before = {
+            lid: t.clone() for lid, t in self.residuals.items()
+        }
+        result = embed_with(
+            strategy, self.residuals, self.bits, self.carriers
+        )
+        self.assertIsInstance(result, EmbeddingResult)
+
+        recovered = extract_with(
+            strategy, result.embedded_weights, result.carrier_indices
+        )
+        embedded_count = result.bits_embedded
+        self.assertGreater(embedded_count, 0)
+        self.assertEqual(embedded_count, len(recovered))
+        self.assertEqual(recovered, self.bits[:embedded_count])
+
+        # The adapter must not mutate the cover it was handed.
+        for lid, original in before.items():
+            self.assertTrue(
+                torch.equal(self.residuals[lid], original),
+                f"layer {lid} mutated",
+            )
+
+    def test_qae_statuses_and_nf4_qae_fails_loudly(self):
+        """W1.1: qae READY with sign-flip marked; nf4_qae BLOCKED.
+
+        A blocked strategy whose factory returned a silent fallback
+        would embed with the wrong mechanism and report success — the
+        factory must raise instead, with the diagnosis in the message.
+        """
+        self.assertEqual(spec("qae").status, "READY")
+        self.assertTrue(spec("qae").forces_sign_flip)
+        self.assertFalse(spec("qae").extract_needs_cover)
+        self.assertEqual(spec("nf4_qae").status, "BLOCKED")
+        self.assertTrue(spec("nf4_qae").extract_needs_cover)
+
+        with self.assertRaises(RuntimeError) as ctx:
+            build(self._config("nf4_qae"), "nf4_qae")
+        self.assertIn("BLOCKED", str(ctx.exception))
+
 
 if __name__ == "__main__":
     unittest.main(verbosity=2)
