@@ -392,6 +392,102 @@ class RoundTripTests(unittest.TestCase):
         with self.assertRaises(ValueError):
             build(config, "split")
 
+    def test_lwe_width_rule_global_default(self):
+        """W5.4: the default rule is byte-compatible with exp10/11/12.
+
+        Whatever the layer's noise, a default-config strategy derives
+        the shipped absolute width — the number exp11's frontier was
+        measured at. A silent per-layer default would move every
+        historical artifact's meaning.
+        """
+        from src.embedding.strategies.lwe_strategy import (
+            DEFAULT_GRID_WIDTH,
+        )
+
+        strategy = build(self._config("lwe"), "lwe")
+        self.assertEqual(strategy.width_rule, "global")
+        for lid, std in ((0, 0.00114), (1, 0.00241), (2, 0.00262)):
+            self.assertEqual(
+                strategy._derive_interval_width(lid, std),
+                DEFAULT_GRID_WIDTH,
+            )
+
+    def test_lwe_width_rule_per_layer(self):
+        """W5.4: width follows each layer's noise, clipped to the
+        exp11 window, and the round trip still holds — which is also
+        the embed/extract agreement test, because embed derives from
+        the original std and extract from the stego std."""
+        from src.embedding.strategies.lwe_strategy import (
+            PER_LAYER_WIDTH_CAP,
+            PER_LAYER_WIDTH_FLOOR,
+            PER_LAYER_WIDTH_SCALE,
+        )
+
+        config = self._config("lwe")
+        config.lwe_width_rule = "per_layer"
+        strategy = build(config, "lwe")
+        self.assertEqual(strategy.width_rule, "per_layer")
+
+        w_quiet = strategy._derive_interval_width(0, 0.00114)
+        w_median = strategy._derive_interval_width(1, 0.00241)
+        w_noisy = strategy._derive_interval_width(2, 0.00262)
+        w_loud = strategy._derive_interval_width(3, 0.00900)
+
+        # Proportional where inside the window, clipped at both ends.
+        # (std is coarsened to 4 decimals first: round(0.00241, 4)
+        # = 0.0024 — the bucketing is the mechanism, not an accident.)
+        self.assertEqual(w_quiet, PER_LAYER_WIDTH_FLOOR)
+        self.assertAlmostEqual(
+            w_median, PER_LAYER_WIDTH_SCALE * round(0.00241, 4),
+            places=12,
+        )
+        self.assertAlmostEqual(
+            w_noisy, PER_LAYER_WIDTH_SCALE * round(0.00262, 4),
+            places=12,
+        )
+        self.assertEqual(w_loud, PER_LAYER_WIDTH_CAP)
+        for w in (w_quiet, w_median, w_noisy, w_loud):
+            self.assertGreaterEqual(w, PER_LAYER_WIDTH_FLOOR)
+            self.assertLessEqual(w, PER_LAYER_WIDTH_CAP)
+
+        # A different strategy instance (the extractor's) must derive
+        # the same widths and decode the embedder's stream.
+        result = embed_with(
+            strategy, self.residuals, self.bits, self.carriers
+        )
+        reader_config = self._config("lwe")
+        reader_config.lwe_width_rule = "per_layer"
+        reader = build(reader_config, "lwe")
+        recovered = extract_with(
+            reader, result.embedded_weights, result.carrier_indices
+        )
+        self.assertEqual(recovered, self.bits[: len(recovered)])
+
+    def test_lwe_per_layer_width_bucket_stability(self):
+        """W5.4: embed and extract derive the width from different
+        views of the same layer (original vs stego std). The measured
+        per-layer shift from an LWE embed is <= 0.0153% on
+        Qwen2.5-3B; within that band the 4-decimal coarsening must
+        bucket identically, or the extractor's grid would drift."""
+        config = self._config("lwe")
+        config.lwe_width_rule = "per_layer"
+        embedder = build(config, "lwe")
+        reader = build(config, "lwe")
+
+        for lid, std in enumerate(
+            (0.00114, 0.00156, 0.00191, 0.00241, 0.00262)
+        ):
+            stego_std = std * (1 + 1.53e-4)
+            self.assertEqual(
+                embedder._derive_interval_width(lid, std),
+                reader._derive_interval_width(lid + 100, stego_std),
+                f"layer {lid}: width drifted between views",
+            )
+
+        # The spec must say the option exists — a rule nobody can
+        # discover from the registry is a rule nobody can verify.
+        self.assertIn("per_layer", spec("lwe").notes)
+
 
 if __name__ == "__main__":
     unittest.main(verbosity=2)

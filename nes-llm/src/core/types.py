@@ -60,6 +60,11 @@ class EmbeddingConfig:
     # W5.3 split dial: fraction of carriers carrying LWE-style parity
     # (the rest carry sign flips). Only read by SplitStrategy.
     split_fraction: float = 0.5
+    # W5.4 per-layer grid width: "global" (the shipped absolute
+    # DEFAULT_GRID_WIDTH, byte-compatible with exp10/exp11/exp12) or
+    # "per_layer" — width proportional to the layer's own std, clipped
+    # to exp11's measured window. Only read by LWEStrategy.
+    lwe_width_rule: str = 'global'
 
 
 @dataclass

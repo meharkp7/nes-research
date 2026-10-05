@@ -225,7 +225,12 @@ REGISTRY: Dict[str, StrategySpec] = {
             "grid width is derived from the stego tensor's own std, which "
             "is valid because the embedding is sparse (~0.001% of "
             "values). Requires LweParityExtractor rather than the "
-            "sign-based one production uses."
+            "sign-based one production uses. W5.4 adds "
+            "config.lwe_width_rule=\"per_layer\": width proportional "
+            "to each layer's own std (4-decimal coarsening so embed "
+            "and extract bucket identically), clipped to exp11's "
+            "measured window; the default \"global\" is the shipped "
+            "absolute width."
         ),
     ),
     "neural": StrategySpec(

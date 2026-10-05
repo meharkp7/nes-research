@@ -183,6 +183,20 @@ THRESHOLDS = {
         "max_ber": 0.0,
         "max_control_ber": 0.0,
     },
+    "exp22": {
+        "description": (
+            "Per-layer LWE grid width (W5.4): exp10's four numbers, "
+            "per cell — the global-width cell must hold them (it is "
+            "exp10's own lwe cell under another name) and the "
+            "per-layer cell must hold them too, or the rule is not "
+            "viable. The DELTA between cells is the measurement; "
+            "per-cell verdicts, no experiment verdict."
+        ),
+        "max_ber": 0.0,
+        "max_ber_at_sigma_0_001": 0.02,
+        "max_ber_at_sigma_0_002": 0.10,
+        "max_detector_accuracy": 0.55,
+    },
 }
 
 

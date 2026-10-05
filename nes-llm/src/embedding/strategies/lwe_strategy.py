@@ -66,6 +66,18 @@ import math
 # through the grid_width argument.
 DEFAULT_GRID_WIDTH = 0.010
 
+# W5.4 — per-layer rule (config.lwe_width_rule = "per_layer").
+# Width proportional to the layer's own noise so the grid-to-noise
+# ratio w/sigma is equalized across layers (Qwen2.5-3B's quietest
+# layer carries a global grid 8.8 sigma wide against 3.8 for the
+# noisiest), clipped to exp11's measured window — the only window
+# with a measured frontier (0.005 passes sigma=0.001, 0.02 stays
+# undetectable). SCALE=4 puts the median layer at ~0.0096, i.e. the
+# global default, so the two rules differ only in per-layer spread.
+PER_LAYER_WIDTH_SCALE = 4.0
+PER_LAYER_WIDTH_FLOOR = 0.005
+PER_LAYER_WIDTH_CAP = 0.020
+
 
 class LWEStrategy:
     """
@@ -111,6 +123,11 @@ class LWEStrategy:
             else DEFAULT_GRID_WIDTH
         )
 
+        # W5.4: "global" = the absolute width above (unchanged,
+        # exp10/exp11/exp12 byte-compatible); "per_layer" = derived
+        # from each layer's std inside _derive_interval_width.
+        self.width_rule = getattr(config, "lwe_width_rule", "global")
+
         self._grid_cache: Dict[int, float] = {}
 
     # ------------------------------------------------------------------
@@ -139,14 +156,29 @@ class LWEStrategy:
         # Scale factor in [0.75, 1.25] — varies per layer per key
         scale = (h[0] / 255.0) * 0.5 + 0.75
 
-        interval_width = (
-            self.grid_width
-            if self.grid_width is not None
-            else max(
-                residual_std * self.alpha * scale,
-                self.min_magnitude * 2,
+        if self.width_rule == "per_layer":
+            # W5.4 — width proportional to THIS layer's own noise,
+            # clipped to exp11's measured window. std is coarsened to
+            # 4 decimals so embed (original std, line ~231) and
+            # extract (stego std, line ~316) bucket identically: an
+            # LWE embed moves per-layer std by at most 0.0153% on
+            # Qwen2.5-3B — zero bucket flips (exp22's artifact pins
+            # the widths; gate BER 0.0 would catch any edge case).
+            coarse = round(float(residual_std), 4)
+            width = PER_LAYER_WIDTH_SCALE * coarse
+            interval_width = min(
+                max(width, PER_LAYER_WIDTH_FLOOR),
+                PER_LAYER_WIDTH_CAP,
             )
-        )
+        else:
+            interval_width = (
+                self.grid_width
+                if self.grid_width is not None
+                else max(
+                    residual_std * self.alpha * scale,
+                    self.min_magnitude * 2,
+                )
+            )
 
         self._grid_cache[layer_id] = interval_width
         return interval_width
