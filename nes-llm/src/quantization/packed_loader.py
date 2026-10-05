@@ -14,9 +14,12 @@ interesting part to a third-party runtime.
 
 Real layout, for reference (Qwen2.5-3B-Instruct, group_size=128):
 
-    GPTQ  qweight (out//8, in)   qzeros (groups, in//8)   scales (groups, in)
-          g_idx   (out,)
-    AWQ   qweight (out, in//8)   qzeros (groups, in//8)   scales (groups, in)
+    GPTQ  qweight (in//8, out)   qzeros (groups, out//8)   scales (groups, out)
+          g_idx   (in,)
+    AWQ   qweight (in, out//8)   qzeros (groups, out//8)   scales (groups, out)
+
+Both pack along the axis the other does not: GPTQ packs the weight
+along the input axis, AWQ packs it along the output axis.
 """
 
 import glob

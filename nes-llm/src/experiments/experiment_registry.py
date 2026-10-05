@@ -73,8 +73,19 @@ THRESHOLDS = {
         ],
     },
     "exp9": {
-        "description": "Clean BER beyond NF4 (GPTQ / AWQ).",
+        "description": (
+            "Clean BER through format-specific dequantization "
+            "(GPTQ / AWQ), each verified against its FP16 reference."
+        ),
         "max_ber": 0.0,
+        # The dequantizer gate, stated here rather than only as a
+        # default in `verify_dequantization`, so that ground rule 2
+        # ("thresholds live in experiment_registry.THRESHOLDS") is
+        # true of *every* threshold the suite uses. Exp9 reads these
+        # and passes them in; adapters.py keeps the same numbers as
+        # its defaults for callers outside the suite.
+        "min_dequant_correlation": 0.95,
+        "max_dequant_residual_ratio": 0.5,
     },
 }
 
