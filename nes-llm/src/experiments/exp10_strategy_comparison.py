@@ -81,8 +81,15 @@ GATE = 0.55
 CANDIDATES = ["sign", "magnitude_aware", "lwe", "neural"]
 
 
-def build_detector_dataset(residuals, strategy_name, rng):
-    """Paired clean/stego patches from this strategy's own embedding."""
+def build_detector_dataset(
+    residuals, strategy_name, rng, family=None, num_layers=None
+):
+    """Paired clean/stego patches from this strategy's own embedding.
+
+    ``family``/``num_layers`` default to this module's Qwen constants,
+    so exp12's positional imports behave exactly as before; exp18 passes
+    the model under test.
+    """
     dataset = []
     per_embedding = max(PAIRS // EMBEDDINGS_PER_VARIANT, 1)
 
@@ -90,8 +97,8 @@ def build_detector_dataset(residuals, strategy_name, rng):
         config = EmbeddingConfig(
             total_payload_bits=PAYLOAD_BITS,
             embedding_strategy=strategy_name,
-            model_family=FAMILY,
-            num_hidden_layers=NUM_LAYERS,
+            model_family=family or FAMILY,
+            num_hidden_layers=num_layers or NUM_LAYERS,
         )
 
         result = IntelligentEmbedder(config).embed(
@@ -177,7 +184,8 @@ def train_detector(dataset, device):
     return float(evaluate(model, test_loader, device)["accuracy"])
 
 
-def measure_extractability(residuals, strategy_name):
+def measure_extractability(residuals, strategy_name, family=None,
+                           num_layers=None):
     """Full embed -> decrypt round trip with no access to the cover."""
     from src.embedding.strategy_registry import (
         embed_with,
@@ -189,8 +197,8 @@ def measure_extractability(residuals, strategy_name):
     config = EmbeddingConfig(
         total_payload_bits=PAYLOAD_BITS,
         embedding_strategy=strategy_name,
-        model_family=FAMILY,
-        num_hidden_layers=NUM_LAYERS,
+        model_family=family or FAMILY,
+        num_hidden_layers=num_layers or NUM_LAYERS,
     )
 
     result: Dict[str, Any] = {
@@ -275,9 +283,11 @@ def measure_extractability(residuals, strategy_name):
     return result
 
 
-def measure_detectability(residuals, strategy_name, device):
+def measure_detectability(residuals, strategy_name, device, family=None,
+                          num_layers=None):
     dataset = build_detector_dataset(
-        residuals, strategy_name, random.Random(SEED)
+        residuals, strategy_name, random.Random(SEED),
+        family=family, num_layers=num_layers,
     )
 
     accuracy = train_detector(dataset, device)
@@ -317,6 +327,8 @@ def measure_robustness(
     strategy_name,
     sigmas=(0.0, 0.001, 0.002, 0.005),
     trials=3,
+    family=None,
+    num_layers=None,
 ):
     """BER across the noise grid, via the strategy's own extractor.
 
@@ -338,8 +350,8 @@ def measure_robustness(
             config = EmbeddingConfig(
                 total_payload_bits=PAYLOAD_BITS,
                 embedding_strategy=strategy_name,
-                model_family=FAMILY,
-                num_hidden_layers=NUM_LAYERS,
+                model_family=family or FAMILY,
+                num_hidden_layers=num_layers or NUM_LAYERS,
             )
             embedded = IntelligentEmbedder(config).embed(
                 MESSAGE, residuals

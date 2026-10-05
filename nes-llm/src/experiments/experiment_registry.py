@@ -135,6 +135,19 @@ THRESHOLDS = {
         ),
         "max_ber": 0.0,
     },
+    "exp18": {
+        "description": (
+            "Strategy x model matrix (W1.3): per cell, the round "
+            "trip must hold (exp3's 0.0), robustness must hold at "
+            "sigma 0.001/0.002 (exp6's 0.02/0.10), and the "
+            "strategy's own detector must stay at chance (exp7's "
+            "0.55). Four numbers, four reused sources, none new."
+        ),
+        "max_ber": 0.0,
+        "max_ber_at_sigma_0_001": 0.02,
+        "max_ber_at_sigma_0_002": 0.10,
+        "max_detector_accuracy": 0.55,
+    },
 }
 
 
