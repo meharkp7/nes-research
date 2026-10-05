@@ -5,35 +5,52 @@ RESEARCH_PLAN §4 W5.4: *"Per-layer strategy selection. Different grid
 width per layer, keyed by layer noise. Layers differ: Qwen2.5-7B spans
 0.0012–0.0130, Phi-3 spans 0.0026–0.0031."*
 
-Two cells, exp10's three axes each, ONLY `EmbeddingConfig.lwe_width_rule`
+Three cells, exp10's three axes each, ONLY `EmbeddingConfig.lwe_width_rule`
 varying (exp10's `config_overrides` hook):
 
-    global     the shipped absolute width 0.010 on every layer —
-               exp10's own lwe cell under another name, the control.
-    per_layer  w_l = clip(4.0 * round(std_l, 4), 0.005, 0.020) —
-               width proportional to the layer's own noise (equalizing
-               the grid-to-noise ratio across layers), clipped to the
-               only window with a measured frontier (exp11: 0.005
-               passes sigma=0.001, 0.02 stays undetectable).
+    global      the shipped absolute width 0.010 on every layer —
+                exp10's own lwe cell under another name, the control.
+    per_layer   w_l = clip(4.0 * round(std_l, 4), 0.005, 0.020) —
+                magnitude-keyed: width proportional to the layer's
+                own noise, clipped to exp11's measured window.
+    layer_rank  a fixed ladder [0.005, 0.010] keyed to the layer's
+                RANK in the noise ordering — the same heterogeneity,
+                keyed to the part of "layer noise" that measurement
+                noise cannot move.
 
-Agreement design (the reason for the 4-decimal coarsening): embed
-derives the width from the ORIGINAL layer std and the extractor from
-the STEGO layer std — two views of the same tensor. Measured on this
-model, an LWE embed moves per-layer std by at most 0.0153%, which
-buckets identically at 4 decimals (zero flips; gate BER 0.0 would
-catch any edge case).
+Run 1 (global + per_layer) measured the design's failure mode and
+this module records it rather than smoothing it: per_layer round-trips
+at 0.0 and hides like every lwe cell (detector 0.50), but its
+robustness collapses — BER 0.0223 at sigma=0.001 (gate 0.02) and
+0.5747 at sigma=0.002 against global's 0.0127. Cause, verified
+numerically: the extractor sizes the grid from the tensor it
+receives, and the robustness measurement hands it the NOISY tensor —
+noise inflates std through sqrt(std^2 + sigma^2), so 36/36 layers
+bucket differently at every sigma tested and the extractor's grid
+drifts wider than the embedder's (the `noise_bucket_flips` field
+recomputes this from the artifact's own stds). Magnitude-keying is
+therefore unbuildable at extract time: the statistic moves under
+exactly the perturbation the gate measures.
 
-Pre-registered expectations, recorded before the run: both cells
-round-trip at exp3's 0.0; the LWE detector has collapsed to exactly
-0.50 in every experiment that trained it (exp10, exp12, exp16, exp18,
-exp20) so the detector axis may be uninformative again; per_layer's
-quiet layers sit at the window floor (0.005), so its noise-robustness
-can only match or trail global's — the DELTA direction is the open
-question and is recorded as measured, not steered.
+layer_rank isolates agreement from heterogeneity: rank is preserved
+under the strictly monotone inflation map, so both sides derive
+identical widths from a fixed ladder while still running different
+widths per layer. What the ladder then SCORES (robustness vs the
+global control) is the open question, recorded as measured.
+
+Pre-registered expectations for the rerun: all three cells round-trip
+at exp3's 0.0 (agreement is by construction for global/layer_rank
+and bucket-verified for per_layer at sigma=0); the lwe detector has
+been exactly 0.50 in every experiment that trained it (exp10, exp12,
+exp16, exp18, exp20) so 0.50 again is expected but not assumed; the
+per_layer robustness numbers are rerun confirmations of run 1's
+measured values; layer_rank's robustness direction vs global is NOT
+predicted — its quiet-end layers sit at exp11's floor, its bulk below
+the global default, and the delta is recorded either way.
 
 Gate: THRESHOLDS['exp22'] — exp10's four reused numbers, per cell
 (exp18's rule: a cell failing an axis is reported failing for that
-axis; the delta between cells is the measurement).
+axis; the deltas against the global control are the measurement).
 
 Usage:
     python -m src.experiments.exp22_layer_widths --model <id>
@@ -71,7 +88,8 @@ from src.experiments.paths import RESULTS_DIR  # noqa: E402
 from src.experiments.residual_source import load_cached_residuals  # noqa: E402
 
 EXPERIMENT = "exp22"
-RULES = ("global", "per_layer")
+RULES = ("global", "per_layer", "layer_rank")
+ROBUSTNESS_SIGMAS = (0.001, 0.002, 0.005)
 
 
 def log(message: str) -> None:
@@ -98,15 +116,48 @@ def widths_table(residuals, family: str, layers: int) -> Dict[str, Any]:
             lwe_width_rule=rule,
         )
         strategy = build_strategy(config, "lwe")
-        widths = {
-            lid: strategy._derive_interval_width(lid, std)
-            for lid, std in stds.items()
-        }
+        if rule == "layer_rank":
+            # Ranks need the whole layer set at once.
+            widths = strategy._rank_widths(stds)
+        else:
+            widths = {
+                lid: strategy._derive_interval_width(lid, std)
+                for lid, std in stds.items()
+            }
         table["widths"][rule] = widths
         table["w_over_std"][rule] = {
             lid: widths[lid] / std for lid, std in stds.items()
         }
     return table
+
+
+def noise_bucket_flips(stds: Dict[int, float]) -> Dict[str, Any]:
+    """Why run 1's per_layer cell collapsed: the extractor sizes the
+    grid from the tensor it receives, and under noise that tensor's
+    std is inflated by sqrt(std^2 + sigma^2) — layer buckets move and
+    the extractor's grid drifts wider than the embedder's.
+
+    Analytic (sample-noise ignored): recomputable from the artifact's
+    own recorded stds, so the claim lives in the numbers it cites.
+    """
+    import math
+
+    out: Dict[str, Any] = {
+        "method": "analytic: round(sqrt(std^2 + sigma^2), 4) vs "
+                  "round(std, 4) per layer (sample noise ignored)",
+        "layers": len(stds),
+    }
+    for sigma in ROBUSTNESS_SIGMAS:
+        changed = sum(
+            1
+            for s in stds.values()
+            if round(math.sqrt(s * s + sigma * sigma), 4) != round(s, 4)
+        )
+        out[f"{sigma}"] = {
+            "layers_changed": changed,
+            "of": len(stds),
+        }
+    return out
 
 
 def measure_cell(residuals, rule: str, family: str, layers: int,
@@ -226,10 +277,11 @@ def main() -> int:
         args.model, context.expected_layers
     )
 
-    log("[exp22] deriving per-layer widths for both rules ...")
+    log("[exp22] deriving per-layer widths for every rule ...")
     table = widths_table(residuals, context.family, context.expected_layers)
     w_g = table["widths"]["global"]
     w_p = table["widths"]["per_layer"]
+    w_r = table["widths"]["layer_rank"]
     log(
         f"  global: all {len(set(w_g.values()))} distinct width(s) "
         f"= {sorted(set(w_g.values()))}"
@@ -242,6 +294,20 @@ def main() -> int:
         f"(global w/sigma "
         f"[{min(table['w_over_std']['global'].values()):.2f}, "
         f"{max(table['w_over_std']['global'].values()):.2f}])"
+    )
+    log(
+        f"  layer_rank: ladder [{min(w_r.values()):.5f}, "
+        f"{max(w_r.values()):.5f}] over {len(w_r)} ranks "
+        f"(noise-invariant by construction)"
+    )
+    flips = noise_bucket_flips(table["layer_std"])
+    log(
+        "  magnitude-keying diagnosis: layers whose bucket noise "
+        "moves = "
+        + ", ".join(
+            f"sigma {s}: {flips[s]['layers_changed']}/{flips[s]['of']}"
+            for s in ("0.001", "0.002", "0.005")
+        )
     )
 
     device = torch.device(
@@ -258,36 +324,30 @@ def main() -> int:
             )
         )
 
-    # The measurement: the delta between the two cells, computed only
-    # from numbers actually present.
-    global_cell, per_layer_cell = cells
-    delta = {
-        "detector": (
-            per_layer_cell["detector_accuracy"]
-            - global_cell["detector_accuracy"]
-            if per_layer_cell["detector_accuracy"] is not None
-            and global_cell["detector_accuracy"] is not None
-            else None
-        ),
-        "ber_sigma_0_002": (
-            per_layer_cell["robustness_ber_curve"].get("0.002")
-            - global_cell["robustness_ber_curve"].get("0.002")
-            if per_layer_cell["robustness_ber_curve"].get("0.002")
-            is not None
-            and global_cell["robustness_ber_curve"].get("0.002")
-            is not None
-            else None
-        ),
-        "ber_sigma_0_001": (
-            per_layer_cell["robustness_ber_curve"].get("0.001")
-            - global_cell["robustness_ber_curve"].get("0.001")
-            if per_layer_cell["robustness_ber_curve"].get("0.001")
-            is not None
-            and global_cell["robustness_ber_curve"].get("0.001")
-            is not None
-            else None
-        ),
-    }
+    # The measurement: the deltas of each non-global rule against
+    # the global control, computed only from numbers actually
+    # present.
+    def diff(a, b):
+        return b - a if (a is not None and b is not None) else None
+
+    global_cell = cells[0]
+    cell_deltas: Dict[str, Any] = {}
+    for cell in cells[1:]:
+        rule = cell["width_rule"]
+        cell_deltas[rule] = {
+            "detector": diff(
+                global_cell.get("detector_accuracy"),
+                cell.get("detector_accuracy"),
+            ),
+            "ber_sigma_0_001": diff(
+                global_cell["robustness_ber_curve"].get("0.001"),
+                cell["robustness_ber_curve"].get("0.001"),
+            ),
+            "ber_sigma_0_002": diff(
+                global_cell["robustness_ber_curve"].get("0.002"),
+                cell["robustness_ber_curve"].get("0.002"),
+            ),
+        }
 
     anchor = exp18_lwe_anchor(_slug(args.model))
     if anchor.get("present"):
@@ -314,7 +374,8 @@ def main() -> int:
         "cells": cells,
         "rules": list(RULES),
         "layer_widths": table,
-        "cell_delta": delta,
+        "cell_deltas": cell_deltas,
+        "noise_bucket_flips": noise_bucket_flips(table["layer_std"]),
         "control_anchor": anchor,
         "method": {
             "axes_source": (
@@ -328,6 +389,13 @@ def main() -> int:
                 "layer tensor's own, coarsened to 4 decimals so embed "
                 "(original) and extract (stego) bucket identically; "
                 "measured embed shift <= 0.0153% per layer"
+            ),
+            "width_rule_layer_rank": (
+                "fixed ladder [0.005, 0.010] by the layer's RANK in "
+                "the std ordering (ties on layer id) — rank is "
+                "preserved under noise's monotone sqrt(std^2 + "
+                "sigma^2) inflation, so embed and extract derive "
+                "identical widths from their own views"
             ),
             "window_source": (
                 "exp11's measured frontier (0.005-0.02 passes both "
@@ -346,17 +414,25 @@ def main() -> int:
         "notes": [
             "Per-cell verdicts only, exp18's rule: a cell failing an "
             "axis is reported failing for that axis, never as an "
-            "experiment error. The DELTA between cells is the "
-            "measurement.",
+            "experiment error. The DELTAS against the global control "
+            "are the measurement.",
+            "Run 1's failure, recorded not smoothed: per_layer "
+            "round-tripped at 0.0 and hid at detector 0.50, but its "
+            "robustness collapsed (0.0223 at sigma=0.001, 0.5747 at "
+            "0.002) because the extractor sizes the grid from the "
+            "tensor it receives — and under noise that tensor's std "
+            "is inflated, so its buckets (and grids) drift from the "
+            "embedder's. noise_bucket_flips recomputes the drift "
+            "from this artifact's own recorded stds. Magnitude-"
+            "keying is unbuildable at extract time; layer_rank is "
+            "the noise-invariant keying that isolates agreement "
+            "from heterogeneity.",
             "The global-width cell is exp10's lwe cell under another "
             "name (default rule, default width); its anchor vs "
             "exp18's committed lwe cell is recorded, not gated.",
             "Detector accuracy is trained on each cell's own "
             "embedding (exp10's comparability note): comparable as "
             "'this detector against this rule'.",
-            "The extractor derives widths from stego std; any "
-            "embed/extract bucket disagreement would surface as "
-            "round-trip BER > 0.0, which the gate catches.",
         ],
     }
 
@@ -372,7 +448,7 @@ def main() -> int:
             f"detector={cell['detector_accuracy']} "
             f"wins={cell['wins']}"
         )
-    log(f"delta (per_layer - global): {delta}")
+    log(f"deltas vs global control: {json.dumps(cell_deltas)}")
     log(f"wrote {target}")
 
     del residuals

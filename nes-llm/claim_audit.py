@@ -20,6 +20,7 @@ cannot be found in its artifact is UNVERIFIED, never assumed true.
 """
 
 import json
+import math
 import sys
 from collections import Counter
 from pathlib import Path
@@ -1315,6 +1316,257 @@ def audit_qae_lwe_interop():
     )
 
 
+# ---------------------------------------------------------------------
+# W5.4 — per-layer LWE grid width (exp22)
+# ---------------------------------------------------------------------
+EXP22_ARTIFACT = "exp22_layer_widths_qwen__qwen2.5_3b.json"
+EXP22_RULES = ["global", "per_layer", "layer_rank"]
+
+
+def audit_layer_widths():
+    d = one(EXP22_ARTIFACT)
+    check(
+        "exp22: artifact present (W5.4 first pass, Qwen2.5-3B)",
+        d is not None,
+        EXP22_ARTIFACT if d else "missing: " + EXP22_ARTIFACT,
+    )
+    if not d:
+        return
+
+    gate = THRESHOLDS["exp22"]
+    check(
+        "exp22: gate matches THRESHOLDS['exp22'] — exp10's four "
+        "reused numbers (0.0, 0.02, 0.10, 0.55), per cell",
+        gate.get("max_ber") == 0.0
+        and gate.get("max_ber_at_sigma_0_001") == 0.02
+        and gate.get("max_ber_at_sigma_0_002") == 0.10
+        and gate.get("max_detector_accuracy") == 0.55
+        and d["gate"]["max_ber"] == gate.get("max_ber")
+        and d["gate"]["max_detector_accuracy"]
+        == gate.get("max_detector_accuracy")
+        and "THRESHOLDS['exp22']" in d["gate"]["gate_source"],
+        f"gate={ {k: v for k, v in gate.items() if k != 'description'} }",
+    )
+
+    cells = d.get("cells", [])
+    check(
+        "exp22: exactly the three width rules, in order, with the "
+        "right overrides (global = defaults, per_layer and "
+        "layer_rank = lwe_width_rule) — nothing else may vary",
+        d.get("rules") == EXP22_RULES
+        and [c.get("width_rule") for c in cells] == EXP22_RULES
+        and (cells[0].get("config_overrides") == {})
+        and cells[1].get("config_overrides")
+        == {"lwe_width_rule": "per_layer"}
+        and cells[2].get("config_overrides")
+        == {"lwe_width_rule": "layer_rank"},
+        f"rules={d.get('rules')}",
+    )
+
+    # The dial, recomputed from the artifact's own recorded stds:
+    # global is the absolute default everywhere; per_layer is
+    # clip(4.0 * round(std, 4), 0.005, 0.020); layer_rank is the
+    # fixed ladder by rank (ties on layer id); w/std ratios agree.
+    table = d.get("layer_widths", {}) or {}
+    stds = table.get("layer_std", {}) or {}
+    w_g = (table.get("widths", {}) or {}).get("global", {}) or {}
+    w_p = (table.get("widths", {}) or {}).get("per_layer", {}) or {}
+    w_r = (table.get("widths", {}) or {}).get("layer_rank", {}) or {}
+    ratio_p = (table.get("w_over_std", {}) or {}).get("per_layer", {}) or {}
+    width_bad = []
+    ordered = sorted(
+        ((lid, float(s)) for lid, s in stds.items()),
+        key=lambda kv: (kv[1], int(kv[0])),
+    )
+    n = len(ordered)
+    rank_want = {
+        lid: 0.005 + (i / (n - 1) if n > 1 else 0.5) * (0.010 - 0.005)
+        for i, (lid, _s) in enumerate(ordered)
+    }
+    for lid, std in stds.items():
+        if abs(w_g.get(lid, -1) - 0.010) > 1e-15:
+            width_bad.append(f"global[{lid}]={w_g.get(lid)}")
+        want = min(
+            max(4.0 * round(float(std), 4), 0.005), 0.020
+        )
+        if abs(w_p.get(lid, -1) - want) > 1e-15:
+            width_bad.append(f"per_layer[{lid}]={w_p.get(lid)} want {want}")
+        if abs(w_r.get(lid, -1) - rank_want.get(lid, -1)) > 1e-12:
+            width_bad.append(f"layer_rank[{lid}]={w_r.get(lid)}")
+        if abs(ratio_p.get(lid, -1) - w_p.get(lid, 0) / float(std)) > 1e-9:
+            width_bad.append(f"ratio[{lid}]")
+    check(
+        "exp22: every recorded width recomputes from the artifact's "
+        "own per-layer stds — global = 0.010 everywhere, per_layer = "
+        "clip(4.0*round(std,4), 0.005, 0.020), layer_rank = the "
+        "fixed ladder by rank, w/std consistent",
+        bool(stds) and not width_bad,
+        f"{len(stds)} layers x 3 rules recomputed" if not width_bad
+        else "; ".join(width_bad[:4]),
+    )
+
+    # Every cell verdict recomputes from the numbers beside it
+    # (exp18's rule, per cell, direction-agnostic).
+    inconsistent = []
+    for c in cells:
+        ext = c.get("extractability", {}) or {}
+        curve = c.get("robustness_ber_curve", {}) or {}
+        acc = c.get("detector_accuracy")
+        want_rt = bool(
+            ext.get("structurally_usable")
+            and ext.get("ber") == gate.get("max_ber")
+        )
+        want_rob = bool(
+            curve.get("0.001") is not None
+            and curve.get("0.001") <= gate.get("max_ber_at_sigma_0_001")
+            and curve.get("0.002") is not None
+            and curve.get("0.002") <= gate.get("max_ber_at_sigma_0_002")
+        )
+        want_det = bool(
+            acc is not None and acc <= gate.get("max_detector_accuracy")
+        )
+        if (
+            c.get("meets_round_trip_gate") != want_rt
+            or c.get("meets_robustness_gate") != want_rob
+            or c.get("meets_detector_gate") != want_det
+            or c.get("wins") != (want_rt and want_rob and want_det)
+        ):
+            inconsistent.append(str(c.get("width_rule")))
+    check(
+        "exp22: all three cells' verdict booleans recompute exactly "
+        "from their recorded numbers (no rounding either way)",
+        len(cells) == 3 and not inconsistent,
+        "3/3 consistent" if not inconsistent
+        else "inconsistent: " + ", ".join(inconsistent),
+    )
+
+    bers = [c.get("extractability", {}).get("ber") for c in cells]
+    check(
+        "exp22: all three round trips hold exp3's BER 0.0 — the "
+        "width rule must not cost the round trip (per_layer's "
+        "bucket agreement held at sigma=0 in run 1; layer_rank's "
+        "is true by construction)",
+        bers == [0.0, 0.0, 0.0],
+        f"bers={bers}",
+    )
+
+    method = d.get("method", {}) or {}
+    check(
+        "exp22: protocol pins — payload 10k, 400 pairs / 20 embeds / "
+        "30 epochs / seed 42 (exp10's), exp11's window cited as the "
+        "clip source",
+        method.get("payload_bits") == 10_000
+        and method.get("detector_pairs") == 400
+        and method.get("detector_embeddings") == 20
+        and method.get("detector_epochs") == 30
+        and method.get("seed") == 42
+        and "exp11" in str(method.get("window_source")),
+        "protocol",
+    )
+
+    # The control's anchor: exp18's committed lwe cell, delta
+    # recomputed from recorded numbers; missing stays missing.
+    anchor = d.get("control_anchor", {}) or {}
+    anchor_bad = []
+    if not anchor.get("available"):
+        anchor_bad.append(
+            "exp18 artifact not readable: "
+            + str(anchor.get("reason", "?"))
+        )
+    elif not anchor.get("present"):
+        anchor_bad.append("exp18 has no lwe cell: "
+                          + str(anchor.get("reason", "?")))
+    else:
+        want = anchor.get("exp22_global_detector_accuracy")
+        exp18 = anchor.get("exp18_detector_accuracy")
+        delta = anchor.get("detector_delta_vs_exp18")
+        if want is None or delta is None or abs(
+            delta - (want - exp18)
+        ) > 1e-12:
+            anchor_bad.append("anchor delta drift")
+    check(
+        "exp22: the global-width control anchors to exp18's "
+        "committed lwe cell, delta recomputed; nothing defaulted",
+        not anchor_bad,
+        "anchor consistent" if not anchor_bad
+        else "; ".join(anchor_bad),
+    )
+
+    # The measurement itself: each rule's delta vs the global
+    # control recomputes from the cells.
+    deltas = d.get("cell_deltas", {}) or {}
+    delta_bad = []
+    if len(cells) == 3:
+        g = cells[0]
+        for rule in ("per_layer", "layer_rank"):
+            got = deltas.get(rule, {}) or {}
+            p = next(
+                (c for c in cells if c.get("width_rule") == rule), None
+            )
+            if p is None:
+                delta_bad.append(rule + ": cell missing")
+                continue
+            pairs = (
+                ("detector", g.get("detector_accuracy"),
+                 p.get("detector_accuracy")),
+                ("ber_sigma_0_001",
+                 g.get("robustness_ber_curve", {}).get("0.001"),
+                 p.get("robustness_ber_curve", {}).get("0.001")),
+                ("ber_sigma_0_002",
+                 g.get("robustness_ber_curve", {}).get("0.002"),
+                 p.get("robustness_ber_curve", {}).get("0.002")),
+            )
+            for key, a, b in pairs:
+                want = (b - a) if (a is not None and b is not None) else None
+                v = got.get(key)
+                if want is None and v is None:
+                    continue
+                if v is None or want is None or abs(v - want) > 1e-12:
+                    delta_bad.append(f"{rule}.{key}")
+    else:
+        delta_bad.append("cells missing")
+    check(
+        "exp22: both deltas vs the global control (per_layer - "
+        "global, layer_rank - global) recompute exactly from the "
+        "cells — detector and both sigma points",
+        not delta_bad,
+        f"deltas={deltas}" if not delta_bad
+        else "drift: " + ", ".join(delta_bad),
+    )
+
+    # The run-1 diagnosis, recomputed analytically from the
+    # artifact's own stds: noise inflates std through
+    # sqrt(std^2 + sigma^2) and moves every layer's 4-decimal
+    # bucket — this is why magnitude-keying cannot pass the
+    # robustness gate, in numbers rather than prose.
+    flips = d.get("noise_bucket_flips", {}) or {}
+    flip_bad = []
+    for sigma in (0.001, 0.002, 0.005):
+        rec = flips.get(str(sigma), {}) or {}
+        want = sum(
+            1
+            for s in stds.values()
+            if round(math.sqrt(float(s) ** 2 + sigma ** 2), 4)
+            != round(float(s), 4)
+        )
+        if rec.get("layers_changed") != want or rec.get("of") != len(stds):
+            flip_bad.append(f"sigma {sigma}: {rec.get('layers_changed')}/"
+                            f"{rec.get('of')} want {want}/{len(stds)}")
+    check(
+        "exp22: the recorded diagnosis recomputes — noise moves "
+        "every layer's std bucket (36/36 at each sigma on this "
+        "model), which is the verified cause of per_layer's "
+        "robustness collapse under the extractor's drifting grid",
+        bool(stds) and not flip_bad
+        and all(
+            flips[str(s)]["layers_changed"] == len(stds)
+            for s in (0.001, 0.002, 0.005)
+        ),
+        "36/36 at all three sigmas" if not flip_bad
+        else "; ".join(flip_bad),
+    )
+
+
 # ------------------------------------------------------------------ gates
 def audit_thresholds():
     check(
@@ -1357,6 +1609,7 @@ def main() -> int:
         ("adaptive routing (exp19)", audit_adaptive_routing),
         ("sign/parity split (exp20)", audit_split_dial),
         ("QAE/LWE interop (exp21)", audit_qae_lwe_interop),
+        ("per-layer LWE width (exp22)", audit_layer_widths),
         ("gates", audit_thresholds),
     ):
         print(f"\n{title}")

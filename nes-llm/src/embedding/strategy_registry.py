@@ -229,8 +229,12 @@ REGISTRY: Dict[str, StrategySpec] = {
             "config.lwe_width_rule=\"per_layer\": width proportional "
             "to each layer's own std (4-decimal coarsening so embed "
             "and extract bucket identically), clipped to exp11's "
-            "measured window; the default \"global\" is the shipped "
-            "absolute width."
+            "measured window — and \"layer_rank\": the same "
+            "heterogeneity keyed to the layer's RANK in the noise "
+            "ordering instead of its magnitude, which noise cannot "
+            "move (magnitude-keying fails the robustness gate once "
+            "noise inflates the extractor's std — measured, exp22); "
+            "the default \"global\" is the shipped absolute width."
         ),
     ),
     "neural": StrategySpec(

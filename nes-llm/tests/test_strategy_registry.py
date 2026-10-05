@@ -488,6 +488,56 @@ class RoundTripTests(unittest.TestCase):
         # discover from the registry is a rule nobody can verify.
         self.assertIn("per_layer", spec("lwe").notes)
 
+    def test_lwe_layer_rank_noise_invariance(self):
+        """W5.4 layer_rank: noise moves every layer's std (through
+        sqrt(std^2 + sigma^2)) but preserves their ORDER, so both
+        sides must derive identical widths — the property per_layer
+        lacks, and the whole reason this rule exists."""
+        import math
+
+        config = self._config("lwe")
+        config.lwe_width_rule = "layer_rank"
+        embedder = build(config, "lwe")
+
+        original = {0: 0.00114, 1: 0.00156, 2: 0.00241, 3: 0.00262}
+        for sigma in (0.001, 0.002, 0.005):
+            noisy = {
+                lid: math.sqrt(s * s + sigma * sigma)
+                for lid, s in original.items()
+            }
+            self.assertEqual(
+                embedder._rank_widths(original),
+                embedder._rank_widths(noisy),
+                f"widths diverged at sigma={sigma}",
+            )
+
+        # The ladder is fixed constants: quietest layer gets the
+        # floor, noisiest the global default, monotone in between.
+        widths = embedder._rank_widths(original)
+        self.assertAlmostEqual(widths[0], 0.005, places=12)
+        self.assertAlmostEqual(widths[3], 0.010, places=12)
+        self.assertLess(widths[0], widths[1])
+        self.assertLess(widths[1], widths[2])
+        self.assertLess(widths[2], widths[3])
+
+        # An unknown rule must fail loudly at build time, not fall
+        # through to some default grid.
+        config.lwe_width_rule = "mystery"
+        with self.assertRaises(ValueError):
+            build(config, "lwe")
+
+        # And the round trip must hold through the registry path.
+        config.lwe_width_rule = "layer_rank"
+        strategy = build(config, "lwe")
+        result = embed_with(
+            strategy, self.residuals, self.bits, self.carriers
+        )
+        reader = build(config, "lwe")
+        recovered = extract_with(
+            reader, result.embedded_weights, result.carrier_indices
+        )
+        self.assertEqual(recovered, self.bits[: len(recovered)])
+
 
 if __name__ == "__main__":
     unittest.main(verbosity=2)

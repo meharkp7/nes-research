@@ -78,6 +78,20 @@ PER_LAYER_WIDTH_SCALE = 4.0
 PER_LAYER_WIDTH_FLOOR = 0.005
 PER_LAYER_WIDTH_CAP = 0.020
 
+# W5.4 layer_rank — run 1 measured why MAGNITUDE-keying cannot pass
+# the robustness gate: noise inflates std through sqrt(std^2 +
+# sigma^2), and 36/36 layers bucket differently at every sigma
+# tested, so the extractor sizes a different grid than the embedder
+# used (BER 0.0223 at sigma=0.001, 0.5747 at 0.002, vs 0.0 at 0).
+# Rank is the part of "keyed by layer noise" that noise cannot move:
+# the inflation map is strictly monotone, so the layer ORDERING is
+# preserved exactly and both sides assign identical widths. The
+# ladder is fixed constants — exp11's floor up to the global
+# default — so no endpoint depends on either side's measurements.
+LAYER_RANK_LOW = PER_LAYER_WIDTH_FLOOR
+LAYER_RANK_HIGH = DEFAULT_GRID_WIDTH
+WIDTH_RULES = ("global", "per_layer", "layer_rank")
+
 
 class LWEStrategy:
     """
@@ -125,8 +139,15 @@ class LWEStrategy:
 
         # W5.4: "global" = the absolute width above (unchanged,
         # exp10/exp11/exp12 byte-compatible); "per_layer" = derived
-        # from each layer's std inside _derive_interval_width.
+        # from each layer's std inside _derive_interval_width;
+        # "layer_rank" = fixed ladder keyed by the layer's rank in
+        # the noise ordering (noise-invariant, see _rank_widths).
         self.width_rule = getattr(config, "lwe_width_rule", "global")
+        if self.width_rule not in WIDTH_RULES:
+            raise ValueError(
+                f"lwe_width_rule must be one of {WIDTH_RULES}, "
+                f"got {self.width_rule!r}"
+            )
 
         self._grid_cache: Dict[int, float] = {}
 
@@ -182,6 +203,28 @@ class LWEStrategy:
 
         self._grid_cache[layer_id] = interval_width
         return interval_width
+
+    def _rank_widths(self, stds: Dict[int, float]) -> Dict[int, float]:
+        """
+        W5.4 layer_rank — widths keyed by each layer's RANK in the
+        noise ordering, never by its magnitude.
+
+        Rank survives what magnitude cannot: noise maps every std
+        through the same strictly monotone sqrt(x^2 + sigma^2), so
+        embed (original stds) and extract (noisy stds) sort the
+        layers identically and assign identical widths from the
+        fixed ladder [LAYER_RANK_LOW, LAYER_RANK_HIGH]. Ties break
+        on layer id, which both sides share.
+        """
+        ordered = sorted(stds.items(), key=lambda kv: (kv[1], kv[0]))
+        n = len(ordered)
+        widths: Dict[int, float] = {}
+        for rank, (layer_id, _std) in enumerate(ordered):
+            frac = rank / (n - 1) if n > 1 else 0.5
+            widths[layer_id] = LAYER_RANK_LOW + frac * (
+                LAYER_RANK_HIGH - LAYER_RANK_LOW
+            )
+        return widths
 
     # ------------------------------------------------------------------
     # Core encoding / decoding
@@ -248,6 +291,16 @@ class LWEStrategy:
         """
         self._grid_cache = {}    # reset cache for fresh embed
 
+        # W5.4 layer_rank: the whole layer set at once — ranks are
+        # computed once from the ORIGINAL stds, before the loop.
+        rank_widths = (
+            self._rank_widths({
+                lid: t.float().std().item()
+                for lid, t in residuals.items()
+            })
+            if self.width_rule == "layer_rank" else None
+        )
+
         embedded               = {}
         bit_idx                = 0
         actual_carrier_indices = {}
@@ -259,8 +312,12 @@ class LWEStrategy:
             actual_indices   = []
 
             # Derive interval width for this layer
-            std            = residual_tensor.float().std().item()
-            interval_width = self._derive_interval_width(layer_id, std)
+            if rank_widths is not None:
+                interval_width = rank_widths[layer_id]
+                self._grid_cache[layer_id] = interval_width
+            else:
+                std            = residual_tensor.float().std().item()
+                interval_width = self._derive_interval_width(layer_id, std)
 
             for carrier_idx in indices:
                 if bit_idx >= len(bits):
@@ -332,20 +389,34 @@ class LWEStrategy:
         recovered_bits = []
         used_cover = residuals_ref is not None
 
+        # W5.4 layer_rank: ranks from THIS side's view (cover or
+        # stego, possibly noisy) — the ordering matches the
+        # embedder's because the noise inflation is monotone.
+        rank_widths = None
+        if self.width_rule == "layer_rank":
+            view = residuals_ref if used_cover else weights
+            rank_widths = self._rank_widths({
+                lid: t.float().std().item()
+                for lid, t in view.items()
+            })
+
         for layer_id in sorted(weights.keys()):
             weight_tensor = weights[layer_id]
             indices       = carrier_indices.get(layer_id, [])
             weight_flat   = weight_tensor.flatten()
 
-            # Derive the same interval width used during embedding.
-            if used_cover:
-                std = residuals_ref[layer_id].float().std().item()
+            if rank_widths is not None:
+                interval_width = rank_widths[layer_id]
             else:
-                # Sparse embedding: the untouched values dominate, so
-                # this tensor's own std is the cover's std.
-                std = weight_tensor.float().std().item()
+                # Derive the same interval width used during embedding.
+                if used_cover:
+                    std = residuals_ref[layer_id].float().std().item()
+                else:
+                    # Sparse embedding: the untouched values dominate, so
+                    # this tensor's own std is the cover's std.
+                    std = weight_tensor.float().std().item()
 
-            interval_width = self._derive_interval_width(layer_id, std)
+                interval_width = self._derive_interval_width(layer_id, std)
 
             for carrier_idx in indices:
                 val = weight_flat[carrier_idx].item()
