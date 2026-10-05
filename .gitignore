@@ -13,3 +13,8 @@ cache/
 # preserves the previous result instead of overwriting it. The archive is
 # kept on disk for inspection but is not part of the recorded history.
 results/_archive/
+# Byte-compiled Python. These were tracked (19 of them) and only ever
+# produced noise in `git status` -- a committed .pyc is also a lie about
+# which source produced it.
+__pycache__/
+*.pyc
