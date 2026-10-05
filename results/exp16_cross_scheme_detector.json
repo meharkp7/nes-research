@@ -1,0 +1,150 @@
+{
+  "experiment": "exp16",
+  "title": "W3.1 \u2014 cross-scheme detector",
+  "model_id": "Qwen/Qwen2.5-3B",
+  "family": "qwen",
+  "status": "PASS",
+  "gate": {
+    "max_cross_scheme_detector_accuracy": 0.55,
+    "measured_cross": {
+      "sign_to_lwe": 0.5,
+      "lwe_to_sign": 0.5
+    },
+    "status": "PASS",
+    "gate_source": "experiment_registry.THRESHOLDS['exp16']"
+  },
+  "results": {
+    "sign_to_sign": {
+      "accuracy": 0.6284722222222222,
+      "tp": 85,
+      "tn": 96,
+      "fp": 48,
+      "fn": 59,
+      "pairs": 144
+    },
+    "sign_to_lwe": {
+      "accuracy": 0.5,
+      "tp": 29,
+      "tn": 115,
+      "fp": 29,
+      "fn": 115,
+      "pairs": 144
+    },
+    "lwe_to_sign": {
+      "accuracy": 0.5,
+      "tp": 0,
+      "tn": 144,
+      "fp": 0,
+      "fn": 144,
+      "pairs": 144
+    },
+    "lwe_to_lwe": {
+      "accuracy": 0.5,
+      "tp": 0,
+      "tn": 144,
+      "fp": 0,
+      "fn": 144,
+      "pairs": 144
+    }
+  },
+  "within_scheme_controls": {
+    "sign_to_sign": 0.6284722222222222,
+    "lwe_to_lwe": 0.5
+  },
+  "controls_valid": false,
+  "method": {
+    "placement": "carrier-centred (exp7/exp14 control rule); placement held fixed so only the scheme varies",
+    "embeddings_per_scheme": 6,
+    "pairs_per_scheme": 432,
+    "split": "4 embeds train / 2 test, per scheme; no stego tensor on both sides",
+    "detector": "MLP 4096 -> 256 -> 64 -> 1 (exp7 module)",
+    "epochs": 30,
+    "batch_size": 32,
+    "learning_rate": 0.0001,
+    "seed": 42,
+    "payload_bits": 10000,
+    "residuals": "shared residual cache (same source exp10+)",
+    "per_embedding": {
+      "sign": [
+        {
+          "embed": 0,
+          "total_bits": 9968,
+          "carriers_in_patches": 3888,
+          "split": "train"
+        },
+        {
+          "embed": 1,
+          "total_bits": 9976,
+          "carriers_in_patches": 2900,
+          "split": "train"
+        },
+        {
+          "embed": 2,
+          "total_bits": 9984,
+          "carriers_in_patches": 3515,
+          "split": "train"
+        },
+        {
+          "embed": 3,
+          "total_bits": 9992,
+          "carriers_in_patches": 3828,
+          "split": "train"
+        },
+        {
+          "embed": 4,
+          "total_bits": 10000,
+          "carriers_in_patches": 3718,
+          "split": "test"
+        },
+        {
+          "embed": 5,
+          "total_bits": 10008,
+          "carriers_in_patches": 4050,
+          "split": "test"
+        }
+      ],
+      "lwe": [
+        {
+          "embed": 0,
+          "total_bits": 9960,
+          "carriers_in_patches": 4023,
+          "split": "train"
+        },
+        {
+          "embed": 1,
+          "total_bits": 9968,
+          "carriers_in_patches": 4166,
+          "split": "train"
+        },
+        {
+          "embed": 2,
+          "total_bits": 9976,
+          "carriers_in_patches": 3742,
+          "split": "train"
+        },
+        {
+          "embed": 3,
+          "total_bits": 9984,
+          "carriers_in_patches": 3106,
+          "split": "train"
+        },
+        {
+          "embed": 4,
+          "total_bits": 9992,
+          "carriers_in_patches": 3601,
+          "split": "test"
+        },
+        {
+          "embed": 5,
+          "total_bits": 10000,
+          "carriers_in_patches": 4109,
+          "split": "test"
+        }
+      ]
+    }
+  },
+  "notes": [
+    "Within-scheme controls carry no gate; if either does not clear the 55% line, the cross numbers are uninformative and claim_audit fails on controls_valid.",
+    "exp13 separately refuted LWE's key-gating; this experiment is about detectability transfer only."
+  ]
+}
