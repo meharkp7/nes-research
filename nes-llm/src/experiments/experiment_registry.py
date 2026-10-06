@@ -197,6 +197,30 @@ THRESHOLDS = {
         "max_ber_at_sigma_0_002": 0.10,
         "max_detector_accuracy": 0.55,
     },
+    "exp23": {
+        "description": (
+            "Model surgery survival (W6): exp3's 0.0 per cell — "
+            "'survives' means the payload reads back exactly after "
+            "the surgery, so every non-zero BER is a cell failing "
+            "and its number is the degradation (total vs graceful "
+            "is read from the numbers, not from a relaxed gate). "
+            "The weight-path control must also be 0.0: it is the "
+            "pipeline's validity check, not a result."
+        ),
+        "max_ber": 0.0,
+        "max_control_ber": 0.0,
+    },
+    "exp24": {
+        "description": (
+            "W7 Pareto frontier: citation integrity, not a scientific "
+            "threshold — every detector accuracy and robustness value "
+            "this synthesis cites must equal its source artifact "
+            "exactly (recomputed by claim_audit from the sources), "
+            "and the frontier must recompute from the artifact's own "
+            "points. A synthesis cannot PASS by being plausible."
+        ),
+        "max_source_delta": 0.0,
+    },
 }
 
 
