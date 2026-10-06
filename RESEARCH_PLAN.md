@@ -686,6 +686,36 @@ place, if any holds:** W8 ships a recipient tool; extraction is demonstrated at
 inference time; a detector defeats the LWE 0.50 invariant; or a model/strategy
 outside the measured set is added.
 
+### Misuse assessment — revision 2 (post-W8), §7's gate re-run
+
+Revision 1 stands as written above; this revision is *added*, not edited in,
+because its own rule requires it: **"W8 ships a recipient tool"** now holds
+(`nes delta-export | delta-inspect | delta-extract`, commits `6fa6f54` +
+`12a8c4a`, measured end-to-end in `RESEARCH_LOG.md` §32). The evidence base
+also advanced past rev 1's exp13–22: exp23 (model surgery) and exp24 (Pareto
+frontier) are measured; `claim_audit` still pins 127/127.
+
+| register risk | evidence delta since rev 1 | assessment after W8 | gate condition |
+|---|---|---|---|
+| **Smuggling past safety scanning** (high) | **W8 ships the artifact class now**: the payload moved from a ~6 GB checkpoint to a **30,253-byte delta** that verifies itself; the audit path exists and ran end-to-end (inspect checks hash / carrier count / payload length with no models loaded; extract recovered the message byte-identical; a forged-and-re-signed payload length still fails at the decoded header). The register's "at inference" extraction route remains neither implemented nor measured here — unchanged: hypothesis, not finding. | **Rev 1's W8 half is met**: whatever leaves the repo is inspectable — the delta carries its integrity metadata, the key travels out of band in a separate file, and non-sign schemes are refused by name rather than misread. The smaller artifact also moves more easily than a checkpoint; that cuts both ways, and the audit story is the counter, not the size. | Unchanged, and its W8 half is now **satisfied** — audit story attached. Detection evidence below still required. |
+| **Evading fingerprinting / provenance** (high) | exp22: rank-keying also 0.50; exp24: the entire measured frontier is dominated by one y = 0.50 point, 34/34 | Direction unchanged, now frontier-wide: **no measured configuration beats chance**. On the honest side, a shipped delta carries its own sha256, strategy and key id — the patch itself is fingerprintable and verifiable, which is what provenance tooling needs. | Unchanged: any provenance claim must state the LWE 0.50 invariant — now, the whole frontier — as its own limit. |
+| **IP / licensing** (high) | nothing — still **NOT_RUN** | Unreviewed; W8 changed nothing here | Unchanged: no external distribution of code, weights or deltas until reviewed |
+| **Regulatory** (medium–high) | nothing — still **NOT_RUN** | Owed before any product claim | Same as IP |
+| **Dual-use by others** (medium) | the workflow is now three commands inside the repo | Withholding matters even less once the capability is a CLI invocation; it remains a property of the method either way | Decision recorded at publication time, not discovered later |
+
+**Verdict after W8 — unchanged in effect, narrowed in reason.** Permitted
+today: the programme as research — artifacts, gates and these documents
+inside the repo, results citable as measurements. Forbidden today: any
+external distribution of code, weights or deltas, **solely because (a) the IP
+and regulatory rows are still NOT_RUN** — condition (b), W8's recipient-side
+audit, is now built, tested and measured. If (a) closes, this register has no
+other outstanding distribution condition.
+
+**Re-run triggers — rev 1's consumed, remainder re-armed.** "W8 ships a
+recipient tool" is consumed: it is what produced this revision. Still armed:
+extraction demonstrated at inference time; a detector defeats the LWE 0.50
+invariant; a model/strategy outside the measured set is added.
+
 ### What I would not do
 
 - **Add more models.** 5 families, 22–42 layers. Low marginal value versus W3/W6/W4.
@@ -769,4 +799,4 @@ invalidate later work.
 | 9 | **W7** Pareto frontier | **measured (exp24): the frontier is ONE point — exp22's layer_rank (x 0.00372693, y 0.50, marker 0.00146256) dominates all 34/34 others, minimal on both axes at once, so no trade-off exists among committed results; x measured here (no artifact pairs magnitude with a detector), y/marker cited at delta 0.0, 10 exclusions + 6 omissions recorded with reasons — the strongest publishable framing** |
 | 10 | **W1.4** consolidation | **executed + verified: 14 zero-risk files (4 duplicate embedders + 8 consumers + 2 demos) deleted, cache-build ported onto `model_loader` and rebuild-compared against the committed Qwen2.5-3B cache (36 layers × 3 tensors, 108/108 identical at delta 0.0), `scripts/exp1–4` + `src/model/loader.py` deleted — suite 66 OK, audit 127/127, consistency 9/9 after every batch** |
 | 11 | **W8** delta productization | **implemented + measured end-to-end (commit `6fa6f54`): `src/delta` format with W8.2 integrity metadata (sha256 + carrier count + payload length, all re-derived on load), `nes delta-export/inspect/extract` recipient CLI reading through production's `DecryptPipeline`; Qwen2.5-3B round trip: 30,253-byte delta (824 carriers, 387 changed, 792-bit payload) → message byte-identical — suite 80 OK, audit 127/127, consistency 9/9** |
-| — | misuse assessment — **worked through in §5 against exp13–22 evidence; verdict: research permitted, distribution forbidden (IP/regulatory NOT_RUN, W8 audit pending); re-run triggers listed** | gate before any distribution |
+| — | misuse assessment — **rev 1 worked through in §5 against exp13–22; rev 2 (post-W8) re-run after the recipient tool shipped — verdict unchanged in effect, narrowed in reason: research permitted, distribution forbidden solely on IP/regulatory NOT_RUN (W8 audit half of the gate now built and measured), triggers re-armed** | gate before any distribution |

@@ -2662,3 +2662,50 @@ path); a non-sign delta is refused by name rather than misread. Next:
 the misuse re-run — §5's register lists "W8 ships a recipient tool"
 as a re-run trigger, and it now holds, so the assessment gets a new
 revision rather than an edit in place.
+
+## 33. Misuse assessment — revision 2 (the W8 trigger) + final counts
+
+§5's re-run rule ("redone as a new revision, not edited in place, if
+any holds: **W8 ships a recipient tool** …") fired, so revision 2 was
+appended after rev 1, which stands untouched as the record of what was
+known at exp13–22.
+
+### 33.1 What changed in the assessment
+
+Only one row's condition actually moved. Rev 1 gated distribution on
+**(a)** IP/regulatory review and **(b)** W8's recipient-side audit
+existing; rev 2 records **(b) as built, tested and measured**
+(`6fa6f54`: inspect verifies hash/carrier count/payload length with no
+models loaded, extract recovered the message byte-identical, a
+re-signed payload-length forgery still fails at the decoded header)
+and leaves **(a) untouched — still NOT_RUN**. The verdict is therefore
+unchanged in effect (distribution still forbidden) and narrowed in
+reason (IP/regulatory alone). Two rows gained evidence without
+changing verdict: smuggling now moves a 30,253-byte delta rather than
+a ~6 GB checkpoint — smaller is easier to move, and the audit story is
+the counter, not the size; provenance gained exp22/exp24's
+frontier-wide 0.50 (34/34 dominated by one y = 0.50 point) and, on the
+honest side, the delta's own sha256/strategy/key-id as a
+fingerprintable handle. Trigger #1 is consumed (it produced this
+revision); the three remaining triggers are re-armed verbatim.
+
+### 33.2 Final counts
+
+| count | value | where |
+|---|---|---|
+| unit tests | **80** (66 + 14 delta) | `unittest discover` — README layout row updated from its stale 38 |
+| audit checks | **127/127** | `claim_audit.py` — unchanged: W8's claims are IMPLEMENTED, no `results/*.json` claim added |
+| consistency | **9/9** | `check_consistency.py` |
+| W1.4 historical citations | 66 tests at that execution | left as written — a historical statement, not a current count |
+
+```bash
+cd nes-llm
+../.venv/bin/python -m unittest discover -s tests -p 'test_*.py'   # 80 OK
+../.venv/bin/python claim_audit.py                    # 127/127
+../.venv/bin/python check_consistency.py              # 9/9
+```
+
+The remaining programme work is unchanged and small: the 7-model
+widening of exp18, and the NOT_RUN legs (exp23 fine-tune/GPTQ/AWQ);
+distribution itself waits on the IP/regulatory review, which is a
+human task, not a code one.
