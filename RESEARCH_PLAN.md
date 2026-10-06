@@ -45,8 +45,8 @@ Read `RESEARCH_LOG.md` first for how we got here and which mistakes to not repea
 | 9 model ids covered, 0 ERROR | 35 PASS / 6 FAIL / **0 NOT_RUN** | `results/experiment_manifest.json` |
 
 **How those rows are kept honest.** `nes-llm/claim_audit.py` re-derives every
-MEASURED row above from disk: **98/98 pass**, with `check_consistency.py` at
-9/9 and a 46-test suite running green. Four claims in this document failed
+MEASURED row above from disk: **111/111 pass**, with `check_consistency.py` at
+9/9 and a 66-test suite running green. Four claims in this document failed
 that audit while it was being built — a coverage figure with no artifact
 behind it, an average reported as a maximum, a count lifted from a different
 measurement, and a grid count wearing a suite's name. All four are closed,
@@ -114,13 +114,13 @@ any session that touches a result.
 cd nes-llm
 ../.venv/bin/python run_nes_experiments.py --audit    # manifest matrix
 ../.venv/bin/python check_consistency.py              # 9/9 must pass
-../.venv/bin/python claim_audit.py                    # 98/98 must pass
+../.venv/bin/python claim_audit.py                    # 111/111 must pass
 ```
 
 `claim_audit.py` is this section made executable: each row is re-derived from
 the artifact it names — counts included, because every claim that failed this
 audit failed on a count while the values underneath stayed correct — and it
-exits non-zero on anything it cannot verify. It passes **98/98** as written.
+exits non-zero on anything it cannot verify. It passes **111/111** as written.
 
 Four claims in this document failed it. Three are corrected in the audit notes
 below (exp12 coverage, exp6 robustness, exp2's count) and the fourth — the
@@ -201,7 +201,7 @@ model — including the pair that exposed the staleness.
 
 `python nes-llm/claim_audit.py` re-derives every MEASURED claim in this
 section from `results/*.json` and exits non-zero on any it cannot
-verify. All 98 checks pass at the time of writing. Run it before citing
+verify. All 111 checks pass at the time of writing. Run it before citing
 any number here.
 
 ### FAIL — measured, gate did not pass, not rewritten
@@ -221,7 +221,7 @@ any number here.
 |---|---|---|
 | GPTQ + AWQ dequantizers | `src/quantization/adapters.py` | 20 tests in `tests/test_quantization_adapters.py` |
 | `verify_dequantization` gate | `adapters.py` | includes the absorbed-scale correction and the NaN-safe comparison |
-| `claim_audit.py` | `nes-llm/claim_audit.py` | 98 checks re-deriving every MEASURED claim — counts included — and exiting non-zero on any it cannot verify |
+| `claim_audit.py` | `nes-llm/claim_audit.py` | 111 checks re-deriving every MEASURED claim — counts included — and exiting non-zero on any it cannot verify |
 | `QuantizationStrategy`, `NF4QuantizationStrategy` | strategy registry | per-tensor ABC, needs an adapter; **never run** |
 | Neural strategy `train_sampled()` | adaptive strategy | **never run** |
 | `adaptive_strategy` noise routing | strategy registry | **never run** |
@@ -411,7 +411,7 @@ only path that can rebuild the evidence. `scripts/exp5a/5b/6` already import
 `model_loader`: no divergence, left alone.
 
 **Verification order, once tests can run:** delete the 14 zero-risk files →
-suite (63 tests) + `claim_audit` (98/98) + `check_consistency` (9/9); port the
+suite (66 tests) + `claim_audit` (111/111) + `check_consistency` (9/9); port the
 cache build → rebuild-compare one cache → delete `loader.py` + the four
 superseded scripts → all three checks again → own commit batch.
 
@@ -632,7 +632,7 @@ than a surprise.
 ### Misuse assessment — §7's gate, worked through
 
 The paragraph above is the trigger; this is the assessment. Every evidence cell is
-audit-pinned (98/98 at writing) and carries a §2 status — nothing is argued from a
+audit-pinned (111/111 at writing) and carries a §2 status — nothing is argued from a
 number that is not in `results/`.
 
 | register risk | evidence | assessment | gate condition |
@@ -733,7 +733,7 @@ invalidate later work.
 | 5 | **W1.1** QAE adapter + round trip — **done, exp17: `qae` PASS, `nf4_qae` BLOCKED** | adds two strategies cheaply (one wired, one's blocker diagnosed) |
 | 6 | **W1.3** strategy × model matrix (3 models) — **done, exp18: one axis decides** | the breadth deliverable (first pass; 7-model widening remains) |
 | 7 | **W5** hybrids — **all done: 7a/exp19 (adaptive), W5.3/exp20 (parity-share dial), W5.2/exp21 (FAIL = finding: interop 0.5433 vs 0.0, parity ≡ sign ⊕ public relabeling), W5.4/exp22 (buildable but does not help: magnitude-keying fails the noise gate with cause measured, rank-keying passes, global width stays best)** | most interesting science — closed; only the 7-model widening of exp18 remains in the whole programme |
-| 8 | **W6** model surgery | **code written (exp23: gate + module + 4 tests); run + audit + docs pending shell** — determines viability |
+| 8 | **W6** model surgery | **measured (exp23): 7/9 cells hold exp3's 0.0 — W6.1 LoRA ✓ (both ratios), W6.4 prune ✓ (both fractions, zero carriers displaced), W6.5 merge ✓ to t=0.05; NF4 re-quant fails at 0.3768 and half-merge at 0.2418 — both graceful (better than chance), gate untouched; W6.2 fine-tune + GPTQ/AWQ legs NOT_RUN with probes — determines viability |
 | 9 | **W7** Pareto frontier | **code written (exp24: citation-integrity gate + module + 13 tests); run + audit + docs pending shell** — the strongest publishable framing |
 | 10 | **W1.4** consolidation | **decision recorded in §4 (14 zero-risk deletions + cache-build port before `loader.py`); execution + verification pending shell** — do before W8 |
 | 11 | **W8** delta productization | only after 1–8 hold |
