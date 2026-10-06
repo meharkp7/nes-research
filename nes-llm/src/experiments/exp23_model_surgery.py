@@ -204,7 +204,12 @@ def measure_cell(
     strategy,
     w_stego: Dict[int, torch.Tensor],
 ) -> Dict[str, Any]:
-    """One surgery: r' = embedded_r + delta, extract, measure.
+    """One surgery: r' = embedded_r + flatten(delta), extract, measure.
+
+    Deltas arrive weight-shaped (surgery ran on W_stego's matrix);
+    emb lives in flat residual space — flatten(delta) is exactly
+    extract_residuals' .flatten() undone, so the addition is layout-
+    exact against the carriers, never a blind reshape.
 
     Magnitude stats are recorded beside the BER so the number can be
     explained, not just cited.
@@ -219,7 +224,7 @@ def measure_cell(
         if delta is None:
             r_prime[lid] = emb
             continue
-        r_prime[lid] = emb + delta
+        r_prime[lid] = emb + delta.flatten()
         d2 += float(delta.float().pow(2).sum())
         w2 += float(w_stego[lid].float().pow(2).sum())
         idx = carrier_indices.get(lid, [])
@@ -379,10 +384,25 @@ def main() -> int:
     log("[exp23] building W_stego per layer ...")
     w_stego: Dict[int, torch.Tensor] = {}
     for lid, fp16_w in _down_projs(fp16_model, context.family).items():
+        # Residual space is flat — extract_residuals stores
+        # (fp16_w - dequant).flatten(), the cache matches it exactly
+        # (cache_check above), and carriers index that layout. W_stego
+        # is a weight matrix, so bridge the two with the same guarded
+        # reshape apply_residuals_to_model uses; a blind reshape of a
+        # mismatched matrix is a ground-rule violation.
+        r_flat = r_ref[lid].float().cpu()
+        e_flat = embedded_r[lid].float()
+        want = fp16_w.numel()
+        if r_flat.numel() != want or e_flat.numel() != want:
+            raise RuntimeError(
+                f"layer {lid}: residual numel {r_flat.numel()} / "
+                f"embedded numel {e_flat.numel()} != weight numel "
+                f"{want} — never reshape a mismatched matrix"
+            )
         w_stego[lid] = (
             fp16_w.detach().float().cpu()
-            - r_ref[lid].float().cpu()
-            + embedded_r[lid].float()
+            - r_flat.reshape(fp16_w.shape)
+            + e_flat.reshape(fp16_w.shape)
         )
     # Weight-path control: r' = W_stego - dequant equals embedded_r
     # by construction (cache_vs_pair above proves the views match),
