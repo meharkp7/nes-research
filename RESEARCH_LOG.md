@@ -2392,3 +2392,109 @@ eleventh standalone artifact outside the manifest grid. **W6 measured
 status: W6.1 ✓, W6.4 ✓, W6.5 ✓ to t=0.05 (✗ at 0.5, gracefully),
 W6.3-NF4 ✗ at 0.3768 (graceful), W6.2 + GPTQ + AWQ NOT_RUN and
 named.** Next: exp24 (W7), then W1.4 execution and W8.
+
+## 30. W7 — the Pareto frontier (exp24)
+
+Suggested order item 9 (`RESEARCH_PLAN` §4 W7): *"Plot every strategy ×
+every parameter: x = mean perturbation magnitude, y = detector
+accuracy, marker = BER@σ0.001"* — the strongest publishable framing.
+
+### 30.1 The scoping decision: x had to be measured here
+
+No committed artifact records mean |Δ| **together** with detector
+accuracy. exp2/exp17 have magnitudes without detectors; every
+detector-bearing artifact (exp10/11/12/18/20/22, exp7's study) records
+changed-value *counts* (`signal_density`), never magnitudes. A count is
+not the plan's x-axis, so substituting one would have been a different
+claim wearing the same label. exp24 therefore **measures x itself** —
+one embed per unique (model, strategy, config) group, originals
+snapshotted before the embed — while y and marker are *cited* from the
+sources at delta 0.0. That split is the whole design: measured where
+the programme has no number, exact where it does.
+
+**exp24**: 35 points over 9 frontier sources (exp10, exp11, exp12,
+exp7's parameter study, exp18's three matrix files, exp20, exp22) plus
+exp14/exp16 cited under `related`. 5 strategies (sign, magnitude_aware,
+lwe, qae, split) × 5 models. Parameter reconstruction follows each
+source's own mechanism: exp11/exp12 keep their alpha=1.0 +
+min_magnitude=w/2 patch, exp20 its split_fraction, exp22 its
+width_rule, exp7's recorded alpha maps to `min_magnitude` (its
+module's own mapping, never `EmbeddingConfig.alpha`), everything else
+the shipped default. Gate: `THRESHOLDS["exp24"]` — `max_source_delta`
+0.0, citation integrity rather than a scientific threshold.
+
+### 30.2 The run
+
+x spans **0.003727 → 0.432320**, y spans **0.5 → 0.7875** (16 points
+sit at the detector floor). The frontier is **one point**:
+
+| | x = mean \|Δ\| | y = detector | marker = BER@σ0.001 |
+|---|---|---|---|
+| **`exp22:…:lwe:layer_rank`** | **0.00372693** | **0.50** | **0.00146256** |
+
+It dominates all 34 other points — minimal on x *and* at the y floor
+simultaneously, so no point can trade against it. Runner-up is
+exp22's own per_layer (x 0.004788, y 0.50); the exp11/exp12 LWE cells
+cluster at x ≈ 0.00498, y 0.50. The split dial traces a clean
+monotone path (sf 0 → 1: x 0.047074 → 0.004992, y 0.7875 → 0.50) and
+still ends dominated by layer_rank at sf=1.0. Sign-family points sit
+10–100× right (x 0.046956 → 0.432320).
+
+**10 exclusions, all with reasons** (never dropped): exp10's neural
+cell (NEEDS_TRAINING), exp12's tinyllama (cache incomplete), and
+gemma-2-2b's 8 cells (4 group-level: model absent from
+`experiment_registry`; 4 magnitude follow-ons). **6 omitted source
+groups** carry why they cannot form y (exp2/exp4/exp6/exp17/exp19 +
+a catch-all naming exp1/3/5/8/9/13/15/21/23). exp14's blind/control
+reading and exp16's cross-scheme matrix are cited under `related` —
+same embedding, different question — and exp2/exp17's magnitudes
+under `prior_magnitude_citations`, each with its protocol recorded as
+cited-not-used.
+
+### 30.3 The reading
+
+1. **The frontier is a corner, not a curve.** The plan imagined
+   points trading x against y; measured, one point is best on both
+   axes at once, so the "frontier" is a winner. That is a stronger
+   claim than a trade-off: no detector-accuracy/magnitude compromise
+   exists among committed results — exp22's rank-keyed width is
+   simply the smallest, least detectable embed the programme has
+   measured.
+2. **LWE's placement is why.** Every y=0.5 point in the set is LWE
+   (or pure parity), and they cluster at x ≈ 0.004–0.005 while
+   sign-family embeds start at 0.047 — an order of magnitude more
+   perturbation for *worse* detectability. The frontier restates
+   exp18's finding (LWE wins on detectability) in the plan's own
+   coordinates.
+3. **The dial families converge but do not win.** The split dial's
+   own endpoint (sf=1.0, which *is* pure LWE) reaches y=0.5 at
+   x=0.004992 — still dominated by layer_rank's 0.003727, i.e. the
+   per-layer width rule buys 25% less perturbation than the dial's
+   best setting at identical detectability.
+4. **Citation integrity held under test.** All 35 y values, all 35
+   markers (6 nulls preserved), and the frontier recompute exactly;
+   tampering one y by +0.01 in a scratch copy failed the audit on the
+   spot, so the gate can actually fail.
+
+### 30.4 Verification
+
+```bash
+cd nes-llm
+../.venv/bin/python claim_audit.py                    # 127/127 (16 new)
+../.venv/bin/python check_consistency.py              # 9/9
+../.venv/bin/python -m unittest discover -s tests -p 'test_*.py'   # OK
+../.venv/bin/python -m src.experiments.exp24_pareto_frontier       # 35 pts, ~1 min
+```
+
+State: 127/127 claims (16 new: artifact, gate = citation integrity at
+0.0, counts, every y recomputed at delta 0.0, markers with 6 nulls
+preserved, round-trip BERs, frontier recomputation, the frontier
+point's exact triple, why it is one point, x measured for all 35,
+config reconstruction per source mechanism, 10 exclusions, 6 omitted
+groups, related citations, prior citations, protocol pins), 9/9
+consistency, tests green — manifest unchanged at 35 PASS / 6 FAIL /
+0 NOT_RUN / 0 ERROR — exp24 is the twelfth standalone artifact
+outside the manifest grid. **W7 measured status: frontier = 1 point
+(exp22 layer_rank, x 0.00372693 / y 0.50 / marker 0.00146256),
+34/34 points dominated, exclusions + omissions recorded not
+dropped.** Next: W1.4 execution, then W8.
