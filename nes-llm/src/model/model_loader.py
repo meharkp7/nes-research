@@ -237,8 +237,24 @@ def load_model_pair(
 def extract_residuals(
     nf4_model,
     fp16_model,
-    family: str
+    family: str,
+    cache=None,
+    force_recompute: bool = False,
 ) -> dict:
+    """
+    R = W_FP16 - dequantize(W_NF4) for every layer, as a flat dict.
+
+    ``cache`` (optional) is a ``ModelTensorCache``. When given, this
+    function becomes the cache-BUILD path: every computed layer is
+    saved through it, and layers it already validates are loaded
+    instead of recomputed (unless ``force_recompute``). The
+    arithmetic is the experiment path's own — the builder cannot
+    drift from the reader because there is only one
+    ``extract_residuals``.
+
+    Cached layers load as CPU tensors; computed layers stay on the
+    model's device (the experiment pipeline's status quo).
+    """
 
     from src.model.registry import (
         get_layer_module,
@@ -249,6 +265,20 @@ def extract_residuals(
     residuals = {}
 
     for i in range(n):
+
+        # ------------------------------------------------------
+        # CACHE HIT: reuse a validated layer instead of
+        # dequantizing again (the builder's resume path).
+        # ------------------------------------------------------
+
+        if (
+            cache is not None
+            and not force_recompute
+            and cache.validate_layer(i)
+        ):
+            residual, _fp16_w, _dq = cache.load_layer(i)
+            residuals[i] = residual
+            continue
 
         nf4_mlp = get_layer_module(
             nf4_model,
@@ -325,6 +355,22 @@ def extract_residuals(
         residuals[i] = (
             fp16_w.float() - dq
         ).flatten()
+
+        # ------------------------------------------------------
+        # CACHE BUILD: persist all three flat fp32 tensors for
+        # this layer. save_layer detaches, moves to CPU and
+        # writes atomically, and validates numel across the
+        # three before writing anything.
+        # ------------------------------------------------------
+
+        if cache is not None:
+
+            cache.save_layer(
+                layer_id=i,
+                residual=residuals[i],
+                fp16_weight=fp16_w.detach().float().flatten(),
+                nf4_dequantized=dq.detach().float().flatten(),
+            )
 
     return residuals
 
