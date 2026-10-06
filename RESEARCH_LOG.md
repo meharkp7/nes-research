@@ -2709,3 +2709,26 @@ The remaining programme work is unchanged and small: the 7-model
 widening of exp18, and the NOT_RUN legs (exp23 fine-tune/GPTQ/AWQ);
 distribution itself waits on the IP/regulatory review, which is a
 human task, not a code one.
+
+## 34. Author IP sign-off recorded (2026-10-06)
+
+A human gate, cleared by the human. On the author's instruction the
+base-model licence review is recorded as done: **the author confirms the
+licences of the base models in the measured set permit redistribution of
+derived artifacts** (code, checkpoints, deltas). §5's IP row moves
+NOT_RUN → REVIEWED (author sign-off), recorded as a **status record, not a
+revision** — no re-run trigger holds (the three armed triggers, an
+inference-time extraction, a detector beating the 0.50 invariant, and a
+model or strategy outside the measured set, are untouched by a licence
+review), so rev 1 and rev 2 stand as written and their "still NOT_RUN"
+rows remain historically true at their revision dates.
+
+Effect on the verdict: condition (a) halves — **regulatory is now the sole
+remaining distribution condition**; condition (b), W8's recipient-side
+audit, was cleared in rev 2. Regulatory stays NOT_RUN: a compliance
+analysis is still owed before any product claim. The sign-off itself is
+the author's, attributed as such in §5 — no licence text was re-read or
+reinterpreted here.
+
+Docs-only change; verification re-run to prove nothing else moved:
+suite 80 OK, `claim_audit` 127/127, `check_consistency` 9/9.

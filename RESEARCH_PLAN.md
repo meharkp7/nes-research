@@ -716,6 +716,22 @@ recipient tool" is consumed: it is what produced this revision. Still armed:
 extraction demonstrated at inference time; a detector defeats the LWE 0.50
 invariant; a model/strategy outside the measured set is added.
 
+### IP sign-off — status record (not a revision)
+
+Recorded 2026-10-06 on the author's instruction: **the base-model licence
+review is done and signed off — the author confirms the licences of the base
+models in the measured set permit redistribution of derived artifacts**
+(code, checkpoints, deltas). §5's **IP row moves NOT_RUN → REVIEWED (author
+sign-off)**. No re-run trigger holds — no inference-time extraction, no
+detector beats the 0.50 invariant, no model or strategy outside the measured
+set — so this is appended as a status record rather than a revision: rev 1
+and rev 2 stand as written, and their "still NOT_RUN" rows are historically
+true at their revision dates. **Regulatory remains NOT_RUN**, so rev 2's
+verdict is unchanged in effect with its condition (a) now halved:
+distribution of code, weights or deltas outside the repo stays **forbidden
+solely on the regulatory row** (condition (b), W8's recipient-side audit,
+was cleared in rev 2).
+
 ### What I would not do
 
 - **Add more models.** 5 families, 22–42 layers. Low marginal value versus W3/W6/W4.
@@ -799,4 +815,4 @@ invalidate later work.
 | 9 | **W7** Pareto frontier | **measured (exp24): the frontier is ONE point — exp22's layer_rank (x 0.00372693, y 0.50, marker 0.00146256) dominates all 34/34 others, minimal on both axes at once, so no trade-off exists among committed results; x measured here (no artifact pairs magnitude with a detector), y/marker cited at delta 0.0, 10 exclusions + 6 omissions recorded with reasons — the strongest publishable framing** |
 | 10 | **W1.4** consolidation | **executed + verified: 14 zero-risk files (4 duplicate embedders + 8 consumers + 2 demos) deleted, cache-build ported onto `model_loader` and rebuild-compared against the committed Qwen2.5-3B cache (36 layers × 3 tensors, 108/108 identical at delta 0.0), `scripts/exp1–4` + `src/model/loader.py` deleted — suite 66 OK, audit 127/127, consistency 9/9 after every batch** |
 | 11 | **W8** delta productization | **implemented + measured end-to-end (commit `6fa6f54`): `src/delta` format with W8.2 integrity metadata (sha256 + carrier count + payload length, all re-derived on load), `nes delta-export/inspect/extract` recipient CLI reading through production's `DecryptPipeline`; Qwen2.5-3B round trip: 30,253-byte delta (824 carriers, 387 changed, 792-bit payload) → message byte-identical — suite 80 OK, audit 127/127, consistency 9/9** |
-| — | misuse assessment — **rev 1 worked through in §5 against exp13–22; rev 2 (post-W8) re-run after the recipient tool shipped — verdict unchanged in effect, narrowed in reason: research permitted, distribution forbidden solely on IP/regulatory NOT_RUN (W8 audit half of the gate now built and measured), triggers re-armed** | gate before any distribution |
+| — | misuse assessment — **rev 1 worked through in §5 against exp13–22; rev 2 (post-W8) re-run after the recipient tool shipped — verdict unchanged in effect, narrowed in reason: research permitted, distribution forbidden solely on IP/regulatory NOT_RUN (W8 audit half of the gate now built and measured), triggers re-armed; IP signed off by the author 2026-10-06 (§5 status record, no trigger) — regulatory NOT_RUN is now the sole remaining distribution condition** | gate before any distribution |
