@@ -24,7 +24,7 @@ quantization formats (NF4, GPTQ, AWQ). Do not take that from this paragraph:
 | `run_nes_experiments.py` | orchestrator: run, audit, write reports |
 | `check_consistency.py` | cross-artifact invariants (9 checks) |
 | `claim_audit.py` | re-derives every MEASURED claim from `results/*.json` |
-| `tests/` | 80 unittest cases |
+| `tests/` | 83 unittest cases |
 
 Artifacts are written to the **repo-root** `results/` (`paths.RESULTS_DIR`) —
 two modules once wrote to `nes-llm/results` instead and drifted. Superseded
@@ -111,7 +111,7 @@ permission to ship.
 | exp15 | LWE fidelity (W2): three-way perplexity in exp5's protocol, per model | embedding-specific PPL Δ < 2% (exp5's number, reused) | **PASS ×2** — +0.0077% (Qwen2.5-3B), +0.0501% (gemma-2-2b) |
 | exp16 | cross-scheme detector (W3.1): train on one scheme, test on the other | both cross directions ≤ 55% (exp7's number, reused) | **PASS** — sign→LWE 50.00% with 62.85% control; LWE-side control collapsed (exp12-consistent), `controls_valid: false` |
 | exp17 | QAE round trip (W1.1): the dict-adapter over the per-tensor ABC, exp3's production path | BER 0.0 (exp3's number, reused) | **PASS** — 0.0 over 48,256 bits, decrypt + match; `nf4_qae` registered BLOCKED with recorded diagnosis |
-| exp18 | strategy × model matrix (W1.3, first pass): exp10's three axes × 4 strategies × 3 models | round trip 0.0, robustness 0.02/0.10, detector ≤ 55% (exp3/exp6/exp7's numbers, reused) | **12/12 round trips BER 0.0, 12/12 robustness pass — only detectability separates**: LWE 0.50 ×3 (wins 3/3), sign-family 0.59–0.84 everywhere; `neural`/`nf4_qae` excluded by name |
+| exp18 | strategy × model matrix (W1.3): exp10's three axes × 4 strategies × 7 models (full grid; TinyLlama skipped — incomplete cache) | round trip 0.0, robustness 0.02/0.10, detector ≤ 55% (exp3/exp6/exp7's numbers, reused) | **28/28 round trips BER 0.0, 28/28 robustness pass — only detectability separates**: LWE 0.50 ×7 (wins 7/7), magnitude_aware steals the only other win (Mistral-7B 0.525), sign/qae 0/7 each; `neural`/`nf4_qae` excluded by name |
 | exp19 | adaptive routing as designed (W5.1): σ-estimator routes to lwe/neural/sign, round trip through the routed branch | BER 0.0 for every round trip that runs (exp3's number, reused); routing choice is measurement, not gate | **three models → three branches** (gemma→lwe, Qwen→neural, Llama→sign); Qwen's route fails design-as-written (no trained model) — recorded, fallback branches both 0.0 |
 | exp20 | sign/parity split dial (W5.3): parity share of carriers sweeps 0.0→1.0, exp10's three axes per cell | round trip 0.0, robustness 0.02/0.10, detector ≤ 55% (exp3/exp6/exp7's numbers, reused) | **the trade-off is a dial**: BER@σ0.002 0→0.0127 and detector 0.7875→0.50 with parity share; all 5 round trips 0.0; only pure parity wins, reproducing exp18's lwe cell exactly (delta 0.0) |
 | exp21 | QAE encode + LWE read-out (W5.2): one embed, same stego, matched vs parity read-out vs public correction | round trip 0.0 for BOTH readings (exp3's number, reused) | **FAIL is the finding**: raw interop **0.5433** (5,572/10,256) vs 0.0 gate, matched control 0.0 — attributable to the pairing; public correction returns 0.0, measuring `parity(v) = sign(v) ⊕ cell-parity(|v|)` (the "hybrid" = sign reading + public relabeling) |
@@ -158,7 +158,8 @@ citation integrity is its gate.
    W5.1 adaptive routing, W5.3 split dial, W5.2 QAE/LWE interop, W5.4
    per-layer grid width (W5 fully closed), §29 W6 model surgery survival,
    §30 W7 Pareto frontier, §31 W1.4 consolidation, §32 W8 delta
-   distribution).
+   distribution, §33 misuse revision 2, §34 author IP sign-off, §35
+   the W1.3 widening to the full grid).
 2. `../RESEARCH_PLAN.md` — every claim sorted MEASURED / FAIL / NOT_RUN, and
    what to do next (Phases A–D).
 3. `../results/final_research_summary.md` — the generated report.

@@ -36,7 +36,7 @@ Read `RESEARCH_LOG.md` first for how we got here and which mistakes to not repea
 | **LWE fidelity measured on 2 models (W2)** | embedding-specific PPL Δ **+0.0077%** (Qwen2.5-3B) and **+0.0501%** (gemma-2-2b) vs 2% gate → both **PASS**; exp5's own baseline/control reproduce exactly (12.4707 / 11.3494) | `results/exp15_lwe_fidelity_*.json` |
 | **Cross-scheme transfer measured (W3.1)** | sign-trained detector: **62.85%** within-scheme → **50.00%** on LWE (control-validated: no transfer); reverse direction uninformative — LWE-trained control collapsed to 50.00%, reproducing exp12's detector 50.00% → gate **PASS**, `controls_valid: false`, conclusion scoped directional | `results/exp16_cross_scheme_detector.json` |
 | **QAE adapter wired, round trip run (W1.1)** | `qae` **READY** via `QaeDictAdapter`: **BER 0.0 over 48,256 bits** through exp3's production path, no-cover probe usable → gate **PASS**; `nf4_qae` registered **BLOCKED** (reference needs weight tensors the embed contract doesn't carry — diagnosed, probe error recorded) | `results/exp17_qae_round_trip.json` |
-| **Strategy × model matrix, first pass (W1.3)** | 4 READY strategies × 3 models: **12/12 round trips BER 0.0, 12/12 robustness gates pass — only detectability separates**; LWE detector **0.50 on all three models** (3/3 wins), sign-family 0.59–0.84 everywhere (qae worst: 0.84/0.73); `neural` + `nf4_qae` excluded by name | `results/exp18_matrix_*.json` |
+| **Strategy × model matrix (W1.3), full 7-model grid** | 4 READY strategies × 7 models: **28/28 round trips BER 0.0, 28/28 robustness gates pass — only detectability separates**; LWE detector **0.50 on all seven models** (7/7 wins — every family, every size class), magnitude_aware takes the matrix's only other win (Mistral-7B 0.525), sign 0.56–0.78 / magnitude_aware 0.53–0.78 / qae 0.56–0.84; `neural` + `nf4_qae` excluded by name; TinyLlama SKIPPED (incomplete cache) | `results/exp18_matrix_*.json` |
 | **Adaptive routing as designed (W5.1)** | three models → **three different branches** (gemma σ=0.000448→lwe, Qwen σ=0.001554→neural, Llama σ=0.007736→sign); every round trip that ran holds BER 0.0; Qwen's neural route fails design-as-written (no trained model) and is **recorded as the design's own**, both available branches round-trip 0.0 as its fallback | `results/exp19_adaptive_*.json` |
 | **Sign/parity split dial measured (W5.3)** | five parity shares × exp10's three axes: all round trips **BER 0.0**; BER@σ0.002 rises **0 → 0.0127** and detector falls **0.7875 → 0.50** with parity share — the stealth/robustness trade-off is a dial; pure parity **reproduces exp18's lwe cell exactly**, only it wins all gates | `results/exp20_split_dial_*.json` |
 | **QAE encode + LWE read-out (W5.2)** | plan called it plausible; measured **0.5433 vs the 0.0 gate → FAIL (the finding)**, matched control **0.0**; the public correction returns **0.0** — `parity(v) = sign(v) ⊕ cell-parity(|v|)` measured: the "hybrid" is sign reading plus a public relabeling | `results/exp21_qae_lwe_*.json` |
@@ -146,7 +146,7 @@ record.
 | **LWE fidelity (W2)** | three-way PPL, exp5's protocol: LWE Δ vs control **+0.0077%** (Qwen2.5-3B), **+0.0501%** (gemma-2-2b); reconstruction alone −8.99% / −5.27%; sign re-run +0.0529% vs recorded −0.0053% (same verdict, fresh-AES-key digit) | `exp15_lwe_fidelity_*.json` |
 | **Cross-scheme detector (W3.1)** | 432 pairs/scheme, split by embedding, carrier-centred both: sign→sign **0.6285** (control clears), **sign→LWE 0.5000** (no transfer), lwe→lwe **0.5000** (collapsed = exp12's 50.00%), lwe→sign **0.5000** (uninformative); gate PASS, `controls_valid: false` | `exp16_cross_scheme_detector.json` |
 | **QAE round trip (W1.1)** | `qae` READY (dict adapter over the per-tensor ABC): **BER 0.0** / 48,256 bits, decrypt + match, no-cover probe usable; distortion 24,076 values changed, mean \|Δ\| 0.0355; `nf4_qae` BLOCKED with recorded diagnosis | `exp17_qae_round_trip.json` |
-| **Strategy × model matrix (W1.3, first pass)** | exp10's three axes × 4 strategies × 3 models: round trip **12/12 BER 0.0**, robustness **12/12 pass** (σ0.001 all 0.0); detector — LWE **0.5000 ×3** (wins 3/3), sign 0.61–0.78, magnitude_aware 0.59–0.78, qae **0.59–0.84** (0/9 for the sign family); pipeline flag false for LWE (sign-only DecryptPipeline, known wiring gap) | `exp18_matrix_*.json` |
+| **Strategy × model matrix (W1.3, full 7-model grid)** | exp10's three axes × 4 strategies × 7 models: round trip **28/28 BER 0.0**, robustness **28/28 pass** (σ0.001 all 0.0); detector — LWE **0.5000 ×7** (wins 7/7), sign 0.56–0.78, magnitude_aware 0.53–0.78 (**1/21 non-LWE win: Mistral-7B 0.525**), qae 0.56–0.84 (1/21 outside LWE overall); pipeline flag false for LWE (sign-only DecryptPipeline, known wiring gap) | `exp18_matrix_*.json` |
 | **Adaptive routing as designed (W5.1)** | three models → **three different branches**: gemma σ **0.000448**→lwe, Qwen σ **0.001554**→neural (route fails design-as-written — no trained model — `EmbeddingError` recorded, forced sign/lwe fallbacks both **0.0**), Llama σ **0.007736**→sign; all four round trips that ran **BER 0.0**; each branch recomputes exactly from recorded σ + thresholds | `exp19_adaptive_*.json` |
 | **Sign/parity split dial (W5.3)** | 5 fractions × Qwen2.5-3B: round trips **5/5 BER 0.0**, σ0.001 **0.0 everywhere**; detector **[0.7875, 0.6938, 0.70, 0.5875, 0.50]**, BER@σ0.002 **[0, 0.0034, 0.0067, 0.0095, 0.0127]** across parity share 0→1 (stealth↑ robustness↓); only pure parity wins; its detector **= exp18's lwe cell (delta 0.0)**, pure-sign endpoint +0.0375 from exp18's sign cell (fresh-key variance, mechanism verified bit-identical) | `exp20_split_dial_*.json` |
 | **QAE encode + LWE read-out (W5.2)** | one embed, same stego, three readings: matched **0.0** (control), raw LWE parity **0.5433** (5,572/10,256 — gate 0.0, **verdict FAIL**), public cell-parity correction **0.0**; `parity(v)=sign(v)⊕cell-parity(|v|)` measured, not asserted; complement prediction missed (carriers all ≥ one grid width: sampled min 0.013 > 0.010) — miss recorded | `exp21_qae_lwe_*.json` |
@@ -243,7 +243,7 @@ any number here.
 
 | item | why it matters |
 |---|---|
-| Strategy × model matrix — **first pass measured (exp18, 3 models)** | breadth deliverable; widening to the full 7-model grid remains |
+| Strategy × model matrix — **measured, full 7-model grid (exp18)** | breadth deliverable; TinyLlama SKIPPED (incomplete cache), gemma-2-2b holds the small slot |
 | Model surgery — **first pass measured (exp23: 7/9 cells hold; fine-tune, GPTQ, AWQ legs still NOT_RUN with probes)** | determines viability |
 | Pareto frontier — **measured (exp24): one point dominates the whole set** | the strongest publishable framing |
 | Robustness / detectability for GPTQ and AWQ | Exp9's channel was clean |
@@ -342,7 +342,7 @@ distribution's mean and std. A sign flip satisfies both trivially, and nothing
 penalises the sign leak. The encoder may converge to the same sign-based solution.
 Running it answers this either way.
 
-#### W1.3 Full strategy × model matrix — **done (first pass), exp18**
+#### W1.3 Full strategy × model matrix — **done, exp18 (full 7-model grid)**
 
 All viable strategies × 7 models, one table, four axes: extractability, BER,
 robustness (BER @ σ=0.001/0.002), detectability.
@@ -361,8 +361,28 @@ reproduction after exp10/exp12); the sign family fails the gate everywhere
 (0.59–0.84), with **qae worst** (0.84/0.73/0.59) — exp17's margin floor amplifies
 the sign signal rather than hiding it, which also makes W5.2's *"both mechanisms
 avoid sign flips"* premise half-false as written. Excluded by name: `neural`
-(untrained, W1.2), `nf4_qae` (blocked, exp17). Widening to the full 7-model grid
-remains open (NOT_RUN row annotated). Full record: `RESEARCH_LOG.md` §24.
+(untrained, W1.2), `nf4_qae` (blocked, exp17). Full record of the first
+pass: `RESEARCH_LOG.md` §24.
+
+**Widened — 7 models, 28 cells (2026-10-06).** The four remaining
+TARGET_MODELS with complete caches ran under the identical protocol, one
+model per process: Phi-3-mini (10 min), Qwen2.5-7B (70 min), Mistral-7B
+(75 min), gemma-2-9b (64 min) — all exit 0. TinyLlama stays SKIPPED
+(incomplete cache, the standing rule) and gemma-2-2b keeps the small slot,
+so the grid is 7 artifacts covering 6 of TARGET_MODELS' 7. Widened result:
+**28/28 round trips at BER 0.0, 28/28 robustness gates pass — only
+detectability still separates strategies.** LWE scores **exactly 0.50 on
+all seven models (7/7 wins)** — the invariant now measured across all five
+families and every size class. One new cell result: **magnitude_aware wins
+its first cell anywhere — Mistral-7B at 0.525**, the matrix's only
+non-LWE win; Mistral is the least detectable model in the grid (sign
+0.5563 and qae 0.5563 both land just over the 0.55 gate). Ranges widen
+downward: sign 0.56–0.78 (0/7), magnitude_aware 0.53–0.78 (1/7), qae
+0.56–0.84 (0/7). **No misuse re-run trigger holds** — every model was
+already in the measured set and no strategy changed. Audit re-pinned to
+the widened evidence: 7/7 artifacts, 28/28 cells, `lwe_dets == [0.5]×7`,
+8 wins with the single non-LWE win named to Mistral. Record:
+`RESEARCH_LOG.md` §35.
 
 #### W1.4 Dead or duplicate code
 
@@ -809,8 +829,8 @@ invalidate later work.
 | 3 | **W2** LWE perplexity — **done, exp15: PASS ×2** | biggest hole; invalidates the strategy choice if it fails (it did not: 0.008% / 0.050%) |
 | 4 | **W3.1** cross-scheme detector — **done, exp16: PASS (scoped)** | the claim's main weakness (sign→LWE: no transfer, control-validated; reverse uninformative) |
 | 5 | **W1.1** QAE adapter + round trip — **done, exp17: `qae` PASS, `nf4_qae` BLOCKED** | adds two strategies cheaply (one wired, one's blocker diagnosed) |
-| 6 | **W1.3** strategy × model matrix (3 models) — **done, exp18: one axis decides** | the breadth deliverable (first pass; 7-model widening remains) |
-| 7 | **W5** hybrids — **all done: 7a/exp19 (adaptive), W5.3/exp20 (parity-share dial), W5.2/exp21 (FAIL = finding: interop 0.5433 vs 0.0, parity ≡ sign ⊕ public relabeling), W5.4/exp22 (buildable but does not help: magnitude-keying fails the noise gate with cause measured, rank-keying passes, global width stays best)** | most interesting science — closed; only the 7-model widening of exp18 remains in the whole programme |
+| 6 | **W1.3** strategy × model matrix — **done, exp18: full 7-model grid — one axis decides (28/28 round trips + robustness, LWE 0.50 ×7)** | the breadth deliverable — closed; TinyLlama SKIPPED (incomplete cache), gemma-2-2b holds the small slot |
+| 7 | **W5** hybrids — **all done: 7a/exp19 (adaptive), W5.3/exp20 (parity-share dial), W5.2/exp21 (FAIL = finding: interop 0.5433 vs 0.0, parity ≡ sign ⊕ public relabeling), W5.4/exp22 (buildable but does not help: magnitude-keying fails the noise gate with cause measured, rank-keying passes, global width stays best)** | most interesting science — closed; the last item it named (exp18's 7-model widening) is now measured too |
 | 8 | **W6** model surgery | **measured (exp23): 7/9 cells hold exp3's 0.0 — W6.1 LoRA ✓ (both ratios), W6.4 prune ✓ (both fractions, zero carriers displaced), W6.5 merge ✓ to t=0.05; NF4 re-quant fails at 0.3768 and half-merge at 0.2418 — both graceful (better than chance), gate untouched; W6.2 fine-tune + GPTQ/AWQ legs NOT_RUN with probes — determines viability |
 | 9 | **W7** Pareto frontier | **measured (exp24): the frontier is ONE point — exp22's layer_rank (x 0.00372693, y 0.50, marker 0.00146256) dominates all 34/34 others, minimal on both axes at once, so no trade-off exists among committed results; x measured here (no artifact pairs magnitude with a detector), y/marker cited at delta 0.0, 10 exclusions + 6 omissions recorded with reasons — the strongest publishable framing** |
 | 10 | **W1.4** consolidation | **executed + verified: 14 zero-risk files (4 duplicate embedders + 8 consumers + 2 demos) deleted, cache-build ported onto `model_loader` and rebuild-compared against the committed Qwen2.5-3B cache (36 layers × 3 tensors, 108/108 identical at delta 0.0), `scripts/exp1–4` + `src/model/loader.py` deleted — suite 66 OK, audit 127/127, consistency 9/9 after every batch** |
