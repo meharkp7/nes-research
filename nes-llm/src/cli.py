@@ -20,6 +20,18 @@ Usage:
 
     # Find optimal parameters
     python -m src.cli tune --layers 8 --size 10000
+
+    # W8 — delta-only distribution: embed → ship a PATCH, not a model
+    python -m src.cli delta-export \
+        --model Qwen/Qwen2.5-3B \
+        --message "payload" \
+        --delta-out out/patch.nesdelta \
+        --key-out out/patch.key
+    python -m src.cli delta-inspect --delta out/patch.nesdelta
+    python -m src.cli delta-extract \
+        --model Qwen/Qwen2.5-3B \
+        --delta out/patch.nesdelta \
+        --keyfile out/patch.key
 """
 
 import argparse
@@ -142,6 +154,172 @@ def cmd_tune(args):
     print(f"\n[NES] Config saved to {out}")
 
 
+# ======================================================================
+# W8 — delta-only distribution (W8.1 recipient tool, W8.2 metadata)
+# ======================================================================
+
+def _resolve_family(model_id, family_arg):
+    if family_arg:
+        return family_arg
+    from src.experiments.experiment_registry import family_of
+
+    try:
+        return family_of(model_id)
+    except Exception:
+        sys.exit(
+            f"[NES] ❌ unknown model {model_id!r}: pass --family "
+            "(it is not in the experiment registry)"
+        )
+
+
+def _load_clean_residuals(model_id, family):
+    """The base model: R_clean = W_FP16 - dequant(W_NF4), same pair
+    every experiment reads residuals from."""
+
+    from src.model.model_loader import (
+        DEVICE,
+        extract_residuals,
+        load_model_pair,
+    )
+
+    print(
+        f"[NES] loading base pair {model_id} (family={family})...",
+        file=sys.stderr,
+    )
+    nf4_model, fp16_model, _tokenizer = load_model_pair(
+        model_id, device=DEVICE
+    )
+    return extract_residuals(nf4_model, fp16_model, family)
+
+
+def cmd_delta_export(args):
+    """Sender: embed a message, write the delta + its key file."""
+    from src.core.types import EmbeddingConfig
+    from src.delta import build_delta, save_delta, verify_delta
+    from src.embedding.intelligent_embedder import IntelligentEmbedder
+
+    if args.message_file:
+        with open(args.message_file, "r", encoding="utf-8") as f:
+            message = f.read()
+    else:
+        message = args.message
+    if not message:
+        sys.exit("[NES] ❌ empty message")
+
+    family = _resolve_family(args.model, args.family)
+    residuals = _load_clean_residuals(args.model, family)
+
+    config = EmbeddingConfig(
+        total_payload_bits=args.bits,
+        embedding_strategy="sign",
+        model_family=family,
+        num_hidden_layers=len(residuals),
+    )
+    result = IntelligentEmbedder(config).embed(message, residuals)
+
+    payload = build_delta(
+        residuals, result, model_id=args.model, family=family
+    )
+    save_delta(payload, args.delta_out)
+    report = verify_delta(payload)
+
+    with open(args.key_out, "w") as f:
+        f.write(result.key.hex() + "\n")
+
+    print(f"[NES] ✅ delta written: {args.delta_out}")
+    print(f"       carriers      : {report['carrier_count']:,} "
+          f"({report['changed_count']:,} values changed)")
+    print(f"       payload       : {report['payload_bits']:,} bits")
+    print(f"       sha256        : {report['sha256'][:16]}…")
+    print(f"       key           : {args.key_out} "
+          "(share OUT OF BAND — the delta is not secret, the key is)")
+
+
+def cmd_delta_inspect(args):
+    """Verify a delta's integrity metadata and print the audit report.
+
+    Runs no models: an auditor can check the file before paying for
+    the base model."""
+
+    from src.delta import load_delta
+
+    try:
+        payload = load_delta(args.delta)
+    except Exception as exc:  # corruption, truncation, foreign file
+        print(f"[NES] ❌ integrity check FAILED: {exc}", file=sys.stderr)
+        sys.exit(1)
+
+    meta = payload["metadata"]
+    print(f"[NES] ✅ integrity OK: {args.delta}")
+    print(f"       format        : {meta['format']} v{meta['version']}")
+    print(f"       model         : {meta['model_id']} ({meta['family']})")
+    print(f"       strategy      : {meta['strategy']}  "
+          f"key_id={meta['key_id']}")
+    print(f"       carriers      : {meta['carrier_count']:,} across "
+          f"{meta['layer_count']} layers")
+    print(f"       changed values: {meta['changed_count']:,}")
+    print(f"       payload length: {meta['payload_bits']:,} bits "
+          f"(+ {meta['header_bits']}-bit header)")
+    print(f"       sha256        : {meta['sha256']}")
+    print(f"       created       : {meta['created_utc']}")
+
+
+def cmd_delta_extract(args):
+    """Recipient: base model + delta + key → payload (W8.1)."""
+    from src.delta import (
+        load_delta,
+        recover_payload,
+    )
+
+    # --- key: hex on the command line or hex in a file ---------------
+    if args.key and args.keyfile:
+        sys.exit("[NES] ❌ pass one of --key or --keyfile, not both")
+    if args.key:
+        raw = args.key
+    elif args.keyfile:
+        with open(args.keyfile, "r") as f:
+            raw = f.read().strip()
+    else:
+        sys.exit("[NES] ❌ one of --key (64 hex chars) or --keyfile is required")
+    try:
+        key = bytes.fromhex(raw)
+    except ValueError:
+        sys.exit("[NES] ❌ key must be hex (64 characters)")
+    if len(key) != 32:
+        sys.exit(f"[NES] ❌ key must be 32 bytes, got {len(key)}")
+
+    try:
+        payload = load_delta(args.delta)
+    except Exception as exc:
+        print(f"[NES] ❌ integrity check FAILED: {exc}", file=sys.stderr)
+        sys.exit(1)
+
+    family = _resolve_family(args.model, args.family)
+    residuals = _load_clean_residuals(args.model, family)
+
+    try:
+        message, report = recover_payload(residuals, payload, key)
+    except Exception as exc:
+        print(f"[NES] ❌ recovery failed: {exc}", file=sys.stderr)
+        sys.exit(1)
+
+    # Report to stderr, message to stdout: `nes delta-extract … > msg`
+    # gives the payload alone.
+    print(
+        f"[NES] ✅ recovered: integrity OK "
+        f"({report['carrier_count']:,} carriers, "
+        f"{report['payload_bits_from_header']:,}-bit payload, "
+        f"sha256 {report['sha256'][:16]}…)",
+        file=sys.stderr,
+    )
+    if args.out:
+        with open(args.out, "w", encoding="utf-8") as f:
+            f.write(message)
+        print(f"[NES] message written to {args.out}", file=sys.stderr)
+    else:
+        print(message)
+
+
 def main():
     parser = argparse.ArgumentParser(
         prog="nes",
@@ -176,12 +354,50 @@ def main():
     p_tune.add_argument("--layers", type=int, default=8)
     p_tune.add_argument("--size",   type=int, default=10000)
 
+    # --- W8: delta-only distribution ---
+    p_dx = sub.add_parser(
+        "delta-export",
+        help="Sender: embed a message and write delta + key file",
+    )
+    p_dx.add_argument("--model", required=True,
+                      help="HF model id of the base model pair")
+    p_dx.add_argument("--family",
+                      help="architecture family (default: registry lookup)")
+    p_dx.add_argument("--message", help="message text")
+    p_dx.add_argument("--message-file", help="read the message from a file")
+    p_dx.add_argument("--bits", type=int, default=50_000,
+                      help="payload budget passed to the embedder")
+    p_dx.add_argument("--delta-out", required=True,
+                      help="output delta path (.nesdelta)")
+    p_dx.add_argument("--key-out", required=True,
+                      help="where to write the hex AES key")
+
+    p_di = sub.add_parser(
+        "delta-inspect",
+        help="W8.2: verify a delta's integrity metadata (no models)",
+    )
+    p_di.add_argument("--delta", required=True)
+
+    p_de = sub.add_parser(
+        "delta-extract",
+        help="W8.1 recipient: base model + delta + key → payload",
+    )
+    p_de.add_argument("--model", required=True)
+    p_de.add_argument("--family")
+    p_de.add_argument("--delta", required=True)
+    p_de.add_argument("--key", help="64 hex chars (32-byte AES key)")
+    p_de.add_argument("--keyfile", help="file containing the hex key")
+    p_de.add_argument("--out", help="write the message to this file")
+
     args = parser.parse_args()
     {
-        "embed":     cmd_embed,
-        "extract":   cmd_extract,
-        "benchmark": cmd_benchmark,
-        "tune":      cmd_tune,
+        "embed":        cmd_embed,
+        "extract":      cmd_extract,
+        "benchmark":    cmd_benchmark,
+        "tune":         cmd_tune,
+        "delta-export": cmd_delta_export,
+        "delta-inspect": cmd_delta_inspect,
+        "delta-extract": cmd_delta_extract,
     }[args.command](args)
 
 
