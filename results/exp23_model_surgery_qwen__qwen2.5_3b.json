@@ -1,0 +1,182 @@
+{
+  "experiment": "exp23",
+  "title": "W6 \u2014 model surgery survival (first pass, one model)",
+  "model_id": "Qwen/Qwen2.5-3B",
+  "family": "qwen",
+  "num_layers": 36,
+  "gate": {
+    "description": "Model surgery survival (W6): exp3's 0.0 per cell \u2014 'survives' means the payload reads back exactly after the surgery, so every non-zero BER is a cell failing and its number is the degradation (total vs graceful is read from the numbers, not from a relaxed gate). The weight-path control must also be 0.0: it is the pipeline's validity check, not a result.",
+    "max_ber": 0.0,
+    "max_control_ber": 0.0,
+    "gate_source": "experiment_registry.THRESHOLDS['exp23']"
+  },
+  "control": {
+    "direct_ber": 0.0,
+    "weight_path_ber": 0.0,
+    "cache_vs_pair_max_abs": 0.0,
+    "valid": true
+  },
+  "cells": [
+    {
+      "surgery": "control",
+      "ber": 0.0,
+      "bit_errors": 0,
+      "bits_compared": 10256,
+      "rms_delta_over_rms_w": 0.0,
+      "rms_delta_at_carriers": 0.0,
+      "carriers_displaced": 0,
+      "carriers_total": 10256,
+      "meets_gate": true
+    },
+    {
+      "surgery": "lora_0.001",
+      "ber": 0.0,
+      "bit_errors": 0,
+      "bits_compared": 10256,
+      "rms_delta_over_rms_w": 0.0010000000482909702,
+      "rms_delta_at_carriers": 2.3862437301531263e-05,
+      "carriers_displaced": 10256,
+      "carriers_total": 10256,
+      "meets_gate": true
+    },
+    {
+      "surgery": "lora_0.01",
+      "ber": 0.0,
+      "bit_errors": 0,
+      "bits_compared": 10256,
+      "rms_delta_over_rms_w": 0.009999999705991306,
+      "rms_delta_at_carriers": 0.00023862435347004975,
+      "carriers_displaced": 10256,
+      "carriers_total": 10256,
+      "meets_gate": true
+    },
+    {
+      "surgery": "prune_10",
+      "ber": 0.0,
+      "bit_errors": 0,
+      "bits_compared": 10256,
+      "rms_delta_over_rms_w": 0.020620835786016218,
+      "rms_delta_at_carriers": 0.0,
+      "carriers_displaced": 0,
+      "carriers_total": 10256,
+      "meets_gate": true
+    },
+    {
+      "surgery": "prune_30",
+      "ber": 0.0,
+      "bit_errors": 0,
+      "bits_compared": 10256,
+      "rms_delta_over_rms_w": 0.10941034238606014,
+      "rms_delta_at_carriers": 0.0,
+      "carriers_displaced": 0,
+      "carriers_total": 10256,
+      "meets_gate": true
+    },
+    {
+      "surgery": "nf4_requant",
+      "ber": 0.37675507020280813,
+      "bit_errors": 3864,
+      "bits_compared": 10256,
+      "rms_delta_over_rms_w": 0.0949405642131757,
+      "rms_delta_at_carriers": 0.02199511783428811,
+      "carriers_displaced": 9536,
+      "carriers_total": 10256,
+      "meets_gate": false
+    },
+    {
+      "surgery": "merge_0.01",
+      "ber": 0.0,
+      "bit_errors": 0,
+      "bits_compared": 10256,
+      "rms_delta_over_rms_w": 0.0001343569927681068,
+      "rms_delta_at_carriers": 0.0003447655741659741,
+      "carriers_displaced": 7839,
+      "carriers_total": 10256,
+      "meets_gate": true
+    },
+    {
+      "surgery": "merge_0.05",
+      "ber": 0.0,
+      "bit_errors": 0,
+      "bits_compared": 10256,
+      "rms_delta_over_rms_w": 0.0006717849884709894,
+      "rms_delta_at_carriers": 0.0017238279474288444,
+      "carriers_displaced": 7839,
+      "carriers_total": 10256,
+      "meets_gate": true
+    },
+    {
+      "surgery": "merge_0.5",
+      "ber": 0.24180967238689546,
+      "bit_errors": 2480,
+      "bits_compared": 10256,
+      "rms_delta_over_rms_w": 0.006717849687909301,
+      "rms_delta_at_carriers": 0.017238279186041726,
+      "carriers_displaced": 7839,
+      "carriers_total": 10256,
+      "meets_gate": false
+    }
+  ],
+  "not_run": [
+    {
+      "item": "W6.2 \u2014 1-10k fine-tuning steps",
+      "status": "BLOCKED (recorded, not patched)",
+      "reason": "peft=False, trl=False in this environment; installs are not a research action, and an honest full-parameter run exceeds this machine (26 GB). wikitext is cached but no trainer exists to run it. Fine-tune drift stays NOT_RUN and named; the sigma-noise axes (exp6/10/18/22) remain the only measured proxy for dense drift."
+    },
+    {
+      "item": "W6.3 \u2014 GPTQ leg (NF4 -> GPTQ -> back)",
+      "status": "BLOCKED (recorded, not patched)",
+      "reason": "gptqmodel=False, auto_gptq=False; transformers' GPTQConfig imports but has no quantization backend without one of them. The NF4 leg runs; GPTQ does not."
+    },
+    {
+      "item": "W6.3 \u2014 AWQ leg",
+      "status": "BLOCKED (recorded, not patched)",
+      "reason": "transformers 5.16.1 raises ImportError for AwqQuantizer (probed at artifact time); autoawq/awq absent. Consistent with the standing AWQ dequantizer gate."
+    }
+  ],
+  "method": {
+    "pipeline": "W_stego = dequant(nf4) + embedded_residual per layer (apply_residuals_to_model's formula); cell residual = embedded_residual + (W' - W_stego); extraction via the sign strategy's own extractor (production scheme)",
+    "residual_definition": "R = W_FP16 - dequantize(W_NF4)",
+    "dtype": "float32 throughout \u2014 the pipeline's own arithmetic (extract_residuals dequantizes to fp32); fp16 would round sub-residual displacements away",
+    "strategy": "sign",
+    "payload_bits": 10000,
+    "one_embed_for_all_cells": true,
+    "surgery_scope": "mlp.down_proj only \u2014 the payload's scope; other modules cannot touch the payload by construction",
+    "prune": "per-layer magnitude pruning, smallest-|W| fraction",
+    "lora": "LoRA-shaped B@A, rank 8, RMS scaled to (0.001, 0.01) of RMS(W); training out of scope (peft absent \u2014 see not_run), merge step is linear",
+    "nf4_requant": "bitsandbytes quantize_4bit/dequantize_4bit, nf4, default blocksize 64 (the shipped group size)",
+    "merge": "task-vector: W' = W_stego + t*(W_instruct - W_stego), t in (0.01, 0.05, 0.5); partner Qwen/Qwen2.5-3B-Instruct (same shapes) \u2014 the only cached same-architecture second checkpoint",
+    "seed": 42,
+    "pre_registered": "control 0.0; lora survive-or-graceful; prune open (|W|-vs-|r| overlap unknown); nf4_requant plausibly heavy loss (in-bucket deltas never reach the bytes); merge dies as t grows. Misses are recorded, not rewritten."
+  },
+  "notes": [
+    "Per-cell verdicts, exp18's rule: 'survives' = BER 0.0 against exp3's number; any non-zero BER is a cell failing that axis, and the BER column is the plan's total-vs-graceful reading. No gate is relaxed for expected degradation.",
+    "The weight-path control must equal the direct control (both exp3's 0.0): it proves the weights carry exactly the embedded residual before any surgery touches them.",
+    "cache_vs_pair_max_abs records whether the cached residuals equal a fresh R from the model pair; a large value would mean embed operated on a different residual view than the weights are built from \u2014 reported, never assumed away."
+  ],
+  "reproducibility": {
+    "model_id": "Qwen/Qwen2.5-3B",
+    "family": "qwen",
+    "expected_layers": 36,
+    "actual_layers": 36,
+    "layer_count_matches_expected": true,
+    "random_seed": 42,
+    "device": "mps",
+    "software_versions": {
+      "python": "3.14.3",
+      "platform": "macOS-26.3-arm64-arm-64bit-Mach-O",
+      "torch": "2.13.0",
+      "transformers": "5.16.1",
+      "bitsandbytes": "0.50.2",
+      "accelerate": "1.14.0",
+      "numpy": "2.5.2"
+    },
+    "platform_notes": [
+      "Apple Silicon/MPS: NF4 dequantization must stay on CPU. Moving large dequantized tensors to MPS raises RuntimeError: Invalid buffer size.",
+      "MPS has no native int8/uint8 dequantize; PYTORCH_ENABLE_MPS_FALLBACK is set to 1."
+    ],
+    "residual_source": null,
+    "residual_definition": "R = W_FP16 - dequantize(W_NF4)",
+    "timestamp": "2026-10-06T08:01:10.094849+00:00"
+  }
+}

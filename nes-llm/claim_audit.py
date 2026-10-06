@@ -1604,6 +1604,231 @@ def audit_layer_widths():
 
 
 # ------------------------------------------------------------------ gates
+# W6 — model surgery survival (exp23)
+EXP23_ARTIFACT = "exp23_model_surgery_qwen__qwen2.5_3b.json"
+EXP23_ORDER = [
+    "control", "lora_0.001", "lora_0.01", "prune_10", "prune_30",
+    "nf4_requant", "merge_0.01", "merge_0.05", "merge_0.5",
+]
+
+
+def audit_model_surgery():
+    d = one(EXP23_ARTIFACT)
+    check(
+        "exp23: artifact present (W6 first pass, Qwen2.5-3B)",
+        d is not None,
+        EXP23_ARTIFACT if d else "missing: " + EXP23_ARTIFACT,
+    )
+    if not d:
+        return
+
+    gate = THRESHOLDS["exp23"]
+    check(
+        "exp23: gate matches THRESHOLDS['exp23'] — exp3's 0.0 twice "
+        "(max_ber, max_control_ber); degradation is read from the "
+        "BER column, never from a relaxed gate",
+        gate.get("max_ber") == 0.0
+        and gate.get("max_control_ber") == 0.0
+        and d["gate"].get("max_ber") == gate.get("max_ber")
+        and d["gate"].get("max_control_ber") == gate.get("max_control_ber")
+        and "THRESHOLDS['exp23']" in str(d["gate"].get("gate_source")),
+        f"max_ber={d['gate'].get('max_ber')} "
+        f"max_control_ber={d['gate'].get('max_control_ber')}",
+    )
+
+    control = d.get("control", {}) or {}
+    check(
+        "exp23: the weight-path control holds both readings at exp3's "
+        "0.0 and the cached residuals equal a fresh pair residual "
+        "exactly — the cell arithmetic is validated before any "
+        "surgery is measured",
+        control.get("direct_ber") == 0.0
+        and control.get("weight_path_ber") == 0.0
+        and control.get("cache_vs_pair_max_abs") == 0.0
+        and control.get("valid") is True,
+        f"direct={control.get('direct_ber')} "
+        f"weight={control.get('weight_path_ber')} "
+        f"pair={control.get('cache_vs_pair_max_abs')}",
+    )
+
+    cells = d.get("cells", [])
+    check(
+        "exp23: exactly the nine surgery cells, in order (control, "
+        "2 LoRA, 2 prune, NF4, 3 merge) — nothing added, nothing "
+        "silently dropped",
+        [c.get("surgery") for c in cells] == EXP23_ORDER,
+        f"cells={[c.get('surgery') for c in cells]}",
+    )
+
+    # Every verdict recomputes from the numbers beside it: the BER is
+    # the recorded error count over the compared bits, and the gate
+    # boolean is exp3's 0.0 — exact, no rounding either way.
+    inconsistent = []
+    for c in cells:
+        ber = c.get("ber")
+        bits = c.get("bits_compared")
+        errs = c.get("bit_errors")
+        if ber != (errs / bits if bits else None):
+            inconsistent.append(f"{c.get('surgery')}:ber")
+        if c.get("meets_gate") != (ber == gate.get("max_ber")):
+            inconsistent.append(f"{c.get('surgery')}:gate")
+        if bits != 10256 or c.get("carriers_total") != 10256:
+            inconsistent.append(f"{c.get('surgery')}:bits")
+    check(
+        "exp23: every cell's BER recomputes exactly from its own "
+        "error count over 10,256 compared bits, and every verdict "
+        "boolean recomputes from exp3's 0.0 (no rounding either way)",
+        len(cells) == 9 and not inconsistent,
+        "9/9 consistent" if not inconsistent
+        else "; ".join(inconsistent),
+    )
+
+    by_name = {c.get("surgery"): c for c in cells}
+    survivors = [
+        n for n in EXP23_ORDER
+        if n in by_name and by_name[n].get("ber") == 0.0
+    ]
+    nf4 = by_name.get("nf4_requant", {})
+    m5 = by_name.get("merge_0.5", {})
+    check(
+        "exp23: the result as measured — seven cells survive at BER "
+        "0.0 (control, both LoRA ratios, both prunes, merge t<=0.05); "
+        "NF4 re-quant fails at 0.3768 (3864/10256) and the half-merge "
+        "fails at 0.2418 (2480/10256), both still short of chance "
+        "0.5 — total-vs-graceful read from the numbers, gate untouched",
+        survivors == [
+            "control", "lora_0.001", "lora_0.01",
+            "prune_10", "prune_30", "merge_0.01", "merge_0.05",
+        ]
+        and nf4.get("bit_errors") == 3864
+        and m5.get("bit_errors") == 2480
+        and 0.0 < nf4.get("ber", 1.0) < 0.5
+        and 0.0 < m5.get("ber", 1.0) < 0.5
+        and nf4.get("meets_gate") is False
+        and m5.get("meets_gate") is False,
+        f"nf4={nf4.get('ber')} merge_0.5={m5.get('ber')}",
+    )
+
+    prune_bad = []
+    for n in ("prune_10", "prune_30"):
+        c = by_name.get(n, {})
+        if not (
+            c.get("carriers_displaced") == 0
+            and c.get("rms_delta_at_carriers") == 0.0
+            and (c.get("rms_delta_over_rms_w") or 0.0) > 0.0
+            and c.get("ber") == 0.0
+        ):
+            prune_bad.append(n)
+    check(
+        "exp23: pruning's pass is explained by its own numbers — a "
+        "real delta (RMS 2.1% / 10.9% of the weights) that lands on "
+        "zero carriers, so the payload sits outside the pruned mass "
+        "by placement, not by luck",
+        not prune_bad,
+        f"displaced={[by_name.get(n, {}).get('carriers_displaced') for n in ('prune_10', 'prune_30')]}"
+        if not prune_bad else "failed: " + ", ".join(prune_bad),
+    )
+
+    lora_bad = []
+    for n, want in (("lora_0.001", 0.001), ("lora_0.01", 0.01)):
+        got = by_name.get(n, {}).get("rms_delta_over_rms_w")
+        if got is None or abs(got - want) > 1e-6:
+            lora_bad.append(f"{n}={got}")
+    check(
+        "exp23: the LoRA-shaped deltas hit their stated RMS scale "
+        "(1.0e-3 and 1.0e-2 of RMS(W)) — a delta off its scale would "
+        "make 'survives LoRA merge' mean nothing",
+        not lora_bad,
+        "0.001 / 0.01 hit" if not lora_bad else "; ".join(lora_bad),
+    )
+
+    r1 = by_name.get("merge_0.01", {}).get("rms_delta_over_rms_w")
+    r2 = by_name.get("merge_0.05", {}).get("rms_delta_over_rms_w")
+    r3 = by_name.get("merge_0.5", {}).get("rms_delta_over_rms_w")
+    linear = bool(
+        r1 and r2 and r3
+        and abs(r2 / r1 - 5.0) < 1e-5
+        and abs(r3 / r2 - 10.0) < 1e-5
+    )
+    check(
+        "exp23: the merge deltas scale linearly with t (rms 0.05/"
+        "0.01 = 5, rms 0.5/0.05 = 10) — the recorded task vector "
+        "W' = W_stego + t*(W_instruct - W_stego) is measured, not "
+        "asserted",
+        linear,
+        f"r={r1:.3e} {r2:.3e} {r3:.3e}" if r1 and r2 and r3
+        else "missing rms",
+    )
+
+    method = d.get("method", {}) or {}
+    check(
+        "exp23: protocol pins — payload 10k (10,256 compared bits), "
+        "one production-path sign embed shared by every cell, seed "
+        "42, fp32 throughout, surgery scope mlp.down_proj only",
+        method.get("payload_bits") == 10_000
+        and method.get("one_embed_for_all_cells") is True
+        and method.get("strategy") == "sign"
+        and method.get("seed") == 42
+        and "down_proj only" in str(method.get("surgery_scope"))
+        and "float32" in str(method.get("dtype")),
+        "protocol",
+    )
+
+    blockers = d.get("not_run", []) or []
+    names = " | ".join(str(b.get("item", "")) for b in blockers)
+    check(
+        "exp23: all three blocked legs recorded BY NAME with runtime "
+        "probes and no patching — W6.2 fine-tune (peft/trl), W6.3 "
+        "GPTQ (gptqmodel/auto_gptq), W6.3 AWQ (AwqQuantizer)",
+        len(blockers) == 3
+        and "W6.2" in names
+        and "GPTQ" in names
+        and "AWQ" in names
+        and all(
+            "recorded, not patched" in str(b.get("status"))
+            for b in blockers
+        )
+        and "peft=False, trl=False" in str(
+            dig(blockers[0], "reason") if blockers else ""
+        )
+        and "gptqmodel=False" in str(
+            dig(blockers[1], "reason") if len(blockers) > 1 else ""
+        )
+        and "AwqQuantizer" in str(
+            dig(blockers[2], "reason") if len(blockers) > 2 else ""
+        ),
+        f"{len(blockers)} blockers: {names}",
+    )
+
+    notes0 = str((d.get("notes") or [""])[0])
+    check(
+        "exp23: pre-registration preserved with the misses recorded, "
+        "not rewritten — method.pre_registered names the control 0.0 "
+        "and both heavy-loss expectations (nf4, merge dies as t "
+        "grows), and notes[0] states exp18's rule with no gate "
+        "relaxed",
+        "control 0.0" in str(method.get("pre_registered"))
+        and "nf4_requant plausibly heavy loss"
+        in str(method.get("pre_registered"))
+        and "merge dies as t grows" in str(method.get("pre_registered"))
+        and "No gate is relaxed" in notes0,
+        "pre_registered + notes[0]",
+    )
+
+    repro = d.get("reproducibility", {}) or {}
+    check(
+        "exp23: reproducibility recorded — 36/36 layers matched, "
+        "seed and versions captured, residual definition intact",
+        repro.get("actual_layers") == repro.get("expected_layers") == 36
+        and repro.get("layer_count_matches_expected") is True
+        and repro.get("random_seed") == 42
+        and "dequantize" in str(repro.get("residual_definition"))
+        and bool(repro.get("timestamp")),
+        f"layers={repro.get('actual_layers')}/"
+        f"{repro.get('expected_layers')}",
+    )
+
+
 def audit_thresholds():
     check(
         "dequant gate thresholds unchanged (0.95 / 0.5)",
@@ -1646,6 +1871,7 @@ def main() -> int:
         ("sign/parity split (exp20)", audit_split_dial),
         ("QAE/LWE interop (exp21)", audit_qae_lwe_interop),
         ("per-layer LWE width (exp22)", audit_layer_widths),
+        ("model surgery survival (exp23)", audit_model_surgery),
         ("gates", audit_thresholds),
     ):
         print(f"\n{title}")
