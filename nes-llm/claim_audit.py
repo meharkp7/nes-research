@@ -1603,6 +1603,357 @@ def audit_layer_widths():
     )
 
 
+# W7 — Pareto frontier (exp24)
+EXP24_ARTIFACT = "exp24_pareto_frontier.json"
+EXP24_Y_KEY = {"exp7_neural_parameter_study": "accuracy"}
+
+
+def _exp24_cell(point):
+    """Resolve a point's source key to the source cell it cites.
+
+    Source keys are ``experiment:collection[index]``. Fixed-name
+    experiments (exp10/11/12/7) resolve directly; exp18/exp20/exp22
+    live in per-model files, disambiguated by the point's own model
+    slug — the exact slug the point id was built from.
+    """
+    src = str(point.get("source", ""))
+    if ":" not in src:
+        return None, "no source key"
+    exp, rest = src.split(":", 1)
+    if not (rest.endswith("]") and "[" in rest):
+        return None, f"malformed source {src!r}"
+    coll, idx = rest[:-1].split("[")
+    try:
+        index = int(idx)
+    except ValueError:
+        return None, f"malformed source {src!r}"
+
+    path = RESULTS / f"{exp}.json"
+    if not path.exists():
+        slug = (point.get("model_id", "").replace("/", "__")
+                .replace("-", "_").lower())
+        cands = [p for p in sorted(RESULTS.glob(f"{exp}_*.json"))
+                 if slug and slug in p.name]
+        if len(cands) != 1:
+            return None, f"{len(cands)} candidate files for {src}"
+        path = cands[0]
+    try:
+        seq = json.loads(path.read_text(encoding="utf-8"))[coll]
+        return seq[index], ""
+    except (OSError, ValueError, KeyError, IndexError, TypeError) as exc:
+        return None, f"{path.name}: {exc}"
+
+
+def audit_pareto_frontier():
+    d = one(EXP24_ARTIFACT)
+    check(
+        "exp24: artifact present (W7 first pass, 35 points over 11 "
+        "committed sources)",
+        d is not None,
+        EXP24_ARTIFACT if d else "missing: " + EXP24_ARTIFACT,
+    )
+    if not d:
+        return
+
+    gate = THRESHOLDS["exp24"]
+    check(
+        "exp24: gate matches THRESHOLDS['exp24'] — max_source_delta 0.0 "
+        "(citation integrity: every y/marker equals its source exactly; "
+        "a synthesis cannot PASS by being plausible)",
+        gate.get("max_source_delta") == 0.0
+        and d["gate"].get("max_source_delta") == 0.0
+        and "THRESHOLDS['exp24']" in str(d["gate"].get("gate_source")),
+        f"max_source_delta={d['gate'].get('max_source_delta')}",
+    )
+
+    points = d.get("points", [])
+    counts = d.get("counts", {}) or {}
+    check(
+        "exp24: counts match the lists they summarise — 35 points, "
+        "1 frontier, 10 excluded, 2 related, 6 omitted source groups",
+        counts.get("points") == len(points) == 35
+        and counts.get("frontier") == len(d.get("frontier", [])) == 1
+        and counts.get("excluded") == len(d.get("excluded", [])) == 10
+        and counts.get("related") == len(d.get("related", [])) == 2
+        and counts.get("omitted_source_groups")
+        == len(d.get("omitted_sources", [])) == 6,
+        str(counts),
+    )
+
+    # Citation integrity, the gate itself: every y and every marker
+    # recomputes from the source cell it names — exact, delta 0.0,
+    # nulls preserved as nulls (a missing curve is never filled in).
+    y_bad, m_bad, rt_bad, unresolved = [], [], [], []
+    for p in points:
+        cell, err = _exp24_cell(p)
+        if cell is None:
+            unresolved.append(f"{p.get('id')}:{err}")
+            continue
+        want_y = cell.get(EXP24_Y_KEY.get(p.get("experiment"),
+                                          "detector_accuracy"))
+        if want_y is None or float(want_y) != p.get("y"):
+            y_bad.append(f"{p.get('id')}:{want_y}!={p.get('y')}")
+        curve = cell.get("robustness_ber_curve")
+        want_m = curve.get("0.001") if isinstance(curve, dict) else None
+        if want_m != p.get("marker"):
+            m_bad.append(f"{p.get('id')}:{want_m}!={p.get('marker')}")
+        ext = cell.get("extractability")
+        if isinstance(ext, dict) and ext.get("ber") is not None:
+            want_rt = ext.get("ber")
+        elif isinstance(curve, dict):
+            want_rt = curve.get("0.0")
+        else:
+            want_rt = None
+        if want_rt != p.get("round_trip_ber"):
+            rt_bad.append(f"{p.get('id')}:{want_rt}"
+                          f"!={p.get('round_trip_ber')}")
+    check(
+        "exp24: every one of the 35 cited y values recomputes exactly "
+        "from its source cell (detector accuracy; exp7's study key "
+        "'accuracy') at delta 0.0 — a synthesis cannot be plausible, "
+        "it must be exact",
+        not unresolved and not y_bad and len(points) == 35,
+        "35/35 at delta 0.0" if not (unresolved or y_bad)
+        else "; ".join((unresolved + y_bad)[:5]),
+    )
+    check(
+        "exp24: every marker (BER@σ0.001) recomputes exactly from its "
+        "source's robustness_ber_curve, and all 6 null markers stay "
+        "null — exp7's study measured no curve, so none was borrowed "
+        "or invented to make a point look annotated",
+        not unresolved and not m_bad
+        and sum(1 for p in points if p.get("marker") is None) == 6,
+        "35/35 at delta 0.0, 6 nulls preserved"
+        if not (unresolved or m_bad) else "; ".join(m_bad[:5]),
+    )
+    check(
+        "exp24: every round-trip BER carried beside a point recomputes "
+        "from its source (extractability.ber, else the curve's σ0 "
+        "entry, else null) — the sanity column is measured too",
+        not unresolved and not rt_bad,
+        "35/35 at delta 0.0" if not (unresolved or rt_bad)
+        else "; ".join(rt_bad[:5]),
+    )
+
+    # The frontier recomputes from the artifact's own points.
+    recomputed = [
+        p["id"] for i, p in enumerate(points)
+        if not any(
+            j != i and q["x"] <= p["x"] and q["y"] <= p["y"]
+            and (q["x"] < p["x"] or q["y"] < p["y"])
+            for j, q in enumerate(points)
+        )
+    ]
+    check(
+        "exp24: the frontier recomputes from the artifact's own 35 "
+        "points (nondominated on x-down, y-down; equal points do not "
+        "dominate each other) and equals the stored frontier exactly",
+        recomputed == d.get("frontier") and len(recomputed) == 1,
+        f"recomputed={recomputed}",
+    )
+
+    fp = next((p for p in points
+               if p.get("id") in (d.get("frontier") or [])), {})
+    check(
+        "exp24: the frontier as measured — exp22's layer_rank width "
+        "rule is the single nondominated point: x=0.00372693 (smallest "
+        "of all 35), y=0.50 detector (the floor), marker 0.00146256 — "
+        "the rank-keyed width wins the trade-off outright instead of "
+        "trading along it",
+        fp.get("id") == "exp22:qwen__qwen2.5_3b:lwe:layer_rank"
+        and fp.get("x") == 0.0037269348978949783
+        and fp.get("y") == 0.5
+        and fp.get("marker") == 0.0014625585023400937,
+        f"id={fp.get('id')} x={fp.get('x')} y={fp.get('y')} "
+        f"marker={fp.get('marker')}",
+    )
+    check(
+        "exp24: why the frontier is one point — the winner is minimal "
+        "on BOTH axes at once (its x is the set minimum and its y sits "
+        "at the detector floor 0.5), so no point in the set can "
+        "dominate it and every other point is dominated",
+        bool(fp) and fp.get("x") == min(p["x"] for p in points)
+        and fp.get("y") == min(p["y"] for p in points)
+        and all(p.get("y", 1.0) >= 0.5 for p in points),
+        f"min x={min(p['x'] for p in points):.8f} "
+        f"min y={min(p['y'] for p in points)}",
+    )
+
+    x_bad = [p.get("id") for p in points
+             if not (isinstance(p.get("x"), float) and p.get("x") > 0.0
+                     and (p.get("changed_values") or 0) > 0
+                     and (p.get("bits_embedded") or 0) > 0)]
+    method = d.get("method", {}) or {}
+    check(
+        "exp24: x is measured here for every point — mean |delta| over "
+        "changed values, each point carrying its x, changed-value count "
+        "and embedded bits, with the definition and the reason it had "
+        "to be measured (no committed artifact pairs magnitude with a "
+        "detector) recorded in method; no count substituted for it",
+        not x_bad and len(points) == 35
+        and "mean |embedded - original|"
+        in str(method.get("x_definition", ""))
+        and "never substituted" in str(method.get(
+            "x_why_measured_here", "")),
+        "35/35 carry x" if not x_bad
+        else "missing: " + ", ".join(x_bad[:5]),
+    )
+
+    # Config reconstruction: each point's params must mirror its
+    # source's own mechanism, cell by cell.
+    cfg_bad = []
+    for p in points:
+        cell, err = _exp24_cell(p)
+        if cell is None:
+            cfg_bad.append(f"{p.get('id')}:{err}")
+            continue
+        params = p.get("params", {}) or {}
+        exp = p.get("experiment")
+        try:
+            if exp in ("exp11_lwe_alpha_pareto", "exp12_lwe_cross_model"):
+                width = float(cell.get("grid_width")
+                              or 0.01 if exp == "exp12_lwe_cross_model"
+                              else cell.get("grid_width"))
+                ok = (params.get("alpha") == 1.0
+                      and params.get("min_magnitude") == width / 2.0)
+            elif exp == "exp20":
+                ok = (params.get("split_fraction")
+                      == float(cell.get("split_fraction")))
+            elif exp == "exp22":
+                ok = (params.get("lwe_width_rule")
+                      == str(cell.get("width_rule")))
+            elif exp == "exp7_neural_parameter_study":
+                ok = (params.get("min_magnitude")
+                      == float(cell.get("alpha"))
+                      and params.get("gamma") == float(cell.get("gamma"))
+                      and params.get("payload_bits")
+                      == int(cell.get("payload_bits")))
+            else:  # exp10 / exp18 — the shipped default config
+                ok = params == {"payload_bits": 10000}
+        except (TypeError, ValueError):
+            ok = False
+        if not ok:
+            cfg_bad.append(str(p.get("id")))
+    check(
+        "exp24: every point's config reconstructs its source's own "
+        "mechanism — exp11/exp12 pinned by their alpha=1.0 & "
+        "min_magnitude=w/2 patch, exp20's split_fraction, exp22's "
+        "width_rule, exp7's alpha→min_magnitude (its module's own "
+        "mapping) + gamma + payload, exp10/exp18 at the shipped "
+        "default — so a shared point means the same embed, not a "
+        "lookalike",
+        not cfg_bad and len(points) == 35,
+        "35/35 reconstruct" if not cfg_bad
+        else "; ".join(cfg_bad[:5]),
+    )
+
+    # Exclusions and omissions are recorded, never dropped (§2).
+    excl = d.get("excluded", [])
+    excl_text = " | ".join(f"{e.get('what')}:{e.get('reason')}"
+                           for e in excl)
+    check(
+        "exp24: all 10 exclusions recorded with what + reason + source, "
+        "never dropped — the neural cell by its NEEDS_TRAINING status, "
+        "tinyllama by its incomplete cache, gemma-2-2b's 8 cells by its "
+        "absence from experiment_registry (4 group-level + 4 magnitude "
+        "follow-ons), each reason carried in full",
+        len(excl) == 10
+        and all(e.get("what") and e.get("reason") and e.get("source")
+                for e in excl)
+        and "NEEDS_TRAINING" in excl_text
+        and "residual cache incomplete" in excl_text
+        and "not in experiment_registry" in excl_text
+        and sum("magnitude not measured" in str(e.get("reason"))
+                for e in excl) == 4,
+        f"{len(excl)} exclusions, all with reasons"
+        if len(excl) == 10 else f"{len(excl)} exclusions",
+    )
+
+    om = d.get("omitted_sources", [])
+    om_text = " | ".join(f"{o.get('source')}:{o.get('reason')}"
+                         for o in om)
+    check(
+        "exp24: 6 omitted source groups each carry the reason they "
+        "cannot form a frontier point (no detector axis), exp2/exp17 "
+        "named as priors rather than x, and the catch-all names every "
+        "remaining experiment — including exp23 and exp21 — so the "
+        "frontier's coverage is stated rather than implied",
+        len(om) == 6
+        and all(o.get("source") and o.get("reason") for o in om)
+        and "exp2_*.json" in om_text
+        and "exp17_*.json" in om_text
+        and "cited as a prior, not as x" in om_text
+        and "exp23" in om_text,
+        f"{len(om)} groups" if len(om) == 6 else f"{len(om)} groups",
+    )
+
+    # The related and prior citations recompute from their sources.
+    rel = {r.get("source"): r for r in d.get("related", [])}
+    arms = (one("exp14_blind_patch_detector.json") or {}).get("arms", {}) \
+        or {}
+    want14 = (
+        arms.get("blind", {}).get("metrics", {}).get("accuracy"),
+        arms.get("control", {}).get("metrics", {}).get("accuracy"),
+        arms.get("blind", {}).get("positions_containing_carrier"),
+    )
+    got14 = rel.get("exp14_blind_patch_detector.json") or {}
+    cross16 = {k: v.get("accuracy") for k, v in
+               ((one("exp16_cross_scheme_detector.json") or {})
+                .get("results") or {}).items()}
+    got16 = (rel.get("exp16_cross_scheme_detector.json")
+             or {}).get("cross_matrix")
+    check(
+        "exp24: both related citations recompute from their sources "
+        "exactly — exp14's blind/control accuracies + carrier count, "
+        "exp16's four cross-scheme readings — recorded as readings of "
+        "an existing point, never folded into the frontier",
+        len(rel) == 2
+        and (got14.get("blind_accuracy"),
+             got14.get("control_accuracy"),
+             got14.get("blind_positions_with_carrier")) == want14
+        and got16 == cross16,
+        f"exp14={want14} exp16_keys={sorted(got16 or {})}",
+    )
+
+    priors = {p.get("source"): p
+              for p in d.get("prior_magnitude_citations", [])}
+    want2 = ((one("exp2_qwen__qwen2.5-3b.json") or {}).get("mean_mag_mean")
+             or (one("exp2_qwen__qwen2.5-3b.json") or {})
+             .get("reproducibility", {}).get("mean_mag_mean"))
+    m17 = (one("exp17_qae_round_trip.json") or {}).get("metrics", {}) or {}
+    p2 = priors.get("exp2_qwen__qwen2.5-3b.json") or {}
+    p17 = priors.get("exp17_qae_round_trip.json") or {}
+    check(
+        "exp24: both prior-magnitude citations recompute from their "
+        "sources exactly (exp2's mean_mag_mean; exp17's "
+        "mean_abs_delta_over_changed at 48,256 bits) and each records "
+        "its own protocol as cited-not-used — different payloads, so "
+        "neither was merged into x",
+        len(priors) == 2
+        and p2.get("mean_mag_mean") == want2
+        and p17.get("mean_abs_delta_over_changed")
+        == m17.get("mean_abs_delta_over_changed")
+        and p17.get("bits_embedded") == m17.get("bits_embedded") == 48256
+        and all("not used as x" in str(p.get("protocol"))
+                for p in priors.values()),
+        f"exp2={want2} exp17={m17.get('mean_abs_delta_over_changed')}",
+    )
+
+    srcs = method.get("sources_read", [])
+    missing_src = [s for s in srcs if not (RESULTS / s).exists()]
+    check(
+        "exp24: protocol pins — seed 42, payload default 10,000, "
+        "marker σ=0.001 named in method, all 11 sources_read present "
+        "on disk (9 frontier sources + the 2 related readings)",
+        method.get("seed") == 42
+        and method.get("payload_bits_default") == 10000
+        and "0.001" in str(method.get("marker", ""))
+        and len(srcs) == 11 and not missing_src,
+        f"seed={method.get('seed')} sources={len(srcs)} "
+        f"missing={missing_src}",
+    )
+
+
 # ------------------------------------------------------------------ gates
 # W6 — model surgery survival (exp23)
 EXP23_ARTIFACT = "exp23_model_surgery_qwen__qwen2.5_3b.json"
@@ -1872,6 +2223,7 @@ def main() -> int:
         ("QAE/LWE interop (exp21)", audit_qae_lwe_interop),
         ("per-layer LWE width (exp22)", audit_layer_widths),
         ("model surgery survival (exp23)", audit_model_surgery),
+        ("Pareto frontier (exp24)", audit_pareto_frontier),
         ("gates", audit_thresholds),
     ):
         print(f"\n{title}")

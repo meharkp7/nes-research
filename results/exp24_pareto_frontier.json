@@ -1,0 +1,754 @@
+{
+  "experiment": "exp24",
+  "title": "W7 \u2014 Pareto frontier (strategy \u00d7 parameter, x = mean |delta|, y = detector accuracy, marker = BER@sigma 0.001)",
+  "gate": {
+    "max_source_delta": 0.0,
+    "gate_source": "experiment_registry.THRESHOLDS['exp24']",
+    "description": "Citation integrity: every y/marker stored here must equal its source artifact exactly; the frontier recomputes from these points (nondominated x-down, y-down)."
+  },
+  "method": {
+    "x_definition": "mean |embedded - original| over changed values, one embed per unique (model, strategy, config) group, originals snapshotted before embed",
+    "x_why_measured_here": "no committed artifact records magnitude together with detector accuracy: exp2/exp17 carry magnitudes without detectors, detector-bearing artifacts carry changed-value COUNTS (signal_density) only \u2014 counts are never substituted for the plan's x-axis",
+    "y": "detector accuracy as recorded in each source (key 'detector_accuracy'; exp7 study key 'accuracy')",
+    "marker": "BER at sigma 0.001 from the source's robustness_ber_curve; annotation, not an axis \u2014 null means the source measured no robustness curve, recorded, never dropped",
+    "frontier": "nondominated on (x minimized, y minimized); equal points do not dominate each other",
+    "config_reconstruction": "exp11/exp12 grid-width cells carry the sources' own patch (alpha=1.0, min_magnitude=w/2); exp20 carries split_fraction; exp22 carries lwe_width_rule; exp7's recorded alpha maps to min_magnitude (its module's own `min_magnitude=alpha`), gamma as gamma, payload as payload; all others shipped defaults (payload 10000)",
+    "payload_bits_default": 10000,
+    "seed": 42,
+    "sources_read": [
+      "exp10_strategy_comparison.json",
+      "exp11_lwe_alpha_pareto.json",
+      "exp12_lwe_cross_model.json",
+      "exp7_neural_parameter_study.json",
+      "exp18_matrix_google__gemma_2_2b.json",
+      "exp18_matrix_meta_llama__llama_3.1_8b.json",
+      "exp18_matrix_qwen__qwen2.5_3b.json",
+      "exp20_split_dial_qwen__qwen2.5_3b.json",
+      "exp22_layer_widths_qwen__qwen2.5_3b.json",
+      "exp14_blind_patch_detector.json",
+      "exp16_cross_scheme_detector.json"
+    ]
+  },
+  "points": [
+    {
+      "id": "exp10_strategy_comparison:qwen__qwen2.5_3b:sign",
+      "source": "exp10_strategy_comparison:results[0]",
+      "experiment": "exp10_strategy_comparison",
+      "model_id": "Qwen/Qwen2.5-3B",
+      "strategy": "sign",
+      "params": {
+        "payload_bits": 10000
+      },
+      "y": 0.7125,
+      "marker": 0.0,
+      "round_trip_ber": 0.0,
+      "x": 0.0469558339777224,
+      "changed_values": 4991,
+      "bits_embedded": 10256
+    },
+    {
+      "id": "exp10_strategy_comparison:qwen__qwen2.5_3b:magnitude_aware",
+      "source": "exp10_strategy_comparison:results[1]",
+      "experiment": "exp10_strategy_comparison",
+      "model_id": "Qwen/Qwen2.5-3B",
+      "strategy": "magnitude_aware",
+      "params": {
+        "payload_bits": 10000
+      },
+      "y": 0.6875,
+      "marker": 0.0,
+      "round_trip_ber": 0.0,
+      "x": 0.02503860319925359,
+      "changed_values": 10256,
+      "bits_embedded": 10256
+    },
+    {
+      "id": "exp10_strategy_comparison:qwen__qwen2.5_3b:lwe",
+      "source": "exp10_strategy_comparison:results[2]",
+      "experiment": "exp10_strategy_comparison",
+      "model_id": "Qwen/Qwen2.5-3B",
+      "strategy": "lwe",
+      "params": {
+        "payload_bits": 10000
+      },
+      "y": 0.5,
+      "marker": 0.0,
+      "round_trip_ber": 0.0,
+      "x": 0.005014460365318471,
+      "changed_values": 10256,
+      "bits_embedded": 10256
+    },
+    {
+      "id": "exp11_lwe_alpha_pareto:qwen__qwen2.5_3b:lwe:w0.002",
+      "source": "exp11_lwe_alpha_pareto:results[0]",
+      "experiment": "exp11_lwe_alpha_pareto",
+      "model_id": "Qwen/Qwen2.5-3B",
+      "strategy": "lwe",
+      "params": {
+        "payload_bits": 10000,
+        "alpha": 1.0,
+        "min_magnitude": 0.001
+      },
+      "y": 0.5,
+      "marker": 0.5857384295371815,
+      "round_trip_ber": 0.0,
+      "x": 0.00500108687535463,
+      "changed_values": 10256,
+      "bits_embedded": 10256
+    },
+    {
+      "id": "exp11_lwe_alpha_pareto:qwen__qwen2.5_3b:lwe:w0.005",
+      "source": "exp11_lwe_alpha_pareto:results[1]",
+      "experiment": "exp11_lwe_alpha_pareto",
+      "model_id": "Qwen/Qwen2.5-3B",
+      "strategy": "lwe",
+      "params": {
+        "payload_bits": 10000,
+        "alpha": 1.0,
+        "min_magnitude": 0.0025
+      },
+      "y": 0.5,
+      "marker": 0.01267550702028081,
+      "round_trip_ber": 0.0,
+      "x": 0.005067038650561979,
+      "changed_values": 10256,
+      "bits_embedded": 10256
+    },
+    {
+      "id": "exp11_lwe_alpha_pareto:qwen__qwen2.5_3b:lwe:w0.01",
+      "source": "exp11_lwe_alpha_pareto:results[2]",
+      "experiment": "exp11_lwe_alpha_pareto",
+      "model_id": "Qwen/Qwen2.5-3B",
+      "strategy": "lwe",
+      "params": {
+        "payload_bits": 10000,
+        "alpha": 1.0,
+        "min_magnitude": 0.005
+      },
+      "y": 0.5,
+      "marker": 0.0,
+      "round_trip_ber": 0.0,
+      "x": 0.004980724348502114,
+      "changed_values": 10256,
+      "bits_embedded": 10256
+    },
+    {
+      "id": "exp11_lwe_alpha_pareto:qwen__qwen2.5_3b:lwe:w0.02",
+      "source": "exp11_lwe_alpha_pareto:results[3]",
+      "experiment": "exp11_lwe_alpha_pareto",
+      "model_id": "Qwen/Qwen2.5-3B",
+      "strategy": "lwe",
+      "params": {
+        "payload_bits": 10000,
+        "alpha": 1.0,
+        "min_magnitude": 0.01
+      },
+      "y": 0.5,
+      "marker": 0.0,
+      "round_trip_ber": 0.0,
+      "x": 0.0049900363014891815,
+      "changed_values": 10256,
+      "bits_embedded": 10256
+    },
+    {
+      "id": "exp11_lwe_alpha_pareto:qwen__qwen2.5_3b:lwe:w0.05",
+      "source": "exp11_lwe_alpha_pareto:results[4]",
+      "experiment": "exp11_lwe_alpha_pareto",
+      "model_id": "Qwen/Qwen2.5-3B",
+      "strategy": "lwe",
+      "params": {
+        "payload_bits": 10000,
+        "alpha": 1.0,
+        "min_magnitude": 0.025
+      },
+      "y": 0.70625,
+      "marker": 0.0,
+      "round_trip_ber": 0.0,
+      "x": 0.005046110530492854,
+      "changed_values": 10256,
+      "bits_embedded": 10256
+    },
+    {
+      "id": "exp12_lwe_cross_model:qwen__qwen2.5_3b:lwe:mQwen2.5-3B",
+      "source": "exp12_lwe_cross_model:results[1]",
+      "experiment": "exp12_lwe_cross_model",
+      "model_id": "Qwen/Qwen2.5-3B",
+      "strategy": "lwe",
+      "params": {
+        "payload_bits": 10000,
+        "alpha": 1.0,
+        "min_magnitude": 0.005
+      },
+      "y": 0.5,
+      "marker": 0.0,
+      "round_trip_ber": 0.0,
+      "x": 0.004980724348502114,
+      "changed_values": 10256,
+      "bits_embedded": 10256
+    },
+    {
+      "id": "exp12_lwe_cross_model:qwen__qwen2.5_7b:lwe:mQwen2.5-7B",
+      "source": "exp12_lwe_cross_model:results[2]",
+      "experiment": "exp12_lwe_cross_model",
+      "model_id": "Qwen/Qwen2.5-7B",
+      "strategy": "lwe",
+      "params": {
+        "payload_bits": 10000,
+        "alpha": 1.0,
+        "min_magnitude": 0.005
+      },
+      "y": 0.5,
+      "marker": 0.0,
+      "round_trip_ber": 0.0,
+      "x": 0.005059832658279496,
+      "changed_values": 10236,
+      "bits_embedded": 10256
+    },
+    {
+      "id": "exp12_lwe_cross_model:mistralai__mistral_7b_v0.3:lwe:mMistral-7B-v0.3",
+      "source": "exp12_lwe_cross_model:results[3]",
+      "experiment": "exp12_lwe_cross_model",
+      "model_id": "mistralai/Mistral-7B-v0.3",
+      "strategy": "lwe",
+      "params": {
+        "payload_bits": 10000,
+        "alpha": 1.0,
+        "min_magnitude": 0.005
+      },
+      "y": 0.5,
+      "marker": 0.0,
+      "round_trip_ber": 0.0,
+      "x": 0.005028789041101613,
+      "changed_values": 10255,
+      "bits_embedded": 10256
+    },
+    {
+      "id": "exp12_lwe_cross_model:meta_llama__llama_3.1_8b:lwe:mLlama-3.1-8B",
+      "source": "exp12_lwe_cross_model:results[4]",
+      "experiment": "exp12_lwe_cross_model",
+      "model_id": "meta-llama/Llama-3.1-8B",
+      "strategy": "lwe",
+      "params": {
+        "payload_bits": 10000,
+        "alpha": 1.0,
+        "min_magnitude": 0.005
+      },
+      "y": 0.5,
+      "marker": 0.0,
+      "round_trip_ber": 0.0,
+      "x": 0.004982109509562131,
+      "changed_values": 10231,
+      "bits_embedded": 10256
+    },
+    {
+      "id": "exp12_lwe_cross_model:google__gemma_2_9b:lwe:mgemma-2-9b",
+      "source": "exp12_lwe_cross_model:results[5]",
+      "experiment": "exp12_lwe_cross_model",
+      "model_id": "google/gemma-2-9b",
+      "strategy": "lwe",
+      "params": {
+        "payload_bits": 10000,
+        "alpha": 1.0,
+        "min_magnitude": 0.005
+      },
+      "y": 0.5,
+      "marker": 0.0,
+      "round_trip_ber": 0.0,
+      "x": 0.004960457737704335,
+      "changed_values": 10256,
+      "bits_embedded": 10256
+    },
+    {
+      "id": "exp7_neural_parameter_study:qwen__qwen2.5_3b:sign:baseline (alpha=1e-3, gamma=2.5)",
+      "source": "exp7_neural_parameter_study:variants[0]",
+      "experiment": "exp7_neural_parameter_study",
+      "model_id": "Qwen/Qwen2.5-3B",
+      "strategy": "sign",
+      "params": {
+        "payload_bits": 10000,
+        "min_magnitude": 0.001,
+        "gamma": 2.5
+      },
+      "y": 0.71875,
+      "marker": null,
+      "round_trip_ber": null,
+      "x": 0.04711961212099266,
+      "changed_values": 5178,
+      "bits_embedded": 10256
+    },
+    {
+      "id": "exp7_neural_parameter_study:qwen__qwen2.5_3b:sign:alpha 1e-4 (10x smaller)",
+      "source": "exp7_neural_parameter_study:variants[1]",
+      "experiment": "exp7_neural_parameter_study",
+      "model_id": "Qwen/Qwen2.5-3B",
+      "strategy": "sign",
+      "params": {
+        "payload_bits": 10000,
+        "min_magnitude": 0.0001,
+        "gamma": 2.5
+      },
+      "y": 0.71875,
+      "marker": null,
+      "round_trip_ber": null,
+      "x": 0.04718925638658001,
+      "changed_values": 5068,
+      "bits_embedded": 10256
+    },
+    {
+      "id": "exp7_neural_parameter_study:qwen__qwen2.5_3b:sign:alpha 1e-2 (10x larger)",
+      "source": "exp7_neural_parameter_study:variants[2]",
+      "experiment": "exp7_neural_parameter_study",
+      "model_id": "Qwen/Qwen2.5-3B",
+      "strategy": "sign",
+      "params": {
+        "payload_bits": 10000,
+        "min_magnitude": 0.01,
+        "gamma": 2.5
+      },
+      "y": 0.7,
+      "marker": null,
+      "round_trip_ber": null,
+      "x": 0.04714139614168791,
+      "changed_values": 5101,
+      "bits_embedded": 10256
+    },
+    {
+      "id": "exp7_neural_parameter_study:qwen__qwen2.5_3b:sign:gamma 1.0 (wider spread)",
+      "source": "exp7_neural_parameter_study:variants[3]",
+      "experiment": "exp7_neural_parameter_study",
+      "model_id": "Qwen/Qwen2.5-3B",
+      "strategy": "sign",
+      "params": {
+        "payload_bits": 10000,
+        "min_magnitude": 0.001,
+        "gamma": 1.0
+      },
+      "y": 0.69375,
+      "marker": null,
+      "round_trip_ber": null,
+      "x": 0.04699229796648641,
+      "changed_values": 5039,
+      "bits_embedded": 10256
+    },
+    {
+      "id": "exp7_neural_parameter_study:qwen__qwen2.5_3b:sign:gamma 5.0 (narrower)",
+      "source": "exp7_neural_parameter_study:variants[4]",
+      "experiment": "exp7_neural_parameter_study",
+      "model_id": "Qwen/Qwen2.5-3B",
+      "strategy": "sign",
+      "params": {
+        "payload_bits": 10000,
+        "min_magnitude": 0.001,
+        "gamma": 5.0
+      },
+      "y": 0.74375,
+      "marker": null,
+      "round_trip_ber": null,
+      "x": 0.046171556951392974,
+      "changed_values": 5097,
+      "bits_embedded": 10256
+    },
+    {
+      "id": "exp7_neural_parameter_study:qwen__qwen2.5_3b:sign:payload 100k (10x carriers)",
+      "source": "exp7_neural_parameter_study:variants[5]",
+      "experiment": "exp7_neural_parameter_study",
+      "model_id": "Qwen/Qwen2.5-3B",
+      "strategy": "sign",
+      "params": {
+        "payload_bits": 100000,
+        "min_magnitude": 0.001,
+        "gamma": 2.5
+      },
+      "y": 0.74375,
+      "marker": null,
+      "round_trip_ber": null,
+      "x": 0.03121387809479399,
+      "changed_values": 50228,
+      "bits_embedded": 100256
+    },
+    {
+      "id": "exp18:meta_llama__llama_3.1_8b:sign",
+      "source": "exp18:cells[0]",
+      "experiment": "exp18",
+      "model_id": "meta-llama/Llama-3.1-8B",
+      "strategy": "sign",
+      "params": {
+        "payload_bits": 10000
+      },
+      "y": 0.60625,
+      "marker": 0.0,
+      "round_trip_ber": 0.0,
+      "x": 0.43231997750633816,
+      "changed_values": 5103,
+      "bits_embedded": 10256
+    },
+    {
+      "id": "exp18:meta_llama__llama_3.1_8b:magnitude_aware",
+      "source": "exp18:cells[1]",
+      "experiment": "exp18",
+      "model_id": "meta-llama/Llama-3.1-8B",
+      "strategy": "magnitude_aware",
+      "params": {
+        "payload_bits": 10000
+      },
+      "y": 0.59375,
+      "marker": 0.0,
+      "round_trip_ber": 0.0,
+      "x": 0.2272230440898916,
+      "changed_values": 10256,
+      "bits_embedded": 10256
+    },
+    {
+      "id": "exp18:meta_llama__llama_3.1_8b:lwe",
+      "source": "exp18:cells[2]",
+      "experiment": "exp18",
+      "model_id": "meta-llama/Llama-3.1-8B",
+      "strategy": "lwe",
+      "params": {
+        "payload_bits": 10000
+      },
+      "y": 0.5,
+      "marker": 0.0,
+      "round_trip_ber": 0.0,
+      "x": 0.005024050967767835,
+      "changed_values": 10240,
+      "bits_embedded": 10256
+    },
+    {
+      "id": "exp18:meta_llama__llama_3.1_8b:qae",
+      "source": "exp18:cells[3]",
+      "experiment": "exp18",
+      "model_id": "meta-llama/Llama-3.1-8B",
+      "strategy": "qae",
+      "params": {
+        "payload_bits": 10000
+      },
+      "y": 0.59375,
+      "marker": 0.0,
+      "round_trip_ber": 0.0,
+      "x": 0.41878329147436205,
+      "changed_values": 5173,
+      "bits_embedded": 10256
+    },
+    {
+      "id": "exp18:qwen__qwen2.5_3b:sign",
+      "source": "exp18:cells[0]",
+      "experiment": "exp18",
+      "model_id": "Qwen/Qwen2.5-3B",
+      "strategy": "sign",
+      "params": {
+        "payload_bits": 10000
+      },
+      "y": 0.75,
+      "marker": 0.0,
+      "round_trip_ber": 0.0,
+      "x": 0.0469558339777224,
+      "changed_values": 4991,
+      "bits_embedded": 10256
+    },
+    {
+      "id": "exp18:qwen__qwen2.5_3b:magnitude_aware",
+      "source": "exp18:cells[1]",
+      "experiment": "exp18",
+      "model_id": "Qwen/Qwen2.5-3B",
+      "strategy": "magnitude_aware",
+      "params": {
+        "payload_bits": 10000
+      },
+      "y": 0.675,
+      "marker": 0.0,
+      "round_trip_ber": 0.0,
+      "x": 0.02503860319925359,
+      "changed_values": 10256,
+      "bits_embedded": 10256
+    },
+    {
+      "id": "exp18:qwen__qwen2.5_3b:lwe",
+      "source": "exp18:cells[2]",
+      "experiment": "exp18",
+      "model_id": "Qwen/Qwen2.5-3B",
+      "strategy": "lwe",
+      "params": {
+        "payload_bits": 10000
+      },
+      "y": 0.5,
+      "marker": 0.0,
+      "round_trip_ber": 0.0,
+      "x": 0.005014460365318471,
+      "changed_values": 10256,
+      "bits_embedded": 10256
+    },
+    {
+      "id": "exp18:qwen__qwen2.5_3b:qae",
+      "source": "exp18:cells[3]",
+      "experiment": "exp18",
+      "model_id": "Qwen/Qwen2.5-3B",
+      "strategy": "qae",
+      "params": {
+        "payload_bits": 10000
+      },
+      "y": 0.725,
+      "marker": 0.0,
+      "round_trip_ber": 0.0,
+      "x": 0.04707319915189111,
+      "changed_values": 5083,
+      "bits_embedded": 10256
+    },
+    {
+      "id": "exp20:qwen__qwen2.5_3b:split:sf0",
+      "source": "exp20:cells[0]",
+      "experiment": "exp20",
+      "model_id": "Qwen/Qwen2.5-3B",
+      "strategy": "split",
+      "params": {
+        "payload_bits": 10000,
+        "split_fraction": 0.0
+      },
+      "y": 0.7875,
+      "marker": 0.0,
+      "round_trip_ber": 0.0,
+      "x": 0.04707377827922238,
+      "changed_values": 5086,
+      "bits_embedded": 10256
+    },
+    {
+      "id": "exp20:qwen__qwen2.5_3b:split:sf0.25",
+      "source": "exp20:cells[1]",
+      "experiment": "exp20",
+      "model_id": "Qwen/Qwen2.5-3B",
+      "strategy": "split",
+      "params": {
+        "payload_bits": 10000,
+        "split_fraction": 0.25
+      },
+      "y": 0.69375,
+      "marker": 0.0,
+      "round_trip_ber": 0.0,
+      "x": 0.029909091037291342,
+      "changed_values": 6434,
+      "bits_embedded": 10256
+    },
+    {
+      "id": "exp20:qwen__qwen2.5_3b:split:sf0.5",
+      "source": "exp20:cells[2]",
+      "experiment": "exp20",
+      "model_id": "Qwen/Qwen2.5-3B",
+      "strategy": "split",
+      "params": {
+        "payload_bits": 10000,
+        "split_fraction": 0.5
+      },
+      "y": 0.7,
+      "marker": 0.0,
+      "round_trip_ber": 0.0,
+      "x": 0.018835219416517526,
+      "changed_values": 7709,
+      "bits_embedded": 10256
+    },
+    {
+      "id": "exp20:qwen__qwen2.5_3b:split:sf0.75",
+      "source": "exp20:cells[3]",
+      "experiment": "exp20",
+      "model_id": "Qwen/Qwen2.5-3B",
+      "strategy": "split",
+      "params": {
+        "payload_bits": 10000,
+        "split_fraction": 0.75
+      },
+      "y": 0.5875,
+      "marker": 0.0,
+      "round_trip_ber": 0.0,
+      "x": 0.010996065975800936,
+      "changed_values": 8986,
+      "bits_embedded": 10256
+    },
+    {
+      "id": "exp20:qwen__qwen2.5_3b:split:sf1",
+      "source": "exp20:cells[4]",
+      "experiment": "exp20",
+      "model_id": "Qwen/Qwen2.5-3B",
+      "strategy": "split",
+      "params": {
+        "payload_bits": 10000,
+        "split_fraction": 1.0
+      },
+      "y": 0.5,
+      "marker": 0.0,
+      "round_trip_ber": 0.0,
+      "x": 0.004992071074228763,
+      "changed_values": 10256,
+      "bits_embedded": 10256
+    },
+    {
+      "id": "exp22:qwen__qwen2.5_3b:lwe:global",
+      "source": "exp22:cells[0]",
+      "experiment": "exp22",
+      "model_id": "Qwen/Qwen2.5-3B",
+      "strategy": "lwe",
+      "params": {
+        "payload_bits": 10000,
+        "lwe_width_rule": "global"
+      },
+      "y": 0.5,
+      "marker": 0.0,
+      "round_trip_ber": 0.0,
+      "x": 0.004990793276409649,
+      "changed_values": 10256,
+      "bits_embedded": 10256
+    },
+    {
+      "id": "exp22:qwen__qwen2.5_3b:lwe:per_layer",
+      "source": "exp22:cells[1]",
+      "experiment": "exp22",
+      "model_id": "Qwen/Qwen2.5-3B",
+      "strategy": "lwe",
+      "params": {
+        "payload_bits": 10000,
+        "lwe_width_rule": "per_layer"
+      },
+      "y": 0.5,
+      "marker": 0.022588403536141447,
+      "round_trip_ber": 0.0,
+      "x": 0.0047884145722537075,
+      "changed_values": 10256,
+      "bits_embedded": 10256
+    },
+    {
+      "id": "exp22:qwen__qwen2.5_3b:lwe:layer_rank",
+      "source": "exp22:cells[2]",
+      "experiment": "exp22",
+      "model_id": "Qwen/Qwen2.5-3B",
+      "strategy": "lwe",
+      "params": {
+        "payload_bits": 10000,
+        "lwe_width_rule": "layer_rank"
+      },
+      "y": 0.5,
+      "marker": 0.0014625585023400937,
+      "round_trip_ber": 0.0,
+      "x": 0.0037269348978949783,
+      "changed_values": 10256,
+      "bits_embedded": 10256
+    }
+  ],
+  "frontier": [
+    "exp22:qwen__qwen2.5_3b:lwe:layer_rank"
+  ],
+  "excluded": [
+    {
+      "what": "exp10_strategy_comparison:qwen__qwen2.5_3b:neural",
+      "reason": "status NEEDS_TRAINING: Learns a (residual, bit) -> value mapping, so it is not constrained to a sign flip and is the only candidate that could learn a cover-matching distribution. Requires NeuralEmbeddingTrainer training before use.",
+      "source": "exp10_strategy_comparison:results[3]"
+    },
+    {
+      "what": "exp12_lwe_cross_model:tinyllama__tinyllama_1.1b_chat_v1.0:lwe",
+      "reason": "status SKIPPED: residual cache incomplete",
+      "source": "exp12_lwe_cross_model:results[0]"
+    },
+    {
+      "what": "group:google__gemma_2_2b:sign[1 point(s)]",
+      "reason": "model not in experiment_registry: 'Unknown model: google/gemma-2-2b'",
+      "source": "experiment_registry"
+    },
+    {
+      "what": "group:google__gemma_2_2b:magnitude_aware[1 point(s)]",
+      "reason": "model not in experiment_registry: 'Unknown model: google/gemma-2-2b'",
+      "source": "experiment_registry"
+    },
+    {
+      "what": "group:google__gemma_2_2b:lwe[1 point(s)]",
+      "reason": "model not in experiment_registry: 'Unknown model: google/gemma-2-2b'",
+      "source": "experiment_registry"
+    },
+    {
+      "what": "group:google__gemma_2_2b:qae[1 point(s)]",
+      "reason": "model not in experiment_registry: 'Unknown model: google/gemma-2-2b'",
+      "source": "experiment_registry"
+    },
+    {
+      "what": "exp18:google__gemma_2_2b:sign",
+      "reason": "magnitude not measured (group failure recorded above)",
+      "source": "exp18:cells[0]"
+    },
+    {
+      "what": "exp18:google__gemma_2_2b:magnitude_aware",
+      "reason": "magnitude not measured (group failure recorded above)",
+      "source": "exp18:cells[1]"
+    },
+    {
+      "what": "exp18:google__gemma_2_2b:lwe",
+      "reason": "magnitude not measured (group failure recorded above)",
+      "source": "exp18:cells[2]"
+    },
+    {
+      "what": "exp18:google__gemma_2_2b:qae",
+      "reason": "magnitude not measured (group failure recorded above)",
+      "source": "exp18:cells[3]"
+    }
+  ],
+  "omitted_sources": [
+    {
+      "source": "exp2_*.json",
+      "reason": "write-magnitude characterisation, no detector axis; its mean_mag_mean is cited as a prior, not as x"
+    },
+    {
+      "source": "exp4_*.json",
+      "reason": "capacity sweep: BER vs payload size, no detector axis"
+    },
+    {
+      "source": "exp6_*.json",
+      "reason": "sigma-robustness curves only, no detector axis"
+    },
+    {
+      "source": "exp17_*.json",
+      "reason": "round trip + mean_abs_delta under exp17's own 50k protocol, no detector axis; cited as a prior"
+    },
+    {
+      "source": "exp19_*.json",
+      "reason": "adaptive routing: round trips and branch selection, no detector measurement"
+    },
+    {
+      "source": "everything else (exp1, exp3, exp5, exp8, exp9, exp13, exp15, exp21, exp23)",
+      "reason": "round trip / fidelity / recovery / format / surgery questions \u2014 none records a detector accuracy, so none can form y"
+    }
+  ],
+  "related": [
+    {
+      "source": "exp14_blind_patch_detector.json",
+      "blind_accuracy": 0.5,
+      "control_accuracy": 0.6875,
+      "blind_positions_with_carrier": 4,
+      "reason": "adversary-placement variant of the same sign embedding: y moves with the detector's knowledge while x does not \u2014 a reading of one point, not a new point"
+    },
+    {
+      "source": "exp16_cross_scheme_detector.json",
+      "cross_matrix": {
+        "sign_to_sign": 0.6284722222222222,
+        "sign_to_lwe": 0.5,
+        "lwe_to_sign": 0.5,
+        "lwe_to_lwe": 0.5
+      },
+      "reason": "cross-scheme readings of existing embeddings: same x, different question \u2014 not frontier points"
+    }
+  ],
+  "prior_magnitude_citations": [
+    {
+      "source": "exp2_qwen__qwen2.5-3b.json",
+      "mean_mag_mean": 0.00184349390231849,
+      "protocol": "exp2's own write-magnitude protocol (no detector axis) \u2014 cited, not used as x"
+    },
+    {
+      "source": "exp17_qae_round_trip.json",
+      "mean_abs_delta_over_changed": 0.03546278966703097,
+      "bits_embedded": 48256,
+      "protocol": "qae at exp17's 50k-bit protocol \u2014 cited, not used as x (different payload)"
+    }
+  ],
+  "counts": {
+    "points": 35,
+    "frontier": 1,
+    "excluded": 10,
+    "related": 2,
+    "omitted_source_groups": 6
+  }
+}
