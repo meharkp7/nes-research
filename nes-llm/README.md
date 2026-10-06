@@ -124,7 +124,7 @@ citation integrity is its gate.
    fidelity, W3.1 cross-scheme, W1.1 QAE round trip, W1.3 strategy matrix,
    W5.1 adaptive routing, W5.3 split dial, W5.2 QAE/LWE interop, W5.4
    per-layer grid width (W5 fully closed), §29 W6 model surgery survival,
-   §30 W7 Pareto frontier).
+   §30 W7 Pareto frontier, §31 W1.4 consolidation).
 2. `../RESEARCH_PLAN.md` — every claim sorted MEASURED / FAIL / NOT_RUN, and
    what to do next (Phases A–D).
 3. `../results/final_research_summary.md` — the generated report.

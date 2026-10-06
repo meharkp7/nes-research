@@ -371,10 +371,18 @@ remains open (NOT_RUN row annotated). Full record: `RESEARCH_LOG.md` §24.
 divergent residual implementations, and legacy `scripts/exp*.py` import the former.
 **Decide: consolidate or delete.** Do not leave four embedders and two loaders.
 
-**Worked decision — recorded file-only (import graph grepped across
-`nes-llm/` sources, tests, scripts, README, `setup.py`); execution deferred
-until the suite can run.** The console entry point is `nes=src.cli:main`,
-which reaches neither cluster nor `loader.py`.
+**Worked decision — executed and verified.** The import graph was
+re-grepped live before each deletion (no importer of any deleted file
+lay outside the deleted set; no committed `results/*.json` came from
+the seven evaluation leaves). The cache build was ported onto
+`model_loader.extract_residuals` (optional `cache=` keyword; default
+behavior unchanged for every existing caller) and **rebuild-compared
+against the committed Qwen2.5-3B cache: 36 layers × 3 tensors, all 108
+identical at delta 0.0** — so `loader.py` could not take the only
+evidence-rebuilding path with it. Then `scripts/exp1–4` and
+`src/model/loader.py` were deleted. The console entry point is
+`nes=src.cli:main`, which reaches neither cluster. Post-deletion: 66
+tests OK, `claim_audit` 127/127, `check_consistency` 9/9.
 
 **Delete — zero importers anywhere (2 files).** `real_residual_embedder.py`
 and `_v2.py` contain only `build_residual()` + `main()` demos: no class, no
@@ -410,10 +418,15 @@ superseded: the manifest's exp1–4 are `src.experiments.experiments.exp1..4`
 only path that can rebuild the evidence. `scripts/exp5a/5b/6` already import
 `model_loader`: no divergence, left alone.
 
-**Verification order, once tests can run:** delete the 14 zero-risk files →
+**Verification order (executed):** delete the 14 zero-risk files →
 suite (66 tests) + `claim_audit` (127/127) + `check_consistency` (9/9); port the
 cache build → rebuild-compare one cache → delete `loader.py` + the four
 superseded scripts → all three checks again → own commit batch.
+**All steps executed and green at each stage:** the rebuild-compare
+rebuilt Qwen2.5-3B's cache from scratch (36 layers × 3 tensors) and
+found **108/108 tensors identical at delta 0.0** against the committed
+cache before `loader.py` was deleted. Commits `5635ecc` (14 files) and
+`50ee50b` (port + 5 deletions); full record: `RESEARCH_LOG.md` §31.
 
 ---
 
@@ -735,6 +748,6 @@ invalidate later work.
 | 7 | **W5** hybrids — **all done: 7a/exp19 (adaptive), W5.3/exp20 (parity-share dial), W5.2/exp21 (FAIL = finding: interop 0.5433 vs 0.0, parity ≡ sign ⊕ public relabeling), W5.4/exp22 (buildable but does not help: magnitude-keying fails the noise gate with cause measured, rank-keying passes, global width stays best)** | most interesting science — closed; only the 7-model widening of exp18 remains in the whole programme |
 | 8 | **W6** model surgery | **measured (exp23): 7/9 cells hold exp3's 0.0 — W6.1 LoRA ✓ (both ratios), W6.4 prune ✓ (both fractions, zero carriers displaced), W6.5 merge ✓ to t=0.05; NF4 re-quant fails at 0.3768 and half-merge at 0.2418 — both graceful (better than chance), gate untouched; W6.2 fine-tune + GPTQ/AWQ legs NOT_RUN with probes — determines viability |
 | 9 | **W7** Pareto frontier | **measured (exp24): the frontier is ONE point — exp22's layer_rank (x 0.00372693, y 0.50, marker 0.00146256) dominates all 34/34 others, minimal on both axes at once, so no trade-off exists among committed results; x measured here (no artifact pairs magnitude with a detector), y/marker cited at delta 0.0, 10 exclusions + 6 omissions recorded with reasons — the strongest publishable framing** |
-| 10 | **W1.4** consolidation | **decision recorded in §4 (14 zero-risk deletions + cache-build port before `loader.py`); execution + verification pending shell** — do before W8 |
+| 10 | **W1.4** consolidation | **executed + verified: 14 zero-risk files (4 duplicate embedders + 8 consumers + 2 demos) deleted, cache-build ported onto `model_loader` and rebuild-compared against the committed Qwen2.5-3B cache (36 layers × 3 tensors, 108/108 identical at delta 0.0), `scripts/exp1–4` + `src/model/loader.py` deleted — suite 66 OK, audit 127/127, consistency 9/9 after every batch** |
 | 11 | **W8** delta productization | only after 1–8 hold |
 | — | misuse assessment — **worked through in §5 against exp13–22 evidence; verdict: research permitted, distribution forbidden (IP/regulatory NOT_RUN, W8 audit pending); re-run triggers listed** | gate before any distribution |

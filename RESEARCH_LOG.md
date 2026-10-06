@@ -2498,3 +2498,69 @@ outside the manifest grid. **W7 measured status: frontier = 1 point
 (exp22 layer_rank, x 0.00372693 / y 0.50 / marker 0.00146256),
 34/34 points dominated, exclusions + omissions recorded not
 dropped.** Next: W1.4 execution, then W8.
+
+## 31. W1.4 — consolidation executed (19 files + 2 loaders gone)
+
+The worked decision in `RESEARCH_PLAN` §4 W1.4, executed in two
+commits with the full check suite run after each.
+
+### 31.1 The 14 zero-risk files (commit `5635ecc`)
+
+Re-grepped the import graph live before deleting: every importer of
+the 14 files lay inside the deleted set, no committed `results/*.json`
+came from the seven `src/evaluation/*` leaves, `claim_audit` /
+`check_consistency` cited none of them, and the console entry point
+(`nes=src.cli:main`) reached neither cluster. Deleted: the two
+`real_residual_embedder` demos; `residual_embedder` (+`_v2`, `_qcae`)
+and `embedder.py` — four divergent reimplementations of
+`ResidualEmbedder`; their eight consumers (`src/main.py` + the seven
+evaluation leaves). 2,370 lines. `keyed_residual_embedder` and the
+live stack untouched.
+
+### 31.2 The cache-build port — rebuild-compare before any loader deletion (commit `50ee50b`)
+
+The recorded rule: *never delete the only path that can rebuild the
+evidence.* `loader.py` line 553 was that path (it saved each layer as
+a side effect of `extract_residuals`). Port:
+
+- `model_loader.extract_residuals` gained an optional `cache=`
+  keyword (default `None` → byte-for-byte the old behavior for all
+  eight existing callers). When given, computed layers save through
+  `cache_manager.save_layer` (numel-validated, detached to CPU,
+  atomic rename, metadata after first save) and validated layers load
+  instead of recomputing. Build and read now share one residual
+  definition — they cannot drift.
+- `scripts/cache_model.py` rewritten onto that path, plus a
+  `--verify-against` mode that diffs a rebuilt cache against an
+  existing one tensor by tensor.
+
+**The gate for deleting `loader.py`:** a fresh rebuild of
+Qwen/Qwen2.5-3B (both models loaded, all 36 layers re-dequantized)
+into a *scratch* cache root, compared against the committed cache —
+**108/108 tensors (36 layers × residual/fp16_weight/nf4_dequantized)
+identical at delta 0.0**. Evidence cache untouched; scratch removed
+after the compare.
+
+Then deleted `scripts/exp1_probe`, `exp2_residual_fingerprint`,
+`exp3_clean_ber`, `exp4_capacity_curve` (their only remaining importer
+was `loader.py` itself; the manifest's `exp1–4` are
+`src.experiments.experiments.*` and were never touched) and
+`src/model/loader.py` — after confirming its four importers were
+exactly those scripts.
+
+### 31.3 Verification
+
+```bash
+cd nes-llm
+../.venv/bin/python -m unittest discover -s tests -p 'test_*.py'   # 66 OK
+../.venv/bin/python claim_audit.py                    # 127/127
+../.venv/bin/python check_consistency.py              # 9/9
+../.venv/bin/python -m scripts.cache_model --verify-against <cache root>
+```
+
+State after both commits: 66 tests, 127/127 claims, 9/9 consistency —
+green after *every* batch, not just at the end. `src.model.loader`
+raises `ModuleNotFoundError`; stale `.pyc` swept. **W1.4 status:
+executed.** Cumulative deletions: 19 source files + 2,370 + 1,423
+lines. Next: W8 (recipient CLI + delta integrity metadata), then the
+misuse re-run.
