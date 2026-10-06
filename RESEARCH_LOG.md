@@ -2284,3 +2284,111 @@ environment probe already recorded the blockers — `peft`, `gptqmodel`
 and `trl` absent (`bitsandbytes` present, NF4 reachable), so W6.3's
 GPTQ leg and the LoRA-typed paths are blocked as designed, not
 patched.
+
+## 29. W6 — model surgery survival (exp23)
+
+Suggested order item 8 (`RESEARCH_PLAN` §4 W6): *"Model surgery (LoRA
+merge, fine-tune, re-quantize, prune, merge) determines viability."*
+W6.1/W6.3-NF4/W6.4/W6.5 are measured here; W6.2 and W6.3's
+GPTQ/AWQ legs are blocked with probes, recorded not patched.
+
+### 29.1 What was built, and the crash the layout mismatch caused
+
+**exp23**: one production-path sign embed (payload 10k → 10,256
+bits) over Qwen2.5-3B's cached residuals, then nine surgery cells
+over the SAME embed — control, LoRA-shaped deltas (rank 8, RMS
+1.0e-3 / 1.0e-2 of RMS(W)), magnitude prune 10/30%, NF4 re-quant
+(bitsandbytes' own kernels, blocksize 64), and task-vector merge with
+Qwen2.5-3B-Instruct at t = 0.01/0.05/0.5. Per cell
+`r' = embedded_r + (W' − W_stego)`, extracted by the production
+strategy; gate `THRESHOLDS["exp23"]` = exp3's 0.0 twice, per-cell
+verdicts (exp18's rule). Surgery scope is `mlp.down_proj` only — the
+payload's scope: residuals *are* down_proj residuals by definition, so
+other modules cannot touch the payload by construction.
+
+Run 1 crashed at W_stego construction, on layer 0, before any cell
+ran and before any artifact was written. Cause: the residual world is
+**flat** (`extract_residuals` stores `(fp16_w − dequant).flatten()`,
+the cache matches it, carriers index that layout) while `_down_projs`
+returns the **matrix** — a `(2048, 11008)` minus `(22544384,)`
+broadcast. Fixed at the two points where the worlds meet, using the
+bridge the pipeline itself uses: a numel-guarded reshape at the build
+(a blind reshape of a mismatched matrix is a ground-rule violation)
+and `flatten` at `measure_cell`'s single residual-space add. No
+measurement changed; nothing was edited after the fact.
+
+### 29.2 The run
+
+Control triple **0.0 / 0.0 / 0.000e+00** — direct extraction, weight
+path, and `cache_vs_pair` (a fresh pair residual equals the cached one
+exactly, so embed and weights read the same residual view).
+
+| cell | BER | errors/10,256 | rms Δ/W | carriers displaced | gate |
+|---|---|---|---|---|---|
+| control | 0.0 | 0 | 0 | 0 | ✓ |
+| lora_0.001 | 0.0 | 0 | 1.0e-3 | 10,256 | ✓ |
+| lora_0.01 | 0.0 | 0 | 1.0e-2 | 10,256 | ✓ |
+| prune_10 | 0.0 | 0 | 0.0206 | **0** | ✓ |
+| prune_30 | 0.0 | 0 | 0.1094 | **0** | ✓ |
+| nf4_requant | **0.3768** | 3,864 | 0.0949 | 9,536 | ✗ |
+| merge_0.01 | 0.0 | 0 | 1.34e-4 | 7,839 | ✓ |
+| merge_0.05 | 0.0 | 0 | 6.72e-4 | 7,839 | ✓ |
+| merge_0.5 | **0.2418** | 2,480 | 6.72e-3 | 7,839 | ✗ |
+
+not_run: 3 blockers with runtime probes — W6.2 fine-tune
+(`peft=False, trl=False`; 26 GB cannot host an honest run), W6.3 GPTQ
+(`gptqmodel=False, auto_gptq=False`), W6.3 AWQ (`AwqQuantizer`
+ImportError under transformers 5.16.1) — recorded, not patched.
+
+### 29.3 The reading
+
+1. **W6.1 and W6.4 hold outright.** LoRA-sized linear adds round-trip
+   at 0.0 even though they displace *every* carrier — the delta at
+   carriers (rms 2.4e-5 / 2.4e-4) never reaches the sign decoder's
+   margin. Pruning 10% and 30% of the matrix displaces **zero**
+   carriers (rms at carriers exactly 0.0): the payload sits outside
+   the smallest-|W| mass. That is a measured placement fact, not
+   luck — and it is why prune's pass needs its own column in the
+   table rather than a bare 0.0.
+2. **W6.3's NF4 leg fails, and its failure is graceful, not total.**
+   Re-quantizing the whole stego weight displaces 9,536 carriers and
+   flips 3,864 bits (0.3768) — re-quant noise (rms at carriers 0.022)
+   swamps the residual scale. Against the plan's total-vs-graceful
+   question: 0.3768 < 0.5, so the stream is degraded far past the
+   gate but still carries signal; it is dead by the gate, alive as a
+   channel.
+3. **W6.5 survives merging to t=0.05 and degrades smoothly past it.**
+   Merge deltas scale linearly with t (rms ratios 1 : 5 : 10 — the
+   task vector measured, not asserted); BER stays 0.0 through t=0.05,
+   then 0.2418 at t=0.5 — better than chance at half-replacement, so
+   the payload decays continuously as the stego is overwritten.
+4. **Pre-registration held.** "control 0.0" ✓, "nf4_requant
+   plausibly heavy loss" ✓ (0.3768), "merge dies as t grows" ✓
+   (0 → 0 → 0.2418), prune recorded open and answered with its
+   mechanism. Nothing was rewritten to match the numbers; the gate
+   never moved.
+
+### 29.4 Verification
+
+```bash
+cd nes-llm
+../.venv/bin/python claim_audit.py                    # 111/111 (13 new)
+../.venv/bin/python check_consistency.py              # 9/9
+../.venv/bin/python -m unittest discover -s tests -p 'test_*.py'   # 66 OK
+../.venv/bin/python -m src.experiments.exp23_model_surgery \
+    --model Qwen/Qwen2.5-3B                           # 9 cells, ~10 min
+```
+
+State: 111/111 claims (13 new: artifact, gate = exp3's 0.0 twice,
+control triple exact, nine cells in order, every BER recomputed from
+its own error counts, the seven survivors + both failure numbers
+pinned, prune's zero-carrier explanation, LoRA RMS scales, merge
+linearity, protocol pins, three named blockers, pre-registration
+intact, reproducibility), 9/9 consistency, 66 tests (exp23's 4
+surgery-primitive tests among them; exp24's 13 frontier tests and 3
+index-sampler pins also landed in the suite this stretch), manifest
+unchanged at 35 PASS / 6 FAIL / 0 NOT_RUN / 0 ERROR — exp23 is the
+eleventh standalone artifact outside the manifest grid. **W6 measured
+status: W6.1 ✓, W6.4 ✓, W6.5 ✓ to t=0.05 (✗ at 0.5, gracefully),
+W6.3-NF4 ✗ at 0.3768 (graceful), W6.2 + GPTQ + AWQ NOT_RUN and
+named.** Next: exp24 (W7), then W1.4 execution and W8.
