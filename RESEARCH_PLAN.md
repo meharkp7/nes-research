@@ -371,6 +371,50 @@ remains open (NOT_RUN row annotated). Full record: `RESEARCH_LOG.md` §24.
 divergent residual implementations, and legacy `scripts/exp*.py` import the former.
 **Decide: consolidate or delete.** Do not leave four embedders and two loaders.
 
+**Worked decision — recorded file-only (import graph grepped across
+`nes-llm/` sources, tests, scripts, README, `setup.py`); execution deferred
+until the suite can run.** The console entry point is `nes=src.cli:main`,
+which reaches neither cluster nor `loader.py`.
+
+**Delete — zero importers anywhere (2 files).** `real_residual_embedder.py`
+and `_v2.py` contain only `build_residual()` + `main()` demos: no class, no
+`embed`/`extract`, nothing imports them, no doc cites them (the inventory
+line above says "three"; there are two on disk).
+
+**Delete as one cluster — the four embedders and their only consumers
+(12 files).** `residual_embedder.py` (← `src/main.py`, `qcae_noise_robustness`,
+`qcae_embedding_benchmark`), `_v2` (← `multi_cycle_requantization_v2`,
+`noise_robustness_v2`, `nf4_embedding_benchmark`,
+`nf4_requantization_study_v2`), `_qcae` (← the two qcae modules), `embedder.py`
+(← `selector_benchmark`). Those eight consumers are imported by nothing — no
+experiment, no test, no other module — and the seven `src/evaluation/*` leaves
+produce no committed `results/*.json` and are cited nowhere in README/LOG/PLAN
+(only in this section, plus pre-history `attempt2/docs`). Untouched:
+`keyed_residual_embedder` (two passing tests) and the live stack
+(`intelligent_embedder` + strategies).
+
+**Consolidate on `model_loader.py`, but port the cache builder first
+(7 files).** Divergence verified: `load_model_pair` is a 3-tuple in both;
+`extract_residuals` differs — `model_loader` returns a `dict` (every modern
+caller: runner, `model_context`, `residual_source`, exp8/9, steganalysis)
+while `loader` returns `(residuals, fp16_weights, quantized_weights)` **and
+writes the residual cache** (`cache.save_layer`, loader.py:553) — the only
+cache-*build* path in the repo; `scripts/cache_model.py` is its sole caller
+and `model_loader` has no save. So: (a) port the build (save via
+`cache_manager` from the `model_loader` path) and verify a rebuild matches an
+existing cache for one model; (b) delete `scripts/exp1_probe`,
+`exp2_residual_fingerprint`, `exp3_clean_ber`, `exp4_capacity_curve` —
+superseded: the manifest's exp1–4 are `src.experiments.experiments.exp1..4`
+(registry `"module"` entries) and `run_nes_experiments.py` never touches
+`scripts/`; (c) only then delete `src/model/loader.py` — never delete the
+only path that can rebuild the evidence. `scripts/exp5a/5b/6` already import
+`model_loader`: no divergence, left alone.
+
+**Verification order, once tests can run:** delete the 14 zero-risk files →
+suite (63 tests) + `claim_audit` (98/98) + `check_consistency` (9/9); port the
+cache build → rebuild-compare one cache → delete `loader.py` + the four
+superseded scripts → all three checks again → own commit batch.
+
 ---
 
 ### W2. Fidelity is the biggest hole
@@ -585,6 +629,31 @@ carrier count, payload length. Prevents silent corruption.
 after an explicit misuse assessment. Flagging once, here, so it is a decision rather
 than a surprise.
 
+### Misuse assessment — §7's gate, worked through
+
+The paragraph above is the trigger; this is the assessment. Every evidence cell is
+audit-pinned (98/98 at writing) and carries a §2 status — nothing is argued from a
+number that is not in `results/`.
+
+| register risk | evidence | assessment | gate condition |
+|---|---|---|---|
+| **Smuggling past safety scanning** (high) | **MEASURED**: capacity ≥ 10M payload bits at BER 0 (exp4) touching 0.0013% of values; payload = AES-GCM ciphertext under a `os.urandom` key; the *bits* need no key (exp13: all 10,256 read at BER 0.0, precision/recall 1.0, clean control 0 candidates); a parity reader recovers a sign stream up to a public relabeling (exp21: 0.5433 ≡ sign ⊕ cell-parity, matched control 0.0); the payload-bearing model behaves normally (LWE Δ vs control +0.0077% / +0.0501%, both PASS vs the 2% gate, exp15) | The abuse path never needs to break AES — the deployer holds the key. What is measured: a full-size payload fits a passing model and is readable offline by anyone with weights + key. **This repo extracts offline over weights (READ: `DecryptPipeline`'s pipeline); the register's "at inference" route is neither implemented nor measured here — recorded as hypothesis, not finding.** | Distribution only with W8's audit story attached (inspectable delta + integrity metadata) and the detection evidence below |
+| **Evading fingerprinting / provenance** (high) | **MEASURED**: a *knowing* adversary detects `sign` at 70.5% (exp7_neural FAIL vs the 0.55 gate; structural 69.4–74.4% across α×100, γ×5, payload×10) and 68.75% carrier-centered (exp14's control); a *blind* adversary learns nothing — 50.0%, tp=fp=0 (exp14 PASS; only 4/576 blind positions held a carrier); the **LWE** channel evades every detector trained in this programme — 0.50 invariantly across six experiments (exp10/12/16/18/20/22) | Evasion is strategy-conditional, and both halves are measured: `sign` is detectable by an adversary who knows where to look, LWE defeats every adversary we could build — our own negative result is the provenance conflict. | Any provenance or fingerprinting claim published alongside this work must state the LWE 0.50 invariant as its own limit |
+| **IP / licensing** (high) | **NOT_RUN** — no base-model licence review exists | Unreviewed, exactly as the register says | No external distribution of code, weights or deltas until reviewed |
+| **Regulatory** (medium–high) | **NOT_RUN** — no compliance analysis exists | Owed before any product claim | Same gate as IP |
+| **Dual-use by others** (medium) | **READ** — the capability is a property of the method, not of anything held back | Withholding artifacts reduces spread at the margin, not existence | Decision recorded at publication time, not discovered later |
+
+**Permitted today:** the programme as research — artifacts, gates and these
+documents inside the repo, results citable as measurements. **Forbidden today:**
+any external distribution of code, weights or deltas, until (a) the IP and
+regulatory rows are no longer NOT_RUN and (b) W8's recipient-side audit exists,
+so whatever leaves the repo is inspectable by whoever receives it.
+
+**Re-run triggers — the assessment is redone as a new revision, not edited in
+place, if any holds:** W8 ships a recipient tool; extraction is demonstrated at
+inference time; a detector defeats the LWE 0.50 invariant; or a model/strategy
+outside the measured set is added.
+
 ### What I would not do
 
 - **Add more models.** 5 families, 22–42 layers. Low marginal value versus W3/W6/W4.
@@ -664,8 +733,8 @@ invalidate later work.
 | 5 | **W1.1** QAE adapter + round trip — **done, exp17: `qae` PASS, `nf4_qae` BLOCKED** | adds two strategies cheaply (one wired, one's blocker diagnosed) |
 | 6 | **W1.3** strategy × model matrix (3 models) — **done, exp18: one axis decides** | the breadth deliverable (first pass; 7-model widening remains) |
 | 7 | **W5** hybrids — **all done: 7a/exp19 (adaptive), W5.3/exp20 (parity-share dial), W5.2/exp21 (FAIL = finding: interop 0.5433 vs 0.0, parity ≡ sign ⊕ public relabeling), W5.4/exp22 (buildable but does not help: magnitude-keying fails the noise gate with cause measured, rank-keying passes, global width stays best)** | most interesting science — closed; only the 7-model widening of exp18 remains in the whole programme |
-| 8 | **W6** model surgery | determines viability |
-| 9 | **W7** Pareto frontier | the strongest publishable framing |
-| 10 | **W1.4** consolidation | cleanup; do before W8 |
+| 8 | **W6** model surgery | **code written (exp23: gate + module + 4 tests); run + audit + docs pending shell** — determines viability |
+| 9 | **W7** Pareto frontier | **code written (exp24: citation-integrity gate + module + 13 tests); run + audit + docs pending shell** — the strongest publishable framing |
+| 10 | **W1.4** consolidation | **decision recorded in §4 (14 zero-risk deletions + cache-build port before `loader.py`); execution + verification pending shell** — do before W8 |
 | 11 | **W8** delta productization | only after 1–8 hold |
-| — | misuse assessment | gate before any distribution |
+| — | misuse assessment — **worked through in §5 against exp13–22 evidence; verdict: research permitted, distribution forbidden (IP/regulatory NOT_RUN, W8 audit pending); re-run triggers listed** | gate before any distribution |
