@@ -22,6 +22,9 @@ from src.experiments.exp23_model_surgery import (  # noqa: E402
     low_rank_delta,
     merge_delta,
     nf4_requant,
+    fp16_merge_diff,
+    lm_blocks,
+    not_run_findings,
 )
 
 
@@ -114,6 +117,63 @@ class SurgeryPrimitiveTests(unittest.TestCase):
         err = (out - self.w).abs().mean()
         scale = self.w.abs().mean()
         self.assertLess(err.item(), 0.5 * scale.item())
+
+
+class FineTuneLegTests(unittest.TestCase):
+    """W6.2's leg machinery (added 2026-10-06): the pieces that can
+    be pinned without a model — token chunking, the delta contract,
+    and not_run's outcome-driven findings."""
+
+    def test_lm_blocks_are_non_overlapping_and_gap_free(self):
+        ids = list(range(10))
+        blocks = lm_blocks(ids, 4)
+        # tail shorter than a block is dropped, never padded silently
+        self.assertEqual(blocks, [[0, 1, 2, 3], [4, 5, 6, 7]])
+        self.assertEqual([i for b in blocks for i in b], list(range(8)))
+        with self.assertRaises(ValueError):
+            lm_blocks(ids, 0)
+
+    def test_fp16_merge_diff_is_exact_and_noop_on_no_change(self):
+        orig = {0: (torch.randn(32, 16) * 0.02).half()}
+        # no-op training: identical tensors -> exact zeros
+        same = {0: orig[0].clone()}
+        self.assertTrue((fp16_merge_diff(orig, same)[0] == 0).all())
+        # a real change: fp32 subtraction of the two fp16 views must
+        # match the exact (float64) difference to fp32 precision
+        trained = {0: (orig[0] + 0.01 * torch.randn_like(orig[0])).half()}
+        delta = fp16_merge_diff(orig, trained)[0]
+        ref = trained[0].double() - orig[0].double()
+        self.assertTrue(
+            torch.allclose(delta.double(), ref, rtol=1e-6, atol=1e-8)
+        )
+        # shape mismatch is refused, never broadcast or reshaped
+        with self.assertRaises(ValueError):
+            fp16_merge_diff(orig, {0: torch.randn(16, 32).half()})
+        with self.assertRaises(KeyError):
+            fp16_merge_diff(orig, {1: trained[0]})
+
+    def test_not_run_findings_carry_leg_outcomes_not_policy(self):
+        # no leg errors: findings only from missing deps — in this
+        # environment peft/trl/gptqmodel/autoawq/bitsandbytes are all
+        # present, so nothing is recorded (the legs ran or ran to a
+        # real exception captured elsewhere)
+        self.assertEqual(not_run_findings({}), [])
+        # a failed leg records its REAL exception, verbatim
+        errs = {
+            "W6.2": "RuntimeError: boom",
+            "W6.3-GPTQ": "TypeError: nope",
+            "W6.3-AWQ": "OSError: awq broke",
+        }
+        got = {f["item"]: f["reason"] for f in not_run_findings(errs)}
+        self.assertEqual(
+            got["W6.2 — 1-10k fine-tuning steps"], "RuntimeError: boom"
+        )
+        self.assertIn("TypeError: nope", got["W6.3 — GPTQ leg (NF4 -> GPTQ -> back)"])
+        self.assertIn("OSError: awq broke", got["W6.3 — AWQ leg"])
+        # the AWQ finding still carries the live transformers probe
+        self.assertIn("AwqQuantizer", got["W6.3 — AWQ leg"])
+        for f in not_run_findings(errs):
+            self.assertIn("recorded, not patched", f["status"])
 
 
 if __name__ == "__main__":

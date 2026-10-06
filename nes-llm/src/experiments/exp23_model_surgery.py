@@ -31,24 +31,44 @@ would round sub-residual displacements away):
     control      no surgery (validity check, must be 0.0)
     lora_*       LoRA-shaped low-rank updates at two stated RMS
                  scales (0.1%, 1% of RMS(W)) — the MERGE step of a
-                 LoRA is a linear add; training is out of scope
-                 (peft absent, recorded under not_run)
+                 LoRA is a linear add; real training is measured
+                 separately in the finetune_1k cell (W6.2)
     prune_*      magnitude pruning, per layer: smallest-|W|
                  fraction zeroed (10%, 30%)
     nf4_requant  W' = dequant(quantize_nf4(W_stego), blocksize 64)
-                 — the NF4 leg of W6.3; the GPTQ/AWQ legs cannot run
-                 (no gptqmodel/auto_gptq; transformers 5.16.1 removed
-                 AwqQuantizer) — recorded under not_run, not patched
+                 — the NF4 leg of W6.3; gptq_requant / awq_requant
+                 attempt the other two W6.3 legs (gptqmodel /
+                 autoawq, installs authorized by the author
+                 2026-10-06), reading the packed result back with
+                 the repo's own dequantizers — a leg that cannot
+                 run records its real exception under not_run
     merge_*      task-vector merge with Qwen2.5-3B-Instruct (same
                  shapes, cached): W' = W_stego + t·(W_inst - W_stego),
                  at t = 0.01 / 0.05 / 0.5
+    finetune_1k  W6.2 real training — LoRA (rank 8, alpha 8) on
+                 mlp.down_proj ONLY (the surgery scope), 1,000
+                 steps of next-token prediction (~0.9 epoch of the
+                 cached wikitext-2-raw train split, 512-token
+                 blocks, batch 1 × grad-accum 4, lr 1e-4 cosine),
+                 merged with peft's merge_and_unload; the cell
+                 delta = trained − original (exact fp32
+                 subtraction of the two fp16 views). Full-
+                 parameter training still exceeds this machine
+                 (26 GB) — the scoped LoRA run is the honest fit,
+                 stated as such
+    gptq_requant  W6.3 GPTQ leg — int4 GPTQ with real calibration
+                 forwards through the stego model, read back with
+                 the repo's own dequantize_gptq_layer
+    awq_requant  W6.3 AWQ leg — autoawq quantize on stated wikitext
+                 windows, read back with dequantize_awq_layer
 
-W6.2 (1–10k fine-tuning steps) does not run: `peft`, `trl` and
-`gptqmodel` are absent from this environment (probed at runtime and
-recorded in the artifact's `not_run`), installs are not a research
-action, and an honest full-parameter run exceeds this machine. The
-existing sigma-noise axes (exp6/10/18/22) remain the only measured
-proxy for dense drift; fine-tune drift stays NOT_RUN and named.
+W6.2 now runs: `peft`, `trl` and `gptqmodel` were installed
+2026-10-06 under an explicit author decision reversing the earlier
+"installs are not a research action" deferral (recorded with this
+run in RESEARCH_LOG); an honest full-parameter run still exceeds
+this machine, so the measured leg is the scoped LoRA run above.
+Each attempted leg either produces a cell or records its real
+exception under `not_run` — recorded, not patched.
 
 Pre-registered expectations, recorded before the run (misses are
 recorded, never rewritten): control 0.0 (structural); lora cells
@@ -57,9 +77,13 @@ positions, margins ≫ the stated RMS scales); prune outcome depends
 on the |W|-vs-|r| overlap and is genuinely open; nf4_requant
 plausibly heavy loss (deltas smaller than NF4 bucket spacing never
 reach the bytes) but measured, not assumed; merge expected to die
-as t grows. Gate: THRESHOLDS['exp23'] — exp3's 0.0 twice, both
-reused. Per-cell verdicts (exp18's rule); the BER column IS the
-total-vs-graceful reading.
+as t grows. Added before the 2026-10-06 legs ran: finetune_1k
+expected to survive or degrade gracefully (LoRA deltas land at
+merge scale, where W6.1 already survives); gptq_requant and
+awq_requant plausibly heavy loss like nf4 (sub-bucket deltas) but
+measured, not assumed. Gate: THRESHOLDS['exp23'] — exp3's 0.0
+twice, both reused. Per-cell verdicts (exp18's rule); the BER
+column IS the total-vs-graceful reading.
 
 Usage:
     python -m src.experiments.exp23_model_surgery --model <id>
@@ -71,9 +95,11 @@ import importlib.util
 import json
 import os
 import random
+import shutil
 import sys
+import tempfile
 from pathlib import Path
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List, Optional, Tuple
 
 os.environ.setdefault("PYTORCH_ENABLE_MPS_FALLBACK", "1")
 sys.path.insert(0, str(Path(__file__).resolve().parents[2]))
@@ -101,6 +127,16 @@ PRUNE_FRACTIONS = (0.10, 0.30)
 LORA_RATIOS = (0.001, 0.01)   # target RMS(delta)/RMS(W)
 LORA_RANK = 8
 MERGE_T = (0.01, 0.05, 0.5)
+
+# The legs added 2026-10-06 (author-authorized installs); all values
+# are stated up front so the artifact's method can only restate them.
+FINETUNE_STEPS = 1000      # W6.2's 1-10k window, top of the range
+FINETUNE_BLOCK = 512
+FINETUNE_LR = 1e-4
+FINETUNE_ACCUM = 4
+GPTQ_CALIB_SAMPLES = 64
+AWQ_CALIB_SAMPLES = 32
+AWQ_CALIB_SEQ_LEN = 256
 
 # The environment probe, run at artifact time — blockers recorded as
 # facts from THIS interpreter, not as prose.
@@ -142,8 +178,8 @@ def low_rank_delta(
     """A LoRA-shaped delta: B @ A scaled so RMS(delta) = ratio * RMS(w).
 
     The merge step of a LoRA adapter is exactly this linear add; the
-    training that produced B, A is out of scope (peft absent — see
-    not_run). Seeded, so a cell reproduces.
+    training that produced B, A is measured for real in the
+    finetune_1k cell (W6.2). Seeded, so a cell reproduces.
     """
     rows, cols = w.shape
     a = torch.randn(rank, cols, generator=generator, dtype=torch.float32)
@@ -185,6 +221,403 @@ def nf4_requant(w: torch.Tensor) -> torch.Tensor:
     )
     back = dequantize_4bit(q, state, quant_type="nf4")
     return back.to(torch.float32).to(w.device)
+
+
+# ------------------------------------------------------------------
+# The W6.2/W6.3 legs (added 2026-10-06, author-authorized installs)
+# ------------------------------------------------------------------
+
+def lm_blocks(ids: List[int], block: int) -> List[List[int]]:
+    """Non-overlapping `block`-sized chunks of a token stream (W6.2).
+
+    Deterministic and gap-free: next-token training sees exactly the
+    flattened split's tokens, each sequence feeding the next token.
+    """
+    if block <= 0:
+        raise ValueError(f"block must be positive, got {block}")
+    return [ids[i:i + block] for i in range(0, len(ids) - block + 1, block)]
+
+
+def fp16_merge_diff(
+    original: Dict[int, torch.Tensor],
+    trained: Dict[int, torch.Tensor],
+) -> Dict[int, torch.Tensor]:
+    """The W6.2 cell delta: trained − original, exact fp32 subtraction.
+
+    Both sides are the same checkpoint's fp16 matrices before/after a
+    LoRA merge, cast up and subtracted in fp32 — the subtraction of
+    two equal-layout tensors introduces no rounding. A no-op training
+    run therefore returns exact zeros, which is the no-op property
+    the cell arithmetic depends on (a "trained" model that did not
+    train must measure nothing, not something plausible).
+    """
+    out: Dict[int, torch.Tensor] = {}
+    for lid, w in trained.items():
+        o = original.get(lid)
+        if o is None:
+            raise KeyError(f"layer {lid}: trained without an original")
+        if o.shape != w.shape:
+            raise ValueError(
+                f"layer {lid}: trained {tuple(w.shape)} vs original "
+                f"{tuple(o.shape)} — never subtract a shape mismatch"
+            )
+        out[lid] = w.detach().float().cpu() - o.detach().float().cpu()
+    return out
+
+
+def _wikitext_windows(n: int, min_chars: int = 200) -> List[str]:
+    """n short raw-text rows from the cached wikitext-2-raw split.
+
+    Used as the calibration corpus for BOTH quantization legs so
+    neither tool falls back to a default (downloaded) corpus — what
+    runs is what the method states.
+    """
+    from datasets import load_dataset
+
+    ds = load_dataset("wikitext", "wikitext-2-raw-v1", split="train")
+    out: List[str] = []
+    for row in ds["text"]:
+        t = row.strip()
+        if len(t) >= min_chars:
+            out.append(t)
+        if len(out) >= n:
+            break
+    if not out:
+        raise RuntimeError(
+            "wikitext-2-raw yielded no usable calibration rows"
+        )
+    return out
+
+
+def _quantize_call(fn, *args, **kwargs):
+    """Call `fn`, refusing to silently drop a kwarg its signature lacks.
+
+    A dropped `dataset=`/`calib_data=` would make the quantizer fall
+    back to its own default calibration corpus — different evidence
+    from the stated one — so the call fails loudly instead of
+    quietly measuring something else.
+    """
+    import inspect
+
+    try:
+        sig = inspect.signature(fn)
+    except (TypeError, ValueError):
+        return fn(*args, **kwargs)
+    has_var = any(
+        p.kind == inspect.Parameter.VAR_KEYWORD
+        for p in sig.parameters.values()
+    )
+    if not has_var:
+        dropped = [k for k in kwargs if k not in sig.parameters]
+        if dropped:
+            raise TypeError(
+                f"{getattr(fn, '__qualname__', fn)} does not accept "
+                f"{dropped} — refusing to run against a default "
+                f"calibration corpus instead of the stated one"
+            )
+    return fn(*args, **kwargs)
+
+
+def _swap_payload_matrices(
+    model, w_stego: Dict[int, torch.Tensor], family: str
+) -> None:
+    """Overwrite a loaded model's down_proj with W_stego (fp16 view).
+
+    The quantizers only accept a loaded checkpoint, so the stego
+    weights go in the way a shipped checkpoint would arrive: copied
+    in the model's own dtype, payload matrices only — the surgery
+    scope. The caller discards the model afterwards.
+    """
+    from src.model.registry import get_layer_module
+
+    for lid, w in w_stego.items():
+        mod = get_layer_module(model, family, lid, "mlp").down_proj
+        mod.weight.data.copy_(w.to(torch.float16))
+
+
+def _dequant_deltas(
+    read_dense: Dict[int, torch.Tensor],
+    w_stego: Dict[int, torch.Tensor],
+) -> Dict[int, torch.Tensor]:
+    """delta = W' − W_stego from dequantized matrices, layout-guarded.
+
+    Packed checkpoints store [in, out] where the pipeline's matrices
+    are [out, in]; a transposed read is accepted only when it is
+    exactly the guard's shape — never a blind reshape.
+    """
+    out: Dict[int, torch.Tensor] = {}
+    for lid in sorted(w_stego):
+        dense = read_dense[lid]
+        want = w_stego[lid].shape
+        if dense.shape != want and dense.T.shape == want:
+            dense = dense.T.contiguous()
+        if dense.shape != want:
+            raise RuntimeError(
+                f"layer {lid}: dequantized {tuple(dense.shape)} vs "
+                f"W_stego {tuple(want)} — reader/layout mismatch"
+            )
+        out[lid] = dense.float().cpu() - w_stego[lid].float().cpu()
+    return out
+
+
+def lora_finetune_deltas(
+    model,
+    tokenizer,
+    family: str,
+    steps: int,
+) -> Tuple[Dict[int, torch.Tensor], Dict[str, Any]]:
+    """W6.2: real gradient training — LoRA adapters on the payload scope.
+
+    Only `down_proj` receives adapters (the surgery scope: no other
+    module can touch the payload by construction). Trained in the
+    checkpoint's own dtype (fp16, no autocast flags) on the best
+    device the Trainer picks. Returns ({layer: fp32 delta}, record).
+    """
+    from datasets import load_dataset
+    from peft import LoraConfig, get_peft_model
+    from transformers import (
+        DataCollatorForLanguageModeling,
+        Trainer,
+        TrainingArguments,
+        set_seed,
+    )
+
+    set_seed(SEED)
+    orig = {
+        lid: t.detach().clone()
+        for lid, t in _down_projs(model, family).items()
+    }
+
+    model.gradient_checkpointing_enable(
+        gradient_checkpointing_kwargs={"use_reentrant": False}
+    )
+    model.config.use_cache = False
+    peft_model = get_peft_model(
+        model,
+        LoraConfig(
+            r=LORA_RANK,
+            lora_alpha=LORA_RANK,
+            lora_dropout=0.0,
+            target_modules=["down_proj"],
+            bias="none",
+            task_type="CAUSAL_LM",
+        ),
+    )
+
+    ds = load_dataset("wikitext", "wikitext-2-raw-v1", split="train")
+    rows = [t for t in ds["text"] if t and t.strip()]
+    tokenized = tokenizer(rows, add_special_tokens=False)["input_ids"]
+    flat = [i for row in tokenized for i in row]
+    blocks = lm_blocks(flat, FINETUNE_BLOCK)
+    if not blocks:
+        raise RuntimeError("wikitext tokenized to no full block")
+
+    class _Blocks(torch.utils.data.Dataset):
+        def __init__(self, chunks: List[List[int]]) -> None:
+            self.chunks = chunks
+
+        def __len__(self) -> int:
+            return len(self.chunks)
+
+        def __getitem__(self, idx: int) -> Dict[str, torch.Tensor]:
+            ids = torch.tensor(self.chunks[idx], dtype=torch.long)
+            return {"input_ids": ids, "labels": ids.clone()}
+
+    out_dir = tempfile.mkdtemp(prefix="exp23-ft-")
+    trainer = Trainer(
+        model=peft_model,
+        args=TrainingArguments(
+            output_dir=out_dir,
+            max_steps=steps,
+            per_device_train_batch_size=1,
+            gradient_accumulation_steps=FINETUNE_ACCUM,
+            learning_rate=FINETUNE_LR,
+            lr_scheduler_type="cosine",
+            warmup_ratio=0.03,
+            logging_steps=max(steps // 10, 1),
+            report_to=[],
+            save_strategy="no",
+            dataloader_num_workers=0,
+            seed=SEED,
+        ),
+        train_dataset=_Blocks(blocks),
+        data_collator=DataCollatorForLanguageModeling(tokenizer, mlm=False),
+    )
+    log(f"  [finetune] {steps} steps on {trainer.args.device} "
+        f"({len(blocks)} blocks of {FINETUNE_BLOCK} tokens) ...")
+    run = trainer.train()
+    history = trainer.state.log_history or []
+    loss_first = next((h["loss"] for h in history if "loss" in h), None)
+    loss_last = next(
+        (h["loss"] for h in reversed(history) if "loss" in h), None
+    )
+
+    merged = peft_model.merge_and_unload()
+    deltas = fp16_merge_diff(orig, _down_projs(merged, family))
+    if all(bool((d == 0).all()) for d in deltas.values()):
+        raise RuntimeError(
+            "fine-tune produced an exact-zero delta — no optimization "
+            "step changed a weight; refusing to record a no-op cell"
+        )
+    record = {
+        "steps": steps,
+        "block": FINETUNE_BLOCK,
+        "grad_accum": FINETUNE_ACCUM,
+        "lr": FINETUNE_LR,
+        "scheduler": "cosine with 3% warmup",
+        "r": LORA_RANK,
+        "alpha": LORA_RANK,
+        "targets": "down_proj only (surgery scope)",
+        "dataset": (
+            "wikitext-2-raw-v1 train (cached), flattened, "
+            "non-overlapping blocks"
+        ),
+        "tokens_seen": steps * FINETUNE_ACCUM * FINETUNE_BLOCK,
+        "blocks_available": len(blocks),
+        "loss_first": loss_first,
+        "loss_last": loss_last,
+        "final_train_loss": float(run.training_loss),
+        "device": str(trainer.args.device),
+        "dtype": "checkpoint fp16 throughout (no autocast flags)",
+        "optimizer": "AdamW (Trainer default)",
+        "delta": (
+            "trained − original via peft merge_and_unload(), exact "
+            "fp32 subtraction of the two fp16 views"
+        ),
+    }
+    shutil.rmtree(out_dir, ignore_errors=True)
+    model.config.use_cache = True
+    return deltas, record
+
+
+def gptq_requant_deltas(
+    model_id: str,
+    w_stego: Dict[int, torch.Tensor],
+    tokenizer,
+    family: str,
+) -> Tuple[Dict[int, torch.Tensor], Dict[str, Any]]:
+    """W6.3's GPTQ leg: real GPTQ int4 quantization of the stego model.
+
+    Calibration forward passes run through the model with W_stego in
+    the payload's matrices; the packed result is read back with the
+    repo's own GPTQ dequantizer (the reader exp9 validated) —
+    delta = W' − W_stego.
+    """
+    from gptqmodel import GPTQModel, QuantizeConfig
+    from src.model.registry import get_layer_module
+    from src.quantization.adapters import dequantize_gptq_layer
+
+    cfg = QuantizeConfig(
+        bits=4,
+        group_size=128,
+        sym=True,
+        true_sequential=False,
+        device="cpu",
+        calibration_data_device="cpu",
+    )
+    qmodel = GPTQModel.from_pretrained(model_id, quantize_config=cfg)
+    _swap_payload_matrices(qmodel.model, w_stego, family)
+    calib = _wikitext_windows(GPTQ_CALIB_SAMPLES)
+    _quantize_call(qmodel.quantize, tokenizer, dataset=calib)
+
+    read: Dict[int, torch.Tensor] = {}
+    for lid in sorted(w_stego):
+        mod = get_layer_module(
+            qmodel.model, family, lid, "mlp"
+        ).down_proj
+        read[lid] = dequantize_gptq_layer(mod)
+    deltas = _dequant_deltas(read, w_stego)
+    record = {
+        "backend": "gptqmodel (installed 2026-10-06, author decision)",
+        "bits": 4,
+        "group_size": 128,
+        "sym": True,
+        "method": (
+            "GPTQ: calibration forwards through the stego model on "
+            "CPU, per the tool's own quantizer"
+        ),
+        "calibration": (
+            f"{GPTQ_CALIB_SAMPLES} wikitext-2-raw windows (stated; "
+            "the default corpus is refused, not silently used)"
+        ),
+        "reader": "src.quantization.adapters.dequantize_gptq_layer",
+        "delta": "dequant(W') − W_stego, exact fp32 subtraction",
+        "scope": (
+            "the tool quantizes every linear by default; the cell "
+            "measures the payload's down_proj delta — other modules "
+            "cannot touch the payload by construction"
+        ),
+    }
+    del qmodel, read
+    gc.collect()
+    return deltas, record
+
+
+def awq_requant_deltas(
+    model_id: str,
+    w_stego: Dict[int, torch.Tensor],
+    tokenizer,
+    family: str,
+) -> Tuple[Dict[int, torch.Tensor], Dict[str, Any]]:
+    """W6.3's AWQ leg: autoawq's quantize over the stego model.
+
+    Scales come from the stego weights' activations; the packed
+    result is read back with the repo's own AWQ dequantizer (exp8's
+    gate) — delta = W' − W_stego.
+    """
+    from awq import AutoAWQForCausalLM
+    from src.model.registry import get_layer_module
+    from src.quantization.adapters import dequantize_awq_layer
+
+    awq_model = AutoAWQForCausalLM.from_pretrained(
+        model_id, torch_dtype=torch.float16, trust_remote_code=False,
+    )
+    _swap_payload_matrices(awq_model, w_stego, family)
+    calib = _wikitext_windows(AWQ_CALIB_SAMPLES)
+    _quantize_call(
+        awq_model.quantize,
+        tokenizer=tokenizer,
+        quant_config={"w_bit": 4, "q_group_size": 128, "zero_point": True},
+        calib_data=calib,
+        max_calib_samples=AWQ_CALIB_SAMPLES,
+        max_calib_seq_len=AWQ_CALIB_SEQ_LEN,
+        n_parallel_calib_samples=4,
+        apply_clip=True,
+        duo_scaling=True,
+    )
+
+    read: Dict[int, torch.Tensor] = {}
+    for lid in sorted(w_stego):
+        mod = get_layer_module(
+            awq_model, family, lid, "mlp"
+        ).down_proj
+        read[lid] = dequantize_awq_layer(mod)
+    deltas = _dequant_deltas(read, w_stego)
+    record = {
+        "backend": (
+            "autoawq (upstream-deprecated; this is its runtime probe "
+            "on torch 2.13 / transformers 5.16.1)"
+        ),
+        "bits": 4,
+        "group_size": 128,
+        "zero_point": True,
+        "calibration": (
+            f"{AWQ_CALIB_SAMPLES} wikitext-2-raw windows, seq <= "
+            f"{AWQ_CALIB_SEQ_LEN} (stated; pileval is not downloaded)"
+        ),
+        "reader": (
+            "src.quantization.adapters.dequantize_awq_layer (exp8's gate)"
+        ),
+        "delta": "dequant(W') − W_stego, exact fp32 subtraction",
+        "scope": (
+            "the tool quantizes every linear by default; the cell "
+            "measures the payload's down_proj delta — other modules "
+            "cannot touch the payload by construction"
+        ),
+    }
+    del awq_model, read
+    gc.collect()
+    return deltas, record
 
 
 # ------------------------------------------------------------------
@@ -256,14 +689,29 @@ def measure_cell(
     }
 
 
-def not_run_findings() -> List[Dict[str, str]]:
-    """What cannot run here, with the probe that proves it."""
+def not_run_findings(
+    leg_errors: Optional[Dict[str, str]] = None,
+) -> List[Dict[str, str]]:
+    """What did not run here, with the probe or exception proving it.
+
+    A leg that ran leaves no finding. A leg that failed carries the
+    real exception text from this interpreter at artifact time; the
+    dependency branches stay as the fallback probe for environments
+    where the tooling is absent rather than broken.
+    """
+    leg_errors = leg_errors or {}
     availability = {
         dep: importlib.util.find_spec(dep) is not None
         for dep in DEPENDENCIES
     }
     findings = []
-    if not availability["peft"] or not availability["trl"]:
+    if "W6.2" in leg_errors:
+        findings.append({
+            "item": "W6.2 — 1-10k fine-tuning steps",
+            "status": "BLOCKED (recorded, not patched)",
+            "reason": leg_errors["W6.2"],
+        })
+    elif not availability["peft"] or not availability["trl"]:
         findings.append({
             "item": "W6.2 — 1-10k fine-tuning steps",
             "status": "BLOCKED (recorded, not patched)",
@@ -277,7 +725,13 @@ def not_run_findings() -> List[Dict[str, str]]:
                 "measured proxy for dense drift."
             ),
         })
-    if not availability["gptqmodel"] and not availability["auto_gptq"]:
+    if "W6.3-GPTQ" in leg_errors:
+        findings.append({
+            "item": "W6.3 — GPTQ leg (NF4 -> GPTQ -> back)",
+            "status": "BLOCKED (recorded, not patched)",
+            "reason": leg_errors["W6.3-GPTQ"],
+        })
+    elif not availability["gptqmodel"] and not availability["auto_gptq"]:
         findings.append({
             "item": "W6.3 — GPTQ leg (NF4 -> GPTQ -> back)",
             "status": "BLOCKED (recorded, not patched)",
@@ -288,15 +742,31 @@ def not_run_findings() -> List[Dict[str, str]]:
                 "without one of them. The NF4 leg runs; GPTQ does not."
             ),
         })
-    findings.append({
-        "item": "W6.3 — AWQ leg",
-        "status": "BLOCKED (recorded, not patched)",
-        "reason": (
-            "transformers 5.16.1 raises ImportError for AwqQuantizer "
-            "(probed at artifact time); autoawq/awq absent. Consistent "
-            "with the standing AWQ dequantizer gate."
-        ),
-    })
+    if "W6.3-AWQ" in leg_errors:
+        try:
+            from transformers import AwqQuantizer  # noqa: F401
+            tf_probe = "transformers AwqQuantizer: importable"
+        except ImportError as exc:
+            tf_probe = f"transformers AwqQuantizer: ImportError ({exc})"
+        findings.append({
+            "item": "W6.3 — AWQ leg",
+            "status": "BLOCKED (recorded, not patched)",
+            "reason": f"{leg_errors['W6.3-AWQ']} | probe: {tf_probe}",
+        })
+    elif not importlib.util.find_spec("awq"):
+        try:
+            from transformers import AwqQuantizer  # noqa: F401
+            tf_probe = "transformers AwqQuantizer: importable"
+        except ImportError as exc:
+            tf_probe = f"transformers AwqQuantizer: ImportError ({exc})"
+        findings.append({
+            "item": "W6.3 — AWQ leg",
+            "status": "BLOCKED (recorded, not patched)",
+            "reason": (
+                f"autoawq absent from this environment. | probe: "
+                f"{tf_probe}"
+            ),
+        })
     if not availability["bitsandbytes"]:
         findings.append({
             "item": "W6.3 — NF4 leg",
@@ -493,13 +963,89 @@ def main() -> int:
     del other
     gc.collect()
 
+    # --- W6.2: real fine-tuning steps (LoRA on the payload scope) --
+    # nf4_model is dead weight from here (r_ref is already built);
+    # the training leg wants the RAM.
+    leg_errors: Dict[str, str] = {}
+    method_finetune = method_gptq = method_awq = None
+    del nf4_model
+    gc.collect()
+    ft_name = f"finetune_{FINETUNE_STEPS // 1000}k"
+    log(f"[exp23] cell {ft_name} (LoRA down_proj, "
+        f"{FINETUNE_STEPS} steps) ...")
+    try:
+        deltas, method_finetune = lora_finetune_deltas(
+            fp16_model, _tok, context.family, FINETUNE_STEPS,
+        )
+        cells.append(measure_cell(
+            ft_name, deltas, embedded_r, carriers, transmitted,
+            strategy, w_stego,
+        ))
+        log(f"  ber={cells[-1]['ber']} "
+            f"loss {method_finetune['loss_first']} -> "
+            f"{method_finetune['loss_last']}")
+        del deltas
+    except Exception as exc:  # noqa: BLE001 — a real probe outcome
+        leg_errors["W6.2"] = f"{type(exc).__name__}: {exc}"
+        log(f"[exp23] fine-tune leg could not run: "
+            f"{leg_errors['W6.2']}")
+        method_finetune = None
+    finally:
+        del fp16_model
+        gc.collect()
+        torch.mps.empty_cache()
+
+    # --- W6.3: GPTQ leg (gptqmodel; stated calibration) ----------
+    log("[exp23] cell gptq_requant (gptqmodel int4) ...")
+    try:
+        deltas, method_gptq = gptq_requant_deltas(
+            args.model, w_stego, _tok, context.family,
+        )
+        cells.append(measure_cell(
+            "gptq_requant", deltas, embedded_r, carriers,
+            transmitted, strategy, w_stego,
+        ))
+        log(f"  ber={cells[-1]['ber']}")
+        del deltas
+    except Exception as exc:  # noqa: BLE001 — a real probe outcome
+        leg_errors["W6.3-GPTQ"] = f"{type(exc).__name__}: {exc}"
+        log(f"[exp23] GPTQ leg could not run: "
+            f"{leg_errors['W6.3-GPTQ']}")
+        method_gptq = None
+    gc.collect()
+    torch.mps.empty_cache()
+
+    # --- W6.3: AWQ leg (autoawq; stated calibration) -------------
+    log("[exp23] cell awq_requant (autoawq int4) ...")
+    try:
+        deltas, method_awq = awq_requant_deltas(
+            args.model, w_stego, _tok, context.family,
+        )
+        cells.append(measure_cell(
+            "awq_requant", deltas, embedded_r, carriers,
+            transmitted, strategy, w_stego,
+        ))
+        log(f"  ber={cells[-1]['ber']}")
+        del deltas
+    except Exception as exc:  # noqa: BLE001 — a real probe outcome
+        leg_errors["W6.3-AWQ"] = f"{type(exc).__name__}: {exc}"
+        log(f"[exp23] AWQ leg could not run: "
+            f"{leg_errors['W6.3-AWQ']}")
+        method_awq = None
+    gc.collect()
+    torch.mps.empty_cache()
+
     for cell in cells:
         cell["meets_gate"] = cell["ber"] == gate["max_ber"]
     control_ok = cells[0]["ber"] == gate["max_control_ber"] == direct_ber
 
     artifact: Dict[str, Any] = {
         "experiment": EXPERIMENT,
-        "title": "W6 — model surgery survival (first pass, one model)",
+        "title": (
+            "W6 — model surgery survival (Qwen2.5-3B, all legs: "
+            "the original nine plus W6.2 fine-tune and the "
+            "GPTQ/AWQ re-quant legs)"
+        ),
         "model_id": args.model,
         "family": context.family,
         "num_layers": context.expected_layers,
@@ -514,7 +1060,7 @@ def main() -> int:
             "valid": control_ok,
         },
         "cells": cells,
-        "not_run": not_run_findings(),
+        "not_run": not_run_findings(leg_errors),
         "method": {
             "pipeline": (
                 "W_stego = dequant(nf4) + embedded_residual per layer "
@@ -538,8 +1084,9 @@ def main() -> int:
             "prune": "per-layer magnitude pruning, smallest-|W| fraction",
             "lora": (
                 f"LoRA-shaped B@A, rank {LORA_RANK}, RMS scaled to "
-                f"{LORA_RATIOS} of RMS(W); training out of scope "
-                "(peft absent — see not_run), merge step is linear"
+                f"{LORA_RATIOS} of RMS(W); the merge step is "
+                f"linear. Real training is measured separately in "
+                f"the {ft_name} cell (W6.2, added 2026-10-06)"
             ),
             "nf4_requant": (
                 "bitsandbytes quantize_4bit/dequantize_4bit, nf4, "
@@ -555,8 +1102,11 @@ def main() -> int:
                 "control 0.0; lora survive-or-graceful; prune open "
                 "(|W|-vs-|r| overlap unknown); nf4_requant plausibly "
                 "heavy loss (in-bucket deltas never reach the bytes); "
-                "merge dies as t grows. Misses are recorded, not "
-                "rewritten."
+                "merge dies as t grows. Added 2026-10-06 before the "
+                "legs ran: finetune survive-or-graceful (LoRA deltas "
+                "at merge scale, W6.1's evidence); gptq/awq plausibly "
+                "heavy loss like nf4 (sub-bucket deltas) but measured, "
+                "not assumed. Misses are recorded, not rewritten."
             ),
         },
         "notes": [
