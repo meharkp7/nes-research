@@ -771,6 +771,10 @@ EXP18_ARTIFACTS = [
     "exp18_matrix_google__gemma_2_2b.json",
     "exp18_matrix_qwen__qwen2.5_3b.json",
     "exp18_matrix_meta_llama__llama_3.1_8b.json",
+    "exp18_matrix_microsoft__phi_3_mini_4k_instruct.json",
+    "exp18_matrix_qwen__qwen2.5_7b.json",
+    "exp18_matrix_mistralai__mistral_7b_v0.3.json",
+    "exp18_matrix_google__gemma_2_9b.json",
 ]
 EXP18_STRATEGIES = ["sign", "magnitude_aware", "lwe", "qae"]
 
@@ -779,9 +783,11 @@ def audit_strategy_matrix():
     arts = [(name, one(name)) for name in EXP18_ARTIFACTS]
     missing = [n for n, d in arts if not d]
     check(
-        "exp18: all three first-pass model artifacts present",
+        "exp18: all seven grid model artifacts present (3 first pass "
+        "+ 4 widened 2026-10-06; TinyLlama SKIPPED under the "
+        "incomplete-cache rule)",
         not missing,
-        "3/3" if not missing else "missing: " + ", ".join(missing),
+        "7/7" if not missing else "missing: " + ", ".join(missing),
     )
     if missing:
         return
@@ -873,7 +879,7 @@ def audit_strategy_matrix():
         "exp18: every cell's verdict booleans recompute exactly from "
         "its recorded numbers (no rounding either way)",
         not inconsistent,
-        "12/12 consistent" if not inconsistent
+        "28/28 consistent" if not inconsistent
         else "inconsistent: " + ", ".join(inconsistent),
     )
 
@@ -884,15 +890,28 @@ def audit_strategy_matrix():
         c.get("detector_accuracy")
         for c in cells if c["strategy"] == "lwe"
     ]
+    other_wins = [
+        (n, c.get("strategy"))
+        for n, d in arts for c in d["cells"]
+        if c.get("wins") and c.get("strategy") != "lwe"
+    ]
     check(
-        "exp18: 12/12 round trips at BER 0.0 and 12/12 robustness "
-        "gates pass; LWE detector exactly 0.50 on all three models "
-        "(third reproduction after exp10/exp12)",
-        len(bers) == 12
+        "exp18: 28/28 round trips at BER 0.0 and 28/28 robustness "
+        "gates pass; LWE detector exactly 0.50 on all seven models "
+        "(7/7 wins) with exactly one other winning cell — "
+        "magnitude_aware on Mistral-7B (0.525)",
+        len(bers) == 28
         and all(b == 0.0 for b in bers)
         and all(c.get("meets_robustness_gate") for c in cells)
-        and lwe_dets == [0.5, 0.5, 0.5],
-        f"ber_set={sorted(set(bers))} lwe_dets={lwe_dets}",
+        and lwe_dets == [0.5] * 7
+        and sum(1 for c in cells if c.get("wins")) == 8
+        and other_wins == [
+            ("exp18_matrix_mistralai__mistral_7b_v0.3.json",
+             "magnitude_aware"),
+        ],
+        f"ber_set={sorted(set(bers))} "
+        f"wins={sum(1 for c in cells if c.get('wins'))} "
+        f"lwe_dets={lwe_dets}",
     )
 
 
