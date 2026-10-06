@@ -2732,3 +2732,54 @@ reinterpreted here.
 
 Docs-only change; verification re-run to prove nothing else moved:
 suite 80 OK, `claim_audit` 127/127, `check_consistency` 9/9.
+
+## 35. W1.3 widening — exp18 on the full 7-model grid (2026-10-06)
+
+The widening order-row 7 called "the only remaining item in the whole
+programme." Four models, one process each, sequential (26 GB — parallel
+runs would thrash):
+
+| model | started | ended | exit |
+|---|---|---|---|
+| microsoft/Phi-3-mini-4k-instruct | 18:00:46 | 18:10:27 (10 min) | 0 |
+| Qwen/Qwen2.5-7B | 18:10:27 | 19:20:50 (70 min) | 0 |
+| mistralai/Mistral-7B-v0.3 | 19:20:50 | 20:35:52 (75 min) | 0 |
+| google/gemma-2-9b | 20:35:52 | 21:40:04 (64 min) | 0 |
+
+All four caches were verified complete beforehand (layer counts match
+TARGET_MODELS). TinyLlama stays SKIPPED — 0 layer files, the standing
+rule *SKIPPED, never defaulted* — and gemma-2-2b keeps the small slot,
+so the grid is 7 artifacts = 6 of TARGET_MODELS' 7 + the substitute.
+
+**The widened table (7 models × 4 strategies = 28 cells):**
+
+- round trip **28/28 at BER 0.0**; robustness **28/28 pass**
+  (σ0.001 all 0.0) — the first-pass reading survives the widening whole.
+- **LWE detector exactly 0.50 on all seven models — 7/7 wins.** The
+  invariant now holds on every family (llama, mistral, gemma, qwen,
+  phi3) and every size class from 2B to 9B.
+- **magnitude_aware wins its first cell anywhere: Mistral-7B, 0.525**
+  (≤ 0.55) — the matrix's only non-LWE win. It comes from Mistral being
+  the least detectable model overall: sign 0.5563 and qae 0.5563 land
+  *just* over the gate on the same model. Ranges: sign 0.56–0.78 (0/7),
+  magnitude_aware 0.53–0.78 (1/7), qae 0.56–0.84 (0/7).
+- verdict booleans recompute 28/28 from the recorded numbers — the
+  audit's direction-agnostic check, now across seven artifacts.
+
+**Trigger review (§5 misuse):** none holds. All four new models were
+already in the measured set (exp12 measured three of them), no strategy
+is added (same four READY, same two named exclusions), no detector beats
+the LWE 0.50 invariant (this matrix re-confirms it), no inference-time
+extraction. No revision owed; rev 2 stands as written.
+
+**Audit re-pinned (content, not count — 127 checks stayed 127):**
+EXP18_ARTIFACTS 3 → 7 files; check 1 pins all seven with the TinyLlama
+skip stated; the consistency detail 12 → 28; the headline pins 28/28
+round trips, 28/28 robustness, `lwe_dets == [0.5] × 7`, 8 wins, and the
+single non-LWE win named exactly to Mistral's magnitude_aware cell.
+
+Docs: PLAN §0 row, §2 W1.3 (widened paragraph, NOT_RUN row, order rows
+6–7), README exp18 row + test count 80 → 83 + reading order.
+
+Verification: suite 83 OK, `claim_audit` 127/127 (widened checks pass),
+`check_consistency` 9/9.
