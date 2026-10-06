@@ -2564,3 +2564,101 @@ raises `ModuleNotFoundError`; stale `.pyc` swept. **W1.4 status:
 executed.** Cumulative deletions: 19 source files + 2,370 + 1,423
 lines. Next: W8 (recipient CLI + delta integrity metadata), then the
 misuse re-run.
+
+## 32. W8 — delta-only distribution (recipient tool + integrity metadata)
+
+The §5 Phase-D deliverable, executed: what ships is a patch, not a
+checkpoint. Two commits' worth of work in one (`6fa6f54` code + tests,
+docs alongside), with one real end-to-end measurement and one bug that
+only the real run could find.
+
+### 32.1 The format (`src/delta/format.py`)
+
+`delta = W_stego − W_clean`, which equals `R_embed − R_clean` — by
+`WeightPatcher`'s definition `W = W_nf4_dequant + R` the dequant
+baseline cancels, so weight space and residual space carry the same
+numbers. The file holds, per layer:
+
+- `positions` — every carrier, **in read order** (extraction reads
+  `sorted(layers)` then list order; reordering would desynchronize the
+  bit stream),
+- `values` — the delta at those carriers. Zero-delta carriers are kept:
+  a carrier whose clean sign already matched its bit changes nothing,
+  so a sparse-only file would lose the positions of half the bits,
+- `metadata` — W8.2's own list: **sha256** (canonical metadata JSON +
+  canonical tensor bytes, so the hash describes the numbers, not
+  torch's container), **carrier count**, **payload length**, plus
+  changed count, layer shapes, strategy, model id, key id.
+
+`verify_delta` re-derives every count from the arrays themselves and
+is run on save *and* load: a tampered value, a forged carrier count, a
+payload length that disagrees with its own header field, an index out
+of bounds — each fails with the specific reason. Positions are not a
+secret (exp13 reads every value keylessly), so carrying them costs
+nothing; the key stays out of band, in a separate file.
+
+Two refusals are built in, because both failure modes read as noise
+rather than as errors: `build_delta` refuses an embed that changed
+values outside the recorded carriers (the format would silently drop
+them) and refuses a payload that did not fit its carrier budget;
+`recover_payload` refuses any strategy that is not `sign` by name
+(a parity/grid stream decoded as signs returns noise — the reader
+must not pretend otherwise).
+
+### 32.2 The tool (`nes delta-*`)
+
+```bash
+nes delta-export  --model M --message "…" --delta-out p.nesdelta --key-out p.key
+nes delta-inspect --delta p.nesdelta                 # no models loaded
+nes delta-extract --model M --delta p.nesdelta --keyfile p.key
+```
+
+Recovery has exactly one arithmetic path —
+`R_embed = R_clean + delta`, read through production's
+`DecryptPipeline` — so the recipient cannot disagree with production
+by having its own extractor. After decryption, the decoded length
+header is cross-checked against the metadata's payload length: a delta
+whose numbers were rewritten **and re-signed with a fresh sha256**
+still cannot claim a payload the stream does not carry (tested).
+
+### 32.3 Measured end-to-end — Qwen/Qwen2.5-3B
+
+| step | result |
+|---|---|
+| `delta-export` | **30,253-byte** delta: 824 carriers across 36 layers, **387** values actually changed, 792-bit payload (71-char message + IV + tag), sha256 `7016296c9f52ed4f…`, key written separately |
+| `delta-inspect` | integrity OK — every count re-derived from the arrays, exit 0 |
+| `delta-extract` | integrity OK (824 carriers, 792-bit payload), message **byte-identical** to the input, exit 0 |
+
+The delta file is ~0.0005% of the fp16 checkpoint's size and scales
+linearly with carrier count, not with model size.
+
+**The bug only the real run found:** live extraction
+(`extract_residuals` without a cache — deliberately, so a recipient
+needs no cache) returns residuals that carry `requires_grad` from the
+model's parameters; `.numpy()` on the hash path raised
+`RuntimeError`. Synthetic fixtures are plain tensors and passed
+cleanly. Fixed by detaching at the three tensor boundaries (hash,
+build, reconstruct) — the delta is a distribution artifact, not a
+graph — and pinned by a test that builds, hashes and recovers from
+`requires_grad` inputs, so the fixture now reproduces the real path.
+
+Artifacts (delta + key) were written to a scratch directory and are
+**not committed** — payload-bearing files do not enter version
+control; the commands above reproduce them exactly.
+
+### 32.4 Verification
+
+```bash
+cd nes-llm
+../.venv/bin/python -m unittest discover -s tests -p 'test_*.py'   # 80 OK (+14)
+../.venv/bin/python claim_audit.py                    # 127/127
+../.venv/bin/python check_consistency.py              # 9/9
+../.venv/bin/python -m src.cli delta-inspect --delta <file>
+```
+
+**W8 status: implemented, measured end-to-end.** Scope stated
+honestly: the reader decodes `sign` (the production scheme, exp3's
+path); a non-sign delta is refused by name rather than misread. Next:
+the misuse re-run — §5's register lists "W8 ships a recipient tool"
+as a re-run trigger, and it now holds, so the assessment gets a new
+revision rather than an edit in place.

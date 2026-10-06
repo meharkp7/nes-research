@@ -222,6 +222,7 @@ any number here.
 | GPTQ + AWQ dequantizers | `src/quantization/adapters.py` | 20 tests in `tests/test_quantization_adapters.py` |
 | `verify_dequantization` gate | `adapters.py` | includes the absorbed-scale correction and the NaN-safe comparison |
 | `claim_audit.py` | `nes-llm/claim_audit.py` | 127 checks re-deriving every MEASURED claim — counts included — and exiting non-zero on any it cannot verify |
+| Delta distribution W8.1/W8.2 (`src/delta/`, `nes delta-export/inspect/extract`) | `src/delta/format.py`, `recipient.py`, `src/cli.py` | integrity-verified delta file + recipient CLI; 14 tests in `tests/test_delta_distribution.py`; measured end-to-end on Qwen2.5-3B (`RESEARCH_LOG.md` §32); no result depends on it |
 | `QuantizationStrategy`, `NF4QuantizationStrategy` | strategy registry | per-tensor ABC, needs an adapter; **never run** |
 | Neural strategy `train_sampled()` | adaptive strategy | **never run** |
 | `adaptive_strategy` noise routing | strategy registry | **never run** |
@@ -623,10 +624,28 @@ weaponised checkpoint.
 A CLI/library that takes base model + delta + key → recovers the payload. Needs to be
 usable by someone who did not build it.
 
+**Implemented** (`src/delta/` + `nes delta-export | delta-inspect |
+delta-extract`, commit `6fa6f54`): recovery runs one arithmetic path
+(`R_embed = R_clean + delta`) through production's `DecryptPipeline`, so
+the recipient reads with the same extractor production wrote with.
+**Measured end-to-end on Qwen2.5-3B**: a 30,253-byte delta (824
+carriers, 36 layers, 387 values changed, 792-bit payload) recovered the
+message byte-identical from base model + delta + key. The reader
+decodes the production `sign` scheme and refuses any other by name.
+Suite: 14 delta tests (`tests/test_delta_distribution.py`).
+
 ### W8.2 Statistical guards on the delta itself
 
 If the delta is the deliverable, it should carry its own integrity metadata: hash,
 carrier count, payload length. Prevents silent corruption.
+
+**Implemented**: sha256 over canonical metadata JSON + canonical
+tensor bytes, carrier count, payload length (+ changed count, layer
+shapes, strategy, model id). `verify_delta` re-derives every count
+from the arrays on load, and extraction cross-checks the decoded
+length header against metadata — so a tampered value, a forged count
+or a re-signed payload length fails loudly instead of extracting as
+noise. Pinned by tests, including the re-signed-forgery case.
 
 ### Risk register
 
@@ -749,5 +768,5 @@ invalidate later work.
 | 8 | **W6** model surgery | **measured (exp23): 7/9 cells hold exp3's 0.0 — W6.1 LoRA ✓ (both ratios), W6.4 prune ✓ (both fractions, zero carriers displaced), W6.5 merge ✓ to t=0.05; NF4 re-quant fails at 0.3768 and half-merge at 0.2418 — both graceful (better than chance), gate untouched; W6.2 fine-tune + GPTQ/AWQ legs NOT_RUN with probes — determines viability |
 | 9 | **W7** Pareto frontier | **measured (exp24): the frontier is ONE point — exp22's layer_rank (x 0.00372693, y 0.50, marker 0.00146256) dominates all 34/34 others, minimal on both axes at once, so no trade-off exists among committed results; x measured here (no artifact pairs magnitude with a detector), y/marker cited at delta 0.0, 10 exclusions + 6 omissions recorded with reasons — the strongest publishable framing** |
 | 10 | **W1.4** consolidation | **executed + verified: 14 zero-risk files (4 duplicate embedders + 8 consumers + 2 demos) deleted, cache-build ported onto `model_loader` and rebuild-compared against the committed Qwen2.5-3B cache (36 layers × 3 tensors, 108/108 identical at delta 0.0), `scripts/exp1–4` + `src/model/loader.py` deleted — suite 66 OK, audit 127/127, consistency 9/9 after every batch** |
-| 11 | **W8** delta productization | only after 1–8 hold |
+| 11 | **W8** delta productization | **implemented + measured end-to-end (commit `6fa6f54`): `src/delta` format with W8.2 integrity metadata (sha256 + carrier count + payload length, all re-derived on load), `nes delta-export/inspect/extract` recipient CLI reading through production's `DecryptPipeline`; Qwen2.5-3B round trip: 30,253-byte delta (824 carriers, 387 changed, 792-bit payload) → message byte-identical — suite 80 OK, audit 127/127, consistency 9/9** |
 | — | misuse assessment — **worked through in §5 against exp13–22 evidence; verdict: research permitted, distribution forbidden (IP/regulatory NOT_RUN, W8 audit pending); re-run triggers listed** | gate before any distribution |

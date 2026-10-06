@@ -19,11 +19,12 @@ quantization formats (NF4, GPTQ, AWQ). Do not take that from this paragraph:
 | `src/quantization/` | pack/unpack, format dequantizers, `verify_dequantization` |
 | `src/carrier_intelligence/` | layer profiling and embedding strategies |
 | `src/steganalysis/` | statistical and neural detectors |
+| `src/delta/` | W8: delta file format + integrity metadata, recipient recovery |
 | `src/reporting/` | matrix and summary generation |
 | `run_nes_experiments.py` | orchestrator: run, audit, write reports |
 | `check_consistency.py` | cross-artifact invariants (9 checks) |
 | `claim_audit.py` | re-derives every MEASURED claim from `results/*.json` |
-| `tests/` | 38 unittest cases |
+| `tests/` | 80 unittest cases |
 
 Artifacts are written to the **repo-root** `results/` (`paths.RESULTS_DIR`) —
 two modules once wrote to `nes-llm/results` instead and drifted. Superseded
@@ -57,6 +58,38 @@ measured, layers compared, entries present — because the value is the part
 nobody doubts and the count is the part that goes stale. It has caught four
 bad claims so far; `../RESEARCH_LOG.md` §17 records them rather than quietly
 correcting them.
+
+## Delta distribution (W8)
+
+What ships is a patch, not a checkpoint: the embedding touches 10,256 of
+~811M values, so the sender distributes `W_stego − W_clean` — a few KB —
+and the recipient reconstructs locally. The delta carries its own
+integrity metadata (sha256 over metadata + tensors, carrier count,
+payload length), so a corrupted or rewritten file fails to load instead
+of extracting as noise.
+
+```bash
+# sender: embed a message, write delta + key (share the key OUT OF BAND)
+../.venv/bin/python -m src.cli delta-export --model Qwen/Qwen2.5-3B \
+    --message "payload" --delta-out patch.nesdelta --key-out patch.key
+
+# anyone: verify integrity (loads no models)
+../.venv/bin/python -m src.cli delta-inspect --delta patch.nesdelta
+
+# recipient: base model + delta + key -> payload
+../.venv/bin/python -m src.cli delta-extract --model Qwen/Qwen2.5-3B \
+    --delta patch.nesdelta --keyfile patch.key
+```
+
+Measured end-to-end on Qwen2.5-3B (`../RESEARCH_LOG.md` §32): a
+30,253-byte delta — 824 carriers across 36 layers, 387 values changed,
+792-bit payload — verified and recovered byte-identical. `src/delta/`
+holds the format and recovery; `tests/test_delta_distribution.py` pins
+the round trip and every integrity failure. The reader decodes the
+production `sign` scheme and refuses any other by name. Distribution of
+deltas remains gated by `../RESEARCH_PLAN.md` §5's misuse assessment
+(IP/regulatory rows still NOT_RUN) — the tool existing is not a
+permission to ship.
 
 ## Experiments
 
@@ -124,7 +157,8 @@ citation integrity is its gate.
    fidelity, W3.1 cross-scheme, W1.1 QAE round trip, W1.3 strategy matrix,
    W5.1 adaptive routing, W5.3 split dial, W5.2 QAE/LWE interop, W5.4
    per-layer grid width (W5 fully closed), §29 W6 model surgery survival,
-   §30 W7 Pareto frontier, §31 W1.4 consolidation).
+   §30 W7 Pareto frontier, §31 W1.4 consolidation, §32 W8 delta
+   distribution).
 2. `../RESEARCH_PLAN.md` — every claim sorted MEASURED / FAIL / NOT_RUN, and
    what to do next (Phases A–D).
 3. `../results/final_research_summary.md` — the generated report.
