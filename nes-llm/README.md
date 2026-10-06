@@ -84,6 +84,7 @@ correcting them.
 | exp21 | QAE encode + LWE read-out (W5.2): one embed, same stego, matched vs parity read-out vs public correction | round trip 0.0 for BOTH readings (exp3's number, reused) | **FAIL is the finding**: raw interop **0.5433** (5,572/10,256) vs 0.0 gate, matched control 0.0 — attributable to the pairing; public correction returns 0.0, measuring `parity(v) = sign(v) ⊕ cell-parity(|v|)` (the "hybrid" = sign reading + public relabeling) |
 | exp22 | per-layer LWE grid width (W5.4): three width rules (global / magnitude-keyed / rank-keyed), exp10's three axes per cell | exp10's four numbers per cell (0.0, 0.02/0.10, 0.55 — reused) | **the dial is buildable and does not help**: global **wins** (0.0/0.0127, det 0.50, = exp18's lwe cell bit-for-bit); per_layer round-trips 0.0 but **fails robustness (0.0226/0.5763)** — cause measured: the extractor grids the *noisy* tensor, 36/36 buckets move per σ; layer_rank **wins** (0.0015/0.0736) yet costs robustness vs the global default; detector 0.50 on all three (width-blind) |
 | exp23 | model surgery survival (W6): nine cells over ONE production-path sign embed — control, LoRA (rank 8, RMS 1e-3/1e-2 of RMS(W)), prune 10/30%, NF4 re-quant (bnb blocksize 64), task-vector merge t=0.01/0.05/0.5 with Qwen2.5-3B-Instruct | exp3's 0.0 per cell, both readings (control included) — reused | **seven cells survive at 0.0**: LoRA both ratios (displaces every carrier, but the delta never reaches the sign margin), prune both fractions (**zero carriers displaced** — payload sits outside the pruned mass, measured, not lucky), merge to t=0.05; **NF4 re-quant fails at 0.3768 (3,864/10,256)** and **half-merge at 0.2418 (2,480/10,256)** — both still better than chance, so degradation is graceful rather than erased; control triple 0.0, cache≡pair exact; fine-tune/GPTQ/AWQ legs blocked and named |
+| exp24 | Pareto frontier (W7): every strategy × parameter as x = mean \|Δ\| (measured here — no committed artifact pairs magnitude with a detector), y = detector accuracy, marker = BER@σ0.001, cited from 9 sources at delta 0.0 | `THRESHOLDS['exp24']` — max_source_delta 0.0: every y/marker must equal its source exactly, frontier recomputes from the artifact's own points | **the frontier is one point**: exp22's **layer_rank** (x **0.00372693**, y **0.50**, marker **0.00146256**) dominates all **34/34** others — minimal on both axes at once, so no trade-off exists; LWE family clusters at x ≈ 0.004–0.005 vs sign at 0.047–0.43; 10 exclusions + 6 omitted groups all recorded with reasons, exp14/exp16 cited under `related`, exp2/exp17 as priors-not-x |
 
 Thresholds live in `experiment_registry.THRESHOLDS`. No experiment edits its
 own, and `claim_audit.py` pins them, so a gate cannot be quietly relaxed.
@@ -110,15 +111,20 @@ exp23 carries per-cell verdicts (exp18's rule over nine surgeries):
 seven survive at exp3's 0.0; NF4 re-quant and the half-merge fail
 with their degradation numbers (0.3768, 0.2418) recorded — both
 still better than chance.
+exp24 is a synthesis, not an experiment: its frontier recomputes
+from its own 35 points (nondominated on x-down, y-down), and every
+y and marker it cites must equal its source artifact at delta 0.0 —
+citation integrity is its gate.
 
 ## Reading order
 
 1. `../RESEARCH_LOG.md` — what was done, what broke, what was decided (§16 is
-   the AWQ story, §17 the final state and claim-audit findings, §19–§29 the
+   the AWQ story, §17 the final state and claim-audit findings, §19–§30 the
    Phase-B results so far: W4.2 keyless recovery, W3.2 blind patches, W2 LWE
    fidelity, W3.1 cross-scheme, W1.1 QAE round trip, W1.3 strategy matrix,
    W5.1 adaptive routing, W5.3 split dial, W5.2 QAE/LWE interop, W5.4
-   per-layer grid width (W5 fully closed), §29 W6 model surgery survival).
+   per-layer grid width (W5 fully closed), §29 W6 model surgery survival,
+   §30 W7 Pareto frontier).
 2. `../RESEARCH_PLAN.md` — every claim sorted MEASURED / FAIL / NOT_RUN, and
    what to do next (Phases A–D).
 3. `../results/final_research_summary.md` — the generated report.
