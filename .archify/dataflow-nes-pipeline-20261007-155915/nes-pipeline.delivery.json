@@ -1,0 +1,17 @@
+{
+  "schemaVersion": 1,
+  "receiptId": "e6a89bfd-c4eb-4a33-931b-646a32a96429",
+  "status": "current",
+  "command": "deliver",
+  "type": "dataflow",
+  "input": "/Users/meharkapoor7/nes-research/.archify/dataflow-nes-pipeline-20261007-155915/candidate.json",
+  "output": "/Users/meharkapoor7/nes-research/.archify/dataflow-nes-pipeline-20261007-155915/nes-pipeline.html",
+  "specification": {
+    "sha256": "66b49e3bea105bdeae843e322bf15417cc0210293bb4150eca4ebc9f4633e57d",
+    "bytes": 8427
+  },
+  "artifact": {
+    "sha256": "b1d03b22d5e20dc0c39321647d353d3ae1a82911b34b1b3b9122e773af2acb29",
+    "bytes": 771128
+  }
+}

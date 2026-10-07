@@ -1,0 +1,221 @@
+{
+  "schema_version": 1,
+  "diagram_type": "dataflow",
+  "meta": {
+    "title": "NES Production Pipeline — Payload into LLM Weights and Back",
+    "output": ".archify/dataflow-nes-pipeline-20261007-155915/nes-pipeline.html",
+    "viewBox": [930, 600],
+    "quality_profile": "showcase",
+    "repository": {
+      "url": "https://github.com/meharkp7/nes-research.git",
+      "provider": "github",
+      "link_mode": "web",
+      "revision": "c16e1a848d0e386d4daa50872927407aa433df8c"
+    }
+  },
+  "stages": [
+    { "label": "Source" },
+    { "label": "Embed" },
+    { "label": "Store & operate" },
+    { "label": "Recover & detect" }
+  ],
+  "nodes": [
+    {
+      "id": "msg",
+      "type": "external",
+      "label": "Secret message",
+      "sublabel": "UTF-8 text",
+      "stage": 0,
+      "row": 0,
+      "sources": [
+        { "path": "nes-llm/src/embedding/intelligent_embedder.py", "line": 64, "end_line": 65, "label": "embed step 1" }
+      ]
+    },
+    {
+      "id": "model",
+      "type": "database",
+      "label": "FP16 model",
+      "sublabel": "HF checkpoint (W_fp16)",
+      "tag": "weights",
+      "stage": 0,
+      "row": 1,
+      "sources": [
+        { "path": "nes-llm/src/model/model_loader.py", "line": 78, "end_line": 126, "label": "ModelLoader.load" }
+      ]
+    },
+    {
+      "id": "resid",
+      "type": "backend",
+      "label": "Residual extractor",
+      "sublabel": "R = W_fp16 − W_nf4 dequant",
+      "stage": 0,
+      "row": 2,
+      "sources": [
+        { "path": "nes-llm/src/model/model_loader.py", "line": 237, "end_line": 381, "label": "extract_residuals" }
+      ]
+    },
+    {
+      "id": "aes",
+      "type": "security",
+      "label": "AES-256-GCM",
+      "sublabel": "IV + ciphertext + 32-bit header",
+      "tag": "keyed",
+      "stage": 1,
+      "row": 0,
+      "width": 128,
+      "sources": [
+        { "path": "nes-llm/src/crypto/aes_cipher.py", "line": 74, "end_line": 86, "label": "encrypt_to_bits" },
+        { "path": "nes-llm/src/embedding/intelligent_embedder.py", "line": 67, "end_line": 76, "label": "embed steps 2-3" },
+        { "path": "nes-llm/src/embedding/payload_encoder.py", "line": 118, "label": "_uint32_to_bits" }
+      ]
+    },
+    {
+      "id": "qaci",
+      "type": "backend",
+      "label": "QACI carrier selection",
+      "sublabel": "per-layer bit allocation",
+      "stage": 1,
+      "row": 2,
+      "width": 144,
+      "sources": [
+        { "path": "nes-llm/src/carrier_intelligence/qaci_pipeline.py", "line": 35, "end_line": 108, "label": "select" },
+        { "path": "nes-llm/src/embedding/intelligent_embedder.py", "line": 78, "end_line": 85, "label": "embed step 4" }
+      ]
+    },
+    {
+      "id": "strat",
+      "type": "backend",
+      "label": "Strategy embed",
+      "sublabel": "registry: sign · LWE · magnitude_aware · QAE",
+      "tag": "bits → R'",
+      "stage": 1,
+      "row": 1,
+      "width": 168,
+      "sources": [
+        { "path": "nes-llm/src/embedding/strategy_registry.py", "line": 182, "end_line": 264, "label": "registered strategies" },
+        { "path": "nes-llm/src/embedding/intelligent_embedder.py", "line": 86, "end_line": 93, "label": "embed step 5" }
+      ]
+    },
+    {
+      "id": "stego",
+      "type": "database",
+      "label": "Stego model",
+      "sublabel": "W_new = W_q + R_embedded, saved",
+      "tag": "payload inside",
+      "stage": 2,
+      "row": 0,
+      "width": 128,
+      "sources": [
+        { "path": "nes-llm/src/model/weight_patcher.py", "line": 30, "end_line": 65, "label": "WeightPatcher.patch" },
+        { "path": "nes-llm/src/pipeline/nes_pipeline.py", "line": 103, "end_line": 114, "label": "save + keys/carriers" }
+      ]
+    },
+    {
+      "id": "surgery",
+      "type": "backend",
+      "label": "Weight surgery (exp23)",
+      "sublabel": "LoRA · prune · NF4 · GPTQ · AWQ · fine-tune",
+      "tag": "12 cells",
+      "stage": 2,
+      "row": 1,
+      "width": 164,
+      "sources": [
+        { "path": "nes-llm/src/experiments/exp23_model_surgery.py", "line": 21, "end_line": 25, "label": "cell formula" },
+        { "path": "nes-llm/src/quantization/adapters.py", "line": 466, "end_line": 508, "label": "residual_for_layer" }
+      ]
+    },
+    {
+      "id": "decrypt",
+      "type": "security",
+      "label": "DecryptPipeline",
+      "sublabel": "sign rule → header → AES decrypt",
+      "tag": "keyed",
+      "stage": 3,
+      "row": 2,
+      "width": 128,
+      "sources": [
+        { "path": "nes-llm/src/extraction/decrypt_pipeline.py", "line": 76, "end_line": 139, "label": "run" }
+      ]
+    },
+    {
+      "id": "reread",
+      "type": "backend",
+      "label": "Re-extract residuals",
+      "sublabel": "r' = embedded_r + (W' − W_stego)",
+      "stage": 3,
+      "row": 1,
+      "width": 136,
+      "sources": [
+        { "path": "nes-llm/src/experiments/exp23_model_surgery.py", "line": 21, "end_line": 25, "label": "cell read-back" }
+      ]
+    },
+    {
+      "id": "out",
+      "type": "external",
+      "label": "Recovered message",
+      "sublabel": "gated on exp3's BER 0.0",
+      "stage": 3,
+      "row": 3,
+      "yOffset": -8,
+      "sources": [
+        { "path": "nes-llm/src/experiments/experiment_registry.py", "line": 33, "end_line": 36, "label": "exp3 gate" }
+      ]
+    },
+    {
+      "id": "detect",
+      "type": "backend",
+      "label": "Keyless detectors",
+      "sublabel": "blind patch · feature · neural",
+      "stage": 3,
+      "row": 0,
+      "width": 120,
+      "sources": [
+        { "path": "nes-llm/src/experiments/exp14_blind_patch_detector.py", "line": 86, "end_line": 247, "label": "datasets + evaluation" },
+        { "path": "nes-llm/src/steganalysis/feature_detector.py", "line": 14, "end_line": 41, "label": "extract_features" },
+        { "path": "nes-llm/src/steganalysis/neural_detector.py", "line": 33, "label": "Detector" }
+      ]
+    }
+  ],
+  "flows": [
+    { "id": "message-bytes", "from": "msg", "to": "aes", "label": "UTF-8 bytes", "variant": "default" },
+    { "id": "weight-pair", "from": "model", "to": "resid", "label": "W_fp16 + W_nf4", "variant": "default", "labelAt": [100, 315] },
+    { "id": "residuals-in", "from": "resid", "to": "strat", "label": "residuals R", "variant": "default" },
+    { "id": "cipher-bits", "from": "aes", "to": "strat", "label": "ciphertext bits + header", "variant": "security", "labelAt": [315, 201] },
+    { "id": "carriers", "from": "qaci", "to": "strat", "label": "selected carriers", "variant": "emphasis" },
+    { "id": "patch-save", "from": "strat", "to": "stego", "label": "patch + save", "variant": "emphasis", "labelAt": [440, 315] },
+    { "id": "surgery-in", "from": "stego", "to": "surgery", "label": "applies surgery W'", "variant": "default", "labelAt": [530, 201] },
+    { "id": "operated-weights", "from": "surgery", "to": "reread", "label": "operated weights", "variant": "emphasis", "labelAt": [645, 315] },
+    { "id": "bits-carriers", "from": "reread", "to": "decrypt", "label": "r' + carrier indices", "variant": "default", "labelAt": [745, 340] },
+    { "id": "plaintext", "from": "decrypt", "to": "out", "label": "plaintext (BER 0.0)", "variant": "emphasis", "labelAt": [745, 442] },
+    { "id": "blind-read", "from": "stego", "to": "detect", "label": "weights, no key", "variant": "dashed", "labelAt": [640, 157] }
+  ],
+  "cards": [
+    {
+      "dot": "emerald",
+      "title": "Payload path",
+      "items": [
+        "Message → AES-256-GCM → 32-bit header → QACI carriers → strategy writes into residuals",
+        "One fresh AES key per embed; keys and carrier indices are saved beside the model",
+        "Recovery reverses every step and gates on exp3's clean round trip at BER 0.0"
+      ]
+    },
+    {
+      "dot": "orange",
+      "title": "Surgery survival (exp23)",
+      "items": [
+        "Each cell applies W' = surgery(W_stego), then reconstructs r' from the weight delta",
+        "8 of 12 cells hold BER 0.0 — LoRA, pruning, small merges, the 1,000-step fine-tune",
+        "NF4/GPTQ/AWQ re-quantization degrades the payload but never erases it"
+      ]
+    },
+    {
+      "dot": "rose",
+      "title": "Keyless detection",
+      "items": [
+        "Detectors read weights without ever seeing the key",
+        "exp14's blind patch detector scores 0.5000 — no signal for the uninformed reader",
+        "A lattice-aware reader spikes on the true structure — detectable by the informed"
+      ]
+    }
+  ]
+}
