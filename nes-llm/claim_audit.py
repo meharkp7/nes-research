@@ -1979,13 +1979,15 @@ EXP23_ARTIFACT = "exp23_model_surgery_qwen__qwen2.5_3b.json"
 EXP23_ORDER = [
     "control", "lora_0.001", "lora_0.01", "prune_10", "prune_30",
     "nf4_requant", "merge_0.01", "merge_0.05", "merge_0.5",
+    "finetune_1k", "gptq_requant", "awq_requant",
 ]
 
 
 def audit_model_surgery():
     d = one(EXP23_ARTIFACT)
     check(
-        "exp23: artifact present (W6 first pass, Qwen2.5-3B)",
+        "exp23: artifact present (W6, first pass + legs run 2026-10-07, "
+        "Qwen2.5-3B)",
         d is not None,
         EXP23_ARTIFACT if d else "missing: " + EXP23_ARTIFACT,
     )
@@ -2023,9 +2025,10 @@ def audit_model_surgery():
 
     cells = d.get("cells", [])
     check(
-        "exp23: exactly the nine surgery cells, in order (control, "
-        "2 LoRA, 2 prune, NF4, 3 merge) — nothing added, nothing "
-        "silently dropped",
+        "exp23: exactly the twelve surgery cells, in order (control, "
+        "2 LoRA, 2 prune, NF4, 3 merge, then the three legs that were "
+        "NOT_RUN in the first pass — fine-tune, GPTQ, AWQ) — nothing "
+        "added, nothing silently dropped",
         [c.get("surgery") for c in cells] == EXP23_ORDER,
         f"cells={[c.get('surgery') for c in cells]}",
     )
@@ -2048,8 +2051,8 @@ def audit_model_surgery():
         "exp23: every cell's BER recomputes exactly from its own "
         "error count over 10,256 compared bits, and every verdict "
         "boolean recomputes from exp3's 0.0 (no rounding either way)",
-        len(cells) == 9 and not inconsistent,
-        "9/9 consistent" if not inconsistent
+        len(cells) == 12 and not inconsistent,
+        "12/12 consistent" if not inconsistent
         else "; ".join(inconsistent),
     )
 
@@ -2060,23 +2063,30 @@ def audit_model_surgery():
     ]
     nf4 = by_name.get("nf4_requant", {})
     m5 = by_name.get("merge_0.5", {})
+    gptq = by_name.get("gptq_requant", {})
+    awq = by_name.get("awq_requant", {})
+    heavy = (nf4, m5, gptq, awq)
     check(
-        "exp23: the result as measured — seven cells survive at BER "
-        "0.0 (control, both LoRA ratios, both prunes, merge t<=0.05); "
-        "NF4 re-quant fails at 0.3768 (3864/10256) and the half-merge "
-        "fails at 0.2418 (2480/10256), both still short of chance "
-        "0.5 — total-vs-graceful read from the numbers, gate untouched",
+        "exp23: the result as measured — eight cells survive at BER "
+        "0.0 (control, both LoRA ratios, both prunes, merge t<=0.05, "
+        "and the real 1,000-step fine-tune); NF4 re-quant fails at "
+        "0.3832 (3930/10256), the half-merge at 0.2476 (2539/10256), "
+        "GPTQ at 0.4956 (5083/10256, near chance) and AWQ at 0.4108 "
+        "(4213/10256) — every failure short of chance 0.5, so the "
+        "degradation is graceful rather than erased; total-vs-graceful "
+        "read from the numbers, gate untouched",
         survivors == [
             "control", "lora_0.001", "lora_0.01",
             "prune_10", "prune_30", "merge_0.01", "merge_0.05",
+            "finetune_1k",
         ]
-        and nf4.get("bit_errors") == 3864
-        and m5.get("bit_errors") == 2480
-        and 0.0 < nf4.get("ber", 1.0) < 0.5
-        and 0.0 < m5.get("ber", 1.0) < 0.5
-        and nf4.get("meets_gate") is False
-        and m5.get("meets_gate") is False,
-        f"nf4={nf4.get('ber')} merge_0.5={m5.get('ber')}",
+        and [c.get("bit_errors") for c in heavy]
+        == [3930, 2539, 5083, 4213]
+        and all(0.0 < c.get("ber", 1.0) < 0.5 for c in heavy)
+        and all(c.get("meets_gate") is False for c in heavy),
+        f"nf4={nf4.get('ber')} merge_0.5={m5.get('ber')} "
+        f"gptq={gptq.get('ber')} awq={awq.get('ber')} "
+        f"survivors={survivors}",
     )
 
     prune_bad = []
@@ -2146,28 +2156,39 @@ def audit_model_surgery():
 
     blockers = d.get("not_run", []) or []
     names = " | ".join(str(b.get("item", "")) for b in blockers)
+    ft = method.get("finetune") or {}
+    gq = method.get("gptq") or {}
+    aw = method.get("awq") or {}
     check(
-        "exp23: all three blocked legs recorded BY NAME with runtime "
-        "probes and no patching — W6.2 fine-tune (peft/trl), W6.3 "
-        "GPTQ (gptqmodel/auto_gptq), W6.3 AWQ (AwqQuantizer)",
-        len(blockers) == 3
-        and "W6.2" in names
-        and "GPTQ" in names
-        and "AWQ" in names
-        and all(
-            "recorded, not patched" in str(b.get("status"))
-            for b in blockers
-        )
-        and "peft=False, trl=False" in str(
-            dig(blockers[0], "reason") if blockers else ""
-        )
-        and "gptqmodel=False" in str(
-            dig(blockers[1], "reason") if len(blockers) > 1 else ""
-        )
-        and "AwqQuantizer" in str(
-            dig(blockers[2], "reason") if len(blockers) > 2 else ""
-        ),
-        f"{len(blockers)} blockers: {names}",
+        "exp23: the first pass's three named blockers are now measured "
+        "cells — not_run is empty (a leg that ran leaves no finding) "
+        "and method carries the protocol each leg ran under: fine-tune "
+        "1,000 steps, lr 1e-4 cosine with 3% warmup, down_proj only, "
+        "loss falling 2.271010437011719 -> 2.169337158203125 (identical "
+        "across runs); GPTQ int4 group 128 sym on 64 stated wikitext "
+        "windows, read back via save() -> safetensors; AWQ int4 group "
+        "128 zero-point on 32 stated windows through exp8's reader",
+        blockers == []
+        and ft.get("steps") == 1000
+        and ft.get("lr") == 0.0001
+        and "3% warmup" in str(ft.get("scheduler"))
+        and "down_proj only" in str(ft.get("targets"))
+        and ft.get("loss_first") == 2.271010437011719
+        and ft.get("loss_last") == 2.169337158203125
+        and ft.get("loss_last") < ft.get("loss_first")
+        and gq.get("bits") == 4
+        and gq.get("group_size") == 128
+        and gq.get("sym") is True
+        and "64 wikitext" in str(gq.get("calibration"))
+        and "save()" in str(gq.get("read_back"))
+        and aw.get("bits") == 4
+        and aw.get("group_size") == 128
+        and aw.get("zero_point") is True
+        and "32 wikitext" in str(aw.get("calibration"))
+        and "dequantize_awq_layer" in str(aw.get("reader")),
+        f"{len(blockers)} blockers: {names}" if blockers
+        else "0 blockers; fine-tune/GPTQ/AWQ measured with stated "
+             "protocol in method.finetune/gptq/awq",
     )
 
     notes0 = str((d.get("notes") or [""])[0])

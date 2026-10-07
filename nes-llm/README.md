@@ -24,7 +24,7 @@ quantization formats (NF4, GPTQ, AWQ). Do not take that from this paragraph:
 | `run_nes_experiments.py` | orchestrator: run, audit, write reports |
 | `check_consistency.py` | cross-artifact invariants (9 checks) |
 | `claim_audit.py` | re-derives every MEASURED claim from `results/*.json` |
-| `tests/` | 83 unittest cases |
+| `tests/` | 85 unittest cases |
 
 Artifacts are written to the **repo-root** `results/` (`paths.RESULTS_DIR`) —
 two modules once wrote to `nes-llm/results` instead and drifted. Superseded
@@ -116,7 +116,7 @@ permission to ship.
 | exp20 | sign/parity split dial (W5.3): parity share of carriers sweeps 0.0→1.0, exp10's three axes per cell | round trip 0.0, robustness 0.02/0.10, detector ≤ 55% (exp3/exp6/exp7's numbers, reused) | **the trade-off is a dial**: BER@σ0.002 0→0.0127 and detector 0.7875→0.50 with parity share; all 5 round trips 0.0; only pure parity wins, reproducing exp18's lwe cell exactly (delta 0.0) |
 | exp21 | QAE encode + LWE read-out (W5.2): one embed, same stego, matched vs parity read-out vs public correction | round trip 0.0 for BOTH readings (exp3's number, reused) | **FAIL is the finding**: raw interop **0.5433** (5,572/10,256) vs 0.0 gate, matched control 0.0 — attributable to the pairing; public correction returns 0.0, measuring `parity(v) = sign(v) ⊕ cell-parity(|v|)` (the "hybrid" = sign reading + public relabeling) |
 | exp22 | per-layer LWE grid width (W5.4): three width rules (global / magnitude-keyed / rank-keyed), exp10's three axes per cell | exp10's four numbers per cell (0.0, 0.02/0.10, 0.55 — reused) | **the dial is buildable and does not help**: global **wins** (0.0/0.0127, det 0.50, = exp18's lwe cell bit-for-bit); per_layer round-trips 0.0 but **fails robustness (0.0226/0.5763)** — cause measured: the extractor grids the *noisy* tensor, 36/36 buckets move per σ; layer_rank **wins** (0.0015/0.0736) yet costs robustness vs the global default; detector 0.50 on all three (width-blind) |
-| exp23 | model surgery survival (W6): nine cells over ONE production-path sign embed — control, LoRA (rank 8, RMS 1e-3/1e-2 of RMS(W)), prune 10/30%, NF4 re-quant (bnb blocksize 64), task-vector merge t=0.01/0.05/0.5 with Qwen2.5-3B-Instruct | exp3's 0.0 per cell, both readings (control included) — reused | **seven cells survive at 0.0**: LoRA both ratios (displaces every carrier, but the delta never reaches the sign margin), prune both fractions (**zero carriers displaced** — payload sits outside the pruned mass, measured, not lucky), merge to t=0.05; **NF4 re-quant fails at 0.3768 (3,864/10,256)** and **half-merge at 0.2418 (2,480/10,256)** — both still better than chance, so degradation is graceful rather than erased; control triple 0.0, cache≡pair exact; fine-tune/GPTQ/AWQ legs blocked and named |
+| exp23 | model surgery survival (W6): twelve cells over ONE production-path sign embed — control, LoRA (rank 8, RMS 1e-3/1e-2 of RMS(W)), prune 10/30%, NF4 re-quant (bnb blocksize 64), task-vector merge t=0.01/0.05/0.5, real 1,000-step fine-tune (down_proj), GPTQ and AWQ int4 re-quant, with Qwen2.5-3B-Instruct | exp3's 0.0 per cell, both readings (control included) — reused | **eight cells survive at 0.0**: LoRA both ratios (displaces every carrier, but the delta never reaches the sign margin), prune both fractions (**zero carriers displaced** — payload sits outside the pruned mass, measured, not lucky), merge to t=0.05, and the **real 1,000-step fine-tune (loss 2.271→2.169)**; **NF4 re-quant fails at 0.3832 (3,930/10,256)**, **half-merge at 0.2476 (2,539/10,256)**, **GPTQ at 0.4956 (5,083/10,256, near chance)** and **AWQ at 0.4108 (4,213/10,256)** — every failure still better than chance, so degradation is graceful rather than erased; control triple 0.0, cache≡pair exact; not_run empty — no legs left blocked |
 | exp24 | Pareto frontier (W7): every strategy × parameter as x = mean \|Δ\| (measured here — no committed artifact pairs magnitude with a detector), y = detector accuracy, marker = BER@σ0.001, cited from 9 sources at delta 0.0 | `THRESHOLDS['exp24']` — max_source_delta 0.0: every y/marker must equal its source exactly, frontier recomputes from the artifact's own points | **the frontier is one point**: exp22's **layer_rank** (x **0.00372693**, y **0.50**, marker **0.00146256**) dominates all **34/34** others — minimal on both axes at once, so no trade-off exists; LWE family clusters at x ≈ 0.004–0.005 vs sign at 0.047–0.43; 10 exclusions + 6 omitted groups all recorded with reasons, exp14/exp16 cited under `related`, exp2/exp17 as priors-not-x |
 
 Thresholds live in `experiment_registry.THRESHOLDS`. No experiment edits its
@@ -140,10 +140,11 @@ interop 0.5433 vs the 0.0 gate, with its matched control at 0.0.
 exp22 carries per-cell verdicts (exp18's rule over three width rules):
 its per_layer cell fails both robustness gates with the cause
 measured and recorded, not smoothed.
-exp23 carries per-cell verdicts (exp18's rule over nine surgeries):
-seven survive at exp3's 0.0; NF4 re-quant and the half-merge fail
-with their degradation numbers (0.3768, 0.2418) recorded — both
-still better than chance.
+exp23 carries per-cell verdicts (exp18's rule over twelve surgeries):
+eight survive at exp3's 0.0 — including the real 1,000-step
+fine-tune; NF4 re-quant, the half-merge, GPTQ and AWQ fail with
+their degradation numbers (0.3832, 0.2476, 0.4956, 0.4108) recorded
+— all still better than chance.
 exp24 is a synthesis, not an experiment: its frontier recomputes
 from its own 35 points (nondominated on x-down, y-down), and every
 y and marker it cites must equal its source artifact at delta 0.0 —

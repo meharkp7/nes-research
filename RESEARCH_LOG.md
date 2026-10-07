@@ -2783,3 +2783,138 @@ Docs: PLAN §0 row, §2 W1.3 (widened paragraph, NOT_RUN row, order rows
 
 Verification: suite 83 OK, `claim_audit` 127/127 (widened checks pass),
 `check_consistency` 9/9.
+
+## 36. W6 legs — exp23's fine-tune / GPTQ / AWQ attempted (2026-10-07)
+
+The first pass left three legs NOT_RUN on absent tooling. Two author
+decisions made them attemptable: the IP sign-off (§34 — recorded, never
+edited) and the install authorization ("its allowed dw"). Installs are
+not a research action — the artifact's own method line already said so.
+Installed: **optimum 2.3.0** (gptqmodel 7.5.0 refuses to import below
+optimum 1.24.0). Verified unchanged by that install: transformers
+5.16.1, torch 2.13.0, peft 0.21.2, trl 1.14.1, GPTQModel 7.5.0,
+autoawq 0.2.9, bitsandbytes 0.50.2 (accelerate 1.14.0, datasets 5.0.1).
+
+Protocol is untouched: exp3's 0.0 gate on both readings, the same one
+production-path sign embed shared with the nine original cells, the
+same payload and scope. Only the tooling that performs the surgery
+changed; no measurement was altered to make anything pass.
+
+**Runs — one model per process, sequential; run 3 was killed
+externally (below), every other run completed with its artifact:**
+
+| run | window (IST) | outcome |
+|---|---|---|
+| first pass (committed) | 2026-10-06 13:31 | 9 cells; 3 legs blocked by absent deps, probes recorded (`peft=False, trl=False` / `gptqmodel=False, auto_gptq=False` / `transformers 5.16.1 raises ImportError for AwqQuantizer`) |
+| run 1 | 2026-10-07 00:14:31–00:16:47 | 9 cells re-measured; all 3 legs blocked with real exceptions: fine-tune `ImportError: gptqmodel requires optimum version 1.24.0`, GPTQ `TypeError: BaseQModel.quantize does not accept ['dataset']` (the guard refusing the default corpus), AWQ `ValueError: Could not find layers in Qwen2AWQForCausalLM` |
+| run 2 | 2026-10-07 00:38:36–01:35:13 | 9 cells; fine-tune blocked on `TrainingArguments: unexpected keyword 'warmup_ratio'` (transformers 5.x), GPTQ completed quantize then blocked at read-back (`'_LinearWeightMetadata' object has no attribute 'qweight'`), AWQ quantized 36/36 layers then blocked at read-back (`'WQLinear_GEMM' object has no attribute 'weight'`) |
+| run 3 | 2026-10-07 02:15:26–~04:26 (killed) | 9 cells + fine-tune leg completed (ber 0.0, loss 2.271→2.169), then the session teardown killed shell and python mid-GPTQ — no EXIT line, no artifact. Cells cannot splice across processes (one embed per artifact), so the run was repeated whole rather than resumed |
+| run 4 | 2026-10-07 11:11:31–14:03:28 | **all 12 cells, `not_run: []`** — launched detached (no `setsid` binary on macOS, so `perl POSIX::setsid` + exec) so session churn could not reach it; every leg ran: fine-tune 0.0 with loss 2.271→2.169 *identical to run 3's logged values* (deterministic), GPTQ 0.4956, AWQ 0.4108; artifact written 14:03 |
+
+**What each failure was, and the fix (code only; nothing measured was
+edited):**
+
+1. **optimum 2.3.0** — dependency install behind gptqmodel's import
+   guard. Not a method change.
+2. **`warmup_ratio` → `warmup_steps = max(1, int(steps * 0.03))`** —
+   transformers 5.x dropped the ratio kwarg; the recorded scheduler
+   ("cosine with 3% warmup") is now honored exactly rather than
+   approximately.
+3. **gptqmodel 7.5.0 renamed the corpus kwarg** — `dataset=` is
+   rejected; `quantize()` now takes the calibration corpus as its
+   first positional parameter. The stated wikitext windows are passed
+   the same way; the guard that refuses the default corpus stands.
+4. **AWQ layer discovery** — the repo's registry unwraps exactly one
+   `.model`; autoawq double-wraps (`Qwen2AWQForCausalLM.model.model`),
+   so the leg passes the inner module explicitly.
+5. **The legs' method records were computed but never merged** into
+   the artifact's `method` dict — conditional merge added, so
+   `method.finetune/gptq/awq` appear iff the leg ran.
+6. **Readers (both legs' read-back)** — exp8/exp9's adapters read the
+   packed tensors through `.weight`, the checkpoint-holder layout they
+   were validated against. The *runtime* quant-linear classes differ:
+   gptqmodel's `TorchLinear.weight` returns a metadata shim that
+   carries none of them, autoawq's `WQLinear_GEMM` has no `.weight`
+   at all — both raised AttributeError. Both readers now prefer
+   module-level packed attributes when present and fall back to the
+   holder; the validated holder path is untouched, and new tests pin
+   the two paths equal on the same tensors.
+7. **GPTQ read-back device** — after `quantize()` returns, gptqmodel
+   7.5.0 keeps the packed buffers on the *meta* device (the real
+   tensors live in its LazyTurtle stash; verified: all four buffers
+   `is_meta=True` while the per-module losses in the log are real).
+   `save()` materializes the canonical checkpoint, so the leg saves to
+   a temp dir, reads each layer's four tensors from the safetensors
+   shard through exp9's reader, and deletes the dir. Cross-checked
+   once against gptqmodel's own `dequantize_weight()` on the same
+   file: correlation **1.0**, max abs diff 1.2e-4 (fp16 rounding) —
+   the two dequantizations are the same function.
+
+**Nondeterminism — observed, bounded, not explained away.** The heavy
+cells jitter on every re-run; the light cells do not:
+
+| cell | first pass | run 1 | run 2 | run 3 (log only — killed) | run 4 |
+|---|---|---|---|---|---|
+| nf4_requant errs (BER) | 3864 (0.37675507020280813) | 3849 (0.375292511700468) | 3874 (0.37773010920436817) | 3942 (0.3843603744149766) | 3930 (0.3831903276131045) |
+| merge_0.5 errs (BER) | 2480 (0.24180967238689546) | 2520 (0.24570982839313574) | 2486 (0.24239469578783152) | 2491 (0.24288221528861154) | 2539 (0.24756240249609984) |
+| nf4 carriers_displaced | 9536 | 9551 | 9533 | not logged | 9543 |
+| merge_0.5 carriers_displaced | 7839 | 7827 | 7797 | not logged | 7830 |
+
+- control, both LoRA cells and both prune cells are byte-identical
+  across runs, metadata included; merge t≤0.05 stays at 0.0; every
+  gate verdict is stable in every run.
+- bitsandbytes' nf4 path was probed **bitwise-deterministic** (CPU ==
+  MPS, three identical hashes) — the jitter is not bnb's RNG, and a
+  code read found no RNG consulted in embedder or QACI selection.
+- the residual rms moves only at the 8th–10th digit (ulp-level);
+  carriers_displaced moves by tens of carriers. The pattern is
+  *consistent with* score-tie reordering (reduction threading or
+  hash-order iteration in the carrier ranking); the specific flip was
+  not traced, and no stronger cause is claimed.
+
+**Trigger review (§5 misuse):** none holds. The legs run the same
+model, the same sign strategy, the same single embed — no new strategy,
+no detector, no inference-time extraction, nothing added beyond tools
+that perform the surgery the plan always intended to measure. No
+revision owed; rev 2 stands as written.
+
+**Final result (run 4 artifact — twelve cells, `not_run: []`,
+control triple exact 0.0, cache≡pair 0.0):**
+
+| cell | BER | errs | gate (exp3's 0.0) |
+|---|---|---|---|
+| control | 0.0 (direct 0.0, weight_path 0.0) | 0/10256 | pass |
+| lora_0.001 | 0.0 | 0/10256 | pass |
+| lora_0.01 | 0.0 | 0/10256 | pass |
+| prune_10 | 0.0 (0 carriers displaced) | 0/10256 | pass |
+| prune_30 | 0.0 (0 carriers displaced) | 0/10256 | pass |
+| nf4_requant | 0.3831903276131045 | 3930/10256 | fail |
+| merge_0.01 | 0.0 | 0/10256 | pass |
+| merge_0.05 | 0.0 | 0/10256 | pass |
+| merge_0.5 | 0.24756240249609984 | 2539/10256 | fail |
+| **finetune_1k** | **0.0** | 0/10256 | **pass** |
+| **gptq_requant** | **0.4956123244929797** | 5083/10256 | fail |
+| **awq_requant** | **0.4107839313572543** | 4213/10256 | fail |
+
+Readings: **eight survivors at the untouched gate** — the nine-cell
+first-pass character holds, plus the real 1,000-step fine-tune, whose
+delta lands at merge scale (rms 0.0092 × RMS(W)), displaces carriers
+without reaching the sign margin, and trains honestly (loss
+2.271→2.169). **All four failures are graceful:** every one sits below
+chance 0.5 — GPTQ nearest at 0.4956, then AWQ 0.4108, NF4 0.3832,
+half-merge 0.2476 — so no surgery erases the payload into noise; the
+two new int4 legs land between NF4 and chance, and GPTQ, the
+coarseness-matched tool, is the most destructive of the four. The W6
+verdict is now answered with numbers: light-touch surgery (LoRA,
+pruning, small merges, genuine fine-tuning) preserves the payload at
+0.0; int4 re-quantization degrades it in proportion to coarseness but
+never totally.
+
+Docs: PLAN §0 pending row and order row 8 (NOT_RUN → all legs run,
+12-cell summary); nes-llm/README exp23 row and verdict prose
+(nine→twelve cells, legs recorded with their numbers); claim_audit
+exp23 block re-pinned to the run-4 artifact (12-cell order, survivors
++ four failure values, `not_run == []`, method.finetune/gptq/awq
+protocol pins); RESEARCH_LOG §36 (this section).
+Verification: test suite **85 OK**; claim_audit **127/127**;
+check_consistency **9/9**.
