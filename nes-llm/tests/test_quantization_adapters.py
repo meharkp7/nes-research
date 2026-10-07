@@ -351,6 +351,47 @@ class AWQTests(unittest.TestCase):
         self.assertFalse(torch.equal(produced, reference))
 
 
+class RuntimeModuleAttrsTests(unittest.TestCase):
+    """Both readers must accept module-level packed tensors.
+
+    The runtime quant-linear classes expose qweight/qzeros/scales
+    (and g_idx for GPTQ) as direct attributes: gptqmodel's
+    TorchLinear answers `.weight` with a metadata shim that carries
+    none of them, and autoawq's WQLinear_GEMM has no `.weight` at
+    all — reading through `.weight` raised AttributeError on both in
+    exp23's legs (2026-10-07). The module-level path must produce
+    the exact same matrix as the checkpoint holder the readers were
+    originally validated against.
+    """
+
+    def test_gptq_module_level_matches_holder_path(self):
+        module, reference, *_ = make_gptq()
+        flat = _Module()
+        for name in ("qweight", "qzeros", "scales", "g_idx"):
+            setattr(flat, name, getattr(module.weight, name))
+
+        self.assertTrue(
+            torch.equal(dequantize_gptq_layer(module), reference)
+        )
+        self.assertTrue(
+            torch.equal(dequantize_gptq_layer(flat), reference)
+        )
+
+    def test_awq_module_level_matches_holder_path(self):
+        module, reference = make_awq()
+        flat = _Module()
+        flat.qweight = module.weight.qweight
+        flat.qzeros = module.qzeros
+        flat.scales = module.scales
+
+        self.assertTrue(
+            torch.equal(dequantize_awq_layer(module), reference)
+        )
+        self.assertTrue(
+            torch.equal(dequantize_awq_layer(flat), reference)
+        )
+
+
 class DispatchTests(unittest.TestCase):
     def test_format_detection(self):
         gptq, *_ = make_gptq()

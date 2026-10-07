@@ -122,12 +122,20 @@ def dequantize_gptq_layer(module) -> torch.Tensor:
     for that row, which is why it is applied to the reconstructed
     matrix rather than to an input axis.
     """
-    weight = module.weight
+    # The four packed tensors live under `.weight` on the exp9
+    # checkpoint holder, and at module level on gptqmodel's runtime
+    # TorchLinear — whose `.weight` is a metadata shim that carries
+    # none of them (reading through it raised AttributeError there).
+    src = (
+        module
+        if getattr(module, "qweight", None) is not None
+        else module.weight
+    )
 
-    qweight = weight.qweight.detach().to("cpu")
-    qzeros = weight.qzeros.detach().to("cpu")
-    scales = weight.scales.detach().to("cpu").float()
-    g_idx = weight.g_idx.detach().to("cpu")
+    qweight = src.qweight.detach().to("cpu")
+    qzeros = src.qzeros.detach().to("cpu")
+    scales = src.scales.detach().to("cpu").float()
+    g_idx = src.g_idx.detach().to("cpu")
 
     pack_factor = 32 // 4
 
@@ -313,9 +321,15 @@ def dequantize_awq_layer(module) -> torch.Tensor:
     The packed layout yields ``[in, out]``; ``nn.Linear.weight`` is
     ``[out, in]``, so the result is transposed before returning.
     """
-    weight = module.weight
-
-    qweight = weight.qweight.detach().to("cpu")
+    # qweight sits under `.weight` on the checkpoint holder exp8
+    # validated, and at module level on autoawq's runtime class
+    # (WQLinear_GEMM has no `.weight` at all); qzeros and scales are
+    # read from the module on both paths.
+    qweight = (
+        module
+        if getattr(module, "qweight", None) is not None
+        else module.weight
+    ).qweight.detach().to("cpu")
     qzeros = module.qzeros.detach().to("cpu")
     scales = module.scales.detach().to("cpu").float()
 

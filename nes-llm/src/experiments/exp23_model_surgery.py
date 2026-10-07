@@ -433,7 +433,10 @@ def lora_finetune_deltas(
             gradient_accumulation_steps=FINETUNE_ACCUM,
             learning_rate=FINETUNE_LR,
             lr_scheduler_type="cosine",
-            warmup_ratio=0.03,
+            # transformers 5.x dropped warmup_ratio from
+            # TrainingArguments; 3% of 1000 steps = 30, exactly the
+            # registered intent (the record still says 3% warmup).
+            warmup_steps=max(1, int(steps * 0.03)),
             logging_steps=max(steps // 10, 1),
             report_to=[],
             save_strategy="no",
@@ -504,7 +507,6 @@ def gptq_requant_deltas(
     delta = W' − W_stego.
     """
     from gptqmodel import GPTQModel, QuantizeConfig
-    from src.model.registry import get_layer_module
     from src.quantization.adapters import dequantize_gptq_layer
 
     cfg = QuantizeConfig(
@@ -518,14 +520,62 @@ def gptq_requant_deltas(
     qmodel = GPTQModel.from_pretrained(model_id, quantize_config=cfg)
     _swap_payload_matrices(qmodel.model, w_stego, family)
     calib = _wikitext_windows(GPTQ_CALIB_SAMPLES)
-    _quantize_call(qmodel.quantize, tokenizer, dataset=calib)
+    # gptqmodel 7.5.0 renamed the corpus kwarg: `calibration`
+    # (positional first); `dataset=` is rejected, and the guard
+    # above refuses any call that would drop the stated corpus.
+    _quantize_call(qmodel.quantize, calib, tokenizer=tokenizer)
 
+    # gptqmodel 7.5.0 keeps the packed buffers on the meta device
+    # after quantize() (the real tensors live in its LazyTurtle
+    # stash), so the in-memory module cannot be read directly.
+    # save() materializes the canonical GPTQ checkpoint — exactly
+    # the file layout dequantize_gptq_layer was validated against
+    # (exp9) — which is read per layer and deleted afterwards.
+    import glob
+    import shutil
+    import tempfile
+    import types
+    from contextlib import ExitStack
+
+    from safetensors import safe_open
+
+    save_dir = tempfile.mkdtemp(prefix="nes_exp23_gptq_")
     read: Dict[int, torch.Tensor] = {}
-    for lid in sorted(w_stego):
-        mod = get_layer_module(
-            qmodel.model, family, lid, "mlp"
-        ).down_proj
-        read[lid] = dequantize_gptq_layer(mod)
+    try:
+        qmodel.save(save_dir)
+        shards = sorted(glob.glob(f"{save_dir}/*.safetensors"))
+        if not shards:
+            raise RuntimeError("gptqmodel save() wrote no safetensors shard")
+        with ExitStack() as stack:
+            files = [
+                stack.enter_context(safe_open(p, framework="pt"))
+                for p in shards
+            ]
+            for lid in sorted(w_stego):
+                packed: Dict[str, torch.Tensor] = {}
+                for fh in files:
+                    for key in fh.keys():
+                        parts = key.split(".")
+                        if "layers" not in parts:
+                            continue
+                        at = parts.index("layers")
+                        if (
+                            parts[at : at + 4]
+                            == ["layers", str(lid), "mlp", "down_proj"]
+                            and parts[-1]
+                            in ("qweight", "qzeros", "scales", "g_idx")
+                        ):
+                            packed[parts[-1]] = fh.get_tensor(key)
+                if len(packed) != 4:
+                    raise RuntimeError(
+                        f"packed down_proj for layer {lid}: expected 4 "
+                        f"tensors, found {sorted(packed)}"
+                    )
+                read[lid] = dequantize_gptq_layer(
+                    types.SimpleNamespace(**packed)
+                )
+    finally:
+        shutil.rmtree(save_dir, ignore_errors=True)
     deltas = _dequant_deltas(read, w_stego)
     record = {
         "backend": "gptqmodel (installed 2026-10-06, author decision)",
@@ -541,6 +591,11 @@ def gptq_requant_deltas(
             "the default corpus is refused, not silently used)"
         ),
         "reader": "src.quantization.adapters.dequantize_gptq_layer",
+        "read_back": (
+            "gptqmodel save() to a temp dir (its in-memory packed "
+            "buffers are meta-device shells) → per-layer safetensors "
+            "tensors → dequantize_gptq_layer; temp dir deleted"
+        ),
         "delta": "dequant(W') − W_stego, exact fp32 subtraction",
         "scope": (
             "the tool quantizes every linear by default; the cell "
@@ -572,7 +627,12 @@ def awq_requant_deltas(
     awq_model = AutoAWQForCausalLM.from_pretrained(
         model_id, torch_dtype=torch.float16, trust_remote_code=False,
     )
-    _swap_payload_matrices(awq_model, w_stego, family)
+    # autoawq double-wraps (wrapper.model = the transformers model,
+    # whose layers sit at .model.layers); the registry unwraps one
+    # level only, so hand it the inner model — the same parameter
+    # objects the quantizer will see, reached by a valid path.
+    inner = awq_model.model
+    _swap_payload_matrices(inner, w_stego, family)
     calib = _wikitext_windows(AWQ_CALIB_SAMPLES)
     _quantize_call(
         awq_model.quantize,
@@ -589,7 +649,7 @@ def awq_requant_deltas(
     read: Dict[int, torch.Tensor] = {}
     for lid in sorted(w_stego):
         mod = get_layer_module(
-            awq_model, family, lid, "mlp"
+            inner, family, lid, "mlp"
         ).down_proj
         read[lid] = dequantize_awq_layer(mod)
     deltas = _dequant_deltas(read, w_stego)
@@ -1108,6 +1168,9 @@ def main() -> int:
                 "heavy loss like nf4 (sub-bucket deltas) but measured, "
                 "not assumed. Misses are recorded, not rewritten."
             ),
+            **({"finetune": method_finetune} if method_finetune else {}),
+            **({"gptq": method_gptq} if method_gptq else {}),
+            **({"awq": method_awq} if method_awq else {}),
         },
         "notes": [
             "Per-cell verdicts, exp18's rule: 'survives' = BER 0.0 "

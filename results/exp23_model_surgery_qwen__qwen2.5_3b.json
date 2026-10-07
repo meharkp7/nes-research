@@ -1,6 +1,6 @@
 {
   "experiment": "exp23",
-  "title": "W6 \u2014 model surgery survival (first pass, one model)",
+  "title": "W6 \u2014 model surgery survival (Qwen2.5-3B, all legs: the original nine plus W6.2 fine-tune and the GPTQ/AWQ re-quant legs)",
   "model_id": "Qwen/Qwen2.5-3B",
   "family": "qwen",
   "num_layers": 36,
@@ -33,8 +33,8 @@
       "ber": 0.0,
       "bit_errors": 0,
       "bits_compared": 10256,
-      "rms_delta_over_rms_w": 0.0010000000482909702,
-      "rms_delta_at_carriers": 2.3862437301531263e-05,
+      "rms_delta_over_rms_w": 0.0010000000586739255,
+      "rms_delta_at_carriers": 2.386240077208492e-05,
       "carriers_displaced": 10256,
       "carriers_total": 10256,
       "meets_gate": true
@@ -44,8 +44,8 @@
       "ber": 0.0,
       "bit_errors": 0,
       "bits_compared": 10256,
-      "rms_delta_over_rms_w": 0.009999999705991306,
-      "rms_delta_at_carriers": 0.00023862435347004975,
+      "rms_delta_over_rms_w": 0.009999999735457643,
+      "rms_delta_at_carriers": 0.00023862398846226132,
       "carriers_displaced": 10256,
       "carriers_total": 10256,
       "meets_gate": true
@@ -55,7 +55,7 @@
       "ber": 0.0,
       "bit_errors": 0,
       "bits_compared": 10256,
-      "rms_delta_over_rms_w": 0.020620835786016218,
+      "rms_delta_over_rms_w": 0.020620862834422486,
       "rms_delta_at_carriers": 0.0,
       "carriers_displaced": 0,
       "carriers_total": 10256,
@@ -66,7 +66,7 @@
       "ber": 0.0,
       "bit_errors": 0,
       "bits_compared": 10256,
-      "rms_delta_over_rms_w": 0.10941034238606014,
+      "rms_delta_over_rms_w": 0.1094104858999032,
       "rms_delta_at_carriers": 0.0,
       "carriers_displaced": 0,
       "carriers_total": 10256,
@@ -74,12 +74,12 @@
     },
     {
       "surgery": "nf4_requant",
-      "ber": 0.37675507020280813,
-      "bit_errors": 3864,
+      "ber": 0.3831903276131045,
+      "bit_errors": 3930,
       "bits_compared": 10256,
-      "rms_delta_over_rms_w": 0.0949405642131757,
-      "rms_delta_at_carriers": 0.02199511783428811,
-      "carriers_displaced": 9536,
+      "rms_delta_over_rms_w": 0.0949402097380413,
+      "rms_delta_at_carriers": 0.02201537500687207,
+      "carriers_displaced": 9543,
       "carriers_total": 10256,
       "meets_gate": false
     },
@@ -88,9 +88,9 @@
       "ber": 0.0,
       "bit_errors": 0,
       "bits_compared": 10256,
-      "rms_delta_over_rms_w": 0.0001343569927681068,
-      "rms_delta_at_carriers": 0.0003447655741659741,
-      "carriers_displaced": 7839,
+      "rms_delta_over_rms_w": 0.0001342037198862428,
+      "rms_delta_at_carriers": 0.00034184478128781233,
+      "carriers_displaced": 7830,
       "carriers_total": 10256,
       "meets_gate": true
     },
@@ -99,41 +99,58 @@
       "ber": 0.0,
       "bit_errors": 0,
       "bits_compared": 10256,
-      "rms_delta_over_rms_w": 0.0006717849884709894,
-      "rms_delta_at_carriers": 0.0017238279474288444,
-      "carriers_displaced": 7839,
+      "rms_delta_over_rms_w": 0.0006710186223355156,
+      "rms_delta_at_carriers": 0.0017092239739904343,
+      "carriers_displaced": 7830,
       "carriers_total": 10256,
       "meets_gate": true
     },
     {
       "surgery": "merge_0.5",
-      "ber": 0.24180967238689546,
-      "bit_errors": 2480,
+      "ber": 0.24756240249609984,
+      "bit_errors": 2539,
       "bits_compared": 10256,
-      "rms_delta_over_rms_w": 0.006717849687909301,
-      "rms_delta_at_carriers": 0.017238279186041726,
-      "carriers_displaced": 7839,
+      "rms_delta_over_rms_w": 0.006710186043744588,
+      "rms_delta_at_carriers": 0.01709223954266679,
+      "carriers_displaced": 7830,
+      "carriers_total": 10256,
+      "meets_gate": false
+    },
+    {
+      "surgery": "finetune_1k",
+      "ber": 0.0,
+      "bit_errors": 0,
+      "bits_compared": 10256,
+      "rms_delta_over_rms_w": 0.00924403819464514,
+      "rms_delta_at_carriers": 0.00037258933666759164,
+      "carriers_displaced": 7949,
+      "carriers_total": 10256,
+      "meets_gate": true
+    },
+    {
+      "surgery": "gptq_requant",
+      "ber": 0.4956123244929797,
+      "bit_errors": 5083,
+      "bits_compared": 10256,
+      "rms_delta_over_rms_w": 0.16636572273164232,
+      "rms_delta_at_carriers": 0.040739608374946154,
+      "carriers_displaced": 10253,
+      "carriers_total": 10256,
+      "meets_gate": false
+    },
+    {
+      "surgery": "awq_requant",
+      "ber": 0.4107839313572543,
+      "bit_errors": 4213,
+      "bits_compared": 10256,
+      "rms_delta_over_rms_w": 0.5988327458980226,
+      "rms_delta_at_carriers": 0.05130459574210714,
+      "carriers_displaced": 10255,
       "carriers_total": 10256,
       "meets_gate": false
     }
   ],
-  "not_run": [
-    {
-      "item": "W6.2 \u2014 1-10k fine-tuning steps",
-      "status": "BLOCKED (recorded, not patched)",
-      "reason": "peft=False, trl=False in this environment; installs are not a research action, and an honest full-parameter run exceeds this machine (26 GB). wikitext is cached but no trainer exists to run it. Fine-tune drift stays NOT_RUN and named; the sigma-noise axes (exp6/10/18/22) remain the only measured proxy for dense drift."
-    },
-    {
-      "item": "W6.3 \u2014 GPTQ leg (NF4 -> GPTQ -> back)",
-      "status": "BLOCKED (recorded, not patched)",
-      "reason": "gptqmodel=False, auto_gptq=False; transformers' GPTQConfig imports but has no quantization backend without one of them. The NF4 leg runs; GPTQ does not."
-    },
-    {
-      "item": "W6.3 \u2014 AWQ leg",
-      "status": "BLOCKED (recorded, not patched)",
-      "reason": "transformers 5.16.1 raises ImportError for AwqQuantizer (probed at artifact time); autoawq/awq absent. Consistent with the standing AWQ dequantizer gate."
-    }
-  ],
+  "not_run": [],
   "method": {
     "pipeline": "W_stego = dequant(nf4) + embedded_residual per layer (apply_residuals_to_model's formula); cell residual = embedded_residual + (W' - W_stego); extraction via the sign strategy's own extractor (production scheme)",
     "residual_definition": "R = W_FP16 - dequantize(W_NF4)",
@@ -143,11 +160,53 @@
     "one_embed_for_all_cells": true,
     "surgery_scope": "mlp.down_proj only \u2014 the payload's scope; other modules cannot touch the payload by construction",
     "prune": "per-layer magnitude pruning, smallest-|W| fraction",
-    "lora": "LoRA-shaped B@A, rank 8, RMS scaled to (0.001, 0.01) of RMS(W); training out of scope (peft absent \u2014 see not_run), merge step is linear",
+    "lora": "LoRA-shaped B@A, rank 8, RMS scaled to (0.001, 0.01) of RMS(W); the merge step is linear. Real training is measured separately in the finetune_1k cell (W6.2, added 2026-10-06)",
     "nf4_requant": "bitsandbytes quantize_4bit/dequantize_4bit, nf4, default blocksize 64 (the shipped group size)",
     "merge": "task-vector: W' = W_stego + t*(W_instruct - W_stego), t in (0.01, 0.05, 0.5); partner Qwen/Qwen2.5-3B-Instruct (same shapes) \u2014 the only cached same-architecture second checkpoint",
     "seed": 42,
-    "pre_registered": "control 0.0; lora survive-or-graceful; prune open (|W|-vs-|r| overlap unknown); nf4_requant plausibly heavy loss (in-bucket deltas never reach the bytes); merge dies as t grows. Misses are recorded, not rewritten."
+    "pre_registered": "control 0.0; lora survive-or-graceful; prune open (|W|-vs-|r| overlap unknown); nf4_requant plausibly heavy loss (in-bucket deltas never reach the bytes); merge dies as t grows. Added 2026-10-06 before the legs ran: finetune survive-or-graceful (LoRA deltas at merge scale, W6.1's evidence); gptq/awq plausibly heavy loss like nf4 (sub-bucket deltas) but measured, not assumed. Misses are recorded, not rewritten.",
+    "finetune": {
+      "steps": 1000,
+      "block": 512,
+      "grad_accum": 4,
+      "lr": 0.0001,
+      "scheduler": "cosine with 3% warmup",
+      "r": 8,
+      "alpha": 8,
+      "targets": "down_proj only (surgery scope)",
+      "dataset": "wikitext-2-raw-v1 train (cached), flattened, non-overlapping blocks",
+      "tokens_seen": 2048000,
+      "blocks_available": 4916,
+      "loss_first": 2.271010437011719,
+      "loss_last": 2.169337158203125,
+      "final_train_loss": 2.193087646484375,
+      "device": "mps",
+      "dtype": "checkpoint fp16 throughout (no autocast flags)",
+      "optimizer": "AdamW (Trainer default)",
+      "delta": "trained \u2212 original via peft merge_and_unload(), exact fp32 subtraction of the two fp16 views"
+    },
+    "gptq": {
+      "backend": "gptqmodel (installed 2026-10-06, author decision)",
+      "bits": 4,
+      "group_size": 128,
+      "sym": true,
+      "method": "GPTQ: calibration forwards through the stego model on CPU, per the tool's own quantizer",
+      "calibration": "64 wikitext-2-raw windows (stated; the default corpus is refused, not silently used)",
+      "reader": "src.quantization.adapters.dequantize_gptq_layer",
+      "read_back": "gptqmodel save() to a temp dir (its in-memory packed buffers are meta-device shells) \u2192 per-layer safetensors tensors \u2192 dequantize_gptq_layer; temp dir deleted",
+      "delta": "dequant(W') \u2212 W_stego, exact fp32 subtraction",
+      "scope": "the tool quantizes every linear by default; the cell measures the payload's down_proj delta \u2014 other modules cannot touch the payload by construction"
+    },
+    "awq": {
+      "backend": "autoawq (upstream-deprecated; this is its runtime probe on torch 2.13 / transformers 5.16.1)",
+      "bits": 4,
+      "group_size": 128,
+      "zero_point": true,
+      "calibration": "32 wikitext-2-raw windows, seq <= 256 (stated; pileval is not downloaded)",
+      "reader": "src.quantization.adapters.dequantize_awq_layer (exp8's gate)",
+      "delta": "dequant(W') \u2212 W_stego, exact fp32 subtraction",
+      "scope": "the tool quantizes every linear by default; the cell measures the payload's down_proj delta \u2014 other modules cannot touch the payload by construction"
+    }
   },
   "notes": [
     "Per-cell verdicts, exp18's rule: 'survives' = BER 0.0 against exp3's number; any non-zero BER is a cell failing that axis, and the BER column is the plan's total-vs-graceful reading. No gate is relaxed for expected degradation.",
@@ -177,6 +236,6 @@
     ],
     "residual_source": null,
     "residual_definition": "R = W_FP16 - dequantize(W_NF4)",
-    "timestamp": "2026-10-06T08:01:10.094849+00:00"
+    "timestamp": "2026-10-07T08:33:28.990984+00:00"
   }
 }

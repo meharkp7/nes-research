@@ -18,3 +18,6 @@ results/_archive/
 # which source produced it.
 __pycache__/
 *.pyc
+# gptqmodel's runtime logs (nes-llm/logs/): regenerated on every run,
+# tool chatter with no measurement content -- same category as .pyc.
+nes-llm/logs/
