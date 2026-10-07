@@ -1,0 +1,515 @@
+{
+  "experiment": "exp25",
+  "title": "Selection-policy ablation (W9.1)",
+  "model_id": "Qwen/Qwen2.5-3B",
+  "family": "qwen",
+  "status": "PASS",
+  "gate": {
+    "description": "Selection-policy ablation (W9.1): write rule (sign), QACI Hamilton layer allocation (digest-pinned), payload (10,000 bits) and message are held identical across three within-layer position policies \u2014 random, magnitude (production), key-derived. Every policy must round-trip at BER 0.0 (a policy that cannot carry the payload makes the comparison meaningless), and the PRODUCTION arm must hold exp7's detectability gates and exp6's sigma=0.001 robustness gate. Baseline arms are not deployment candidates: their numbers are reported against the same reference lines as per-arm flags, not as status drivers. The keyless question (can an attacker re-running the public selection rule locate carriers?) is measured and compared against pre-registered hypotheses, not gated.",
+    "max_ber_all_arms": 0.0,
+    "max_detector_accuracy": 0.55,
+    "max_kl_divergence": 0.05,
+    "max_production_ber_at_sigma_0_001": 0.02,
+    "gate_source": "experiment_registry.THRESHOLDS['exp25']",
+    "status": "PASS",
+    "failures": []
+  },
+  "arms": {
+    "random": {
+      "replicates": [
+        {
+          "policy": "random",
+          "replicate": 0,
+          "identity": "seed:42",
+          "bits_embedded": 10256,
+          "carrier_count": 10256,
+          "allocation_digest": "8660969e1ddd",
+          "ber": 0.0,
+          "bit_errors": 0,
+          "bits_compared": 10256,
+          "decrypt_ok": true,
+          "recovered_matches": true,
+          "kl_divergence": 9.164295988739468e-09,
+          "detector_accuracy": 0.5028000026941299,
+          "sign_bias": 0.015145152807235718,
+          "mean_shift": 1.2161763152107596e-08,
+          "std_shift": 3.725290298461914e-09,
+          "detectability_gate": {
+            "kl_within_0_05": true,
+            "accuracy_within_0_55": true
+          },
+          "robustness_ber_sigma_0_001": 0.07348543941757671,
+          "robustness_gate": {
+            "within_exp6_line_0_02": false
+          },
+          "keyless_exact_size": {
+            "attacker_total_bits": 10256,
+            "positions": {
+              "true_positives": 0,
+              "false_positives": 10256,
+              "false_negatives": 10256,
+              "precision": 0.0,
+              "recall": 0.0
+            },
+            "layers_with_matching_allocation": 36,
+            "layers_total": 36,
+            "keyless_ber": 0.4919071762870515
+          },
+          "keyless_nominal_size": {
+            "attacker_total_bits": 10000,
+            "positions": {
+              "true_positives": 0,
+              "false_positives": 10000,
+              "false_negatives": 10256,
+              "precision": 0.0,
+              "recall": 0.0
+            },
+            "layers_with_matching_allocation": 0,
+            "layers_total": 36,
+            "keyless_ber": 0.5065
+          }
+        },
+        {
+          "policy": "random",
+          "replicate": 1,
+          "identity": "seed:142",
+          "bits_embedded": 10256,
+          "carrier_count": 10256,
+          "allocation_digest": "8660969e1ddd",
+          "ber": 0.0,
+          "bit_errors": 0,
+          "bits_compared": 10256,
+          "decrypt_ok": true,
+          "recovered_matches": true,
+          "kl_divergence": 8.97171048563905e-09,
+          "detector_accuracy": 0.5028000026941299,
+          "sign_bias": 0.015146642923355103,
+          "mean_shift": 6.930349627509713e-10,
+          "std_shift": 4.656612873077393e-10,
+          "detectability_gate": {
+            "kl_within_0_05": true,
+            "accuracy_within_0_55": true
+          },
+          "robustness_ber_sigma_0_001": 0.07478549141965679,
+          "robustness_gate": {
+            "within_exp6_line_0_02": false
+          },
+          "keyless_exact_size": {
+            "attacker_total_bits": 10256,
+            "positions": {
+              "true_positives": 0,
+              "false_positives": 10256,
+              "false_negatives": 10256,
+              "precision": 0.0,
+              "recall": 0.0
+            },
+            "layers_with_matching_allocation": 36,
+            "layers_total": 36,
+            "keyless_ber": 0.49882995319812795
+          },
+          "keyless_nominal_size": {
+            "attacker_total_bits": 10000,
+            "positions": {
+              "true_positives": 0,
+              "false_positives": 10000,
+              "false_negatives": 10256,
+              "precision": 0.0,
+              "recall": 0.0
+            },
+            "layers_with_matching_allocation": 0,
+            "layers_total": 36,
+            "keyless_ber": 0.5047
+          }
+        },
+        {
+          "policy": "random",
+          "replicate": 2,
+          "identity": "seed:242",
+          "bits_embedded": 10256,
+          "carrier_count": 10256,
+          "allocation_digest": "8660969e1ddd",
+          "ber": 0.0,
+          "bit_errors": 0,
+          "bits_compared": 10256,
+          "decrypt_ok": true,
+          "recovered_matches": true,
+          "kl_divergence": -1.4702891348861158e-08,
+          "detector_accuracy": 0.5028000026941299,
+          "sign_bias": 0.015145152807235718,
+          "mean_shift": 3.5797711461782455e-09,
+          "std_shift": 6.984919309616089e-10,
+          "detectability_gate": {
+            "kl_within_0_05": true,
+            "accuracy_within_0_55": true
+          },
+          "robustness_ber_sigma_0_001": 0.07257540301612064,
+          "robustness_gate": {
+            "within_exp6_line_0_02": false
+          },
+          "keyless_exact_size": {
+            "attacker_total_bits": 10256,
+            "positions": {
+              "true_positives": 0,
+              "false_positives": 10256,
+              "false_negatives": 10256,
+              "precision": 0.0,
+              "recall": 0.0
+            },
+            "layers_with_matching_allocation": 36,
+            "layers_total": 36,
+            "keyless_ber": 0.4949297971918877
+          },
+          "keyless_nominal_size": {
+            "attacker_total_bits": 10000,
+            "positions": {
+              "true_positives": 0,
+              "false_positives": 10000,
+              "false_negatives": 10256,
+              "precision": 0.0,
+              "recall": 0.0
+            },
+            "layers_with_matching_allocation": 0,
+            "layers_total": 36,
+            "keyless_ber": 0.5031
+          }
+        }
+      ],
+      "summary": {
+        "replicates": 3,
+        "ber_values": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "ber_max": 0.0,
+        "keyless_exact_ber_values": [
+          0.4919071762870515,
+          0.49882995319812795,
+          0.4949297971918877
+        ],
+        "robustness_values": [
+          0.07348543941757671,
+          0.07478549141965679,
+          0.07257540301612064
+        ]
+      }
+    },
+    "magnitude": {
+      "replicates": [
+        {
+          "policy": "magnitude",
+          "replicate": 0,
+          "identity": "seed:None",
+          "bits_embedded": 10256,
+          "carrier_count": 10256,
+          "allocation_digest": "8660969e1ddd",
+          "ber": 0.0,
+          "bit_errors": 0,
+          "bits_compared": 10256,
+          "decrypt_ok": true,
+          "recovered_matches": true,
+          "kl_divergence": 3.624785313149914e-05,
+          "detector_accuracy": 0.5028000026941299,
+          "sign_bias": 0.015145152807235718,
+          "mean_shift": 9.41181497182697e-08,
+          "std_shift": 9.313225746154785e-10,
+          "detectability_gate": {
+            "kl_within_0_05": true,
+            "accuracy_within_0_55": true
+          },
+          "robustness_ber_sigma_0_001": 0.0,
+          "robustness_gate": {
+            "within_exp6_line_0_02": true
+          },
+          "keyless_exact_size": {
+            "attacker_total_bits": 10256,
+            "positions": {
+              "true_positives": 10152,
+              "false_positives": 104,
+              "false_negatives": 104,
+              "precision": 0.9898595943837754,
+              "recall": 0.9898595943837754
+            },
+            "layers_with_matching_allocation": 7,
+            "layers_total": 36,
+            "keyless_ber": 0.4713338533541342
+          },
+          "keyless_nominal_size": {
+            "attacker_total_bits": 10000,
+            "positions": {
+              "true_positives": 9951,
+              "false_positives": 49,
+              "false_negatives": 305,
+              "precision": 0.9951,
+              "recall": 0.9702613104524181
+            },
+            "layers_with_matching_allocation": 0,
+            "layers_total": 36,
+            "keyless_ber": 0.505
+          }
+        }
+      ],
+      "summary": {
+        "replicates": 1,
+        "ber_values": [
+          0.0
+        ],
+        "ber_max": 0.0,
+        "keyless_exact_ber_values": [
+          0.4713338533541342
+        ],
+        "robustness_values": [
+          0.0
+        ]
+      }
+    },
+    "keyed": {
+      "replicates": [
+        {
+          "policy": "keyed",
+          "replicate": 0,
+          "identity": "ablation-key-0",
+          "bits_embedded": 10256,
+          "carrier_count": 10256,
+          "allocation_digest": "8660969e1ddd",
+          "ber": 0.0,
+          "bit_errors": 0,
+          "bits_compared": 10256,
+          "decrypt_ok": true,
+          "recovered_matches": true,
+          "kl_divergence": 8.700453690835275e-10,
+          "detector_accuracy": 0.5028000026941299,
+          "sign_bias": 0.01514965295791626,
+          "mean_shift": 1.5636032912880182e-08,
+          "std_shift": 4.656612873077393e-10,
+          "detectability_gate": {
+            "kl_within_0_05": true,
+            "accuracy_within_0_55": true
+          },
+          "robustness_ber_sigma_0_001": 0.07312792511700468,
+          "robustness_gate": {
+            "within_exp6_line_0_02": false
+          },
+          "keyless_exact_size": {
+            "attacker_total_bits": 10256,
+            "positions": {
+              "true_positives": 0,
+              "false_positives": 10256,
+              "false_negatives": 10256,
+              "precision": 0.0,
+              "recall": 0.0
+            },
+            "layers_with_matching_allocation": 36,
+            "layers_total": 36,
+            "keyless_ber": 0.4987324492979719
+          },
+          "keyless_nominal_size": {
+            "attacker_total_bits": 10000,
+            "positions": {
+              "true_positives": 0,
+              "false_positives": 10000,
+              "false_negatives": 10256,
+              "precision": 0.0,
+              "recall": 0.0
+            },
+            "layers_with_matching_allocation": 0,
+            "layers_total": 36,
+            "keyless_ber": 0.5001
+          }
+        },
+        {
+          "policy": "keyed",
+          "replicate": 1,
+          "identity": "ablation-key-1",
+          "bits_embedded": 10256,
+          "carrier_count": 10256,
+          "allocation_digest": "8660969e1ddd",
+          "ber": 0.0,
+          "bit_errors": 0,
+          "bits_compared": 10256,
+          "decrypt_ok": true,
+          "recovered_matches": true,
+          "kl_divergence": -2.7667965696309693e-09,
+          "detector_accuracy": 0.5028000026941299,
+          "sign_bias": 0.0151461660861969,
+          "mean_shift": 1.031185092870146e-08,
+          "std_shift": 6.984919309616089e-10,
+          "detectability_gate": {
+            "kl_within_0_05": true,
+            "accuracy_within_0_55": true
+          },
+          "robustness_ber_sigma_0_001": 0.07244539781591264,
+          "robustness_gate": {
+            "within_exp6_line_0_02": false
+          },
+          "keyless_exact_size": {
+            "attacker_total_bits": 10256,
+            "positions": {
+              "true_positives": 0,
+              "false_positives": 10256,
+              "false_negatives": 10256,
+              "precision": 0.0,
+              "recall": 0.0
+            },
+            "layers_with_matching_allocation": 36,
+            "layers_total": 36,
+            "keyless_ber": 0.5068252730109204
+          },
+          "keyless_nominal_size": {
+            "attacker_total_bits": 10000,
+            "positions": {
+              "true_positives": 0,
+              "false_positives": 10000,
+              "false_negatives": 10256,
+              "precision": 0.0,
+              "recall": 0.0
+            },
+            "layers_with_matching_allocation": 0,
+            "layers_total": 36,
+            "keyless_ber": 0.5116
+          }
+        },
+        {
+          "policy": "keyed",
+          "replicate": 2,
+          "identity": "ablation-key-2",
+          "bits_embedded": 10256,
+          "carrier_count": 10256,
+          "allocation_digest": "8660969e1ddd",
+          "ber": 0.0,
+          "bit_errors": 0,
+          "bits_compared": 10256,
+          "decrypt_ok": true,
+          "recovered_matches": true,
+          "kl_divergence": 3.2060597732197493e-08,
+          "detector_accuracy": 0.5028000026941299,
+          "sign_bias": 0.015149146318435669,
+          "mean_shift": 6.8503140937536955e-09,
+          "std_shift": 2.3283064365386963e-10,
+          "detectability_gate": {
+            "kl_within_0_05": true,
+            "accuracy_within_0_55": true
+          },
+          "robustness_ber_sigma_0_001": 0.07569552782111284,
+          "robustness_gate": {
+            "within_exp6_line_0_02": false
+          },
+          "keyless_exact_size": {
+            "attacker_total_bits": 10256,
+            "positions": {
+              "true_positives": 0,
+              "false_positives": 10256,
+              "false_negatives": 10256,
+              "precision": 0.0,
+              "recall": 0.0
+            },
+            "layers_with_matching_allocation": 36,
+            "layers_total": 36,
+            "keyless_ber": 0.5083853354134166
+          },
+          "keyless_nominal_size": {
+            "attacker_total_bits": 10000,
+            "positions": {
+              "true_positives": 0,
+              "false_positives": 10000,
+              "false_negatives": 10256,
+              "precision": 0.0,
+              "recall": 0.0
+            },
+            "layers_with_matching_allocation": 0,
+            "layers_total": 36,
+            "keyless_ber": 0.5059
+          }
+        }
+      ],
+      "summary": {
+        "replicates": 3,
+        "ber_values": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "ber_max": 0.0,
+        "keyless_exact_ber_values": [
+          0.4987324492979719,
+          0.5068252730109204,
+          0.5083853354134166
+        ],
+        "robustness_values": [
+          0.07312792511700468,
+          0.07244539781591264,
+          0.07569552782111284
+        ]
+      }
+    }
+  },
+  "allocation_shared_across_arms": true,
+  "hypotheses": [
+    {
+      "id": "H1",
+      "gate": "max_ber_all_arms",
+      "statement": "Every position policy round-trips the same 10,000-bit payload at BER 0.0 \u2014 the sign write rule is position-agnostic.",
+      "expected": "ber == 0.0 for every arm and replicate",
+      "observed_supported": true
+    },
+    {
+      "id": "H2",
+      "gate": null,
+      "statement": "All arms stay inside exp7's detectability gates (detector accuracy <= 0.55, KL <= 0.05). Gate status is driven by the production (magnitude) arm; baselines are flagged against the same lines.",
+      "expected": "every arm: accuracy <= 0.55 and kl <= 0.05",
+      "observed_supported": true
+    },
+    {
+      "id": "H3",
+      "gate": null,
+      "statement": "Keyless re-derivation \u2014 re-running the public QACI selection on the stego residuals at the exact payload size \u2014 locates carriers ONLY for the magnitude policy: the sign rule preserves |r| exactly (sign_strategy_v2), so magnitude ranks survive embedding and are public; keyed and random positions are not publicly derivable.",
+      "expected": "magnitude: precision >= 0.99 and keyless_ber < 0.1; random & keyed: keyless_ber > 0.4",
+      "observed_supported": false
+    },
+    {
+      "id": "H4",
+      "gate": null,
+      "statement": "Noise robustness orders with carrier magnitude: at sigma=0.001 small-|r| carriers flip sign more often, so the magnitude arm's BER is no worse than the random arm's.",
+      "expected": "magnitude robustness_ber <= random mean robustness_ber",
+      "observed_supported": true
+    }
+  ],
+  "method": {
+    "held_constant": "sign write rule, QACI Hamilton layer allocation (digest-pinned), payload 10,000 bits, message, model, AES-256-GCM + 32-bit header (IntelligentEmbedder unmodified \u2014 only pipeline.select is bound to a policy wrapper)",
+    "varied": "within-layer positions only: random (randperm), magnitude (production fallback == CarrierSelector.select_by_magnitude), keyed (IndexSampler SHA-256 key)",
+    "keyless_attacker": "exp13's tier_kerckhoffs shape with a sign read: re-run the public QACI selection on the STEGO residuals at the exact (len(transmitted)) and nominal (config.total_payload_bits) sizes",
+    "robustness": "exp10's protocol: additive Gaussian sigma=0.001, 3 trials, fresh generator seeded 42",
+    "seed": 42,
+    "pre_registered": "HYPOTHESES in this file were written before the first run; gates live in experiment_registry.THRESHOLDS so this file contains no threshold of its own. Misses are recorded, not rewritten."
+  },
+  "notes": [
+    "Baseline arms (random, keyed) are NOT deployment candidates: their detectability and robustness numbers are reported against exp7/exp6's reference lines as per-arm flags; only the production arm gates the artifact's status (THRESHOLDS description says so explicitly).",
+    "exp13's phase-tier attacker is out of scope here \u2014 it is measured on exp13's LWE embed and needs no parameters; this experiment measures the public-rule (Kerckhoffs) attacker for the sign scheme. Cross-attacker coverage remains exp13's result.",
+    "Magnitude preserving |r| is a property of sign_strategy_v2.get_bit_for_residual (returns +/-max(|r|, min_magnitude)) \u2014 this was the code-level basis for H3, and the MEASUREMENT refined it: near-exact position re-derivation (see keyless_exact_size.positions.precision \u2014 precision \u2248 0.99) still reads near chance, because Hamilton allocation recomputed on the stego weights never reproduces the writer's per-layer counts in full (field: layers_with_matching_allocation; the sign flips depend on the AES key, so the drift varies per embed), and the first mismatched layer desynchronizes the stream from there down \u2014 consistent with exp13's tier_kerckhoffs, which records the same field for the same reason. H3 missed and is kept as written; this note is post-run interpretation, not a pre-registered claim. Precision and layer-matches are cited from the fields, never fixed here."
+  ],
+  "reproducibility": {
+    "model_id": "Qwen/Qwen2.5-3B",
+    "family": "qwen",
+    "expected_layers": 36,
+    "actual_layers": null,
+    "layer_count_matches_expected": null,
+    "random_seed": 42,
+    "device": "mps",
+    "software_versions": {
+      "python": "3.14.3",
+      "platform": "macOS-26.3-arm64-arm-64bit-Mach-O",
+      "torch": "2.13.0",
+      "transformers": "5.16.1",
+      "bitsandbytes": "0.50.2",
+      "accelerate": "1.14.0",
+      "numpy": "2.5.2"
+    },
+    "platform_notes": [
+      "Apple Silicon/MPS: NF4 dequantization must stay on CPU. Moving large dequantized tensors to MPS raises RuntimeError: Invalid buffer size.",
+      "MPS has no native int8/uint8 dequantize; PYTORCH_ENABLE_MPS_FALLBACK is set to 1."
+    ],
+    "residual_source": null,
+    "residual_definition": "R = W_FP16 - dequantize(W_NF4)",
+    "timestamp": "2026-10-07T13:39:14.601718+00:00"
+  }
+}

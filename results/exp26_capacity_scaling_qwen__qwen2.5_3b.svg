@@ -1,0 +1,132 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1046" height="672" viewBox="0 0 1046 672">
+<rect width="100%" height="100%" fill="#ffffff"/>
+<text x="78" y="34" font-family="Helvetica,Arial" font-size="18" font-weight="bold" fill="#111">exp26 — capacity operating curve (production path, sign + QACI)</text>
+<text x="78" y="54" font-family="Helvetica,Arial" font-size="12" fill="#555">Qwen/Qwen2.5-3B — payload 1k→50k, one embed per size; gates from experiment_registry.THRESHOLDS[exp26]</text>
+<text x="78" y="94" font-family="Helvetica,Arial" font-size="13" font-weight="bold" fill="#111">Round-trip BER</text>
+<line x1="136" y1="120" x2="136" y2="260" stroke="#333"/>
+<line x1="136" y1="260" x2="472" y2="260" stroke="#333"/>
+<line x1="131" y1="260.0" x2="136" y2="260.0" stroke="#333"/>
+<text x="127" y="264.0" text-anchor="end" font-family="Helvetica,Arial" font-size="10" fill="#333">0</text>
+<line x1="131" y1="225.0" x2="136" y2="225.0" stroke="#333"/>
+<text x="127" y="229.0" text-anchor="end" font-family="Helvetica,Arial" font-size="10" fill="#333">0.15</text>
+<line x1="131" y1="190.0" x2="136" y2="190.0" stroke="#333"/>
+<text x="127" y="194.0" text-anchor="end" font-family="Helvetica,Arial" font-size="10" fill="#333">0.3</text>
+<line x1="131" y1="155.0" x2="136" y2="155.0" stroke="#333"/>
+<text x="127" y="159.0" text-anchor="end" font-family="Helvetica,Arial" font-size="10" fill="#333">0.45</text>
+<line x1="131" y1="120.0" x2="136" y2="120.0" stroke="#333"/>
+<text x="127" y="124.0" text-anchor="end" font-family="Helvetica,Arial" font-size="10" fill="#333">0.6</text>
+<line x1="136" y1="260.0" x2="472" y2="260.0" stroke="#d33" stroke-dasharray="5 4" stroke-width="1.1"/>
+<text x="468" y="255.0" text-anchor="end" font-family="Helvetica,Arial" font-size="10" fill="#d33">gate 0.0</text>
+<line x1="136" y1="143.3" x2="472" y2="143.3" stroke="#d33" stroke-dasharray="5 4" stroke-width="1.1"/>
+<text x="468" y="138.3" text-anchor="end" font-family="Helvetica,Arial" font-size="10" fill="#d33">chance 0.5</text>
+<polyline points="136.0,260.0 203.2,260.0 270.4,260.0 337.6,260.0 404.8,260.0 472.0,260.0" fill="none" stroke="#1864ab" stroke-width="2"/>
+<circle cx="136.0" cy="260.0" r="4" fill="#1864ab"/>
+<text x="136.0" y="251.0" text-anchor="middle" font-family="Helvetica,Arial" font-size="9.5" fill="#111">0.0000</text>
+<circle cx="203.2" cy="260.0" r="4" fill="#1864ab"/>
+<text x="203.2" y="251.0" text-anchor="middle" font-family="Helvetica,Arial" font-size="9.5" fill="#111">0.0000</text>
+<circle cx="270.4" cy="260.0" r="4" fill="#1864ab"/>
+<text x="270.4" y="251.0" text-anchor="middle" font-family="Helvetica,Arial" font-size="9.5" fill="#111">0.0000</text>
+<circle cx="337.6" cy="260.0" r="4" fill="#1864ab"/>
+<text x="337.6" y="251.0" text-anchor="middle" font-family="Helvetica,Arial" font-size="9.5" fill="#111">0.0000</text>
+<circle cx="404.8" cy="260.0" r="4" fill="#1864ab"/>
+<text x="404.8" y="251.0" text-anchor="middle" font-family="Helvetica,Arial" font-size="9.5" fill="#111">0.0000</text>
+<circle cx="472.0" cy="260.0" r="4" fill="#1864ab"/>
+<text x="472.0" y="251.0" text-anchor="middle" font-family="Helvetica,Arial" font-size="9.5" fill="#111">0.0000</text>
+<text x="586" y="94" font-family="Helvetica,Arial" font-size="13" font-weight="bold" fill="#111">Statistical detector accuracy</text>
+<line x1="644" y1="120" x2="644" y2="260" stroke="#333"/>
+<line x1="644" y1="260" x2="980" y2="260" stroke="#333"/>
+<line x1="639" y1="260.0" x2="644" y2="260.0" stroke="#333"/>
+<text x="635" y="264.0" text-anchor="end" font-family="Helvetica,Arial" font-size="10" fill="#333">0.4</text>
+<line x1="639" y1="225.0" x2="644" y2="225.0" stroke="#333"/>
+<text x="635" y="229.0" text-anchor="end" font-family="Helvetica,Arial" font-size="10" fill="#333">0.455</text>
+<line x1="639" y1="190.0" x2="644" y2="190.0" stroke="#333"/>
+<text x="635" y="194.0" text-anchor="end" font-family="Helvetica,Arial" font-size="10" fill="#333">0.51</text>
+<line x1="639" y1="155.0" x2="644" y2="155.0" stroke="#333"/>
+<text x="635" y="159.0" text-anchor="end" font-family="Helvetica,Arial" font-size="10" fill="#333">0.565</text>
+<line x1="639" y1="120.0" x2="644" y2="120.0" stroke="#333"/>
+<text x="635" y="124.0" text-anchor="end" font-family="Helvetica,Arial" font-size="10" fill="#333">0.62</text>
+<line x1="644" y1="164.5" x2="980" y2="164.5" stroke="#d33" stroke-dasharray="5 4" stroke-width="1.1"/>
+<text x="976" y="159.5" text-anchor="end" font-family="Helvetica,Arial" font-size="10" fill="#d33">gate 0.55</text>
+<line x1="644" y1="196.4" x2="980" y2="196.4" stroke="#d33" stroke-dasharray="5 4" stroke-width="1.1"/>
+<text x="976" y="191.4" text-anchor="end" font-family="Helvetica,Arial" font-size="10" fill="#d33">chance 0.50</text>
+<polyline points="136.0,194.6 203.2,194.6 270.4,194.6 337.6,194.6 404.8,194.6 472.0,194.6" fill="none" stroke="#1864ab" stroke-width="2"/>
+<circle cx="136.0" cy="194.6" r="4" fill="#1864ab"/>
+<text x="136.0" y="185.6" text-anchor="middle" font-family="Helvetica,Arial" font-size="9.5" fill="#111">0.5028</text>
+<circle cx="203.2" cy="194.6" r="4" fill="#1864ab"/>
+<text x="203.2" y="185.6" text-anchor="middle" font-family="Helvetica,Arial" font-size="9.5" fill="#111">0.5028</text>
+<circle cx="270.4" cy="194.6" r="4" fill="#1864ab"/>
+<text x="270.4" y="185.6" text-anchor="middle" font-family="Helvetica,Arial" font-size="9.5" fill="#111">0.5028</text>
+<circle cx="337.6" cy="194.6" r="4" fill="#1864ab"/>
+<text x="337.6" y="185.6" text-anchor="middle" font-family="Helvetica,Arial" font-size="9.5" fill="#111">0.5028</text>
+<circle cx="404.8" cy="194.6" r="4" fill="#1864ab"/>
+<text x="404.8" y="185.6" text-anchor="middle" font-family="Helvetica,Arial" font-size="9.5" fill="#111">0.5028</text>
+<circle cx="472.0" cy="194.6" r="4" fill="#1864ab"/>
+<text x="472.0" y="185.6" text-anchor="middle" font-family="Helvetica,Arial" font-size="9.5" fill="#111">0.5028</text>
+<text x="78" y="420" font-family="Helvetica,Arial" font-size="13" font-weight="bold" fill="#111">KL(clean || stego)</text>
+<line x1="136" y1="446" x2="136" y2="586" stroke="#333"/>
+<line x1="136" y1="586" x2="472" y2="586" stroke="#333"/>
+<line x1="131" y1="586.0" x2="136" y2="586.0" stroke="#333"/>
+<text x="127" y="590.0" text-anchor="end" font-family="Helvetica,Arial" font-size="10" fill="#333">0</text>
+<line x1="131" y1="551.0" x2="136" y2="551.0" stroke="#333"/>
+<text x="127" y="555.0" text-anchor="end" font-family="Helvetica,Arial" font-size="10" fill="#333">1.66e-05</text>
+<line x1="131" y1="516.0" x2="136" y2="516.0" stroke="#333"/>
+<text x="127" y="520.0" text-anchor="end" font-family="Helvetica,Arial" font-size="10" fill="#333">3.32e-05</text>
+<line x1="131" y1="481.0" x2="136" y2="481.0" stroke="#333"/>
+<text x="127" y="485.0" text-anchor="end" font-family="Helvetica,Arial" font-size="10" fill="#333">4.98e-05</text>
+<line x1="131" y1="446.0" x2="136" y2="446.0" stroke="#333"/>
+<text x="127" y="450.0" text-anchor="end" font-family="Helvetica,Arial" font-size="10" fill="#333">6.64e-05</text>
+<polyline points="136.0,586.0 203.2,566.2 270.4,528.5 337.6,469.3 404.8,505.5 472.0,522.8" fill="none" stroke="#1864ab" stroke-width="2"/>
+<circle cx="136.0" cy="586.0" r="4" fill="#1864ab"/>
+<text x="136.0" y="577.0" text-anchor="middle" font-family="Helvetica,Arial" font-size="9.5" fill="#111">0.00000</text>
+<circle cx="203.2" cy="566.2" r="4" fill="#1864ab"/>
+<text x="203.2" y="557.2" text-anchor="middle" font-family="Helvetica,Arial" font-size="9.5" fill="#111">0.00001</text>
+<circle cx="270.4" cy="528.5" r="4" fill="#1864ab"/>
+<text x="270.4" y="519.5" text-anchor="middle" font-family="Helvetica,Arial" font-size="9.5" fill="#111">0.00003</text>
+<circle cx="337.6" cy="469.3" r="4" fill="#1864ab"/>
+<text x="337.6" y="460.3" text-anchor="middle" font-family="Helvetica,Arial" font-size="9.5" fill="#111">0.00006</text>
+<circle cx="404.8" cy="505.5" r="4" fill="#1864ab"/>
+<text x="404.8" y="496.5" text-anchor="middle" font-family="Helvetica,Arial" font-size="9.5" fill="#111">0.00004</text>
+<circle cx="472.0" cy="522.8" r="4" fill="#1864ab"/>
+<text x="472.0" y="513.8" text-anchor="middle" font-family="Helvetica,Arial" font-size="9.5" fill="#111">0.00003</text>
+<text x="136.0" y="604" text-anchor="middle" font-family="Helvetica,Arial" font-size="11" fill="#333">1k</text>
+<text x="203.2" y="604" text-anchor="middle" font-family="Helvetica,Arial" font-size="11" fill="#333">2.5k</text>
+<text x="270.4" y="604" text-anchor="middle" font-family="Helvetica,Arial" font-size="11" fill="#333">5k</text>
+<text x="337.6" y="604" text-anchor="middle" font-family="Helvetica,Arial" font-size="11" fill="#333">10k</text>
+<text x="404.8" y="604" text-anchor="middle" font-family="Helvetica,Arial" font-size="11" fill="#333">20k</text>
+<text x="472.0" y="604" text-anchor="middle" font-family="Helvetica,Arial" font-size="11" fill="#333">50k</text>
+<text x="249" y="626" text-anchor="middle" font-family="Helvetica,Arial" font-size="11" fill="#555">payload (bits)</text>
+<text x="586" y="420" font-family="Helvetica,Arial" font-size="13" font-weight="bold" fill="#111">Mean |delta| at changed values</text>
+<line x1="644" y1="446" x2="644" y2="586" stroke="#333"/>
+<line x1="644" y1="586" x2="980" y2="586" stroke="#333"/>
+<line x1="639" y1="586.0" x2="644" y2="586.0" stroke="#333"/>
+<text x="635" y="590.0" text-anchor="end" font-family="Helvetica,Arial" font-size="10" fill="#333">0</text>
+<line x1="639" y1="551.0" x2="644" y2="551.0" stroke="#333"/>
+<text x="635" y="555.0" text-anchor="end" font-family="Helvetica,Arial" font-size="10" fill="#333">0.0199</text>
+<line x1="639" y1="516.0" x2="644" y2="516.0" stroke="#333"/>
+<text x="635" y="520.0" text-anchor="end" font-family="Helvetica,Arial" font-size="10" fill="#333">0.0397</text>
+<line x1="639" y1="481.0" x2="644" y2="481.0" stroke="#333"/>
+<text x="635" y="485.0" text-anchor="end" font-family="Helvetica,Arial" font-size="10" fill="#333">0.0596</text>
+<line x1="639" y1="446.0" x2="644" y2="446.0" stroke="#333"/>
+<text x="635" y="450.0" text-anchor="end" font-family="Helvetica,Arial" font-size="10" fill="#333">0.0794</text>
+<polyline points="136.0,469.3 203.2,482.8 270.4,493.1 337.6,503.0 404.8,512.7 472.0,524.1" fill="none" stroke="#1864ab" stroke-width="2"/>
+<circle cx="136.0" cy="469.3" r="4" fill="#1864ab"/>
+<text x="136.0" y="460.3" text-anchor="middle" font-family="Helvetica,Arial" font-size="9.5" fill="#111">6.620e-02</text>
+<circle cx="203.2" cy="482.8" r="4" fill="#1864ab"/>
+<text x="203.2" y="473.8" text-anchor="middle" font-family="Helvetica,Arial" font-size="9.5" fill="#111">5.857e-02</text>
+<circle cx="270.4" cy="493.1" r="4" fill="#1864ab"/>
+<text x="270.4" y="484.1" text-anchor="middle" font-family="Helvetica,Arial" font-size="9.5" fill="#111">5.273e-02</text>
+<circle cx="337.6" cy="503.0" r="4" fill="#1864ab"/>
+<text x="337.6" y="494.0" text-anchor="middle" font-family="Helvetica,Arial" font-size="9.5" fill="#111">4.708e-02</text>
+<circle cx="404.8" cy="512.7" r="4" fill="#1864ab"/>
+<text x="404.8" y="503.7" text-anchor="middle" font-family="Helvetica,Arial" font-size="9.5" fill="#111">4.158e-02</text>
+<circle cx="472.0" cy="524.1" r="4" fill="#1864ab"/>
+<text x="472.0" y="515.1" text-anchor="middle" font-family="Helvetica,Arial" font-size="9.5" fill="#111">3.514e-02</text>
+<text x="136.0" y="604" text-anchor="middle" font-family="Helvetica,Arial" font-size="11" fill="#333">1k</text>
+<text x="203.2" y="604" text-anchor="middle" font-family="Helvetica,Arial" font-size="11" fill="#333">2.5k</text>
+<text x="270.4" y="604" text-anchor="middle" font-family="Helvetica,Arial" font-size="11" fill="#333">5k</text>
+<text x="337.6" y="604" text-anchor="middle" font-family="Helvetica,Arial" font-size="11" fill="#333">10k</text>
+<text x="404.8" y="604" text-anchor="middle" font-family="Helvetica,Arial" font-size="11" fill="#333">20k</text>
+<text x="472.0" y="604" text-anchor="middle" font-family="Helvetica,Arial" font-size="11" fill="#333">50k</text>
+<text x="503" y="626" text-anchor="middle" font-family="Helvetica,Arial" font-size="11" fill="#555">payload (bits)</text>
+<text x="78" y="658" font-family="Helvetica,Arial" font-size="10.5" fill="#777">Every point is one full production embed → extract → decrypt; failed points are kept. Companion: exp4 covers 500k–10M with BER only.</text>
+</svg>

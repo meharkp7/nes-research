@@ -221,6 +221,66 @@ THRESHOLDS = {
         ),
         "max_source_delta": 0.0,
     },
+    "exp25": {
+        "description": (
+            "Selection-policy ablation (W9.1): write rule (sign), QACI "
+            "Hamilton layer allocation (digest-pinned), payload "
+            "(10,000 bits) and message are held identical across "
+            "three within-layer position policies — random, magnitude "
+            "(production), key-derived. Every policy must round-trip "
+            "at BER 0.0 (a policy that cannot carry the payload makes "
+            "the comparison meaningless), and the PRODUCTION arm must "
+            "hold exp7's detectability gates and exp6's sigma=0.001 "
+            "robustness gate. Baseline arms are not deployment "
+            "candidates: their numbers are reported against the same "
+            "reference lines as per-arm flags, not as status "
+            "drivers. The keyless question (can an attacker re-running "
+            "the public selection rule locate carriers?) is measured "
+            "and compared against pre-registered hypotheses, not "
+            "gated."
+        ),
+        "max_ber_all_arms": 0.0,
+        "max_detector_accuracy": 0.55,
+        "max_kl_divergence": 0.05,
+        "max_production_ber_at_sigma_0_001": 0.02,
+    },
+    "exp26": {
+        "description": (
+            "Capacity scaling (W9.2): the unchanged production path at "
+            "1k / 2.5k / 5k / 10k / 20k / 50k payload bits — every "
+            "size must round-trip at BER 0.0 (exp3's gate reused) and "
+            "stay inside exp7's detectability gates (0.55 accuracy, "
+            "0.05 KL). A failed size is a measured capacity or "
+            "detectability limit and stays in the artifact; points "
+            "are never dropped because they fail. exp4 owns the "
+            "500k–10M end of the curve; this is the 1k–50k band with "
+            "detectability attached."
+        ),
+        "max_ber": 0.0,
+        "max_detector_accuracy": 0.55,
+        "max_kl_divergence": 0.05,
+    },
+    "exp27": {
+        "description": (
+            "Threat-model boundary (W9.3): on ONE production embed. "
+            "The control (full access + correct key) must recover the "
+            "message at BER 0.0. Wrong-key decryption must recover 0 "
+            "messages across at least 10 distinct wrong keys and must "
+            "never emit plaintext (AES-GCM authentication is the "
+            "claim; the count is the evidence). Partial model access "
+            "— first 50/25/10% of layers and a seeded scattered "
+            "50/25/10% subset — must recover 0 messages. "
+            "Channel-level readability per condition (raw BER with "
+            "and without the carrier map, public-rule position "
+            "re-derivation) is measured and reported, not gated: the "
+            "boundary this experiment draws is about message "
+            "confidentiality."
+        ),
+        "max_control_ber": 0.0,
+        "min_wrong_keys_tested": 10,
+        "max_wrong_key_recoveries": 0,
+        "max_partial_access_recoveries": 0,
+    },
 }
 
 

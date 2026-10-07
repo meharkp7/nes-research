@@ -1,0 +1,209 @@
+{
+  "experiment": "exp27",
+  "title": "Threat-model boundary (W9.3)",
+  "model_id": "Qwen/Qwen2.5-3B",
+  "family": "qwen",
+  "status": "PASS",
+  "gate": {
+    "description": "Threat-model boundary (W9.3): on ONE production embed. The control (full access + correct key) must recover the message at BER 0.0. Wrong-key decryption must recover 0 messages across at least 10 distinct wrong keys and must never emit plaintext (AES-GCM authentication is the claim; the count is the evidence). Partial model access \u2014 first 50/25/10% of layers and a seeded scattered 50/25/10% subset \u2014 must recover 0 messages. Channel-level readability per condition (raw BER with and without the carrier map, public-rule position re-derivation) is measured and reported, not gated: the boundary this experiment draws is about message confidentiality.",
+    "max_control_ber": 0.0,
+    "min_wrong_keys_tested": 10,
+    "max_wrong_key_recoveries": 0,
+    "max_partial_access_recoveries": 0,
+    "gate_source": "experiment_registry.THRESHOLDS['exp27']",
+    "failures": [],
+    "measured": {
+      "control_ber": 0.0,
+      "control_recovered": true,
+      "wrong_keys_tested": 10,
+      "wrong_key_recoveries": 0,
+      "wrong_key_plaintext_emitted": 0,
+      "partial_access_recoveries": 0
+    }
+  },
+  "conditions": {
+    "control": {
+      "has": [
+        "carrier map",
+        "correct key",
+        "all layers"
+      ],
+      "ber": 0.0,
+      "bit_errors": 0,
+      "bits_compared": 10256,
+      "recovered_matches": true
+    },
+    "wrong_key": {
+      "has": [
+        "carrier map",
+        "WRONG key",
+        "all layers"
+      ],
+      "keys_tested": 10,
+      "recoveries": 0,
+      "plaintext_emitted": 0,
+      "error_kinds": {
+        "gcm_authentication": 10
+      },
+      "channel_ber_with_map_no_key": 0.0
+    },
+    "partial_access": {
+      "has": [
+        "carrier map",
+        "correct key",
+        "subset of layers"
+      ],
+      "cells": [
+        {
+          "condition": "prefix_50pct",
+          "fraction_requested": 0.5,
+          "layers_available": 18,
+          "layers_total": 36,
+          "bits_available": 5343,
+          "stream_coverage": 0.5209633385335414,
+          "ber_on_available_bits": 0.0,
+          "bit_errors_on_available": 0,
+          "decrypt_ok": false,
+          "recovered_matches": false,
+          "error": "Decryption failed: "
+        },
+        {
+          "condition": "scattered_50pct",
+          "fraction_requested": 0.5,
+          "layers_available": 18,
+          "layers_total": 36,
+          "bits_available": 4370,
+          "stream_coverage": 0.42609204368174725,
+          "ber_on_available_bits": 0.0,
+          "bit_errors_on_available": 0,
+          "decrypt_ok": false,
+          "recovered_matches": false,
+          "error": "Decryption failed: "
+        },
+        {
+          "condition": "prefix_25pct",
+          "fraction_requested": 0.25,
+          "layers_available": 9,
+          "layers_total": 36,
+          "bits_available": 2050,
+          "stream_coverage": 0.1998829953198128,
+          "ber_on_available_bits": 0.0,
+          "bit_errors_on_available": 0,
+          "decrypt_ok": false,
+          "recovered_matches": false,
+          "error": "Decryption failed: "
+        },
+        {
+          "condition": "scattered_25pct",
+          "fraction_requested": 0.25,
+          "layers_available": 9,
+          "layers_total": 36,
+          "bits_available": 2821,
+          "stream_coverage": 0.2750585023400936,
+          "ber_on_available_bits": 0.0,
+          "bit_errors_on_available": 0,
+          "decrypt_ok": false,
+          "recovered_matches": false,
+          "error": "Decryption failed: "
+        },
+        {
+          "condition": "prefix_10pct",
+          "fraction_requested": 0.1,
+          "layers_available": 3,
+          "layers_total": 36,
+          "bits_available": 379,
+          "stream_coverage": 0.03695397815912636,
+          "ber_on_available_bits": 0.0,
+          "bit_errors_on_available": 0,
+          "decrypt_ok": false,
+          "recovered_matches": false,
+          "error": "Decryption failed: "
+        },
+        {
+          "condition": "scattered_10pct",
+          "fraction_requested": 0.1,
+          "layers_available": 3,
+          "layers_total": 36,
+          "bits_available": 576,
+          "stream_coverage": 0.056162246489859596,
+          "ber_on_available_bits": 0.0,
+          "bit_errors_on_available": 0,
+          "decrypt_ok": false,
+          "recovered_matches": false,
+          "error": "Decryption failed: "
+        }
+      ],
+      "recoveries": 0
+    },
+    "public_rule_keyless": {
+      "has": [
+        "released weights only (algorithm and payload size are not secrets)"
+      ],
+      "exact_size": {
+        "attacker_total_bits": 10256,
+        "positions": {
+          "true_positives": 10152,
+          "false_positives": 104,
+          "false_negatives": 104,
+          "precision": 0.9898595943837754,
+          "recall": 0.9898595943837754
+        },
+        "layers_with_matching_allocation": 2,
+        "layers_total": 36,
+        "keyless_ber": 0.4875195007800312
+      },
+      "nominal_size": {
+        "attacker_total_bits": 10000,
+        "positions": {
+          "true_positives": 9939,
+          "false_positives": 61,
+          "false_negatives": 317,
+          "precision": 0.9939,
+          "recall": 0.969091263650546
+        },
+        "layers_with_matching_allocation": 1,
+        "layers_total": 36,
+        "keyless_ber": 0.4937
+      },
+      "message_recoverable": false,
+      "message_protection_basis": "C2: 0 of 10 keys that are not the embedding key decrypt \u2014 GCM authentication fails before any plaintext can be produced. An attacker who reads the channel without the key holds ciphertext only."
+    }
+  },
+  "method": {
+    "seed": 42,
+    "one_embed": "Every condition reads the SAME production embed (exp23's paired design): conditions differ only in what the reader is allowed to hold.",
+    "partial_access_protocol": "prefix = lowest layer ids first (contiguous stream prefix), scattered = seeded sample; BER on available bits compares against each layer's TRUE stream slice (stream order is sorted layers, base_embedder).",
+    "public_rule_attacker": "exp25.keyless_qaci_read \u2014 QACI re-run on the stego residuals (exp13's tier_kerckhoffs shape, sign read).",
+    "pre_registered": "Gates in THRESHOLDS['exp27'] fixed before this run; channel readability per condition is reported, not gated \u2014 the gate covers message confidentiality."
+  },
+  "notes": [
+    "Boundary in one line: MESSAGE confidentiality holds at every access level without the key (C2/C3/C4); CHANNEL readability is a separate, measured axis and is NOT claimed here (exp13 owns the keyless-read FAIL, exp25 attributes it to selection policy).",
+    "C3 is all-or-nothing for message recovery by construction: AES-GCM over a stream with missing layers cannot authenticate. The cell-level numbers say WHERE partial access stops paying (coverage and clean-bit reads), which is the boundary a reviewer can probe.",
+    "exp13's phase-tier attacker remains out of scope (it needs no parameters and is measured on exp13's LWE embed); this experiment measures conditions around ONE production embed."
+  ],
+  "reproducibility": {
+    "model_id": "Qwen/Qwen2.5-3B",
+    "family": "qwen",
+    "expected_layers": 36,
+    "actual_layers": null,
+    "layer_count_matches_expected": null,
+    "random_seed": 42,
+    "device": "mps",
+    "software_versions": {
+      "python": "3.14.3",
+      "platform": "macOS-26.3-arm64-arm-64bit-Mach-O",
+      "torch": "2.13.0",
+      "transformers": "5.16.1",
+      "bitsandbytes": "0.50.2",
+      "accelerate": "1.14.0",
+      "numpy": "2.5.2"
+    },
+    "platform_notes": [
+      "Apple Silicon/MPS: NF4 dequantization must stay on CPU. Moving large dequantized tensors to MPS raises RuntimeError: Invalid buffer size.",
+      "MPS has no native int8/uint8 dequantize; PYTORCH_ENABLE_MPS_FALLBACK is set to 1."
+    ],
+    "residual_source": null,
+    "residual_definition": "R = W_FP16 - dequantize(W_NF4)",
+    "timestamp": "2026-10-07T13:32:59.872526+00:00"
+  }
+}

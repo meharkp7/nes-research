@@ -2220,6 +2220,444 @@ def audit_model_surgery():
     )
 
 
+EXP25_ARTIFACT = "exp25_selection_ablation_qwen__qwen2.5_3b.json"
+EXP26_ARTIFACT = "exp26_capacity_scaling_qwen__qwen2.5_3b.json"
+EXP27_ARTIFACT = "exp27_threat_model_qwen__qwen2.5_3b.json"
+EXP26_FIGURE = "exp26_capacity_scaling_qwen__qwen2.5_3b.svg"
+
+
+def audit_paper_experiments():
+    """W9 hardening — selection ablation, capacity curve, boundary.
+
+    Recomputation over pinning wherever a verdict could drift: every
+    gate flag, hypothesis verdict, BER and precision is recomputed
+    from the counts beside it. Only structurally fixed values (sizes,
+    arm names, the 10,256-bit construction) are asserted literally.
+    """
+    _audit_paper_exp25()
+    _audit_paper_exp26()
+    _audit_paper_exp27()
+
+
+def _audit_paper_exp25():
+    d = one(EXP25_ARTIFACT)
+    check(
+        "exp25: artifact present (W9.1 selection-policy ablation, "
+        "Qwen2.5-3B)",
+        d is not None,
+        EXP25_ARTIFACT if d else "missing: " + EXP25_ARTIFACT,
+    )
+    if not d:
+        return
+
+    gate = THRESHOLDS["exp25"]
+    check(
+        "exp25: gate mirrors THRESHOLDS['exp25'] field-for-field — "
+        "all arms 0.0, production 0.55/0.05/0.02 — with the source "
+        "pinned",
+        all(d.get("gate", {}).get(k) == v for k, v in gate.items())
+        and "THRESHOLDS['exp25']" in str(
+            d.get("gate", {}).get("gate_source")
+        ),
+        f"status={d.get('gate', {}).get('status')} "
+        f"failures={d.get('gate', {}).get('failures')}",
+    )
+
+    arms = d.get("arms", {}) or {}
+    check(
+        "exp25: exactly three arms — random x3, magnitude x1 "
+        "(production), keyed x3",
+        sorted(arms) == ["keyed", "magnitude", "random"]
+        and len(dig(arms, "random", "replicates") or []) == 3
+        and len(dig(arms, "magnitude", "replicates") or []) == 1
+        and len(dig(arms, "keyed", "replicates") or []) == 3,
+        f"arms={sorted(arms)}",
+    )
+
+    rows = [
+        (p, r) for p in sorted(arms)
+        for r in arms[p]["replicates"]
+    ]
+    bad = []
+    for p, r in rows:
+        tag = f"{p}[{r.get('replicate')}]"
+        ber, bits, errs = (
+            r.get("ber"), r.get("bits_compared"), r.get("bit_errors")
+        )
+        if ber != (errs / bits if bits else None):
+            bad.append(f"{tag}:ber")
+        if ber != 0.0 or bits != 10256 or r.get("carrier_count") != 10256:
+            bad.append(f"{tag}:roundtrip")
+        if not (r.get("decrypt_ok") and r.get("recovered_matches")):
+            bad.append(f"{tag}:decrypt")
+        dg = r.get("detectability_gate") or {}
+        if dg.get("kl_within_0_05") != (r.get("kl_divergence") <= 0.05):
+            bad.append(f"{tag}:kl-flag")
+        if dg.get("accuracy_within_0_55") != (
+            r.get("detector_accuracy") <= 0.55
+        ):
+            bad.append(f"{tag}:acc-flag")
+        robust = r.get("robustness_ber_sigma_0_001")
+        rg = dig(r, "robustness_gate", "within_exp6_line_0_02")
+        if rg != (robust is not None and robust <= 0.02):
+            bad.append(f"{tag}:robust-flag")
+        for tier in ("keyless_exact_size", "keyless_nominal_size"):
+            pos = dig(r, tier, "positions") or {}
+            tp = pos.get("true_positives")
+            fp = pos.get("false_positives")
+            fn = pos.get("false_negatives")
+            if pos.get("precision") != (
+                tp / (tp + fp) if (tp + fp) else None
+            ):
+                bad.append(f"{tag}:{tier}:precision")
+            if pos.get("recall") != (
+                tp / (tp + fn) if (tp + fn) else None
+            ):
+                bad.append(f"{tag}:{tier}:recall")
+    check(
+        "exp25: every replicate recomputes — BER from errors/bits at "
+        "exp3's 0.0 over the 10,256-carrier construction, decrypt + "
+        "message match, detectability/robustness flags re-derived "
+        "from the numbers beside them, keyless precision/recall from "
+        "TP/FP/FN",
+        not bad,
+        f"bad={bad}",
+    )
+
+    digests = {r.get("allocation_digest") for _, r in rows}
+    check(
+        "exp25: one shared QACI Hamilton allocation across all seven "
+        "replicates (digest-pinned) and the artifact says so — the "
+        "ablation's control variable",
+        len(digests) == 1
+        and d.get("allocation_shared_across_arms") is True,
+        f"digests={sorted(str(x) for x in digests)}",
+    )
+
+    mag = arms["magnitude"]["replicates"][0]
+    check(
+        "exp25: production arm holds exp7's detectability lines "
+        "(0.55/0.05) and exp6's sigma=0.001 line (0.02)",
+        mag["detector_accuracy"] <= 0.55
+        and mag["kl_divergence"] <= 0.05
+        and mag["robustness_ber_sigma_0_001"] <= 0.02,
+        f"acc={mag['detector_accuracy']} kl={mag['kl_divergence']} "
+        f"robust={mag['robustness_ber_sigma_0_001']}",
+    )
+
+    random_reps = arms["random"]["replicates"]
+    base = random_reps + arms["keyed"]["replicates"]
+    base_robust = [
+        r["robustness_ber_sigma_0_001"] for r in base
+    ]
+    check(
+        "exp25: baselines are FLAGGED, not gated — every random/keyed "
+        "replicate sits past exp6's 0.02 line (the measured cost of "
+        "importance-blind selection) with flags saying False, while "
+        "status stays PASS exactly as THRESHOLDS['exp25'] prescribes",
+        all(v is not None and v > 0.02 for v in base_robust)
+        and all(
+            dig(r, "robustness_gate", "within_exp6_line_0_02") is False
+            for r in base
+        )
+        and d.get("status") == "PASS",
+        f"baseline_robustness={[round(v, 4) for v in base_robust]}",
+    )
+
+    def exact_ber(r):
+        v = dig(r, "keyless_exact_size", "keyless_ber")
+        return v is not None and 0.4 <= v <= 0.6
+
+    check(
+        "exp25: the keyless public-rule attacker reads at chance for "
+        "EVERY arm (exact-size BER in [0.4, 0.6]) — no policy leaks a "
+        "readable stream to the public re-run",
+        all(exact_ber(r) for _, r in rows),
+        f"exact_ber={[round(dig(r, 'keyless_exact_size', 'keyless_ber'), 4) for _, r in rows]}",
+    )
+
+    recorded = {
+        h.get("id"): h.get("observed_supported")
+        for h in d.get("hypotheses", [])
+    }
+    h1 = all(r["ber"] == 0.0 for _, r in rows)
+    h2 = all(
+        r["detector_accuracy"] <= 0.55 and r["kl_divergence"] <= 0.05
+        for _, r in rows
+    )
+    kx = mag["keyless_exact_size"]
+    prec = dig(kx, "positions", "precision")
+    mag_ber = kx.get("keyless_ber")
+    others = [
+        dig(r, "keyless_exact_size", "keyless_ber")
+        for p in ("random", "keyed") for r in arms[p]["replicates"]
+    ]
+    h3 = bool(
+        prec is not None and prec >= 0.99
+        and mag_ber is not None and mag_ber < 0.1
+        and all(v is not None and v > 0.4 for v in others)
+    )
+    rand_robust = [
+        r["robustness_ber_sigma_0_001"] for r in random_reps
+    ]
+    h4 = bool(
+        mag["robustness_ber_sigma_0_001"] is not None
+        and all(v is not None for v in rand_robust)
+        and mag["robustness_ber_sigma_0_001"]
+        <= sum(rand_robust) / len(rand_robust)
+    )
+    recomputed = {"H1": h1, "H2": h2, "H3": h3, "H4": h4}
+    check(
+        "exp25: hypothesis verdicts recompute from the recorded "
+        "numbers — H1/H2/H4 supported (round trip, detectability, "
+        "robustness ordering), H3 (public re-run => BER < 0.1) NOT "
+        "supported and kept as written: a miss is recorded, not "
+        "rewritten",
+        recorded == recomputed
+        and recorded.get("H1") is True
+        and recorded.get("H2") is True
+        and recorded.get("H4") is True
+        and recorded.get("H3") is False,
+        f"recorded={recorded} recomputed={recomputed}",
+    )
+
+    check(
+        "exp25: H3's recorded mechanism holds in the numbers — the "
+        "public re-run never reproduces the writer's allocation in "
+        "full while position precision stays >= 0.98, which is why "
+        "near-exact position knowledge still reads near chance",
+        (kx.get("layers_with_matching_allocation") or 0)
+        < (kx.get("layers_total") or 0)
+        and prec is not None and prec >= 0.98,
+        f"alloc_match={kx.get('layers_with_matching_allocation')}/"
+        f"{kx.get('layers_total')} precision={prec}",
+    )
+
+
+def _audit_paper_exp26():
+    d = one(EXP26_ARTIFACT)
+    check(
+        "exp26: artifact present (W9.2 capacity curve, Qwen2.5-3B)",
+        d is not None,
+        EXP26_ARTIFACT if d else "missing: " + EXP26_ARTIFACT,
+    )
+    if not d:
+        return
+
+    gate = THRESHOLDS["exp26"]
+    check(
+        "exp26: gate mirrors THRESHOLDS['exp26'] field-for-field "
+        "(0.0 / 0.55 / 0.05) with the source pinned",
+        all(d.get("gate", {}).get(k) == v for k, v in gate.items())
+        and "THRESHOLDS['exp26']" in str(
+            d.get("gate", {}).get("gate_source")
+        ),
+        f"failures={d.get('gate', {}).get('failures')}",
+    )
+
+    points = d.get("points", []) or []
+    sizes = [1000, 2500, 5000, 10000, 20000, 50000]
+    check(
+        "exp26: exactly the six pre-registered sizes, in order — no "
+        "point dropped because it failed",
+        [p.get("payload_bits") for p in points] == sizes,
+        f"sizes={[p.get('payload_bits') for p in points]}",
+    )
+
+    bad = []
+    for p in points:
+        ber, bits, errs = (
+            p.get("ber"), p.get("bits_compared"), p.get("bit_errors")
+        )
+        size = p.get("payload_bits")
+        if ber != (errs / bits if bits else None):
+            bad.append(f"{size}:ber")
+        if ber != 0.0:
+            bad.append(f"{size}:nonzero")
+        if not (p.get("decrypt_ok") and p.get("recovered_matches")):
+            bad.append(f"{size}:decrypt")
+        if p.get("meets_ber_gate") != (ber == 0.0):
+            bad.append(f"{size}:ber-flag")
+        if p.get("meets_detectability_gate") != (
+            p.get("detector_accuracy") <= 0.55
+            and p.get("kl_divergence") <= 0.05
+        ):
+            bad.append(f"{size}:det-flag")
+    check(
+        "exp26: every point recomputes — BER from errors/bits at "
+        "0.0, decrypt + message match, both gate flags re-derived "
+        "from the numbers beside them",
+        not bad,
+        f"bad={bad}",
+    )
+
+    metrics = d.get("metrics", {}) or {}
+    accs = [p["detector_accuracy"] for p in points]
+    kls = [p["kl_divergence"] for p in points]
+    check(
+        "exp26: metrics recompute from the points — six sizes at "
+        "BER 0.0, the 50k maximum, and the detector/KL ranges equal "
+        "the observed min/max exactly",
+        metrics.get("sizes_tested") == 6
+        and metrics.get("sizes_measured") == 6
+        and metrics.get("sizes_at_ber_zero") == sizes
+        and metrics.get("max_tested_payload_at_ber_zero_bits") == 50000
+        and metrics.get("detector_accuracy_range") == [
+            min(accs), max(accs)
+        ]
+        and metrics.get("kl_range") == [min(kls), max(kls)]
+        and max(accs) <= 0.55
+        and max(kls) <= 0.05,
+        f"acc_range={metrics.get('detector_accuracy_range')} "
+        f"kl_range={metrics.get('kl_range')}",
+    )
+
+    figure = RESULTS / EXP26_FIGURE
+    check(
+        "exp26: the committed figure exists and is non-empty — the "
+        "one artifact reviewers can see without running anything",
+        figure.is_file() and figure.stat().st_size > 0,
+        str(figure),
+    )
+
+    check(
+        "exp26: status PASS with no gate failures",
+        d.get("status") == "PASS"
+        and d.get("gate", {}).get("failures") == [],
+        f"status={d.get('status')}",
+    )
+
+
+def _audit_paper_exp27():
+    d = one(EXP27_ARTIFACT)
+    check(
+        "exp27: artifact present (W9.3 threat-model boundary, "
+        "Qwen2.5-3B)",
+        d is not None,
+        EXP27_ARTIFACT if d else "missing: " + EXP27_ARTIFACT,
+    )
+    if not d:
+        return
+
+    gate = THRESHOLDS["exp27"]
+    check(
+        "exp27: gate mirrors THRESHOLDS['exp27'] field-for-field "
+        "(control 0.0, >=10 wrong keys, 0 recoveries) with the "
+        "source pinned",
+        all(d.get("gate", {}).get(k) == v for k, v in gate.items())
+        and "THRESHOLDS['exp27']" in str(
+            d.get("gate", {}).get("gate_source")
+        ),
+        f"status={d.get('status')} "
+        f"failures={d.get('gate', {}).get('failures')}",
+    )
+
+    measured = dig(d, "gate", "measured") or {}
+    check(
+        "exp27: the measured boundary — control recovers at 0.0, "
+        ">=10 wrong keys tested with 0 recoveries and 0 plaintext "
+        "emissions, 0 partial-access recoveries",
+        measured.get("control_ber") == 0.0
+        and measured.get("control_recovered") is True
+        and measured.get("wrong_keys_tested")
+        >= gate.get("min_wrong_keys_tested")
+        and measured.get("wrong_key_recoveries")
+        == gate.get("max_wrong_key_recoveries")
+        and measured.get("wrong_key_plaintext_emitted") == 0
+        and measured.get("partial_access_recoveries")
+        == gate.get("max_partial_access_recoveries"),
+        f"measured={measured}",
+    )
+
+    control = dig(d, "conditions", "control") or {}
+    check(
+        "exp27: control arithmetic — 0 errors over the 10,256-bit "
+        "construction, message recovered",
+        control.get("ber") == 0.0
+        and control.get("bit_errors") == 0
+        and control.get("bits_compared") == 10256
+        and control.get("recovered_matches") is True,
+        f"control={control}",
+    )
+
+    wrong = dig(d, "conditions", "wrong_key") or {}
+    kinds = wrong.get("error_kinds") or {}
+    check(
+        "exp27: every wrong key fails the same authenticated way — "
+        "10/10 GCM authentication, no header failures, no garbage "
+        "success, and the channel remains readable with the map "
+        "(0.0): channel readability and message confidentiality "
+        "measured as separate axes",
+        sum(kinds.values()) == wrong.get("keys_tested")
+        and set(kinds) == {"gcm_authentication"}
+        and wrong.get("recoveries") == 0
+        and wrong.get("plaintext_emitted") == 0
+        and wrong.get("channel_ber_with_map_no_key") == 0.0,
+        f"kinds={kinds} channel_ber="
+        f"{wrong.get('channel_ber_with_map_no_key')}",
+    )
+
+    cells = dig(d, "conditions", "partial_access", "cells") or []
+    by_name = {c.get("condition"): c for c in cells}
+    prefix = [
+        by_name.get(f"prefix_{t}pct", {}).get("stream_coverage")
+        for t in (50, 25, 10)
+    ]
+    scattered = [
+        by_name.get(f"scattered_{t}pct", {}).get("stream_coverage")
+        for t in (50, 25, 10)
+    ]
+    check(
+        "exp27: six partial-access cells, none decrypts, none "
+        "recovers the message, every available bit reads clean "
+        "(0.0), and coverage falls monotonically with the layer "
+        "fraction for both access patterns",
+        len(cells) == 6
+        and all(
+            c.get("decrypt_ok") is False
+            and c.get("recovered_matches") is False
+            and c.get("ber_on_available_bits") == 0.0
+            and 0.0 < (c.get("stream_coverage") or 0.0) < 1.0
+            for c in cells
+        )
+        and all(
+            a is not None and b is not None and a > b
+            for a, b in zip(prefix, prefix[1:])
+        )
+        and all(
+            a is not None and b is not None and a > b
+            for a, b in zip(scattered, scattered[1:])
+        ),
+        f"prefix={prefix} scattered={scattered}",
+    )
+
+    exact = dig(d, "conditions", "public_rule_keyless", "exact_size")
+    pos = (exact or {}).get("positions") or {}
+    tp = pos.get("true_positives")
+    fp = pos.get("false_positives")
+    ber = (exact or {}).get("keyless_ber")
+    check(
+        "exp27: the public-rule attacker is chance-level on this "
+        "embed (exact-size BER in [0.4, 0.6]) with precision "
+        "recomputing from TP/FP, and the message-protection basis "
+        "cites C2 rather than asserting secrecy",
+        ber is not None and 0.4 <= ber <= 0.6
+        and pos.get("precision") == (tp / (tp + fp) if (tp + fp) else None)
+        and bool(
+            dig(d, "conditions", "public_rule_keyless",
+                "message_protection_basis")
+        ),
+        f"ber={ber} precision={pos.get('precision')}",
+    )
+
+    check(
+        "exp27: status PASS with no gate failures",
+        d.get("status") == "PASS"
+        and d.get("gate", {}).get("failures") == [],
+        f"status={d.get('status')}",
+    )
+
+
 def audit_thresholds():
     check(
         "dequant gate thresholds unchanged (0.95 / 0.5)",
@@ -2264,6 +2702,7 @@ def main() -> int:
         ("per-layer LWE width (exp22)", audit_layer_widths),
         ("model surgery survival (exp23)", audit_model_surgery),
         ("Pareto frontier (exp24)", audit_pareto_frontier),
+        ("paper hardening W9 (exp25-27)", audit_paper_experiments),
         ("gates", audit_thresholds),
     ):
         print(f"\n{title}")

@@ -1,0 +1,199 @@
+{
+  "experiment": "exp26",
+  "title": "Capacity scaling curve (W9.2)",
+  "model_id": "Qwen/Qwen2.5-3B",
+  "family": "qwen",
+  "status": "PASS",
+  "gate": {
+    "description": "Capacity scaling (W9.2): the unchanged production path at 1k / 2.5k / 5k / 10k / 20k / 50k payload bits \u2014 every size must round-trip at BER 0.0 (exp3's gate reused) and stay inside exp7's detectability gates (0.55 accuracy, 0.05 KL). A failed size is a measured capacity or detectability limit and stays in the artifact; points are never dropped because they fail. exp4 owns the 500k\u201310M end of the curve; this is the 1k\u201350k band with detectability attached.",
+    "max_ber": 0.0,
+    "max_detector_accuracy": 0.55,
+    "max_kl_divergence": 0.05,
+    "gate_source": "experiment_registry.THRESHOLDS['exp26']",
+    "failures": []
+  },
+  "configuration": {
+    "sizes": [
+      1000,
+      2500,
+      5000,
+      10000,
+      20000,
+      50000
+    ],
+    "message_source": "repeated 'A', length = bits//8 + 1 (exp4)",
+    "strategy": "sign",
+    "path": "IntelligentEmbedder production path, unchanged; SecurityValidator per size (exp7's instrument), mean_abs_delta (exp24's single definition)"
+  },
+  "points": [
+    {
+      "payload_bits": 1000,
+      "bits_embedded": 1264,
+      "bits_compared": 1264,
+      "bit_errors": 0,
+      "ber": 0.0,
+      "decrypt_ok": true,
+      "recovered_matches": true,
+      "kl_divergence": 0.0,
+      "detector_accuracy": 0.5028000026941299,
+      "sign_bias": 0.015146642923355103,
+      "mean_shift": 0.0,
+      "std_shift": 0.0,
+      "mean_abs_delta": 0.06619681366219009,
+      "changed_values": 605.0,
+      "carrier_count": 1264,
+      "meets_ber_gate": true,
+      "meets_detectability_gate": true
+    },
+    {
+      "payload_bits": 2500,
+      "bits_embedded": 2760,
+      "bits_compared": 2760,
+      "bit_errors": 0,
+      "ber": 0.0,
+      "decrypt_ok": true,
+      "recovered_matches": true,
+      "kl_divergence": 9.372344720759429e-06,
+      "detector_accuracy": 0.5028000026941299,
+      "sign_bias": 0.015146642923355103,
+      "mean_shift": 1.8921127775684e-08,
+      "std_shift": 0.0,
+      "mean_abs_delta": 0.058569747913609686,
+      "changed_values": 1363.0,
+      "carrier_count": 2760,
+      "meets_ber_gate": true,
+      "meets_detectability_gate": true
+    },
+    {
+      "payload_bits": 5000,
+      "bits_embedded": 5264,
+      "bits_compared": 5264,
+      "bit_errors": 0,
+      "ber": 0.0,
+      "decrypt_ok": true,
+      "recovered_matches": true,
+      "kl_divergence": 2.7270896680420265e-05,
+      "detector_accuracy": 0.5028000026941299,
+      "sign_bias": 0.015144646167755127,
+      "mean_shift": 1.1438169167377055e-07,
+      "std_shift": 9.313225746154785e-10,
+      "mean_abs_delta": 0.05273423711937594,
+      "changed_values": 2656.0,
+      "carrier_count": 5264,
+      "meets_ber_gate": true,
+      "meets_detectability_gate": true
+    },
+    {
+      "payload_bits": 10000,
+      "bits_embedded": 10264,
+      "bits_compared": 10264,
+      "bit_errors": 0,
+      "ber": 0.0,
+      "decrypt_ok": true,
+      "recovered_matches": true,
+      "kl_divergence": 5.53399404452648e-05,
+      "detector_accuracy": 0.5028000026941299,
+      "sign_bias": 0.015146642923355103,
+      "mean_shift": 3.857530828099698e-08,
+      "std_shift": 2.3283064365386963e-10,
+      "mean_abs_delta": 0.04707810657067034,
+      "changed_values": 5087.0,
+      "carrier_count": 10264,
+      "meets_ber_gate": true,
+      "meets_detectability_gate": true
+    },
+    {
+      "payload_bits": 20000,
+      "bits_embedded": 20264,
+      "bits_compared": 20264,
+      "bit_errors": 0,
+      "ber": 0.0,
+      "decrypt_ok": true,
+      "recovered_matches": true,
+      "kl_divergence": 3.819238190772012e-05,
+      "detector_accuracy": 0.5028000026941299,
+      "sign_bias": 0.015140146017074585,
+      "mean_shift": 2.1545747586060315e-07,
+      "std_shift": 2.0954757928848267e-09,
+      "mean_abs_delta": 0.04158360214490892,
+      "changed_values": 10074.0,
+      "carrier_count": 20264,
+      "meets_ber_gate": true,
+      "meets_detectability_gate": true
+    },
+    {
+      "payload_bits": 50000,
+      "bits_embedded": 50264,
+      "bits_compared": 50264,
+      "bit_errors": 0,
+      "ber": 0.0,
+      "decrypt_ok": true,
+      "recovered_matches": true,
+      "kl_divergence": 2.9955785066704266e-05,
+      "detector_accuracy": 0.5028000026941299,
+      "sign_bias": 0.015141665935516357,
+      "mean_shift": 1.840235199779272e-07,
+      "std_shift": 1.6298145055770874e-09,
+      "mean_abs_delta": 0.03514346302642207,
+      "changed_values": 25069.0,
+      "carrier_count": 50264,
+      "meets_ber_gate": true,
+      "meets_detectability_gate": true
+    }
+  ],
+  "metrics": {
+    "sizes_tested": 6,
+    "sizes_measured": 6,
+    "sizes_at_ber_zero": [
+      1000,
+      2500,
+      5000,
+      10000,
+      20000,
+      50000
+    ],
+    "max_tested_payload_at_ber_zero_bits": 50000,
+    "detector_accuracy_range": [
+      0.5028000026941299,
+      0.5028000026941299
+    ],
+    "kl_range": [
+      0.0,
+      5.53399404452648e-05
+    ]
+  },
+  "method": {
+    "seed": 42,
+    "pre_registered": "Sizes and gates fixed in this file and THRESHOLDS['exp26'] before the first run; failing points stay in the artifact.",
+    "relation_to_exp4": "exp4 tests 500k/1M/5M/10M with BER only (guide's minimum); this is the 1k-50k band with detectability attached."
+  },
+  "notes": [
+    "One embed per size, sequential, same model and residual cache as exp3/exp23 \u2014 the curve is a property of payload size alone.",
+    "The figure (same basename, .svg) is generated from these points with no plotting dependency: committed alongside so reviewers need no environment to see it."
+  ],
+  "reproducibility": {
+    "model_id": "Qwen/Qwen2.5-3B",
+    "family": "qwen",
+    "expected_layers": 36,
+    "actual_layers": null,
+    "layer_count_matches_expected": null,
+    "random_seed": 42,
+    "device": "mps",
+    "software_versions": {
+      "python": "3.14.3",
+      "platform": "macOS-26.3-arm64-arm-64bit-Mach-O",
+      "torch": "2.13.0",
+      "transformers": "5.16.1",
+      "bitsandbytes": "0.50.2",
+      "accelerate": "1.14.0",
+      "numpy": "2.5.2"
+    },
+    "platform_notes": [
+      "Apple Silicon/MPS: NF4 dequantization must stay on CPU. Moving large dequantized tensors to MPS raises RuntimeError: Invalid buffer size.",
+      "MPS has no native int8/uint8 dequantize; PYTORCH_ENABLE_MPS_FALLBACK is set to 1."
+    ],
+    "residual_source": null,
+    "residual_definition": "R = W_FP16 - dequantize(W_NF4)",
+    "timestamp": "2026-10-07T13:32:49.562899+00:00"
+  }
+}

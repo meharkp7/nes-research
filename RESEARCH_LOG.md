@@ -2918,3 +2918,102 @@ exp23 block re-pinned to the run-4 artifact (12-cell order, survivors
 protocol pins); RESEARCH_LOG §36 (this section).
 Verification: test suite **85 OK**; claim_audit **127/127**;
 check_consistency **9/9**.
+
+## 37. W9 paper hardening — exp25/26/27 (2026-10-07)
+
+Context: after the final verdict the directive was to lock the
+implementation and run three reviewer-proofing experiments, then move
+to paper writing — no new mechanisms, no resurrecting NF4 residuals.
+W8 was already taken (delta productization), so these are registered as
+**W9.1/W9.2/W9.3**; gates were added to
+`experiment_registry.THRESHOLDS` **before** any run, and exp25's
+hypotheses were written into its module before the first execution.
+
+### exp25 — selection-policy ablation (W9.1)
+
+Holds the sign write rule, the QACI Hamilton layer allocation
+(digest-pinned `8660969e1ddd` across all seven replicates), the
+10,000-bit payload and the message fixed; varies only the within-layer
+positions: random (randperm) ×3, magnitude (the production fallback ==
+`CarrierSelector.select_by_magnitude`) ×1, key-derived
+(`IndexSampler`) ×3. Per arm: round trip, exp7's detectability trio,
+exp6/exp10's σ=0.001 noise protocol, and a keyless attacker re-running
+the public QACI rule at exact and nominal payload size (exp13's
+`tier_kerckhoffs` shape, sign read). Embedding stayed the unmodified
+production path — only `pipeline.select` is bound to a policy wrapper.
+
+| arm | BER | detector acc | KL max | robustness @σ0.001 | keyless (exact size) |
+|---|---|---|---|---|---|
+| random ×3 | 0.0 | 0.5028 | ≈0 | 0.0724–0.0757 | 0.492–0.499 |
+| **magnitude (production)** | 0.0 | 0.5028 | 3.62e-05 | **0.0** | **0.4713** |
+| keyed ×3 | 0.0 | 0.5028 | ≈0 | 0.0731–0.0757 | 0.499–0.508 |
+
+Readings: **selection buys robustness at zero detectability cost** —
+the production magnitude carriers hold 0.0 under exp6's noise where
+importance-blind policies land at ~0.074 (past the 0.02 line, flagged
+per arm, not gated — the pre-registered asymmetry). No policy leaks a
+readable stream to the public rule: every arm's keyless read is
+chance. **H1/H2/H4 supported; H3 missed and is kept exactly as
+written** — the prediction "near-exact position re-derivation ⇒ BER <
+0.1" failed because Hamilton allocation recomputed on the stego
+weights never reproduces the writer's per-layer counts in full (7/36
+layers on the final embed; the drift varies per embed — 2 to 18 of 36
+across runs — because the sign flips follow the AES key), and the
+first mismatched layer desynchronizes the stream from there down.
+That attributes exp13's recorded partial-allocation observation to a
+mechanism.
+
+### exp26 — capacity scaling curve (W9.2)
+
+Production path unchanged at 1k/2.5k/5k/10k/20k/50k bits, one embed
+per size: every size round-trips **0.0** with decrypt + message match;
+detector accuracy is the identical 0.5028 at every size, KL 0–5.53e-05
+against gates 0.55/0.05; mean |Δ| at changed values *falls* with
+payload (0.0662 → 0.0351 — larger payloads reach further down the
+magnitude ranking). A dependency-free four-panel SVG figure
+(`exp26_capacity_scaling_qwen__qwen2.5_3b.svg`) is committed beside
+the artifact; exp4 still owns the 500k–10M band with BER only.
+
+### exp27 — threat-model boundary (W9.3)
+
+Four conditions over ONE production embed: control (full map + correct
+key) recovers at 0.0; **0/10 wrong keys recover, 10/10 fail GCM
+authentication, 0 plaintext emitted** — while the channel reads 0.0
+with the map and no key, so readability and confidentiality are
+measured as separate axes; six partial-access cells (first 50/25/10%
+of layers + seeded scattered subsets) all fail to decrypt with every
+*available* bit at 0.0 (coverage 0.037–0.521, monotone in fraction
+for both patterns); the public-rule attacker is chance-level (0.4875
+exact / 0.4937 nominal at precision 0.9899, allocations matching
+2/36). Message confidentiality holds at every access level without
+the key — channel readability is exp13's axis and is not claimed.
+
+### Development record (runs and fixes, honestly)
+
+exp25 executed 5×: run 1 crashed at the wrapper seam (`TypeError:
+'_PolicySelect' object is not callable` — the wrapper object was
+bound where the embedder calls a method; fixed by binding the wrapper's
+bound method and calling the captured original directly), run 2 killed
+mid-flight to fix a note that hardcoded another experiment's
+drift numbers, run 3 added the promised per-arm robustness flag, run 4
+re-ran after the W8→W9 label correction (W8 belongs to delta
+productization; THRESHOLDS descriptions are gate fields, so the
+artifacts had to be regenerated to match), run 5 folded in the final
+embed-independent note wording. exp26 and exp27 executed 2× each
+(initial + W9 re-label). Three tests for the new suites initially
+failed on scaffolding (in-place wrapper mutation, replicate labels) —
+the tests were corrected, not the implementation. METHODOLOGY_SUMMARY
+also lost its three stray "lattice" mentions (PLAN:95 already records:
+no lattice, key-derived grid only).
+
+Docs: PLAN status row + W-table row 12 (W9); nes-llm/README rows
+exp25/26/27 with the final numbers; METHODOLOGY_SUMMARY chain row 9 +
+verdict row + counts (27 experiments); claim_audit `audit_paper_experiments`
+(+25 recomputation checks: gates mirrored from THRESHOLDS, every BER
+recomputed from counts, flags re-derived, hypothesis verdicts
+recomputed independently, ranges only where drift is real); 23 new
+unit tests (policy construction, wrapper semantics, gate evaluation,
+partial-access stream arithmetic, SVG well-formedness).
+
+Verification: test suite **108 OK**; claim_audit **152/152**;
+check_consistency **9/9**.
