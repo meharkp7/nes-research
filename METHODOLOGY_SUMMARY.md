@@ -40,4 +40,4 @@ Repo: `meharkp7/nes-research` · 24 experiments · payload = 10,000 bits in Qwen
 | Is it undetectable? | ⚠️ **Partially** — exactly chance (0.5000) to blind detectors, but a lattice-aware reader finds it |
 | Does it survive model operations? | ⚠️ **Splits cleanly** — training-level operations yes, int4 compression no |
 
-**Final state:** all work items done, 0 NOT_RUN, 0 blockers, tree clean, pushed at `c16e1a8`.
+**Final state:** all work items done, 0 NOT_RUN, 0 blockers, tree clean, pushed to `main`.
