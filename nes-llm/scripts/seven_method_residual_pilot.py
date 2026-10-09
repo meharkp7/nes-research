@@ -389,7 +389,7 @@ def main(argv: list[str] | None = None) -> int:
             report_path.parent.mkdir(parents=True, exist_ok=True)
             if not report_path.exists():
                 report_path.write_text(
-                    json.dumps(failure, indent=2, ensure_ascii=False) + "\\n",
+                    json.dumps(failure, indent=2, ensure_ascii=False) + "\n",
                     encoding="utf-8",
                 )
         print(json.dumps(failure, indent=2, ensure_ascii=False), flush=True)
