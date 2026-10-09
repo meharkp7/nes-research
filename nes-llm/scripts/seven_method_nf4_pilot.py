@@ -72,7 +72,7 @@ def run_embed(args) -> dict:
         )
         per_layer = {}
         for key in state:
-            match = re.search(r"(?:^|\\.)layers\\.(\\d+)\\.", key)
+            match = re.search(r"(?:^|\.)layers\.(\d+)\.", key)
             if not match:
                 continue
             layer_id = int(match.group(1))
