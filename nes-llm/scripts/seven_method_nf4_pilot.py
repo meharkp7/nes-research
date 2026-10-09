@@ -40,6 +40,8 @@ def run_embed(args) -> dict:
     out = args.output.expanduser().resolve()
     expected_out = args.corpus_out.expanduser().resolve()
     report_out = args.report.expanduser().resolve() if args.report else out.with_suffix(".json")
+    if len({out, expected_out, report_out}) != 3:
+        raise ValueError("artifact, expected corpus, and report paths must all differ")
     for path in (out, expected_out, report_out):
         if path.exists():
             raise FileExistsError(f"Refusing to overwrite existing path: {path}")
