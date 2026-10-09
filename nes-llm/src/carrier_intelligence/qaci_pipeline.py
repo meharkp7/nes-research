@@ -39,6 +39,7 @@ class QACIPipeline:
         fp16_weights: Dict[int, torch.Tensor] = None,
         quantized_weights: Dict[int, torch.Tensor] = None,
         module_names: Dict[int, str] = None,
+        use_position_bias: bool = True,
     ) -> "CarrierSelectionResult":
         """
         Args:
@@ -62,6 +63,12 @@ class QACIPipeline:
             )
             for lid in sorted(residuals.keys())
         ]
+        # Research mode can remove the hand-designed positional prior and rank
+        # layers only by measured tensor statistics.
+        if not use_position_bias:
+            for profile in layer_profiles:
+                profile["position_bias"] = 1.0
+                profile["adjusted_quality"] = profile["quality_score"]
 
         # Step 2 — Allocate bits (Hamilton Largest-Remainder)
         allocations = self.scheduler.allocate(layer_profiles, total_payload_bits)
