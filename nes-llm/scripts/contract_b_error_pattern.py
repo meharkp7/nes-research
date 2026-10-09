@@ -15,8 +15,11 @@ from __future__ import annotations
 import argparse
 import hashlib
 import json
+import sys
 from datetime import datetime, timezone
 from pathlib import Path
+
+sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
 from scripts.contract_b_nf4_b14 import (
     DEFAULT_TENSOR_KEY,
