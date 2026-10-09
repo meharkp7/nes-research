@@ -12,6 +12,7 @@ import hashlib
 import json
 from pathlib import Path
 import random
+import re
 import sys
 
 import torch
@@ -49,9 +50,9 @@ def run_embed(args) -> dict:
     corpus = encode_corpus(rows)
     bits = bytes_to_bits(corpus)
     key = bytes.fromhex(args.test_key_hex)
-    names = [x.strip() for x in args.tensors.split(",") if x.strip()]
-    if not names or len(names) != len(set(names)):
-        raise ValueError("--tensors must contain unique comma-separated state-dict tensor names")
+    requested_tensors = args.tensors.strip()
+    if not requested_tensors:
+        raise ValueError("--tensors must be a comma-separated list or 'auto'")
 
     print(f"Loading source model on CPU: {args.model}", flush=True)
     model = AutoModelForCausalLM.from_pretrained(
@@ -59,6 +60,44 @@ def run_embed(args) -> dict:
         local_files_only=args.local_files_only, trust_remote_code=False,
     )
     state = model.state_dict()
+    if requested_tensors.lower() == "auto":
+        # Choose the same attention projection family across five evenly spaced
+        # layers. This handles architectures with q_proj and fused-qkv variants
+        # without silently inventing nonexistent tensor names.
+        preferred_suffixes = (
+            ".self_attn.q_proj.weight",
+            ".self_attn.qkv_proj.weight",
+            ".self_attn.query_key_value.weight",
+            ".self_attn.Wqkv.weight",
+        )
+        per_layer = {}
+        for key in state:
+            match = re.search(r"(?:^|\\.)layers\\.(\\d+)\\.", key)
+            if not match:
+                continue
+            layer_id = int(match.group(1))
+            suffix = next((s for s in preferred_suffixes if key.endswith(s)), None)
+            if suffix is None:
+                continue
+            previous = per_layer.get(layer_id)
+            if previous is None or preferred_suffixes.index(suffix) < preferred_suffixes.index(
+                next(s for s in preferred_suffixes if previous.endswith(s))
+            ):
+                per_layer[layer_id] = key
+        layer_ids = sorted(per_layer)
+        if len(layer_ids) < 1:
+            raise KeyError(
+                "Could not auto-select attention projection tensors; pass explicit --tensors names"
+            )
+        count = min(5, len(layer_ids))
+        selected_positions = sorted({round(i * (len(layer_ids) - 1) / max(count - 1, 1))
+                                      for i in range(count)})
+        names = [per_layer[layer_ids[position]] for position in selected_positions]
+        print(f"Auto-selected NF4 tensors: {names}", flush=True)
+    else:
+        names = [x.strip() for x in requested_tensors.split(",") if x.strip()]
+    if not names or len(names) != len(set(names)):
+        raise ValueError("--tensors must contain unique state-dict tensor names or 'auto'")
     missing = [name for name in names if name not in state]
     if missing:
         raise KeyError(f"Tensor names not found: {missing}")
@@ -256,7 +295,7 @@ def main() -> int:
     embed = sub.add_parser("embed")
     embed.add_argument("--model", required=True)
     embed.add_argument("--method", choices=("qse", "dce"), required=True)
-    embed.add_argument("--tensors", required=True, help="comma-separated model state-dict tensor names")
+    embed.add_argument("--tensors", required=True, help="comma-separated state-dict tensor names, or 'auto' to select an attention projection across up to five layers")
     embed.add_argument("--message", action="append", default=[])
     embed.add_argument("--messages-file", type=Path)
     embed.add_argument("--output", type=Path, required=True)
