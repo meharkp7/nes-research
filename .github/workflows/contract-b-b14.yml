@@ -12,9 +12,12 @@ on:
       - "nes-llm/scripts/contract_b_detectability_diagnostic.py"
       - "nes-llm/scripts/contract_b_robustness_matrix.py"
       - "nes-llm/scripts/contract_b_nf4_requantization.py"
+      - "nes-llm/scripts/contract_b_error_pattern.py"
       - "nes-llm/tests/test_contract_b_nf4_b14.py"
       - "nes-llm/tests/test_contract_b_robustness_matrix.py"
       - "nes-llm/tests/test_contract_b_nf4_requantization.py"
+      - "nes-llm/tests/test_contract_b_error_pattern.py"
+      - "nes-llm/CONTRACT_B_B15_PLAN.md"
       - "nes-llm/CONTRACT_B_B14.md"
       - ".github/workflows/contract-b-b14.yml"
 
@@ -28,10 +31,11 @@ jobs:
           python-version: "3.11"
       - name: Syntax-check Contract B scripts
         working-directory: nes-llm
-        run: python -m py_compile scripts/contract_b_nf4_b14.py scripts/contract_b_capacity_sweep.py scripts/contract_b_utility_eval.py scripts/contract_b_detectability_diagnostic.py scripts/contract_b_robustness_matrix.py scripts/contract_b_nf4_requantization.py
+        run: python -m py_compile scripts/contract_b_nf4_b14.py scripts/contract_b_capacity_sweep.py scripts/contract_b_utility_eval.py scripts/contract_b_detectability_diagnostic.py scripts/contract_b_robustness_matrix.py scripts/contract_b_nf4_requantization.py scripts/contract_b_error_pattern.py
       - name: Run B1.4 synthetic tests
         working-directory: nes-llm
         run: |
           python -m unittest discover -s tests -p 'test_contract_b_nf4_b14.py' -v
           python -m unittest discover -s tests -p 'test_contract_b_robustness_matrix.py' -v
           python -m unittest discover -s tests -p 'test_contract_b_nf4_requantization.py' -v
+          python -m unittest discover -s tests -p 'test_contract_b_error_pattern.py' -v
