@@ -1,6 +1,6 @@
 # Seven-Method Implementation Status
 
-Updated: 2026-10-09
+Updated: 2026-10-10
 Working branch: `research/contract-b-b14-and-evaluation`
 Protocol: [SEVEN_METHOD_RESEARCH_PROTOCOL.md](SEVEN_METHOD_RESEARCH_PROTOCOL.md)
 
@@ -75,7 +75,7 @@ The first CI run caught a real zero-capacity allocation bug; it was fixed and th
 
 ## Next implementation milestone
 
-Run CI and then execute both lanes against the user's local Qwen2.5-3B cache: first a short one-message smoke test, then a multi-string Unicode corpus. Fix runtime/receiver issues without changing historical experiment paths. For each of the seven methods, require a fresh-process artifact reload and exact recovery check before calling the artifact round trip successful. Then add a report aggregator, utility/detectability metrics, and the fixed seven-model matrix. Keep QSE reference-assisted results clearly separate from DCE artifact-only parity recovery.
+Run `scripts/run_seven_method_long_corpus_matrix.py --dry-run`, then execute the seven-cell multilingual matrix with `--local-files-only`. Fix runtime/receiver issues without changing historical experiment paths. For each method, require fresh-process artifact reload and per-message exact recovery checks before calling the round trip successful. Keep QSE reference-assisted results clearly separate from DCE artifact-only parity recovery. After reviewing all seven recovery outcomes, add/run the unified statistical and learned detectability harness on this same model; expand to other models only after the one-model gate passes.
 
 
 ## First local validation commands
@@ -115,15 +115,15 @@ RUN_ID=$(date +%Y%m%d_%H%M%S)
 
 Run the same NF4 command with `--method qse` to characterize the reference-assisted QSE receiver separately. Do not combine its BER with DCE as if their receiver contracts were identical.
 
-## Milestone 4 — long-form seven-model matrix harness
+## Milestone 4 — one-model multilingual seven-method stress test
 
-**Status: IMPLEMENTED; CI syntax-check PASS; real matrix NOT_RUN from this environment.**
+**Status: IMPLEMENTED; local real-model run pending.**
 
-- Added three fixed JSONL corpora under `nes-llm/data/seven_method_corpora/`: `corpus_a.jsonl`, `corpus_b.jsonl`, and `corpus_c.jsonl`.
-- Each corpus contains three paragraph-length messages and includes varied technical prose, punctuation, structured fragments, Unicode and byte-preservation edge cases. The exact same corpus files are reused across all selected model/method cells.
-- Added `nes-llm/scripts/run_seven_method_long_corpus_matrix.py`, a sequential model-major driver for the seven fixed models, seven method families and three corpora (147 planned cells by default).
-- The driver determines model layer count from the local/Hub config and spreads residual carriers over up to five early/middle/late layers. It runs embed and fresh-process extract, retains logs and per-cell reports, and incrementally writes JSON/CSV summaries.
+- Existing corpora `corpus_a.jsonl`, `corpus_b.jsonl`, and `corpus_c.jsonl` are retained unchanged for historical/repeated-corpus work.
+- Added `nes-llm/data/seven_method_corpora/corpus_multilingual_7.jsonl`: seven paragraph-length strings in English, Hindi, Spanish, French, Chinese, Arabic and Japanese. The runner validates 5–7 records and at least 100 Unicode characters per record before model work.
+- The default runner is now deliberately restricted to one cached model (`Qwen/Qwen2.5-3B`) and one multilingual corpus, giving **7 methods × 1 model × 1 corpus = 7 cells**. This avoids repeating the prior Gemma config/model failure across seven methods and focuses on the requested experiment.
+- The driver determines Qwen2.5-3B layer count from config and spreads residual carriers over up to five early/middle/late layers. It runs embed and fresh-process extract, retains logs and per-cell reports, and incrementally writes JSON/CSV summaries. Use `--local-files-only` to avoid downloading anything.
 - Added `--tensors auto` to the NF4 pilot to select an attention projection across up to five evenly spaced layers, preferring `q_proj` and falling back to fused-QKV naming where available.
 - Per-cell outcomes are kept distinct: `PASS`, `BER_FAIL`, `EMBED_FAILED`, `EXTRACT_FAILED`, and `BLOCKED`. No failed cell is silently discarded.
 - The matrix runner does **not** perform steganalysis yet. This stage expands and stress-tests payload length/corpus diversity across the full model-method roster; statistical and learned detectability comes next.
-- CI syntax-check and existing synthetic tests passed on commit `649a7e780bb7b1236d6e1950ed5c695d3430800a`. This does not mean any of the 147 real-model cells have run. Local model access, caches, gated model permissions, capacity, and runtime remain to be verified.
+- The real seven-cell run has not been executed by the repository-editing environment; it must run against the user's local Qwen2.5-3B cache. Prior embedding failures from a multi-model run are not evidence that all methods fail on Qwen2.5-3B.
