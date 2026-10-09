@@ -153,8 +153,8 @@ def main() -> int:
         print(f"\n===== MODEL {model_index}/{len(args.models)}: {model_id} =====", flush=True)
         try:
             layer_count = load_layer_count(model_id, args.local_files_only)
-            layers = spread_layers(layer_count)
-            print(f"Detected {layer_count} layers; residual layers={layers}", flush=True)
+            layers = "auto"
+            print(f"Detected {layer_count} layers; residual layers will be selected automatically by QACI", flush=True)
         except Exception as exc:
             reason = f"{type(exc).__name__}: {exc}"
             for corpus in corpora:
@@ -179,8 +179,7 @@ def main() -> int:
                     embed_cmd = [
                         sys.executable, str(RESIDUAL_RUNNER), "embed",
                         "--model", model_id, "--method", method,
-                        "--messages-file", str(corpus), "--layers",
-                        ",".join(str(x) for x in layers),
+                        "--messages-file", str(corpus), "--layers", "auto",
                         "--output", str(artifact), "--corpus-out", str(expected),
                     ]
                     extract_cmd = [
