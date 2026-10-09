@@ -165,6 +165,22 @@ def run(args: argparse.Namespace) -> dict:
         raise RuntimeError(f"Expected 16-entry NF4 codebook, got {len(codebook)}")
     if math.ceil(original.numel() / blocksize) > len(absmax):
         raise RuntimeError("NF4 quantization-state absmax does not cover tensor")
+    # Guard against a nibble-order or codebook-layout mismatch. Do not report
+    # a DCE distortion result unless the decoded NF4 indices reproduce the
+    # actual BitsAndBytes dequantized tensor to numerical precision.
+    reconstructed_from_codes = torch.tensor(
+        [codebook[c] * absmax[i // blocksize] for i, c in enumerate(original_codes)],
+        dtype=torch.float32,
+    )
+    codebook_reconstruction_rmse = float(torch.mean((reconstructed_from_codes - base)**2).sqrt().item())
+    report["checks"] = report.get("checks", {})
+    report["checks"]["nf4_codebook_layout_reconstruction_rmse"] = codebook_reconstruction_rmse
+    if codebook_reconstruction_rmse > 1e-4:
+        raise RuntimeError(
+            "Packed NF4 nibble order/codebook mapping did not reproduce the "
+            f"BitsAndBytes tensor (RMSE={codebook_reconstruction_rmse:.6g}); "
+            "refusing to report DCE metrics from a mismatched layout."
+        )
     target_hist = hist([original_codes[p] for p in positions])
     baseline_codes = original_codes.copy()
     dce_codes = original_codes.copy()
