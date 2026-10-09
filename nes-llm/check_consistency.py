@@ -26,6 +26,24 @@ from src.experiments.experiment_registry import (  # noqa: E402
 )
 from src.experiments.paths import RESULTS_DIR  # noqa: E402
 
+def resolve_artifact_path(raw_path):
+    """Resolve historical absolute paths after a repository is moved.
+
+    Older manifest entries record the author's local absolute path. Prefer that
+    path when it exists; otherwise resolve the artifact by its repository-root
+    results/ location. Do not treat a missing artifact as present.
+    """
+    if not raw_path:
+        return None
+    path = Path(raw_path)
+    if path.exists():
+        return path
+    fallback = RESULTS_DIR / path.name
+    if fallback.exists():
+        return fallback
+    return path
+
+
 
 def check(name, ok, detail=""):
     status = "OK  " if ok else "FAIL"
@@ -53,9 +71,10 @@ def main() -> int:
             manifest_mod.PASS, manifest_mod.FAIL
         ):
             continue
-        path = entry.get("artifact_path")
-        if not path or not Path(path).exists():
-            missing.append(f"{key} -> {path}")
+        raw_path = entry.get("artifact_path")
+        path = resolve_artifact_path(raw_path)
+        if path is None or not path.exists():
+            missing.append(f"{key} -> {raw_path}")
 
     results.append(
         check(
@@ -69,8 +88,8 @@ def main() -> int:
     # 2. Artifact status agrees with manifest status.
     disagreements = []
     for key, entry in records.items():
-        path = entry.get("artifact_path")
-        if not path or not Path(path).exists():
+        path = resolve_artifact_path(entry.get("artifact_path"))
+        if path is None or not path.exists():
             continue
         try:
             data = json.loads(Path(path).read_text(encoding="utf-8"))
@@ -144,10 +163,10 @@ def main() -> int:
     # 6. Capacity is reported as maximum *tested*.
     capacity = records.get("exp4::Qwen/Qwen2.5-3B")
     if capacity is not None:
-        path = capacity.get("artifact_path")
+        path = resolve_artifact_path(capacity.get("artifact_path"))
         text = ""
-        if path and Path(path).exists():
-            text = Path(path).read_text(encoding="utf-8").lower()
+        if path is not None and path.exists():
+            text = path.read_text(encoding="utf-8").lower()
         results.append(
             check(
                 "capacity labelled 'maximum tested', not absolute",
