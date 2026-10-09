@@ -89,6 +89,7 @@ class BatchDistributionOptimizer:
             if not feasible:
                 raise ValueError(f"candidate set {index - 1} has no payload-feasible candidate")
             support = set(target_probs)
+            support.update(counts)
             support.update(c.quantized_value for c in feasible)
             best = None
             best_score = None
