@@ -1,6 +1,6 @@
 import unittest
 
-from src.experiments.nf4_artifact_codec import pack_codes, tensor_dequant, unpack_codes
+from src.experiments.nf4_artifact_codec import allocate_payload_segments, pack_codes, tensor_dequant, unpack_codes
 
 
 class NF4ArtifactCodecTests(unittest.TestCase):
@@ -32,6 +32,22 @@ class NF4ArtifactCodecTests(unittest.TestCase):
     def test_tensor_dequant_rejects_insufficient_scales(self):
         with self.assertRaises(ValueError):
             tensor_dequant([1, 2, 3], list(range(16)), [1.0], 2)
+
+    def test_payload_is_spread_across_all_selected_tensors(self):
+        segments = allocate_payload_segments({"a": 10000, "b": 10000, "c": 10000, "d": 10000, "e": 10000}, 1544)
+        self.assertEqual([name for name, _, _ in segments], ["a", "b", "c", "d", "e"])
+        self.assertEqual(sum(end - start for _, start, end in segments), 1544)
+        self.assertLessEqual(max(end - start for _, start, end in segments) - min(end - start for _, start, end in segments), 1)
+
+    def test_payload_allocation_respects_small_tensor_capacity(self):
+        segments = allocate_payload_segments({"tiny": 2, "large1": 100, "large2": 100}, 12)
+        lengths = {name: end - start for name, start, end in segments}
+        self.assertEqual(lengths["tiny"], 2)
+        self.assertEqual(sum(lengths.values()), 12)
+
+    def test_payload_allocation_rejects_overflow(self):
+        with self.assertRaises(ValueError):
+            allocate_payload_segments({"a": 2, "b": 3}, 6)
 
 
 if __name__ == "__main__":
