@@ -222,6 +222,8 @@ def allocate_bits(bits: Sequence[int], tensor_capacities: Mapping[str, int]) -> 
     for name, capacity in normalized:
         if offset >= len(bits):
             break
+        if capacity == 0:
+            continue
         end = min(len(bits), offset + capacity)
         allocations.append(BitAllocation(name, offset, tuple(int(b) for b in bits[offset:end])))
         offset = end
