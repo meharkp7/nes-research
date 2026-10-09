@@ -13,7 +13,7 @@ FIELDS = [
 
 
 def write_csv(path: Path, source: str, role: str, *, run: str = "run-1",
-              blocks=(0, 1), model: str = "model-a", tensor: str = "layer.weight",
+              blocks=(0, 1), model: str | None = None, tensor: str = "layer.weight",
               digest: str | None = None):
     with path.open("w", newline="", encoding="utf-8") as stream:
         writer = csv.DictWriter(stream, fieldnames=FIELDS)
@@ -24,7 +24,7 @@ def write_csv(path: Path, source: str, role: str, *, run: str = "run-1",
                 "artifact_sha256": digest or (("a" if role == "clean" else "b") * 64),
                 "run_id": run,
                 "source_id": source,
-                "model_id": model,
+                "model_id": model or f"model-{source}",
                 "tensor_key": tensor,
                 "role": role,
                 "label": "0" if role == "clean" else "1",
@@ -52,7 +52,7 @@ def test_audit_accepts_complete_matched_pairs(tmp_path: Path):
     assert result.returncode == 0, result.stderr
     report = json.loads(result.stdout)
     assert report["status"] == "passed"
-    assert report["source_group_count"] == 3
+    assert report["model_group_count"] == 3
     assert report["pair_count"] == 3
     assert all(pair["block_count_per_role"] == 2 for pair in report["pairs"])
 
@@ -102,7 +102,7 @@ def test_audit_rejects_too_few_source_groups(tmp_path: Path):
             paths.append(path)
     result = invoke(tmp_path, paths)
     assert result.returncode != 0
-    assert "Need >= 3 independent source_id groups" in result.stderr
+    assert "Need >= 3 distinct model_id groups" in result.stderr
 
 
 
