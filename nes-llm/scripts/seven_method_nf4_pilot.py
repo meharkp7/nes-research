@@ -61,8 +61,8 @@ def run_embed(args) -> dict:
     )
     state = model.state_dict()
     if requested_tensors.lower() == "auto":
-        # Choose the same attention projection family across five evenly spaced
-        # layers. This handles architectures with q_proj and fused-qkv variants
+        # Enumerate the same attention projection family across all available
+        # layers. This handles architectures with q_proj and fused-QKV variants
         # without silently inventing nonexistent tensor names.
         preferred_suffixes = (
             ".self_attn.q_proj.weight",
@@ -121,7 +121,7 @@ def run_embed(args) -> dict:
                 break
         if available_capacity < len(bits):
             raise ValueError(f"Payload needs {len(bits)} bits; all profiled candidate tensors provide {available_capacity}")
-        names.sort(key=lambda name: int(re.search(r"(?:^|\\.)layers\\.(\\d+)\\.", name).group(1)))
+        names.sort(key=lambda name: int(re.search(r"(?:^|\.)layers\.(\d+)\.", name).group(1)))
         print(json.dumps({"auto_tensor_selection": "distribution_entropy_then_capacity", "selected_tensors": names, "candidate_scores": {name: candidate_scores[name] for name in names}, "payload_bits": len(bits), "selected_capacity": available_capacity}, indent=2), flush=True)
     else:
         names = [x.strip() for x in requested_tensors.split(",") if x.strip()]
