@@ -34,8 +34,8 @@ class DistortionBudgetedBatchOptimizerTests(unittest.TestCase):
 
     def test_distribution_matching_uses_budget_when_available(self):
         sets = [
-            [c(0, 0, 0, 0.0), c(1, 1, 0, 0.04)],
-            [c(0, 0, 1, 0.0), c(1, 1, 1, 0.04)],
+            [c(0, 0, 0, 0.01), c(1, 1, 0, 0.02)],
+            [c(0, 0, 1, 0.01), c(1, 1, 1, 0.02)],
         ]
         result = DistortionBudgetedBatchOptimizer(1.0).optimize(
             sets, {0.0: 1, 1.0: 1}, [0, 1]
