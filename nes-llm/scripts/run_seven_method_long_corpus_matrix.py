@@ -75,6 +75,43 @@ def write_json(path: Path, value: Any) -> None:
     path.write_text(json.dumps(value, indent=2, ensure_ascii=False) + "\n", encoding="utf-8")
 
 
+def parse_json_report(stdout: str, report_path: Path) -> dict[str, Any]:
+    """Parse a JSON report even when libraries print device/progress lines first."""
+    text = stdout.strip()
+    if text:
+        try:
+            value = json.loads(text)
+            if isinstance(value, dict):
+                return value
+        except json.JSONDecodeError:
+            pass
+
+        # Some imports/backends emit plain-text lines (e.g. "Using device: mps")
+        # before the JSON object. Scan candidate object starts with raw_decode.
+        decoder = json.JSONDecoder()
+        for index, char in enumerate(text):
+            if char != "{":
+                continue
+            try:
+                value, _end = decoder.raw_decode(text[index:])
+            except json.JSONDecodeError:
+                continue
+            if isinstance(value, dict) and (
+                "schema" in value or "exact_match" in value or "error_type" in value
+            ):
+                return value
+
+    # The report file is the durable fallback when the subprocess crashes
+    # before it emits JSON or stdout contains a traceback.
+    try:
+        value = json.loads(report_path.read_text(encoding="utf-8"))
+        if isinstance(value, dict):
+            return value
+    except (OSError, json.JSONDecodeError):
+        pass
+    return {}
+
+
 def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--models", nargs="+", default=DEFAULT_MODELS)
@@ -213,17 +250,12 @@ def main() -> int:
                     continue
 
                 extract_rc, extract_stdout, extract_stderr = run_command(extract_cmd, extract_log)
-                try:
-                    extract_data = json.loads(extract_stdout)
-                    if method in NF4_METHODS:
+                extract_data = parse_json_report(extract_stdout, extract_report)
+                if method in NF4_METHODS and extract_data:
+                    # NF4 extractor currently prints its report but does not
+                    # always persist one; save parsed output consistently.
+                    if not extract_report.exists():
                         write_json(extract_report, extract_data)
-                except json.JSONDecodeError:
-                    # Prefer the structured report if the extractor failed
-                    # before printing JSON, or emitted non-JSON diagnostics.
-                    try:
-                        extract_data = json.loads(extract_report.read_text(encoding="utf-8"))
-                    except (OSError, json.JSONDecodeError):
-                        extract_data = {}
                 if extract_rc == 0 and extract_data.get("exact_match") is True:
                     status = "PASS"
                     reason = ""
