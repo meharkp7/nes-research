@@ -19,7 +19,7 @@ from bitsandbytes.functional import quantize_4bit, dequantize_4bit
 from transformers import AutoModelForCausalLM
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
-from src.experiments.nf4_artifact_codec import pack_codes, tensor_dequant, unpack_codes
+from src.experiments.nf4_artifact_codec import allocate_payload_segments, pack_codes, tensor_dequant, unpack_codes
 from src.experiments.seven_method_protocol import (
     MessageRecord, bytes_to_bits, bits_to_bytes, corpus_summary, decode_corpus,
     encode_corpus, keyed_positions, load_jsonl, normalize_records,
@@ -72,14 +72,10 @@ def run_embed(args) -> dict:
         capacities[name] = int(value.numel())
     if len(bits) > sum(capacities.values()):
         raise ValueError(f"Framed corpus needs {len(bits)} bits; selected NF4 tensors hold {sum(capacities.values())}")
-    allocations = []
-    offset = 0
-    for name, cap in capacities.items():
-        if offset >= len(bits):
-            break
-        end = min(len(bits), offset + cap)
-        allocations.append((name, offset, end, bits[offset:end]))
-        offset = end
+    allocations = [
+        (name, start, end, bits[start:end])
+        for name, start, end in allocate_payload_segments(capacities, len(bits))
+    ]
     del state, model
 
     artifact_layers = {}
