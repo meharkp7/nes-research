@@ -23,6 +23,7 @@ on:
       - "nes-llm/tests/test_contract_b_nf4_requantization.py"
       - "nes-llm/tests/test_contract_b_error_pattern.py"
       - "nes-llm/tests/test_distribution_constrained_optimizer.py"
+      - "nes-llm/tests/test_batch_distribution_optimizer.py"
       - "nes-llm/DCE_IMPLEMENTATION_STATUS.md"
       - "nes-llm/CONTRACT_B_B15_PLAN.md"
       - "nes-llm/CONTRACT_B_B14.md"
@@ -41,7 +42,7 @@ jobs:
         working-directory: nes-llm
         run: |
           python -m py_compile scripts/contract_b_nf4_b14.py scripts/contract_b_capacity_sweep.py scripts/contract_b_utility_eval.py scripts/contract_b_detectability_diagnostic.py scripts/contract_b_robustness_matrix.py scripts/contract_b_nf4_requantization.py scripts/contract_b_error_pattern.py
-          python -m py_compile src/optimization/__init__.py src/optimization/cost_function.py src/optimization/candidate_generator.py src/optimization/optimizer.py scripts/dce_candidate_benchmark.py scripts/dce_weight_sweep.py
+          python -m py_compile src/optimization/__init__.py src/optimization/cost_function.py src/optimization/candidate_generator.py src/optimization/optimizer.py src/optimization/batch_optimizer.py scripts/dce_candidate_benchmark.py scripts/dce_weight_sweep.py
       - name: Run B1.4 and B1.5 synthetic tests
         working-directory: nes-llm
         run: |
@@ -53,6 +54,7 @@ jobs:
         working-directory: nes-llm
         run: |
           python -m unittest discover -s tests -p 'test_distribution_constrained_optimizer.py' -v
+          python -m unittest discover -s tests -p 'test_batch_distribution_optimizer.py' -v
           python -m unittest discover -s tests -p 'test_dce_candidate_benchmark.py' -v
           python -m unittest discover -s tests -p 'test_dce_weight_sweep.py' -v
           python scripts/dce_candidate_benchmark.py --carriers 128 --seed 20261009
