@@ -87,16 +87,20 @@ def hist(values: list[int]) -> dict[int, int]:
 
 
 def run(args: argparse.Namespace) -> dict:
-    source = Path(args.model).expanduser().resolve()
+    raw_model = args.model
+    source_path = Path(raw_model).expanduser()
+    model_ref = str(source_path.resolve()) if source_path.exists() else raw_model
     report_path = Path(args.output).expanduser().resolve()
     if report_path.exists():
         raise FileExistsError(f"Refusing to overwrite report: {report_path}")
-    if not source.exists():
-        raise FileNotFoundError(f"Model path does not exist: {source}")
+    if not source_path.exists() and not args.local_files_only and "/" not in raw_model:
+        raise FileNotFoundError(
+            f"Model must be an existing local directory or a Hugging Face model ID: {raw_model}"
+        )
 
-    print(f"Loading FP16/BF16 source model on CPU: {source}", flush=True)
+    print(f"Loading FP16/BF16 source model on CPU: {model_ref}", flush=True)
     model = AutoModelForCausalLM.from_pretrained(
-        str(source), torch_dtype=torch.float16, device_map="cpu",
+        model_ref, torch_dtype=torch.float16, device_map="cpu",
         local_files_only=args.local_files_only, trust_remote_code=False,
     )
     state = model.state_dict()
@@ -122,7 +126,7 @@ def run(args: argparse.Namespace) -> dict:
     report = {
         "schema": "nes.real_nf4_candidate_pilot.v1",
         "created_at_utc": datetime.now(timezone.utc).isoformat(),
-        "model_path": str(source), "tensor": args.tensor,
+        "model_path": model_ref, "tensor": args.tensor,
         "tensor_values_tested": int(original.numel()), "payload_bits": n_bits,
         "seed": args.seed, "blocksize": args.blocksize,
         "quantizer": "bitsandbytes.functional.quantize_4bit(quant_type='nf4')",
