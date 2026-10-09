@@ -17,6 +17,7 @@ Existing output files are never overwritten.
 from __future__ import annotations
 
 import argparse
+import hashlib
 import json
 from pathlib import Path
 import sys
@@ -58,7 +59,6 @@ def main(argv: list[str] | None = None) -> int:
     records: list[MessageRecord] = []
     if args.messages_file is not None:
         records.extend(load_jsonl(args.messages_file))
-    start = len(records)
     records.extend(
         MessageRecord(f"cli-{index + 1:04d}", text)
         for index, text in enumerate(args.message)
@@ -84,7 +84,7 @@ def main(argv: list[str] | None = None) -> int:
     blob = encode_corpus(rows)
     summary = corpus_summary(rows)
     summary["output_file"] = output.name
-    summary["output_sha256"] = __import__("hashlib").sha256(blob).hexdigest()
+    summary["output_sha256"] = hashlib.sha256(blob).hexdigest()
     summary["input_sources"] = {
         "messages_file": str(args.messages_file) if args.messages_file else None,
         "cli_message_count": len(args.message),
