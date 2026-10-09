@@ -179,21 +179,68 @@ def run_embed(args) -> dict:
             receiver_absmax = absmax
             receiver_blocksize = int(qstate.blocksize)
         else:
-            # QSE remains reference-assisted: preserve its current receiver
-            # contract rather than claiming a blind/artifact-only decoder.
+            # QSE is reference-assisted. Its perturbation must survive the
+            # *second* NF4 quantization, so search increasing margins and
+            # retain the lowest-BER candidate (smallest margin wins ties).
             reference = original - base
-            delta = max(float(reference.std().item()) * args.qse_margin, 1e-8)
-            embedded = original - base
-            for bit, pos in zip(segment, positions):
-                embedded[pos] = reference[pos] + delta if bit else reference[pos] - delta
-            qse_weight = base + embedded
-            qse_q, qse_state = quantize_4bit(qse_weight, quant_type="nf4", blocksize=args.blocksize)
-            stored_codes = unpack_codes(qse_q, original.numel())
+            base_delta = max(float(reference.std().item()) * args.qse_margin, 1e-8)
+            best_candidate = None
+            qse_attempts = 0
+            for attempt in range(args.qse_max_attempts):
+                delta = base_delta * (2 ** attempt)
+                qse_weight = original.clone()
+                for bit, pos in zip(segment, positions):
+                    qse_weight[pos] = original[pos] + delta if bit else original[pos] - delta
+                qse_q, qse_state = quantize_4bit(
+                    qse_weight, quant_type="nf4", blocksize=args.blocksize
+                )
+                candidate_codes = unpack_codes(qse_q, original.numel())
+                candidate_codebook = qse_state.code.detach().float().cpu().flatten()
+                candidate_absmax = qse_state.absmax.detach().float().cpu().flatten()
+                candidate_blocksize = int(qse_state.blocksize)
+                candidate_values = torch.tensor(
+                    tensor_dequant(
+                        candidate_codes, candidate_codebook, candidate_absmax,
+                        candidate_blocksize,
+                    ),
+                    dtype=torch.float32,
+                )
+                errors = 0
+                for bit, pos in zip(segment, positions):
+                    observed = float(candidate_values[pos]) - float(base[pos])
+                    decoded = int(observed >= float(reference[pos]))
+                    errors += int(decoded != int(bit))
+                qse_attempts = attempt + 1
+                candidate = {
+                    "errors": errors,
+                    "delta": delta,
+                    "codes": candidate_codes,
+                    "state": qse_state,
+                    "codebook": candidate_codebook,
+                    "absmax": candidate_absmax,
+                    "blocksize": candidate_blocksize,
+                }
+                if best_candidate is None or (errors, delta) < (
+                    best_candidate["errors"], best_candidate["delta"]
+                ):
+                    best_candidate = candidate
+                if errors == 0:
+                    break
+            assert best_candidate is not None
+            stored_codes = best_candidate["codes"]
+            receiver_codebook = best_candidate["codebook"]
+            receiver_absmax = best_candidate["absmax"]
+            receiver_blocksize = best_candidate["blocksize"]
             receiver_base = base[positions].clone()
             receiver_reference = reference[positions].clone()
-            receiver_codebook = qse_state.code.detach().float().cpu().flatten()
-            receiver_absmax = qse_state.absmax.detach().float().cpu().flatten()
-            receiver_blocksize = int(qse_state.blocksize)
+            tensor_qse_diagnostics = {
+                "requested_margin": args.qse_margin,
+                "used_delta": best_candidate["delta"],
+                "attempts": qse_attempts,
+                "carrier_bit_errors_after_quantization": best_candidate["errors"],
+                "carrier_ber_after_quantization": best_candidate["errors"] / max(len(segment), 1),
+                "margin_search_exhausted": best_candidate["errors"] != 0,
+            }
 
         packed = torch.tensor(list(pack_codes(stored_codes)), dtype=torch.uint8)
         # Fresh-process receiver only needs packed codes plus documented side information.
@@ -218,6 +265,7 @@ def run_embed(args) -> dict:
             "weight_rmse_vs_clean_nf4": float(torch.mean((dequant-base)**2).sqrt().item()),
             "receiver_side_information": "none beyond keyed carrier positions" if args.method == "dce"
                 else "clean NF4 values and reference residual at carriers",
+            **(tensor_qse_diagnostics if args.method == "qse" else {}),
         }
 
     metadata = {
@@ -331,7 +379,10 @@ def main() -> int:
     embed.add_argument("--corpus-out", type=Path, required=True)
     embed.add_argument("--report", type=Path)
     embed.add_argument("--blocksize", type=int, default=64)
-    embed.add_argument("--qse-margin", type=float, default=0.25)
+    embed.add_argument("--qse-margin", type=float, default=0.25,
+                        help="initial QSE perturbation multiplier relative to NF4 residual std")
+    embed.add_argument("--qse-max-attempts", type=int, default=8,
+                        help="maximum geometrically increasing QSE margins; best measured BER candidate is retained")
     embed.add_argument("--layout-tolerance", type=float, default=1e-4)
     embed.add_argument("--test-key-hex", default="00112233445566778899aabbccddeeff00112233445566778899aabbccddeeff")
     embed.add_argument("--local-files-only", action="store_true")
@@ -340,8 +391,9 @@ def main() -> int:
     extract.add_argument("--expected-corpus", type=Path)
     args = parser.parse_args()
     if args.command == "embed":
-        if args.blocksize < 1 or args.qse_margin < 0 or args.layout_tolerance < 0:
-            parser.error("blocksize must be positive; qse-margin/layout-tolerance must be non-negative")
+        if (args.blocksize < 1 or args.qse_margin < 0 or args.qse_max_attempts < 1
+                or args.layout_tolerance < 0):
+            parser.error("blocksize/qse-max-attempts must be positive; qse-margin/layout-tolerance must be non-negative")
         run_embed(args)
     else:
         run_extract(args)
