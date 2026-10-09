@@ -100,3 +100,37 @@ The next lifecycle experiment must transform a fresh copy of the B1.4 stego chec
 ## Execution boundary
 
 GitHub source access does not provide access to the user's local model cache or Mac runtime. Actual Qwen NF4 reloads, transformations, capacity sweep, utility and detectability runs must be executed locally; source review, synthetic tests, tracked artifact review and analysis can be done separately.
+
+## Phase 6 — real NF4 requantization lifecycle test
+
+This test is deliberately different from flipping packed-code bits. It loads the B1.4 stego model as NF4, dequantizes model weights, saves a floating-point intermediate, reloads that intermediate with a fresh NF4 quantization pass, and saves a new quantized checkpoint. It preserves the pristine source and refuses to overwrite existing output/intermediate directories.
+
+Check available disk space first: this operation can require substantial temporary storage and RAM. It is not a lightweight diagnostic. Run from `nes-llm/`:
+
+```bash
+../.venv/bin/python -m unittest discover -s tests -p 'test_contract_b_nf4_requantization.py' -v
+
+../.venv/bin/python scripts/contract_b_nf4_requantization.py \
+  --stego ../cache/contract_b_nf4_b14_10k \
+  --output-dir ../cache/contract_b_b14_nf4_requantized
+```
+
+The script creates the intermediate at `../cache/contract_b_b14_nf4_requantized_fp16_intermediate` and writes `../cache/contract_b_b14_nf4_requantized_requantization_report.json`. It requires both paths not to exist. It uses local files only and does not access the original non-stego checkpoint. If the process fails, preserve the report and any intermediate/output artifacts for diagnosis rather than deleting them and rerunning blindly.
+
+Then independently run the B1.4 receiver against the new output:
+
+```bash
+PAYLOAD_SHA=$(../.venv/bin/python -c 'import json; print(json.load(open("../cache/contract_b_nf4_b14_10k_b14_sender_report.json"))["payload_sha256"])')
+
+../.venv/bin/python scripts/contract_b_nf4_b14.py receive \
+  --stego-dir ../cache/contract_b_b14_nf4_requantized \
+  --output-payload ../cache/contract_b_b14_nf4_requantized_recovered.bin \
+  --expected-sha256 "$PAYLOAD_SHA"
+```
+
+Interpretation:
+- `PASS_TRANSFORMATION_AND_RECOVERY`: fresh NF4 quantization completed and exact payload recovery survived.
+- `TRANSFORMATION_COMPLETED_RECOVERY_FAILED`: quantization completed, but the carrier payload did not survive. The report includes BER when the envelope header remains readable.
+- `TRANSFORMATION_ERROR`: the transformation did not complete; this is not evidence either for or against payload survival.
+
+The report's carrier BER diagnostic and the independent receiver must agree before marking the result final. Do not infer utility preservation from recovery, or recovery robustness from the small mutation matrix. A new NF4 quantization result applies only to this checkpoint, configuration, and run.
