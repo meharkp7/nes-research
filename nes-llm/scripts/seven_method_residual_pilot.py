@@ -23,6 +23,7 @@ import hashlib
 import json
 from pathlib import Path
 import sys
+import traceback
 from typing import Any
 
 import torch
@@ -196,7 +197,7 @@ def run_embed(args: argparse.Namespace) -> dict:
         "model_family": context.family,
         "expected_model_layers": context.expected_layers,
         "selected_layers": layers,
-        "layer_selection": {"mode": "qaci_profile_then_capacity_gated_quality_ranking" if args.layers.strip().lower() == "auto" else "explicit", "profiles": {str(k): v for k, v in layer_profile_map.items()}, "selection_note": "All layers profiled one at a time; ranked by adjusted QACI quality until estimated carrier capacity covers the payload." if args.layers.strip().lower() == "auto" else "Explicit layer IDs supplied."},
+        "layer_selection": {"mode": "qaci_profile_then_capacity_gated_quality_ranking" if args.layers.strip().lower() == "auto" else "explicit", "profiles": {str(k): v for k, v in layer_profile_map.items()}, "selection_note": "All layers profiled one at a time; ranked by measured QACI quality without positional bias until estimated carrier capacity covers the payload." if args.layers.strip().lower() == "auto" else "Explicit layer IDs supplied."},
         "cache_dir": cache_dir,
         "config": _config_dict(config),
         "corpus": corpus_summary(rows),
@@ -361,9 +362,38 @@ def main(argv: list[str] | None = None) -> int:
     args = parser().parse_args(argv)
     if args.command == "embed":
         run_embed(args)
-    else:
+        return 0
+
+    try:
         run_extract(args)
-    return 0
+        return 0
+    except SystemExit:
+        raise
+    except Exception as exc:
+        # Keep extraction failures machine-readable across the subprocess
+        # boundary. Previously exceptions before report construction (e.g.
+        # artifact reload, strategy construction, or decoder errors) produced
+        # no JSON report, leaving the matrix with BER=None and little context.
+        failure = {
+            "schema": "nes.seven_method_residual_extract.v1",
+            "status": "EXTRACT_EXCEPTION",
+            "artifact": str(args.artifact.expanduser().resolve()),
+            "error_type": type(exc).__name__,
+            "error": str(exc),
+            "traceback": traceback.format_exc(),
+            "exact_match": None,
+            "ber": None,
+        }
+        if args.report:
+            report_path = args.report.expanduser().resolve()
+            report_path.parent.mkdir(parents=True, exist_ok=True)
+            if not report_path.exists():
+                report_path.write_text(
+                    json.dumps(failure, indent=2, ensure_ascii=False) + "\\n",
+                    encoding="utf-8",
+                )
+        print(json.dumps(failure, indent=2, ensure_ascii=False), flush=True)
+        return 2
 
 
 if __name__ == "__main__":
