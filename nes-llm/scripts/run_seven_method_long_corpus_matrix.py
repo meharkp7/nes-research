@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Run the frozen 7-method x 7-model matrix over paragraph-length JSONL corpora.
+"""Run all seven methods on one default model over a multilingual long-message corpus.
 
 Runs one cell at a time and records PASS, BER_FAIL, EMBED_FAILED, EXTRACT_FAILED,
 or BLOCKED. Residual-stream and packed-NF4 methods keep their native artifact
@@ -26,21 +26,13 @@ CORPUS_DIR = ROOT / "data" / "seven_method_corpora"
 RESIDUAL_RUNNER = ROOT / "scripts" / "seven_method_residual_pilot.py"
 NF4_RUNNER = ROOT / "scripts" / "seven_method_nf4_pilot.py"
 
-DEFAULT_MODELS = [
-    "google/gemma-2-2b",
-    "Qwen/Qwen2.5-3B",
-    "meta-llama/Llama-3.1-8B",
-    "google/gemma-2-9b",
-    "microsoft/Phi-3-mini-4k-instruct",
-    "mistralai/Mistral-7B-v0.3",
-    "Qwen/Qwen2.5-7B",
-]
+DEFAULT_MODELS = ["Qwen/Qwen2.5-3B"]
 RESIDUAL_METHODS = [
     "sign", "magnitude_aware", "qae", "lwe_grid_parity", "split_sign_parity"
 ]
 NF4_METHODS = ["qse", "dce"]
 ALL_METHODS = RESIDUAL_METHODS + NF4_METHODS
-DEFAULT_CORPORA = ["corpus_a.jsonl", "corpus_b.jsonl", "corpus_c.jsonl"]
+DEFAULT_CORPORA = ["corpus_multilingual_7.jsonl"]
 
 
 def slug(value: str) -> str:
@@ -105,7 +97,20 @@ def main() -> int:
         from src.experiments.seven_method_protocol import load_jsonl, encode_corpus
         records = load_jsonl(path)
         framed = encode_corpus(records)
-        print(f"Corpus {path.name}: {len(records)} messages, "
+        short_records = [
+            {"id": row.id, "characters": len(row.text)}
+            for row in records if len(row.text) < 100
+        ]
+        if len(records) < 5 or len(records) > 7:
+            parser.error(
+                f"{path.name} must contain 5–7 messages; found {len(records)}"
+            )
+        if short_records:
+            parser.error(
+                f"{path.name} has messages shorter than 100 Unicode characters: "
+                f"{short_records}"
+            )
+        print(f"Corpus {path.name}: {len(records)} messages (each >=100 Unicode characters), "
               f"{sum(len(row.text.encode('utf-8')) for row in records)} UTF-8 bytes, "
               f"{len(framed) * 8} framed bits", flush=True)
         corpora.append(path)
