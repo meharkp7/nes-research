@@ -71,19 +71,19 @@ def run_embed(args) -> dict:
             ".self_attn.Wqkv.weight",
         )
         per_layer = {}
-        for key in state:
-            match = re.search(r"(?:^|\.)layers\.(\d+)\.", key)
+        for state_key in state:
+            match = re.search(r"(?:^|\.)layers\.(\d+)\.", state_key)
             if not match:
                 continue
             layer_id = int(match.group(1))
-            suffix = next((s for s in preferred_suffixes if key.endswith(s)), None)
+            suffix = next((s for s in preferred_suffixes if state_key.endswith(s)), None)
             if suffix is None:
                 continue
             previous = per_layer.get(layer_id)
             if previous is None or preferred_suffixes.index(suffix) < preferred_suffixes.index(
                 next(s for s in preferred_suffixes if previous.endswith(s))
             ):
-                per_layer[layer_id] = key
+                per_layer[layer_id] = state_key
         layer_ids = sorted(per_layer)
         if len(layer_ids) < 1:
             raise KeyError(
