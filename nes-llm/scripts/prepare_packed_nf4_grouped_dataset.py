@@ -48,8 +48,8 @@ def assign_group_splits(groups: list[str], seed: int) -> dict[str, str]:
     unique = sorted(set(groups))
     if len(unique) < 3:
         raise ValueError(
-            f"Need >=3 independent source_id groups for train/validation/test; "
-            f"found {len(unique)}. Blocks are not independent groups."
+            f"Need >=3 distinct model_id groups for train/validation/test; "
+            f"found {len(unique)}. Blocks and tensors from one model are not independent groups."
         )
     rng = random.Random(seed)
     rng.shuffle(unique)
