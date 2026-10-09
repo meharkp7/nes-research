@@ -267,10 +267,20 @@ def run_extract(args: argparse.Namespace) -> dict:
             f"decoder returned {len(recovered_bits)} bits, expected {config.total_payload_bits}"
         )
     recovered_corpus = bits_to_bytes(recovered_bits)
-    rows = decode_corpus(recovered_corpus)
     metadata = artifact["metadata"]
     recovered_sha = hashlib.sha256(recovered_corpus).hexdigest()
     internal_digest_match = recovered_sha == metadata["corpus_sha256"]
+    try:
+        rows = decode_corpus(recovered_corpus)
+        decode_error = None
+        recovered_messages = [
+            {"id": row.id, "utf8_bytes": len(row.text.encode("utf-8"))}
+            for row in rows
+        ]
+    except (ValueError, UnicodeDecodeError) as exc:
+        rows = []
+        decode_error = f"{type(exc).__name__}: {exc}"
+        recovered_messages = []
     report: dict[str, Any] = {
         "schema": "nes.seven_method_residual_extract.v1",
         "artifact": str(artifact_path),
@@ -278,11 +288,9 @@ def run_extract(args: argparse.Namespace) -> dict:
         "registry_method": registry_name,
         "source_model_id": metadata["source_model_id"],
         "selected_layers": metadata["selected_layers"],
-        "message_count": len(rows),
-        "recovered_messages": [
-            {"id": row.id, "utf8_bytes": len(row.text.encode("utf-8"))}
-            for row in rows
-        ],
+        "message_count": len(rows) if decode_error is None else None,
+        "recovered_messages": recovered_messages,
+        "decode_error": decode_error,
         "recovered_corpus_sha256": recovered_sha,
         "embedded_manifest_digest_match": internal_digest_match,
         "artifact_kind": metadata["artifact_kind"],
