@@ -82,7 +82,7 @@ def test_requires_three_independent_source_groups(tmp_path: Path):
             inputs.append(path)
     result, _, _ = invoke(tmp_path, inputs)
     assert result.returncode != 0
-    assert "Need >=3 independent source_id groups" in result.stderr
+    assert "Need >=3 distinct model_id groups" in result.stderr
 
 
 def test_missing_paired_role_is_rejected(tmp_path: Path):
