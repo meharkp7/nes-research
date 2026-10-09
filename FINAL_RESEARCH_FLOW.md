@@ -130,7 +130,7 @@ Run from `nes-llm/` using the repository environment:
 
 # Real NF4 Candidate A/B pilot (use a local FP16/BF16 model directory; report path must be new)
 ../.venv/bin/python scripts/real_nf4_candidate_eval.py \\
-  --model ../cache/models/Qwen2.5-3B \\
+  --model Qwen/Qwen2.5-3B \\
   --tensor model.layers.0.self_attn.q_proj.weight \\
   --payload-bits 10000 \\
   --output ../cache/real_nf4_candidate_eval_qwen3b_$(date +%Y%m%d_%H%M%S).json \\
