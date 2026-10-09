@@ -55,3 +55,53 @@ def _to_float_list(values) -> list[float]:
     if isinstance(values, (int, float)):
         return [float(values)]
     return [float(value) for value in values.detach().float().cpu().flatten().tolist()]
+
+
+def allocate_payload_segments(capacities: dict[str, int], payload_bits: int) -> list[tuple[str, int, int]]:
+    """Spread a bitstream across selected tensors, respecting each capacity.
+
+    Each tensor gets an approximately equal share when capacity permits. This
+    prevents a nominal multi-tensor run from silently using only its first
+    (usually very large) tensor.
+    """
+    if payload_bits < 0:
+        raise ValueError("payload_bits must be non-negative")
+    if any(not isinstance(cap, int) or cap < 0 for cap in capacities.values()):
+        raise ValueError("tensor capacities must be non-negative integers")
+    if payload_bits > sum(capacities.values()):
+        raise ValueError(f"payload needs {payload_bits} bits but capacity is {sum(capacities.values())}")
+    names = list(capacities)
+    segments: list[tuple[str, int, int]] = []
+    offset = 0
+    for index, name in enumerate(names):
+        remaining = payload_bits - offset
+        if remaining <= 0:
+            break
+        tensors_left = len(names) - index
+        fair_share = (remaining + tensors_left - 1) // tensors_left
+        count = min(capacities[name], fair_share)
+        if count:
+            segments.append((name, offset, offset + count))
+            offset += count
+    # If an early tensor has low capacity, any unallocated bits are assigned
+    # to remaining tensors in order, still without exceeding capacity.
+    if offset < payload_bits:
+        for name in names:
+            already = sum(end - start for n, start, end in segments if n == name)
+            available = capacities[name] - already
+            count = min(available, payload_bits - offset)
+            if count:
+                segments.append((name, offset, offset + count))
+                offset += count
+            if offset == payload_bits:
+                break
+    if offset != payload_bits:
+        raise ValueError("could not allocate entire payload")
+    # Keep one contiguous segment per tensor, merging any overflow assignment.
+    merged: dict[str, tuple[int, int]] = {}
+    for name, start, end in segments:
+        if name in merged:
+            merged[name] = (min(merged[name][0], start), max(merged[name][1], end))
+        else:
+            merged[name] = (start, end)
+    return [(name, *merged[name]) for name in names if name in merged]
