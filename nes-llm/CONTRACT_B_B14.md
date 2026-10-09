@@ -115,7 +115,7 @@ Check available disk space first: this operation can require substantial tempora
   --output-dir ../cache/contract_b_b14_nf4_requantized
 ```
 
-The script creates the intermediate at `../cache/contract_b_b14_nf4_requantized_fp16_intermediate` and writes `../cache/contract_b_b14_nf4_requantized_requantization_report.json`. It requires both paths not to exist. It uses local files only and does not access the original non-stego checkpoint. If the process fails, preserve the report and any intermediate/output artifacts for diagnosis rather than deleting them and rerunning blindly.
+The script creates the floating-point intermediate at `../cache/contract_b_b14_nf4_requantized_floating_intermediate` and writes `../cache/contract_b_b14_nf4_requantized_requantization_report.json`. It requires both paths not to exist. It uses local files only and does not access the original non-stego checkpoint. If the process fails, preserve the report and any intermediate/output artifacts for diagnosis rather than deleting them and rerunning blindly.
 
 Then independently run the B1.4 receiver against the new output:
 
@@ -152,7 +152,7 @@ Observed report values:
 
 This is a **negative result for exact artifact-only recovery after this specific NF4 requantization path**. The lifecycle transformation and serialization succeeded; the embedded payload did not survive exactly. It does not invalidate the earlier pristine-artifact recovery result, and it must not be reported as a serialization failure or as a general result for all NF4 checkpoints/configurations.
 
-The observed output directories were `cache/contract_b_b14_nf4_requantized_retry3_fp16` (floating-point intermediate; BF16 weights) and `cache/contract_b_b14_nf4_requantized_retry3` (fresh NF4 output). The report is `cache/contract_b_b14_nf4_requantized_retry3_requantization_report.json`. These are local generated artifacts and are not assumed to be tracked in Git.
+The observed output directories were `cache/contract_b_b14_nf4_requantized_retry3_fp16` (the directory name says fp16, but the saved weights were BF16) and `cache/contract_b_b14_nf4_requantized_retry3` (fresh NF4 output). The report is `cache/contract_b_b14_nf4_requantized_retry3_requantization_report.json`. These are local generated artifacts and are not assumed to be tracked in Git.
 
 **Next experiment:** preserve B1.4 unchanged as the baseline. If testing error correction or redundant carrier coding, define it as a separately versioned protocol/experiment, then evaluate recovery, capacity, utility, and detectability under the same declared transformation. Do not overwrite or relabel this failed B1.4 run.
 
