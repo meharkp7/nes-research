@@ -93,7 +93,7 @@ def run_embed(args) -> dict:
         absmax = qstate.absmax.detach().float().cpu().flatten()
         if codebook.numel() != 16:
             raise RuntimeError(f"{name}: expected 16 NF4 codebook entries")
-        recon = tensor_dequant(original_codes, codebook, absmax, int(qstate.blocksize))
+        recon = torch.tensor(tensor_dequant(original_codes, codebook, absmax, int(qstate.blocksize)), dtype=torch.float32)
         layout_rmse = float(torch.mean((recon - base)**2).sqrt().item())
         if layout_rmse > args.layout_tolerance:
             raise RuntimeError(f"{name}: packed NF4 layout mismatch, RMSE={layout_rmse}")
@@ -129,7 +129,7 @@ def run_embed(args) -> dict:
             receiver_absmax = qse_state.absmax.detach().float().cpu().flatten()
             receiver_blocksize = int(qse_state.blocksize)
 
-        packed = pack_codes(stored_codes)
+        packed = torch.tensor(list(pack_codes(stored_codes)), dtype=torch.uint8)
         # Fresh-process receiver only needs packed codes plus documented side information.
         artifact_layers[name] = {
             "packed_codes": packed,
@@ -143,7 +143,7 @@ def run_embed(args) -> dict:
             "bit_start": start,
             "bit_end": end,
         }
-        dequant = tensor_dequant(stored_codes, receiver_codebook, receiver_absmax, receiver_blocksize)
+        dequant = torch.tensor(tensor_dequant(stored_codes, receiver_codebook, receiver_absmax, receiver_blocksize), dtype=torch.float32)
         tensor_reports[name] = {
             "num_values": int(original.numel()), "payload_bits": n,
             "bit_start": start, "bit_end": end,
@@ -209,7 +209,7 @@ def run_extract(args) -> dict:
         if method == "dce":
             recovered.extend(codes[pos] & 1 for pos in positions)
         else:
-            values = tensor_dequant(codes, entry["codebook"], entry["absmax"], int(entry["blocksize"]))
+            values = torch.tensor(tensor_dequant(codes, entry["codebook"], entry["absmax"], int(entry["blocksize"])), dtype=torch.float32)
             for index, pos in enumerate(positions):
                 observed = float(values[pos]) - float(entry["qse_base_at_carriers"][index])
                 recovered.append(int(observed >= float(entry["qse_reference_at_carriers"][index])))
