@@ -125,7 +125,7 @@ def main() -> int:
         if output.exists():
             raise FileExistsError(f"Refusing to overwrite existing report: {output}")
         output.parent.mkdir(parents=True, exist_ok=True)
-        output.write_text(serialized + "\\n", encoding="utf-8")
+        output.write_text(serialized + "\n", encoding="utf-8")
         print(f"Report: {output.resolve()}")
     print(serialized)
     return 0
