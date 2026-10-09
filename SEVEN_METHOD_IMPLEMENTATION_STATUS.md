@@ -114,3 +114,16 @@ RUN_ID=$(date +%Y%m%d_%H%M%S)
 ```
 
 Run the same NF4 command with `--method qse` to characterize the reference-assisted QSE receiver separately. Do not combine its BER with DCE as if their receiver contracts were identical.
+
+## Milestone 4 — long-form seven-model matrix harness
+
+**Status: IMPLEMENTED; CI syntax-check PASS; real matrix NOT_RUN from this environment.**
+
+- Added three fixed JSONL corpora under `nes-llm/data/seven_method_corpora/`: `corpus_a.jsonl`, `corpus_b.jsonl`, and `corpus_c.jsonl`.
+- Each corpus contains three paragraph-length messages and includes varied technical prose, punctuation, structured fragments, Unicode and byte-preservation edge cases. The exact same corpus files are reused across all selected model/method cells.
+- Added `nes-llm/scripts/run_seven_method_long_corpus_matrix.py`, a sequential model-major driver for the seven fixed models, seven method families and three corpora (147 planned cells by default).
+- The driver determines model layer count from the local/Hub config and spreads residual carriers over up to five early/middle/late layers. It runs embed and fresh-process extract, retains logs and per-cell reports, and incrementally writes JSON/CSV summaries.
+- Added `--tensors auto` to the NF4 pilot to select an attention projection across up to five evenly spaced layers, preferring `q_proj` and falling back to fused-QKV naming where available.
+- Per-cell outcomes are kept distinct: `PASS`, `BER_FAIL`, `EMBED_FAILED`, `EXTRACT_FAILED`, and `BLOCKED`. No failed cell is silently discarded.
+- The matrix runner does **not** perform steganalysis yet. This stage expands and stress-tests payload length/corpus diversity across the full model-method roster; statistical and learned detectability comes next.
+- CI syntax-check and existing synthetic tests passed on commit `649a7e780bb7b1236d6e1950ed5c695d3430800a`. This does not mean any of the 147 real-model cells have run. Local model access, caches, gated model permissions, capacity, and runtime remain to be verified.
