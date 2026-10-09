@@ -56,7 +56,7 @@ def run_embed(args) -> dict:
 
     print(f"Loading source model on CPU: {args.model}", flush=True)
     model = AutoModelForCausalLM.from_pretrained(
-        args.model, torch_dtype=torch.float16, device_map="cpu",
+        args.model, revision=args.revision, torch_dtype=torch.float16, device_map="cpu",
         local_files_only=args.local_files_only, trust_remote_code=False,
     )
     state = model.state_dict()
@@ -150,7 +150,10 @@ def run_embed(args) -> dict:
     tensor_reports = {}
     for name, start, end, segment in allocations:
         original = originals[name]
-        qweight, qstate = quantize_4bit(original, quant_type="nf4", blocksize=args.blocksize)
+        qweight, qstate = quantize_4bit(
+            original, quant_type="nf4", blocksize=args.blocksize,
+            compress_statistics=True,
+        )
         base = dequantize_4bit(qweight, quant_state=qstate).float().cpu().flatten()
         n = len(segment)
         positions = keyed_positions(key, name, int(original.numel()), n)
@@ -192,7 +195,8 @@ def run_embed(args) -> dict:
                 for bit, pos in zip(segment, positions):
                     qse_weight[pos] = original[pos] + delta if bit else original[pos] - delta
                 qse_q, qse_state = quantize_4bit(
-                    qse_weight, quant_type="nf4", blocksize=args.blocksize
+                    qse_weight, quant_type="nf4", blocksize=args.blocksize,
+                    compress_statistics=True,
                 )
                 candidate_codes = unpack_codes(qse_q, original.numel())
                 candidate_codebook = qse_state.code.detach().float().cpu().flatten()
@@ -273,7 +277,17 @@ def run_embed(args) -> dict:
         "artifact_kind": "multi_tensor_packed_nf4_experiment_artifact_not_hf_checkpoint",
         "method": args.method,
         "model_id": args.model,
+        "source_revision": args.revision or "revision-unrecorded",
+        "source_dtype_loaded": "float16",
         "quantizer": "bitsandbytes NF4",
+        "quantizer_config": {
+            "quant_type": "nf4",
+            "blocksize_requested": args.blocksize,
+            "blocksize_observed_per_tensor": {
+                name: int(artifact_layers[name]["blocksize"]) for name in artifact_layers
+            },
+            "compress_statistics": True,
+        },
         "blocksize_requested": args.blocksize,
         "payload_bits": len(bits),
         "corpus": corpus_summary(rows),
@@ -371,6 +385,10 @@ def main() -> int:
     sub = parser.add_subparsers(dest="command", required=True)
     embed = sub.add_parser("embed")
     embed.add_argument("--model", required=True)
+    embed.add_argument(
+        "--revision", default=None,
+        help="Pin the exact Hugging Face model commit/ref; recorded in artifact metadata",
+    )
     embed.add_argument("--method", choices=("qse", "dce"), required=True)
     embed.add_argument("--tensors", required=True, help="comma-separated state-dict tensor names, or 'auto' to select an attention projection across up to five layers")
     embed.add_argument("--message", action="append", default=[])
