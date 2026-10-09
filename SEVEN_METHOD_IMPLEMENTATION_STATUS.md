@@ -29,9 +29,19 @@ This is an implementation ledger, not a result claim. **The complete seven-metho
 - `nes-llm/tests/test_seven_method_protocol.py`
   - Covers multi-string and Unicode round trips, empty strings, duplicate IDs, digest corruption, JSONL defaults, deterministic allocations, capacity overflow, carrier position stability and metadata privacy.
 
-The first CI run caught a real zero-capacity allocation bug; it was fixed and the test was rerun successfully. The CI workflow now syntax-checks the protocol/CLI and runs these unit tests plus a Unicode multi-message CLI smoke test.
+The first CI run caught a real zero-capacity allocation bug; it was fixed and the test was rerun successfully. CI passed for commit `9b53f898` and for the subsequent runner/workflow changes; it syntax-checks the protocol and runner, runs these unit tests, and executes a Unicode multi-message CLI smoke test.
 
-## Milestone 2 — method adapter audit
+## Milestone 2 — residual-stream artifact runner
+
+**Status: IMPLEMENTED; syntax/CI-tested; real-model run NOT_RUN.**
+
+- `nes-llm/scripts/seven_method_residual_pilot.py` implements `embed` and `extract` commands for the five existing residual-stream methods: sign, magnitude-aware, QAE, LWE-inspired grid/parity, and SplitStrategy.
+- It uses the established model residual cache, accepts a list of selected transformer layers, builds one framed multi-message bitstream, uses the existing QACI carrier selector and the method's registered encoder/decoder, then writes a residual-tensor bundle.
+- The extract command reloads the artifact and can compare against a separate expected-corpus file to report bit errors, BER and exact match. It can run as a separate process from the embed command.
+- **This is not a Hugging Face model checkpoint** and does not yet establish model utility, detectability or transformation robustness. It validates the shared corpus and method-specific residual receiver contract only.
+- The packed-NF4 QSE and DCE paths are intentionally not routed through this residual runner.
+
+## Milestone 3 — method adapter audit
 
 | Method | Existing source/interface | Status for the unified artifact harness |
 |---|---|---|
@@ -53,4 +63,4 @@ The first CI run caught a real zero-capacity allocation bug; it was fixed and th
 
 ## Next implementation milestone
 
-Build the method adapter contract and Qwen2.5-3B runner. First implement the five existing residual-stream methods through their matching extractors; separately implement packed-NF4 adapters for QSE and DCE. Both lanes must consume the same framed corpus and emit the same report schema while preserving their true representation differences. Require save/reload and a fresh-process receiver test before declaring a method's artifact round trip successful.
+Run the residual-stream pilot on Qwen2.5-3B from the user's local cache, starting with one short message and then a multi-string Unicode corpus. Fix any runtime/receiver issues without changing historical code paths. In parallel, design a multi-tensor packed-NF4 artifact adapter for QSE and DCE that consumes the same framed corpus. Both lanes must emit a comparable report schema while preserving their true representation differences. Require fresh-process reload and exact recovery before declaring a method's artifact round trip successful.
