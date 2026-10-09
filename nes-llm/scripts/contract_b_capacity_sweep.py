@@ -1,12 +1,13 @@
 #!/usr/bin/env python3
-"""Contract B capacity sweep on the packed NF4 tensor, without writing checkpoints.
+"""Contract B capacity sweep on a packed NF4 tensor, without writing checkpoints.
 
 Run from nes-llm:
 ../.venv/bin/python scripts/contract_b_capacity_sweep.py \
   --checkpoint ../cache/contract_b_nf4_probe_retry \
   --sizes-bits 1000 10000 25000 50000 --repeats 3
 
-Mechanism-level capacity/recovery only; not utility, detectability, robustness, or security.
+This measures mechanism-level capacity/recovery only, not utility, detectability,
+robustness, or security.
 """
 from __future__ import annotations
 
@@ -14,9 +15,12 @@ import argparse
 import hashlib
 import json
 import statistics
+import sys
 from datetime import datetime, timezone
 from pathlib import Path
 
+# Ensure "scripts.contract_b_nf4_b14" resolves when this file is executed by path.
+sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 from scripts.contract_b_nf4_b14 import (
     DEFAULT_TENSOR_KEY, TEST_KEY_HEX, embed, envelope, extract,
     find_shard, read_tensor, to_bits,

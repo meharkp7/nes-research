@@ -1,6 +1,7 @@
 import hashlib,json,struct,tempfile,unittest
 from pathlib import Path
 from scripts.contract_b_nf4_b14 import DEFAULT_TENSOR_KEY,TEST_KEY_HEX,PAYLOAD_BITS,payload_bytes,envelope,to_bits,positions,code_at,set_code,embed,extract,read_header,read_tensor
+from scripts.contract_b_capacity_sweep import make_payload
 
 class ContractBB14Tests(unittest.TestCase):
  def setUp(self): self.key=bytes.fromhex(TEST_KEY_HEX)
@@ -28,4 +29,7 @@ class ContractBB14Tests(unittest.TestCase):
    with path.open("wb") as f: f.write(struct.pack("<Q",len(encoded))); f.write(encoded); f.write(packed)
    header,start=read_header(path); self.assertGreater(start,8)
    _,record,lo,hi,actual=read_tensor(path,DEFAULT_TENSOR_KEY); self.assertEqual(record["shape"],[len(packed),1]); self.assertEqual((lo,hi),(0,len(packed))); self.assertEqual(actual,packed)
+ def test_capacity_payload_generator(self):
+  a=make_payload(1000,0); b=make_payload(1000,0); c=make_payload(1000,1)
+  self.assertEqual(len(a)*8,1000); self.assertEqual(a,b); self.assertNotEqual(a,c)
 if __name__=="__main__": unittest.main()
