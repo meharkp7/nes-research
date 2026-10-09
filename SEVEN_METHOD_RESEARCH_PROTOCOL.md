@@ -188,3 +188,26 @@ Freeze numeric thresholds before the new comparison. Existing suite gates (BER 0
 5. Implement the Qwen2.5-3B end-to-end artifact round-trip for all seven methods, preserving unsupported/failed methods as explicit results.
 6. Run the one-model matrix, review it, then expand to the seven-model matrix.
 7. Only after that, execute full utility, detection and robustness studies.
+
+## 8. Frozen long-form corpus matrix (2026-10-10)
+
+Before running the unified detectability suite, run the seven method families over the fixed seven-model roster using all three shared paragraph-length corpora:
+
+- `nes-llm/data/seven_method_corpora/corpus_a.jsonl`
+- `nes-llm/data/seven_method_corpora/corpus_b.jsonl`
+- `nes-llm/data/seven_method_corpora/corpus_c.jsonl`
+
+Each corpus contains three named messages. The corpora deliberately mix multi-sentence technical prose, structured fragments, punctuation, non-ASCII scripts, emoji and Unicode normalization edge cases. Use the exact same corpus files for every model and method. Do not rewrite or normalize text between cells; the framed UTF-8 bytes and hashes are the source of truth.
+
+The default full matrix is 7 models × 7 methods × 3 corpora = **147 cells**. Execute sequentially, model-major, with one cell's artifact reloaded by a separate extraction process. Record per-message/corpus exact match, BER, bit count, artifact/receiver contract, selected layers/tensors, and failure reason. The matrix runner writes incremental JSON and CSV summaries so interrupted runs still preserve completed cells.
+
+Run command from `nes-llm/`:
+
+```bash
+../.venv/bin/python scripts/run_seven_method_long_corpus_matrix.py --dry-run
+../.venv/bin/python scripts/run_seven_method_long_corpus_matrix.py
+```
+
+Use `--local-files-only` to restrict the run to already cached model configs and weights; unavailable models are recorded as `BLOCKED`. Without that flag, the run may download model files and may require access approval for gated models. The run is sequential and can be long, especially for the larger models and the FP16-source NF4 pilot.
+
+**Gate before detectability:** inspect the summary for all 147 cells. Report the matrix as complete only if every cell is either measured or explicitly recorded as blocked/not applicable with a reason. This gate is about long-payload protocol coverage and recovery—not stealth. Do not infer detectability or security from successful extraction.
