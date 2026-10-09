@@ -89,11 +89,40 @@ def run_embed(args) -> dict:
             raise KeyError(
                 "Could not auto-select attention projection tensors; pass explicit --tensors names"
             )
-        count = min(5, len(layer_ids))
-        selected_positions = sorted({round(i * (len(layer_ids) - 1) / max(count - 1, 1))
-                                      for i in range(count)})
-        names = [per_layer[layer_ids[position]] for position in selected_positions]
-        print(f"Auto-selected NF4 tensors: {names}", flush=True)
+        # Rank candidate tensors by their observed weight-distribution entropy,
+        # then include candidates until raw carrier capacity covers this payload.
+        # No layer IDs or fixed number of layers are predetermined.
+        candidate_scores = {}
+        candidate_capacities = {}
+        for layer_id in layer_ids:
+            tensor_name = per_layer[layer_id]
+            values = state[tensor_name].detach().float().cpu().flatten()
+            candidate_capacities[tensor_name] = int(values.numel() - (values.numel() % 2))
+            sample = values
+            if sample.numel() > 250_000:
+                stride = max(1, sample.numel() // 250_000)
+                sample = sample[::stride]
+            lo, hi = float(sample.min()), float(sample.max())
+            if hi <= lo:
+                entropy = 0.0
+            else:
+                counts = torch.histc(sample, bins=64, min=lo, max=hi)
+                probs = counts / counts.sum().clamp_min(1)
+                entropy = float((-(probs * torch.log2(probs.clamp_min(1e-12))).sum() / 6.0).item())
+            candidate_scores[tensor_name] = entropy
+            del values, sample
+        ranked_names = sorted(candidate_scores, key=lambda name: (candidate_scores[name], candidate_capacities[name]), reverse=True)
+        names = []
+        available_capacity = 0
+        for tensor_name in ranked_names:
+            names.append(tensor_name)
+            available_capacity += candidate_capacities[tensor_name]
+            if available_capacity >= len(bits):
+                break
+        if available_capacity < len(bits):
+            raise ValueError(f"Payload needs {len(bits)} bits; all profiled candidate tensors provide {available_capacity}")
+        names.sort(key=lambda name: int(re.search(r"(?:^|\\.)layers\\.(\\d+)\\.", name).group(1)))
+        print(json.dumps({"auto_tensor_selection": "distribution_entropy_then_capacity", "selected_tensors": names, "candidate_scores": {name: candidate_scores[name] for name in names}, "payload_bits": len(bits), "selected_capacity": available_capacity}, indent=2), flush=True)
     else:
         names = [x.strip() for x in requested_tensors.split(",") if x.strip()]
     if not names or len(names) != len(set(names)):
