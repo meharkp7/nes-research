@@ -105,15 +105,16 @@ The best-supported research story is not “the method is undetectable under all
 
 ## 6. Final work remaining
 
-| Priority | Work | Completion condition |
+| Status | Work | Result / completion condition |
 |---|---|---|
-| P0 | Fix CI standalone-script imports. | GitHub Actions passes the syntax checks, all synthetic tests and every smoke command. |
-| P1 | Re-run the full branch CI after the fix and inspect any subsequent failures. | Latest PR run is green; no failures are hidden or skipped. |
-| P2 | Run the matched real-NF4 DCE pilot only if the local artifact/setup can support a fair comparison. | Same payload, carrier set, seed and receiver contract; record BER/checksum, perturbation, utility and distribution metrics for baseline and DCE. If it does not show a meaningful benefit, stop DCE. |
-| P3 | Re-run the authoritative core audits and reconcile any stale documentation counts. | Manifest, claim audit, consistency checker and test counts agree with the checked-out artifacts. |
-| P4 | Final paper and reproducibility audit. | Every central claim maps to an artifact; failures and limitations remain explicit; commands, configurations and figures are packaged. |
+| **DONE** | Fix CI standalone-script imports. | Added `PYTHONPATH=.` to the workflow; the standalone DCE scripts now run in CI. |
+| **DONE** | Re-run branch CI and inspect the failure. | Workflow run **147 passed**: syntax checks, Contract B synthetic tests, core artifact audits, DCE unit tests and smoke commands. |
+| **DONE** | Audit the recorded core results. | `claim_audit.py`: **152/152 claims verified**. `check_consistency.py`: **9/9 checks passed**. The historical absolute-path issue was fixed in the checker without changing results or gates. |
+| **DONE** | Make the Candidate B go/no-go decision. | Close the current DCE synthetic branch. Its trade-off does not justify another optimizer or an NF4 integration built around the current incompatible candidate interface. Reopen only with a specific NF4-aware, receiver-reproducible hypothesis. |
+| **LOCAL ONLY** | Any additional checkpoint reload or model-dependent validation. | GitHub Actions does not have the user's local Qwen cache. The already-recorded B1.4 pristine and re-quantization outcomes remain the evidence; no new local-model result is claimed here. |
+| **PAPER** | Final manuscript and submission package. | Use this ledger and the committed artifacts to write the manuscript; every central claim must map to an artifact, and failures/limitations must remain explicit. This is paper-writing work, not a reason to add more experiments. |
 
-No new optimizer, embedding architecture, ECC design or broad benchmark sweep is planned unless one of these gates shows that it is necessary.
+No new optimizer, embedding architecture, ECC design or broad benchmark sweep is planned. The current evidence is ready to be consolidated into the paper, with model-cache-dependent work clearly separated from completed CI validation.
 
 ## 7. Reproducibility commands
 
