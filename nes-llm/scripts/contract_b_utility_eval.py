@@ -55,14 +55,16 @@ def evaluate_checkpoint(checkpoint: Path, tokenizer, device: str, max_tokens: in
     try:
         with torch.inference_mode():
             for idx, text in enumerate(DIAGNOSTIC_TEXTS):
-                encoded = tokenizer(
+                # Use the same explicit encode path as the preflight, then build
+                # the batch tensor directly. This avoids tokenizer-call wrapper shape
+                # differences across Transformers versions.
+                token_ids = tokenizer.encode(
                     text,
-                    return_tensors="pt",
+                    add_special_tokens=True,
                     truncation=True,
                     max_length=max_tokens,
-                    add_special_tokens=True,
                 )
-                input_ids = encoded["input_ids"].to(device)
+                input_ids = torch.tensor([token_ids], dtype=torch.long, device=device)
                 if input_ids.shape[1] < 2:
                     raise ValueError(f"Diagnostic text {idx} tokenized to fewer than 2 tokens")
                 output = model(input_ids=input_ids, labels=input_ids)
