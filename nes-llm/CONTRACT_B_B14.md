@@ -37,7 +37,7 @@ The receiver runs in a separate process and reloads the stego model on CPU by de
 From `nes-llm/`:
 
 ```bash
-../.venv/bin/python -m unittest tests.test_contract_b_nf4_b14 -v
+../.venv/bin/python -m unittest discover -s tests -p 'test_contract_b_nf4_b14.py' -v
 ```
 
 Tests cover deterministic payload and envelope accounting, unique/prefix-stable carrier selection, nibble ordering, exact 10k round trip, pair-ID invariants, wrong-key rejection, corruption rejection, and synthetic SafeTensors parsing. They do not replace the actual cached-model run.

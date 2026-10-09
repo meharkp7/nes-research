@@ -1,0 +1,24 @@
+name: Contract B B1.4 unit tests
+
+on:
+  push:
+    branches:
+      - research/contract-b-b14-and-evaluation
+  pull_request:
+    paths:
+      - "nes-llm/scripts/contract_b_nf4_b14.py"
+      - "nes-llm/tests/test_contract_b_nf4_b14.py"
+      - "nes-llm/CONTRACT_B_B14.md"
+      - ".github/workflows/contract-b-b14.yml"
+
+jobs:
+  synthetic-tests:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: Run dependency-free synthetic tests
+        working-directory: nes-llm
+        run: python -m unittest discover -s tests -p 'test_contract_b_nf4_b14.py' -v
