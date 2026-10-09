@@ -1,7 +1,5 @@
 import unittest
 
-import torch
-
 from src.experiments.nf4_artifact_codec import pack_codes, tensor_dequant, unpack_codes
 
 
@@ -22,18 +20,18 @@ class NF4ArtifactCodecTests(unittest.TestCase):
 
     def test_unpack_rejects_impossible_length(self):
         with self.assertRaises(ValueError):
-            unpack_codes(torch.tensor([0x12], dtype=torch.uint8), 3)
+            unpack_codes(bytes([0x12]), 3)
 
     def test_tensor_dequant_uses_block_scales(self):
         codes = [0, 1, 2, 3]
-        codebook = torch.arange(16, dtype=torch.float32)
-        scales = torch.tensor([2.0, 3.0])
+        codebook = list(range(16))
+        scales = [2.0, 3.0]
         got = tensor_dequant(codes, codebook, scales, blocksize=2)
-        self.assertEqual(got.tolist(), [0.0, 2.0, 6.0, 9.0])
+        self.assertEqual(got, [0.0, 2.0, 6.0, 9.0])
 
     def test_tensor_dequant_rejects_insufficient_scales(self):
         with self.assertRaises(ValueError):
-            tensor_dequant([1, 2, 3], torch.arange(16), torch.tensor([1.0]), 2)
+            tensor_dequant([1, 2, 3], list(range(16)), [1.0], 2)
 
 
 if __name__ == "__main__":
