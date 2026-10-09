@@ -59,6 +59,11 @@ jobs:
           python -m unittest discover -s tests -p 'test_contract_b_robustness_matrix.py' -v
           python -m unittest discover -s tests -p 'test_contract_b_nf4_requantization.py' -v
           python -m unittest discover -s tests -p 'test_contract_b_error_pattern.py' -v
+      - name: Audit recorded core experiment artifacts
+        working-directory: nes-llm
+        run: |
+          python claim_audit.py
+          python check_consistency.py
       - name: Run DCE prototype tests
         working-directory: nes-llm
         run: |
