@@ -175,7 +175,7 @@ def run_embed(args: argparse.Namespace) -> dict:
     )
     selection = QACIPipeline(
         total_layers=context.expected_layers, gamma=args.gamma
-    ).select(residuals, total_payload_bits=len(bits))
+    ).select(residuals, total_payload_bits=len(bits), use_position_bias=False)
     strategy = build(config, registry_name)
     result = strategy.embed(residuals, bits, selection.selected_indices)
     if not result.success or result.bits_embedded != len(bits):
