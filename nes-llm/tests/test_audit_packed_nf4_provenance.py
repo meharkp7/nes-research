@@ -103,3 +103,35 @@ def test_audit_rejects_too_few_source_groups(tmp_path: Path):
     result = invoke(tmp_path, paths)
     assert result.returncode != 0
     assert "Need >= 3 independent source_id groups" in result.stderr
+
+
+
+def test_audit_rejects_source_id_reused_for_different_tensor(tmp_path: Path):
+    paths = []
+    for source in ("a", "b", "c"):
+        for role in ("clean", "embedded"):
+            path = tmp_path / f"{source}-{role}.csv"
+            tensor = "layer.weight" if source != "a" else (
+                "layer.weight" if role == "clean" else "other.weight"
+            )
+            write_csv(path, source, role, tensor=tensor)
+            paths.append(path)
+    result = invoke(tmp_path, paths)
+    assert result.returncode != 0
+    assert "clean/embedded model_id or tensor_key mismatch" in result.stderr
+
+
+def test_audit_rejects_source_id_reused_across_runs_for_different_tensor(tmp_path: Path):
+    paths = []
+    for source in ("a", "b", "c"):
+        for role in ("clean", "embedded"):
+            path = tmp_path / f"{source}-{role}.csv"
+            write_csv(path, source, role)
+            paths.append(path)
+    for role in ("clean", "embedded"):
+        path = tmp_path / f"a-run2-{role}.csv"
+        write_csv(path, "a", role, run="run-2", tensor="other.weight")
+        paths.append(path)
+    result = invoke(tmp_path, paths)
+    assert result.returncode != 0
+    assert "maps to multiple model_id/tensor_key identities" in result.stderr
