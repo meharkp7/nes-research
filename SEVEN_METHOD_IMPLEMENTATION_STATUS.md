@@ -55,7 +55,7 @@ The first CI run caught a real zero-capacity allocation bug; it was fixed and th
 
 ## Milestone 3 — packed-NF4 candidate artifact adapter
 
-**Status: IMPLEMENTED; syntax/CI validation pending; real-model run NOT_RUN.**
+**Status: IMPLEMENTED; syntax/CI tests PASS; real-model run NOT_RUN.**
 
 - `nes-llm/scripts/seven_method_nf4_pilot.py` adds a separate multi-tensor packed-NF4 `embed`/`extract` path for QSE and DCE. It consumes the same framed multi-message corpus and allocates its bitstream across explicitly named source-model tensors.
 - DCE writes modified packed NF4 code indices and recovers payload bits from code-index parity. Its decoder does not require the original FP16 cover.
@@ -63,7 +63,7 @@ The first CI run caught a real zero-capacity allocation bug; it was fixed and th
 - The artifact is a research bundle of packed codes and receiver metadata, **not** a quantized Hugging Face checkpoint. The adapter records per-tensor reconstruction RMSE and refuses a clean-codebook layout mismatch.
 - `src/experiments/nf4_artifact_codec.py` centralizes nibble packing/unpacking and codebook reconstruction; `tests/test_nf4_artifact_codec.py` covers these operations without loading a model.
 - The expected framed corpus is stored separately. Extraction reloads the artifact, validates framing/integrity, and can report bit errors, BER and exact match in a fresh process.
-- The CI workflow now syntax-checks this runner and runs the NF4 codec tests. These tests do not substitute for a real model/cache run.
+- The CI workflow syntax-checks this runner and runs the pure-Python NF4 codec tests. The workflow passed for runner commit `673d90f419f7bc28d568205fc9350d3eb24c208c`; these tests do not substitute for a real model/cache run.
 
 ## Not yet implemented / not yet measured
 
@@ -76,3 +76,41 @@ The first CI run caught a real zero-capacity allocation bug; it was fixed and th
 ## Next implementation milestone
 
 Run CI and then execute both lanes against the user's local Qwen2.5-3B cache: first a short one-message smoke test, then a multi-string Unicode corpus. Fix runtime/receiver issues without changing historical experiment paths. For each of the seven methods, require a fresh-process artifact reload and exact recovery check before calling the artifact round trip successful. Then add a report aggregator, utility/detectability metrics, and the fixed seven-model matrix. Keep QSE reference-assisted results clearly separate from DCE artifact-only parity recovery.
+
+
+## First local validation commands
+
+Run from `nes-llm/` after pulling the branch. Use new timestamped output paths because the runners refuse to overwrite artifacts.
+
+Residual-stream smoke test (one method, two strings):
+
+```bash
+RUN_ID=$(date +%Y%m%d_%H%M%S)
+../.venv/bin/python scripts/seven_method_residual_pilot.py embed \
+  --model Qwen/Qwen2.5-3B --method lwe_grid_parity \
+  --message "NES smoke test" --message "नमस्ते 🌍" \
+  --output "../cache/seven_method_lwe_${RUN_ID}.pt" \
+  --corpus-out "../cache/seven_method_lwe_${RUN_ID}.expected.bin"
+
+../.venv/bin/python scripts/seven_method_residual_pilot.py extract \
+  --artifact "../cache/seven_method_lwe_${RUN_ID}.pt" \
+  --expected-corpus "../cache/seven_method_lwe_${RUN_ID}.expected.bin"
+```
+
+Packed-NF4 DCE smoke test across five Qwen2.5-3B projection tensors:
+
+```bash
+RUN_ID=$(date +%Y%m%d_%H%M%S)
+../.venv/bin/python scripts/seven_method_nf4_pilot.py embed \
+  --model Qwen/Qwen2.5-3B --local-files-only --method dce \
+  --tensors "model.layers.0.self_attn.q_proj.weight,model.layers.8.self_attn.q_proj.weight,model.layers.15.self_attn.q_proj.weight,model.layers.23.self_attn.q_proj.weight,model.layers.35.self_attn.q_proj.weight" \
+  --message "first string" --message "second string" --message "नमस्ते 🌍" \
+  --output "../cache/seven_method_dce_${RUN_ID}.pt" \
+  --corpus-out "../cache/seven_method_dce_${RUN_ID}.expected.bin"
+
+../.venv/bin/python scripts/seven_method_nf4_pilot.py extract \
+  --artifact "../cache/seven_method_dce_${RUN_ID}.pt" \
+  --expected-corpus "../cache/seven_method_dce_${RUN_ID}.expected.bin"
+```
+
+Run the same NF4 command with `--method qse` to characterize the reference-assisted QSE receiver separately. Do not combine its BER with DCE as if their receiver contracts were identical.
