@@ -9,7 +9,9 @@ Example (run from nes-llm):
 
 Labels and grouping identifiers are explicit metadata, never inferred from paths
 and never included in the numeric feature vector. The script does not train a
-detector. Split train/validation/test by independent source/run, not by block.
+detector. Split train/validation/test by model identity, not by tensor or block.
+Because the feature schema lacks a verified immutable model revision, grouping by
+model_id is conservative and may undercount distinct checkpoints.
 """
 from __future__ import annotations
 
@@ -143,7 +145,7 @@ def main() -> int:
         "metadata_columns_excluded_from_features": metadata_fields,
         "warning": (
             "Block rows are clustered within a source tensor/run and are not "
-            "independent samples. Hold out entire source_id/run_id groups."
+            "independent samples. Hold out all tensors and runs for a model_id together."
         ),
     }
     print(json.dumps(summary, indent=2))
