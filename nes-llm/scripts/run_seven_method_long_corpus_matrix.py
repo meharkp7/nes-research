@@ -21,6 +21,7 @@ from typing import Any
 
 ROOT = Path(__file__).resolve().parents[1]
 REPO_ROOT = ROOT.parent
+sys.path.insert(0, str(ROOT))
 CORPUS_DIR = ROOT / "data" / "seven_method_corpora"
 RESIDUAL_RUNNER = ROOT / "scripts" / "seven_method_residual_pilot.py"
 NF4_RUNNER = ROOT / "scripts" / "seven_method_nf4_pilot.py"
