@@ -155,16 +155,32 @@ def receiver(a):
     if matches is False: raise ValueError("Recovered payload SHA-256 differs from sender hash")
     output=Path(a.output_payload).resolve(); output.parent.mkdir(parents=True,exist_ok=True); output.write_bytes(payload)
     loaded={}
-    if not a.skip_model_reload: print(f"[B1.4 receiver] Reloading stego model on {a.device}..."); loaded=reload_check(folder,key,a.tensor_key,a.device,payload)
+    reload_error=None
+    if not a.skip_model_reload:
+        print(f"[B1.4 receiver] Reloading stego model on {a.device}...")
+        try:
+            loaded=reload_check(folder,key,a.tensor_key,a.device,payload)
+        except Exception as exc:
+            reload_error=f"{type(exc).__name__}: {exc}"
     checks={"magic_valid":detail["magic_valid"],"length_valid":detail["length_valid"],"checksum_valid":detail["checksum_valid"],
       "payload_is_10000_bits":len(payload)*8==PAYLOAD_BITS,"expected_sha256_matches":matches is not False,
-      "model_reload_check":a.skip_model_reload or loaded.get("reloaded_model_payload_matches",False),**loaded}
-    req=("magic_valid","length_valid","checksum_valid","payload_is_10000_bits","expected_sha256_matches","model_reload_check")
-    report={"stage":"B1.4-receiver","status":"PASS" if all(checks[k] is True for k in req) else "FAIL",
+      "model_reload_check":(not a.skip_model_reload) and loaded.get("reloaded_model_payload_matches",False),**loaded}
+    req=("magic_valid","length_valid","checksum_valid","payload_is_10000_bits","expected_sha256_matches")
+    base_ok=all(checks[k] is True for k in req)
+    if not base_ok:
+        status="FAIL"
+    elif a.skip_model_reload:
+        status="PARTIAL"
+    elif reload_error is not None or not checks["model_reload_check"]:
+        status="FAIL"
+    else:
+        status="PASS"
+    report={"stage":"B1.4-receiver","status":status,
       "stego_checkpoint":str(folder),"tensor_key":a.tensor_key,"payload_bits":len(payload)*8,"payload_bytes":len(payload),
       "payload_sha256":digest,"expected_sha256_supplied":a.expected_sha256 or None,"expected_sha256_matches":matches,
       "recovered_payload_file":str(output),"receiver_inputs":["stego_checkpoint","test_key","fixed_protocol"],
       "original_checkpoint_accessed":False,"residual_or_delta_sidecar_accessed":False,"checks":checks,
+      "model_reload_error":reload_error,
       "interpretation":"Artifact-only mechanism pilot for this artifact/configuration; not a security, stealth, utility, robustness or novelty claim.",
       "python":sys.version,"platform":platform.platform()}
     rp=output.parent/(output.name+"_b14_receiver_report.json"); rp.write_text(json.dumps(report,indent=2,sort_keys=True))
