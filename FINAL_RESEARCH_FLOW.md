@@ -89,7 +89,11 @@ DCE was investigated as an extension to improve the aggregate weight distributio
 
 ## 5. Candidate status and final research position
 
-For project tracking, treat **Candidate A / the established experiment line as frozen**, and **Candidate B / DCE as an experimental extension awaiting its real-model decision gate**. In the manuscript, use the actual method names and avoid relying on candidate labels.
+- **Candidate A (QSE / the original quantization-state or residual-channel direction): closed for the current scope.** Treat the investigation as complete, but keep its outcome precise: the QAE adapter round-tripped in the tested production interface, while `nf4_qae` remained blocked because the required reference weights are not carried by the contract. The original claim that quantization residuals themselves provide the validated channel was not established. This is a closed negative/partial result, not a validated successful method.
+- **Candidate B (DCE): current synthetic implementation closed with a negative/mixed result.** The budgeted batch version gives small average TV improvements over the nearest-feasible baseline at added distortion, but the greedy version's stronger histogram scores cost much more perturbation. No DCE variant dominates the measured objectives. Do not promote the current code to the production registry or claim a real-NF4 result.
+- **Established Exp1–Exp27 line: frozen as the main measured research record.** The final paper should be based on those artifact-backed results, plus Contract B1.4/B1.5 as a separate packed-artifact case study, with all limitations retained.
+
+A real-NF4 DCE pilot is not an automatic next step: the current DCE candidate objective is not integrated with the packed-code carrier contract, and the synthetic comparison did not establish a clear overall win. Reopen Candidate B only if a specific NF4-aware, receiver-reproducible protocol has a clear hypothesis worth testing. This avoids turning a negative result into another open-ended implementation cycle.
 
 The best-supported research story is not “the method is undetectable under all conditions.” It is:
 
