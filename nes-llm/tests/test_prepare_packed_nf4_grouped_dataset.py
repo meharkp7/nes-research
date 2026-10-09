@@ -27,7 +27,7 @@ def write_feature_csv(path: Path, source_id: str, role: str, run_id: str = "run-
                 "artifact_sha256": (source_id[0] * 64),
                 "run_id": run_id,
                 "source_id": source_id,
-                "model_id": "test-model",
+                "model_id": f"test-model-{source_id}",
                 "tensor_key": "layer.weight",
                 "role": role,
                 "label": label,
@@ -61,7 +61,7 @@ def test_grouped_dataset_keeps_source_groups_intact(tmp_path: Path):
     result, out_csv, out_splits = invoke(tmp_path, inputs)
     assert result.returncode == 0, result.stderr
     manifest = json.loads(out_splits.read_text())
-    assert manifest["source_group_count"] == 6
+    assert manifest["model_group_count"] == 6
     assert set(manifest["groups_per_split"].values()) >= {1}
     assert sum(manifest["row_counts"].values()) == 24
 
