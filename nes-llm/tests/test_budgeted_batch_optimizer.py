@@ -12,8 +12,8 @@ def c(value, qvalue, bit, distortion):
 class DistortionBudgetedBatchOptimizerTests(unittest.TestCase):
     def test_never_exceeds_declared_budget(self):
         sets = [
-            [c(0, 0, 0, 0.0), c(1, 1, 0, 0.04)],
-            [c(0, 0, 1, 0.0), c(1, 1, 1, 0.04)],
+            [c(0, 0, 0, 0.01), c(1, 1, 0, 0.02)],
+            [c(0, 0, 1, 0.01), c(1, 1, 1, 0.02)],
         ]
         result = DistortionBudgetedBatchOptimizer(0.10).optimize(
             sets, {0.0: 1, 1.0: 1}, [0, 1]
