@@ -157,3 +157,32 @@ payload bits, candidate sets, and toy quantizer for (1) nearest-feasible,
 (2) the rejected independent per-carrier DCE objective, and (3) this batch
 heuristic. Report all seeds, final TV/KL, perturbation, and BER. Do not infer
 NF4 compatibility, model utility, or undetectability from synthetic results.
+
+
+## Matched three-way benchmark added
+
+Added `scripts/dce_three_way_comparison.py` and
+`tests/test_dce_three_way_comparison.py`. The script compares, on identical
+seeded synthetic cover values, payload bits, candidate sets, and toy
+quantization:
+
+1. nearest-feasible baseline;
+2. existing independent per-carrier DCE;
+3. greedy batch-level DCE.
+
+For each method it reports BER, perturbation, histogram TV, and smoothed
+histogram KL; paired differences versus the baseline are included. The
+comparison is synthetic mechanics only. It does not establish NF4 compatibility
+or any model-level security, utility, or stealth claim. The batch method is a
+greedy heuristic and may still lose to the baseline.
+
+Run from `nes-llm/`:
+
+```bash
+../.venv/bin/python -m unittest discover -s tests -p 'test_dce_three_way_comparison.py' -v
+../.venv/bin/python scripts/dce_three_way_comparison.py --carriers 2000 --seed 20261009 --output ../cache/dce_three_way_comparison_20261009.json
+```
+
+The next decision is based on the matched comparison across multiple seeds,
+not a single favorable run. Any follow-up weight tuning must be declared and
+reported separately from a held-out evaluation.
