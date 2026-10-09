@@ -54,12 +54,49 @@ empirical KL in both directions. All parameters and weights are recorded.
 5. No existing B1.4/B1.5 files or prior experiment artifacts are changed by
    this prototype.
 
-## Next milestone after synthetic validation
+## First benchmark result (seed 20261009; 2,000 carriers)
 
-1. Inspect whether DCE improves the distribution/distortion trade-off against
-   the nearest-feasible baseline; do not tune weights on a single reported seed.
-2. Add repeated seeds and weight sweeps with a declared selection protocol.
-3. Implement a representation-specific candidate generator/decoder against the
-   actual NF4 packed representation and explicit artifact-only receiver contract.
-4. Only after the mechanism is correct should it be registered as an experimental
-   strategy and run as a controlled Qwen2.5-3B pilot.
+The initial single-seed result did **not** support the current DCE objective:
+
+| Metric | Nearest-feasible baseline | DCE | DCE minus baseline |
+|---|---:|---:|---:|
+| BER after toy quantization | 0.000000 | 0.000000 | 0.000000 |
+| Mean squared perturbation | 0.021024 | 0.064852 | +0.043828 |
+| Histogram TV distance | 0.036264 | 0.111773 | +0.075509 |
+| Cover-to-embedded histogram KL (nats) | 0.006574 | 0.068248 | +0.061674 |
+
+DCE's mean squared perturbation was about 3.08 times the baseline, and its
+histogram TV distance was about 3.08 times the baseline. Its cover-to-embedded
+KL was about 10.38 times the baseline. Zero BER is expected from the toy
+candidate construction and is not a differentiating result. This is a negative
+result for this configuration, not evidence against every possible DCE design.
+
+Interpretation: the current per-candidate distribution proxy does not control
+the aggregate histogram well enough. Do not promote this configuration or
+choose a replacement weight from this single seed.
+
+## Next validation gate: repeated seeds and weight sweep
+
+Added `scripts/dce_weight_sweep.py` to compare the same baseline against DCE
+across declared seeds and distribution weights. It reports per-run paired
+deltas, means, population standard deviations, ranges, and whether each metric
+beats baseline on every seed. The default exploratory grid is five seeds and
+weights 0, 0.1, 0.5, 1, 2, 5, and 10.
+
+From nes-llm/:
+
+```bash
+../.venv/bin/python -m unittest discover -s tests -p 'test_dce_weight_sweep.py' -v
+../.venv/bin/python scripts/dce_weight_sweep.py --carriers 2000 --output ../cache/dce_weight_sweep_20261009.json
+```
+
+This sweep is exploratory, not confirmatory: report all weights and seeds, and
+do not describe the best observed setting as validated without a separately
+declared held-out evaluation. Even a better synthetic sweep would not establish
+NF4 compatibility, model utility preservation, undetectability, or checkpoint
+robustness.
+
+After reviewing the sweep, decide whether to redesign the objective around
+aggregate batch-level distribution constraints or stop this DCE variant. Only
+then proceed to a representation-specific NF4 candidate generator/decoder and
+a controlled Qwen2.5-3B pilot.
