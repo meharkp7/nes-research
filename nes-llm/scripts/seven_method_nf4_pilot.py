@@ -212,17 +212,28 @@ def run_extract(args) -> dict:
                 observed = float(values[pos]) - float(entry["qse_base_at_carriers"][index])
                 recovered.append(int(observed >= float(entry["qse_reference_at_carriers"][index])))
     recovered_corpus = bits_to_bytes(recovered)
-    records = decode_corpus(recovered_corpus)
     metadata = artifact["metadata"]
+    recovered_digest = hashlib.sha256(recovered_corpus).hexdigest()
+    try:
+        records = decode_corpus(recovered_corpus)
+        decode_error = None
+        recovered_messages = [{"id": r.id, "utf8_bytes": len(r.text.encode("utf-8"))} for r in records]
+    except (ValueError, UnicodeDecodeError) as exc:
+        # A failed receiver is still a useful experiment result: emit BER and
+        # framing diagnostics rather than crashing before reporting the errors.
+        records = []
+        decode_error = f"{type(exc).__name__}: {exc}"
+        recovered_messages = []
     report = {
         "schema": "nes.seven_method_nf4_extract.v1",
         "method": method,
         "artifact": str(artifact_path),
         "artifact_kind": metadata["artifact_kind"],
-        "message_count": len(records),
-        "recovered_messages": [{"id": r.id, "utf8_bytes": len(r.text.encode("utf-8"))} for r in records],
-        "recovered_corpus_sha256": hashlib.sha256(recovered_corpus).hexdigest(),
-        "embedded_manifest_digest_match": hashlib.sha256(recovered_corpus).hexdigest() == metadata["corpus_sha256"],
+        "message_count": len(records) if decode_error is None else None,
+        "recovered_messages": recovered_messages,
+        "decode_error": decode_error,
+        "recovered_corpus_sha256": recovered_digest,
+        "embedded_manifest_digest_match": recovered_digest == metadata["corpus_sha256"],
         "receiver_contract": metadata["receiver_contract"],
         "message_texts_written_to_report": False,
     }
