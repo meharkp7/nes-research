@@ -17,6 +17,7 @@ import hashlib
 import json
 import shutil
 import sys
+import traceback
 from datetime import datetime, timezone
 from pathlib import Path
 
@@ -162,6 +163,37 @@ def run(args: argparse.Namespace) -> int:
             )
         print("[B1.4 requant] Dequantizing model weights...")
         model.dequantize()
+
+        # Transformers 5.16.1 may attach a Bnb4bitDeserialize conversion
+        # whose reverse operation is unimplemented. After successful
+        # dequantization, bypass reversing that packed-checkpoint mapping
+        # when saving the floating-point intermediate.
+        conversions = getattr(model, "_weight_conversions", None)
+        if conversions:
+            operations = [
+                op
+                for conversion in conversions
+                for op in getattr(conversion, "operations", [])
+            ]
+            operation_types = sorted({type(op).__name__ for op in operations})
+            report["original_weight_conversion_types"] = [
+                type(conversion).__name__ for conversion in conversions
+            ]
+            report["original_weight_conversion_operations"] = operation_types
+
+            if not operations or any(
+                name != "Bnb4bitDeserialize" for name in operation_types
+            ):
+                raise RuntimeError(
+                    "Unexpected weight-conversion operations; refusing to bypass "
+                    f"them: {operation_types}"
+                )
+
+            model._weight_conversions = []
+            report["weight_conversion_reverse_bypassed_after_dequantization"] = True
+        else:
+            report["weight_conversion_reverse_bypassed_after_dequantization"] = False
+
         module_name = args.tensor_key.removesuffix(".weight")
         modules = dict(model.named_modules())
         if module_name not in modules:
@@ -239,6 +271,8 @@ def run(args: argparse.Namespace) -> int:
     except Exception as exc:
         report["status"] = "TRANSFORMATION_ERROR"
         report["error"] = f"{type(exc).__name__}: {exc}"
+        report["traceback"] = traceback.format_exc()
+        print(report["traceback"], file=sys.stderr, flush=True)
         report["interpretation"] = (
             "The lifecycle transformation did not complete successfully. Preserve the "
             "source and intermediate/output artifacts for diagnosis; do not claim a "
