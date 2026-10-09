@@ -39,6 +39,41 @@ def directory_bytes(path: Path) -> int:
     return sum(p.stat().st_size for p in path.rglob("*") if p.is_file())
 
 
+def bypass_bnb4bit_reverse_conversion_after_dequantization(model, report: dict) -> None:
+    """Bypass only the known NF4 deserialization mapping after weights are dequantized.
+
+    Transformers 5.16.1 attaches a Bnb4bitDeserialize mapping when loading a
+    packed NF4 checkpoint. Its reverse operation is unimplemented, so
+    save_pretrained() fails even after model.dequantize(). This guarded,
+    version-sensitive workaround must only be called after dequantization.
+    It refuses to bypass any unknown conversion operation.
+    """
+    conversions = getattr(model, "_weight_conversions", None)
+    if not conversions:
+        report["weight_conversion_reverse_bypassed_after_dequantization"] = False
+        return
+
+    operations = [
+        op
+        for conversion in conversions
+        for op in getattr(conversion, "operations", [])
+    ]
+    operation_types = sorted({type(op).__name__ for op in operations})
+    report["original_weight_conversion_types"] = [
+        type(conversion).__name__ for conversion in conversions
+    ]
+    report["original_weight_conversion_operations"] = operation_types
+
+    if not operations or any(name != "Bnb4bitDeserialize" for name in operation_types):
+        raise RuntimeError(
+            "Unexpected weight-conversion operations; refusing to bypass them: "
+            f"{operation_types}"
+        )
+
+    model._weight_conversions = []
+    report["weight_conversion_reverse_bypassed_after_dequantization"] = True
+
+
 def recoverability_diagnostic(packed: bytes, expected_payload: bytes, key: bytes,
                               tensor_key: str) -> dict:
     """Measure carrier BER independently of envelope checksum acceptance."""
@@ -164,35 +199,8 @@ def run(args: argparse.Namespace) -> int:
         print("[B1.4 requant] Dequantizing model weights...")
         model.dequantize()
 
-        # Transformers 5.16.1 may attach a Bnb4bitDeserialize conversion
-        # whose reverse operation is unimplemented. After successful
-        # dequantization, bypass reversing that packed-checkpoint mapping
-        # when saving the floating-point intermediate.
-        conversions = getattr(model, "_weight_conversions", None)
-        if conversions:
-            operations = [
-                op
-                for conversion in conversions
-                for op in getattr(conversion, "operations", [])
-            ]
-            operation_types = sorted({type(op).__name__ for op in operations})
-            report["original_weight_conversion_types"] = [
-                type(conversion).__name__ for conversion in conversions
-            ]
-            report["original_weight_conversion_operations"] = operation_types
-
-            if not operations or any(
-                name != "Bnb4bitDeserialize" for name in operation_types
-            ):
-                raise RuntimeError(
-                    "Unexpected weight-conversion operations; refusing to bypass "
-                    f"them: {operation_types}"
-                )
-
-            model._weight_conversions = []
-            report["weight_conversion_reverse_bypassed_after_dequantization"] = True
-        else:
-            report["weight_conversion_reverse_bypassed_after_dequantization"] = False
+        # This workaround is deliberately guarded and tested separately.
+        bypass_bnb4bit_reverse_conversion_after_dequantization(model, report)
 
         module_name = args.tensor_key.removesuffix(".weight")
         modules = dict(model.named_modules())
