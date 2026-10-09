@@ -202,7 +202,7 @@ def run_embed(args) -> dict:
             torch.save(artifact, f)
         with report_out.open("x", encoding="utf-8") as f:
             json.dump(metadata, f, indent=2)
-            f.write("\\n")
+            f.write("\n")
     except Exception:
         out.unlink(missing_ok=True)
         expected_out.unlink(missing_ok=True)
