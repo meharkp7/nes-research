@@ -189,25 +189,22 @@ Freeze numeric thresholds before the new comparison. Existing suite gates (BER 0
 6. Run the one-model matrix, review it, then expand to the seven-model matrix.
 7. Only after that, execute full utility, detection and robustness studies.
 
-## 8. Frozen long-form corpus matrix (2026-10-10)
+## 8. Frozen single-model multilingual stress test (2026-10-10)
 
-Before running the unified detectability suite, run the seven method families over the fixed seven-model roster using all three shared paragraph-length corpora:
+The immediate run is deliberately **one model, all seven methods**. Do not launch the seven-model matrix yet: the prior default run began with Gemma-2-2B and reported embedding failures, so it did not answer the intended one-model question.
 
-- `nes-llm/data/seven_method_corpora/corpus_a.jsonl`
-- `nes-llm/data/seven_method_corpora/corpus_b.jsonl`
-- `nes-llm/data/seven_method_corpora/corpus_c.jsonl`
-
-Each corpus contains three named messages. The corpora deliberately mix multi-sentence technical prose, structured fragments, punctuation, non-ASCII scripts, emoji and Unicode normalization edge cases. Use the exact same corpus files for every model and method. Do not rewrite or normalize text between cells; the framed UTF-8 bytes and hashes are the source of truth.
-
-The default full matrix is 7 models × 7 methods × 3 corpora = **147 cells**. Execute sequentially, model-major, with one cell's artifact reloaded by a separate extraction process. Record corpus-level exact match and BER, per-record framing/digest validation, bit count, artifact/receiver contract, selected layers/tensors, and failure reason. The matrix runner writes incremental JSON and CSV summaries so interrupted runs still preserve completed cells.
-
-Run command from `nes-llm/`:
+- Model: `Qwen/Qwen2.5-3B` (the model used in the prior local pilots).
+- Methods: `sign`, `magnitude_aware`, `qae`, `lwe_grid_parity`, `split_sign_parity`, `qse`, `dce`.
+- Corpus: `nes-llm/data/seven_method_corpora/corpus_multilingual_7.jsonl`.
+- The corpus has seven paragraph-length strings in English, Hindi, Spanish, French, Chinese, Arabic and Japanese. The runner validates 5–7 records and at least 100 Unicode characters per record before starting model work.
+- Planned run: 1 model × 7 methods × 1 corpus = **7 cells**. Each method receives identical source strings and corpus framing. The runner saves per-cell logs, artifact, independent extraction report, BER and exact-match status.
+- Run from `nes-llm/`:
 
 ```bash
 ../.venv/bin/python scripts/run_seven_method_long_corpus_matrix.py --dry-run
-../.venv/bin/python scripts/run_seven_method_long_corpus_matrix.py
+../.venv/bin/python scripts/run_seven_method_long_corpus_matrix.py --local-files-only
 ```
 
-Use `--local-files-only` to restrict the run to already cached model configs and weights; unavailable models are recorded as `BLOCKED`. Without that flag, the run may download model files and may require access approval for gated models. The run is sequential and can be long, especially for the larger models and the FP16-source NF4 pilot.
+Use `--local-files-only` to prevent downloads. The default is Qwen2.5-3B; do not pass `--models` for this first run. If a method fails, preserve its log and status rather than shrinking the payload or swapping in another model.
 
-**Gate before detectability:** inspect the summary for all 147 cells. Report the matrix as complete only if every cell is either measured or explicitly recorded as blocked/not applicable with a reason. This gate is about long-payload protocol coverage and recovery—not stealth. Do not infer detectability or security from successful extraction.
+This is a **recovery/capacity gate only**. Do not infer stealth or rank methods by detectability from extraction results. Once the seven cells are complete, proceed to detector evaluation on the same model, representation-specific controls and held-out examples.
