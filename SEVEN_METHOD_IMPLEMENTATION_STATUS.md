@@ -125,5 +125,5 @@ Run the same NF4 command with `--method qse` to characterize the reference-assis
 - The driver determines Qwen2.5-3B layer count from config and spreads residual carriers over up to five early/middle/late layers. It runs embed and fresh-process extract, retains logs and per-cell reports, and incrementally writes JSON/CSV summaries. Use `--local-files-only` to avoid downloading anything.
 - Added `--tensors auto` to the NF4 pilot to select an attention projection across up to five evenly spaced layers, preferring `q_proj` and falling back to fused-QKV naming where available.
 - Per-cell outcomes are kept distinct: `PASS`, `BER_FAIL`, `EMBED_FAILED`, `EXTRACT_FAILED`, and `BLOCKED`. No failed cell is silently discarded.
-- The matrix runner does **not** perform steganalysis yet. This stage expands and stress-tests payload length/corpus diversity across the full model-method roster; statistical and learned detectability comes next.
+- The matrix runner does **not** perform steganalysis yet. This stage stress-tests multilingual payload recovery on one model; statistical and learned detectability comes next.
 - The real seven-cell run has not been executed by the repository-editing environment; it must run against the user's local Qwen2.5-3B cache. Prior embedding failures from a multi-model run are not evidence that all methods fail on Qwen2.5-3B.
