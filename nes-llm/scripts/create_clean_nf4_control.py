@@ -14,7 +14,7 @@ from pathlib import Path
 import sys
 
 import torch
-from bitsandbytes.functional import quantize_4bit
+from bitsandbytes.functional import quantize_4bit, dequantize_4bit
 from transformers import AutoModelForCausalLM
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -75,21 +75,13 @@ def create_clean_control(
     packed, quant_state = quantize_4bit(
         flattened, quant_type="nf4", blocksize=blocksize
     )
-    codes = unpack_codes(packed, int(flattened.numel()))
     actual_blocksize = int(quant_state.blocksize)
-    codebook = quant_state.code.detach().float().cpu().flatten()
-    absmax = quant_state.absmax.detach().float().cpu().flatten()
-    reconstructed = torch.tensor(
-        [float(codebook[c]) * float(absmax[i // actual_blocksize])
-         for i, c in enumerate(codes)],
-        dtype=torch.float32,
-    )
+    # Use bitsandbytes' own dequantizer so nested/compressed scale state, if
+    # present in this runtime, is handled by the quantizer implementation.
+    dequantized = dequantize_4bit(packed, quant_state=quant_state).float().cpu().flatten()
     source_for_rmse = flattened.detach().float().cpu()
-    rmse = float(torch.mean((reconstructed - source_for_rmse) ** 2).sqrt().item())
+    rmse = float(torch.mean((dequantized - source_for_rmse) ** 2).sqrt().item())
 
-    # Record quantizer state details that can be observed, and explicitly note
-    # that these are runtime-observed values, not historical QSE provenance.
-    nested = getattr(quant_state, "nested", None)
     report = {
         "schema": "nes.clean_nf4_control.v1",
         "artifact_kind": "single_tensor_clean_nf4_control_not_hf_checkpoint",
@@ -105,8 +97,7 @@ def create_clean_control(
             "quant_type": "nf4",
             "blocksize_requested": blocksize,
             "blocksize_observed": actual_blocksize,
-            "compress_statistics_default_used": True,
-            "nested_quant_state_observed": bool(nested),
+            "compress_statistics": "bitsandbytes default",
             "note": "Runtime-observed clean control settings; historical QSE settings were only partially recorded.",
         },
         "weight_rmse_vs_fp16_source": rmse,
@@ -120,13 +111,12 @@ def create_clean_control(
     }
     artifact = {
         "schema": report["schema"],
-        "metadata": report,
+        "metadata": dict(report),
         "tensor": {
             "packed_codes": packed.detach().cpu().contiguous(),
+            "dequantized_values": dequantized,
             "num_values": int(flattened.numel()),
             "tensor_shape": list(source_shape),
-            "codebook": codebook,
-            "absmax": absmax,
             "blocksize": actual_blocksize,
         },
     }
