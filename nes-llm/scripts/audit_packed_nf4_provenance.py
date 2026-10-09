@@ -118,6 +118,19 @@ def audit(paths: list[Path], min_sources: int) -> dict:
             "embedded_artifact_sha256": next(iter(embedded["artifact_hashes"])),
         })
 
+    # A source_id denotes one source tensor/model identity across all runs.
+    inconsistent_sources = {
+        source_id: sorted(signatures)
+        for source_id, signatures in source_signatures.items()
+        if len(signatures) != 1
+    }
+    if inconsistent_sources:
+        first_source = sorted(inconsistent_sources)[0]
+        raise ValueError(
+            f"source_id {first_source!r} maps to multiple model_id/tensor_key identities: "
+            f"{inconsistent_sources[first_source]}"
+        )
+
     source_ids = sorted({key[0] for key in pairs})
     if len(source_ids) < min_sources:
         raise ValueError(
