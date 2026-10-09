@@ -251,6 +251,8 @@ def run(args: argparse.Namespace) -> dict:
     }
     report["checks"] = {
         "clean_nf4_tensor_shape_matches": base.numel() == original.numel(),
+        "nf4_codebook_layout_reconstruction_rmse": codebook_reconstruction_rmse,
+        "nf4_codebook_layout_matches_dequantizer": codebook_reconstruction_rmse <= 1e-4,
         "candidate_b_packed_code_roundtrip_matches_selected_codes": all(
             d_codes_after[p] == dce_codes[p] for p in positions
         ),
