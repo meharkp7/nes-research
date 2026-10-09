@@ -93,7 +93,7 @@ DCE was investigated as an extension to improve the aggregate weight distributio
 - **Candidate B (DCE): NOT CLOSED.** The existing optimizer evidence remains synthetic-only and does not count as a real-NF4 test. The same pilot now compares a nearest-feasible NF4-code baseline against a histogram-aware DCE selector on actual BitsAndBytes NF4 codes. Its model-dependent run has not yet been executed. Do not claim either candidate succeeds or fails until the real run and required follow-up validation are recorded.
 - **Established Exp1–Exp27 line: frozen as the main measured research record.** The final paper should be based on those artifact-backed results, plus Contract B1.4/B1.5 as a separate packed-artifact case study, with all limitations retained.
 
-A real-NF4 DCE pilot is not an automatic next step: the current DCE candidate objective is not integrated with the packed-code carrier contract, and the synthetic comparison did not establish a clear overall win. Reopen Candidate B only if a specific NF4-aware, receiver-reproducible protocol has a clear hypothesis worth testing. This avoids turning a negative result into another open-ended implementation cycle.
+A first-stage real-NF4 tensor pilot has now been implemented for Candidate A/QSE and Candidate B/DCE. It is not yet a result: the user's local model-dependent run is pending. The harness includes a codebook-layout validation guard so it refuses to report DCE metrics if packed NF4 indices do not reproduce the actual BitsAndBytes dequantized tensor. The next decision must be based on its saved JSON report, followed by artifact-level validation if either candidate looks promising.
 
 The best-supported research story is not “the method is undetectable under all conditions.” It is:
 
@@ -115,7 +115,7 @@ The best-supported research story is not “the method is undetectable under all
 | **NOT RUN — FOLLOW-UP** | Validate full artifact save/reload, utility and detectability for any promising candidate. | Tensor-level BER alone is not an end-to-end result. Preserve every report and compare both candidates under the same payload, tensor, carrier positions, and NF4 settings. |
 | **PAPER** | Final manuscript and submission package. | Use this ledger and the committed artifacts to write the manuscript; every central claim must map to an artifact, and failures/limitations must remain explicit. This is paper-writing work, not a reason to add more experiments. |
 
-No new optimizer, embedding architecture, ECC design or broad benchmark sweep is planned. The current evidence is ready to be consolidated into the paper, with model-cache-dependent work clearly separated from completed CI validation.
+Do not add unrelated optimizers or broad sweeps. The next bounded research task is to execute the two candidate pilots on the local model, inspect the measured report, and only then decide whether an artifact-level evaluation is justified.
 
 ## 7. Reproducibility commands
 
