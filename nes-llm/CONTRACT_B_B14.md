@@ -31,9 +31,10 @@ From `nes-llm/`:
 
 ```bash
 ../.venv/bin/python -m unittest discover -s tests -p 'test_contract_b_nf4_b14.py' -v
+../.venv/bin/python -m unittest discover -s tests -p 'test_contract_b_robustness_matrix.py' -v
 ```
 
-The CI suite covers deterministic payload/envelope accounting, carrier selection, nibble ordering, exact 10k recovery, pair-ID invariants, wrong-key rejection, corruption rejection, capacity-payload generation, and synthetic SafeTensors parsing. CI syntax-checks all Contract B scripts. These tests do not replace the actual cached-model run.
+The B1.4 unit suite covers deterministic payload/envelope accounting, carrier selection, nibble ordering, exact 10k recovery, pair-ID invariants, wrong-key rejection, corruption rejection, capacity-payload generation, and synthetic SafeTensors parsing. The robustness-matrix suite covers locality under non-carrier parity mutations and checksum rejection under carrier corruption. CI syntax-checks all Contract B scripts. Synthetic tests do not replace the actual cached-model run.
 
 ## Phase 2 — capacity sweep
 
@@ -49,12 +50,14 @@ The report `../cache/contract_b_b14_capacity_sweep.json` records per-run exact r
 
 ## Phase 3 — utility diagnostic
 
-After the B1.4 receiver and reload checks pass:
+Use the matching cached tokenizer explicitly because the tokenizer files inside the probe checkpoint were invalid:
 
 ```bash
 ../.venv/bin/python scripts/contract_b_utility_eval.py \
   --original ../cache/contract_b_nf4_probe_retry \
-  --stego ../cache/contract_b_nf4_b14_10k --device cpu --max-tokens 256
+  --stego ../cache/contract_b_nf4_b14_10k \
+  --tokenizer-path Qwen/Qwen2.5-3B \
+  --device cpu --max-tokens 256
 ```
 
 This is a fixed, small diagnostic text suite, not a benchmark. A publication-quality utility result needs a larger held-out corpus, baseline/control variants, uncertainty, and a predeclared acceptance criterion.
@@ -69,16 +72,31 @@ This is a fixed, small diagnostic text suite, not a benchmark. A publication-qua
 
 This reports packed-code histograms, total-variation distance, KL divergence, LSB balance and changed-code localization. It is not a trained detector and cannot establish stealth or attacker success probability.
 
+## Phase 5 — B1.4 packed-code robustness diagnostic
+
+```bash
+../.venv/bin/python scripts/contract_b_robustness_matrix.py \
+  --stego ../cache/contract_b_nf4_b14_10k
+```
+
+Default cases flip the parity bit of 1, 100, and 1,000 non-carrier codes (expected to preserve recovery), then corrupt 1, 10, and 100 payload/envelope carriers after the header (expected to trigger checksum rejection). The report is `../cache/contract_b_b14_robustness_matrix.json`. This measures carrier locality and error detection under controlled packed-code mutations only. It does not simulate real training, pruning, adapter/task-vector merging, or requantization.
+
+## Lifecycle robustness — separate evidence, not interchangeable
+
+The repository's `results/exp23_model_surgery_qwen__qwen2.5_3b.json` measures the earlier residual-domain sign embedding, where extraction occurs in residual space. It reports exact recovery after its specified fine-tuning, LoRA-shaped updates, pruning and small merges, but substantial BER after NF4/GPTQ/AWQ requantization and a large merge. Those results are important historical evidence, but **they are not B1.4 packed-NF4 carrier results** and must not be presented as such.
+
+The next lifecycle experiment must transform a fresh copy of the B1.4 stego checkpoint, retain each transformed artifact, then run the B1.4 artifact receiver against each output. Test each axis independently; record failures rather than patching them away. Do not overwrite the pristine `contract_b_nf4_b14_10k` directory.
+
 ## Remaining phases
 
-1. Finish local B1.4 sender/receiver and negative tests.
-2. Run repeated capacity sweep and preserve all failures.
-3. Expand utility evaluation to a suitable held-out corpus and task-level checks.
-4. Evaluate detectability with pre-registered baselines, held-out data and uncertainty.
-5. Evaluate robustness under reload, fine-tuning, LoRA, pruning, merges and re-quantization.
+1. Preserve the B1.4 sender, receiver, capacity, utility, and detectability reports.
+2. Run and preserve the packed-code robustness diagnostic above.
+3. Run B1.4-specific lifecycle transformations on separate artifact copies: reload/save round-trip, pruning, fine-tuning/LoRA merge, task-vector merge, and requantization.
+4. Expand utility evaluation to a suitable held-out corpus and task-level checks.
+5. Evaluate detectability with pre-registered baselines, held-out data and uncertainty.
 6. Expand across models only after the single-model path is stable.
 7. Complete literature review, ablations, claim audit, reproducibility bundle and paper.
 
 ## Execution boundary
 
-GitHub source access does not provide access to the user's local model cache or Mac runtime. The actual Qwen NF4 reload, capacity sweep, utility and detectability runs must be executed locally; source review, synthetic tests, tracked artifact review and analysis can be done separately.
+GitHub source access does not provide access to the user's local model cache or Mac runtime. Actual Qwen NF4 reloads, transformations, capacity sweep, utility and detectability runs must be executed locally; source review, synthetic tests, tracked artifact review and analysis can be done separately.
