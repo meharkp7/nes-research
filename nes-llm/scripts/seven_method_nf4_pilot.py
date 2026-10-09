@@ -19,33 +19,11 @@ from bitsandbytes.functional import quantize_4bit, dequantize_4bit
 from transformers import AutoModelForCausalLM
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
+from src.experiments.nf4_artifact_codec import pack_codes, tensor_dequant, unpack_codes
 from src.experiments.seven_method_protocol import (
     MessageRecord, bytes_to_bits, bits_to_bytes, corpus_summary, decode_corpus,
     encode_corpus, keyed_positions, load_jsonl, normalize_records,
 )
-
-
-def unpack_codes(packed: torch.Tensor, n_values: int) -> list[int]:
-    raw = packed.detach().cpu().contiguous().view(torch.uint8).flatten().tolist()
-    return [((raw[i // 2] >> 4) & 15) if i % 2 == 0 else (raw[i // 2] & 15)
-            for i in range(n_values)]
-
-
-def pack_codes(codes: list[int]) -> torch.Tensor:
-    if len(codes) % 2:
-        raise ValueError("packed NF4 code count must be even")
-    raw = bytearray(len(codes) // 2)
-    for i in range(0, len(codes), 2):
-        raw[i // 2] = ((codes[i] & 15) << 4) | (codes[i + 1] & 15)
-    return torch.tensor(list(raw), dtype=torch.uint8)
-
-
-def tensor_dequant(codes: list[int], codebook: torch.Tensor,
-                   absmax: torch.Tensor, blocksize: int) -> torch.Tensor:
-    cb = codebook.detach().float().cpu().flatten()
-    scales = absmax.detach().float().cpu().flatten()
-    return torch.tensor([float(cb[c]) * float(scales[i // blocksize])
-                         for i, c in enumerate(codes)], dtype=torch.float32)
 
 
 def read_messages(args) -> list[MessageRecord]:
