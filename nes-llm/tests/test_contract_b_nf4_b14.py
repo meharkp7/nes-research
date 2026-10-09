@@ -27,5 +27,5 @@ class ContractBB14Tests(unittest.TestCase):
    encoded=json.dumps(h,separators=(",",":")).encode()
    with path.open("wb") as f: f.write(struct.pack("<Q",len(encoded))); f.write(encoded); f.write(packed)
    header,start=read_header(path); self.assertGreater(start,8)
-   _,_,record,lo,hi,actual=read_tensor(path,DEFAULT_TENSOR_KEY); self.assertEqual(record["shape"],[len(packed),1]); self.assertEqual((lo,hi),(0,len(packed))); self.assertEqual(actual,packed)
+   _,record,lo,hi,actual=read_tensor(path,DEFAULT_TENSOR_KEY); self.assertEqual(record["shape"],[len(packed),1]); self.assertEqual((lo,hi),(0,len(packed))); self.assertEqual(actual,packed)
 if __name__=="__main__": unittest.main()
