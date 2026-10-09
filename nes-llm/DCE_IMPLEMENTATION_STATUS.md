@@ -245,3 +245,27 @@ The batch method strictly improved TV and cover-to-embedded KL in all five seeds
 **Decision:** the aggregate histogram improvement of greedy batch DCE is reproducible within this toy setup, but the distortion cost is too large to call it an overall improvement. Do not wire it into the production strategy registry and do not move directly to an NF4 pilot. Treat this as a reproducible synthetic trade-off, not evidence of stealth or model utility.
 
 A sensible final DCE design gate, if this line is pursued, is a distortion-budgeted batch objective: constrain mean squared perturbation to a declared budget relative to the nearest-feasible baseline, then optimize the aggregate histogram within that budget. Report infeasible runs as failures rather than silently relaxing the budget. Compare on the same five seeds, and add held-out seeds before making a method-selection claim. If the histogram advantage disappears under a reasonable distortion cap, stop DCE and redirect effort to the established sign-embedding approach and real transformation/utility tests.
+
+
+## Distortion-budgeted batch optimizer: validation gate
+
+Added `src/optimization/budgeted_batch_optimizer.py`, which treats distortion
+as a hard constraint rather than a soft penalty. Its budget is the minimum
+payload-feasible per-carrier perturbation total (the nearest-feasible baseline)
+multiplied by (1 + b), where (b) is the declared maximum relative increase.
+At each greedy step, it reserves the minimum feasible distortion required by
+all remaining carriers. It raises an error if no budget-feasible choice exists;
+it never silently relaxes the budget.
+
+Added a matched benchmark option and
+`scripts/dce_distortion_budget_sweep.py`. The proposed exploratory sweep uses
+five fixed seeds and budgets of 0%, 5%, 10%, and 25% above baseline distortion.
+It reports paired perturbation, TV, and KL changes per seed and in aggregate.
+The zero-budget setting is a control: it should select minimum-distortion
+candidates, so it cannot be expected to improve distribution matching.
+
+This is still synthetic scalar-quantizer evidence. Passing unit tests or
+respecting the budget does not establish model utility, NF4 compatibility,
+steganographic undetectability, cryptographic security, or checkpoint
+robustness. The sweep should be reviewed before any representation-specific
+pilot is considered.
