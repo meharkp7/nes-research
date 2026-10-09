@@ -42,27 +42,50 @@ def run_budget_sweep(
                 include_budgeted=True,
                 distortion_budget_fraction=budget,
             )
-            baseline = report["methods"]["nearest_feasible_baseline"]
-            selected = report["methods"]["batch_dce_distortion_budgeted"]
+            methods = report["methods"]
+            baseline = methods["nearest_feasible_baseline"]
+            selected = methods["batch_dce_distortion_budgeted"]
             budget_detail = report["budgeted_batch_optimizer"]
+
+            def metrics(method: dict) -> dict:
+                return {
+                    "mean_squared_perturbation": method["mean_squared_perturbation"],
+                    "histogram_total_variation_distance": method["distribution"]["histogram_total_variation_distance"],
+                    "histogram_kl_cover_to_embedded_nats": method["distribution"]["histogram_kl_cover_to_embedded_nats"],
+                    "ber_after_quantization": method["ber_after_quantization"],
+                }
+
+            baseline_metrics = metrics(baseline)
+            selected_metrics = metrics(selected)
+            comparison_methods = {
+                name: metrics(method)
+                for name, method in methods.items()
+                if name != "batch_dce_distortion_budgeted"
+            }
             runs.append({
                 "seed": seed,
                 "budget_fraction": budget,
-                "baseline": {
-                    "mean_squared_perturbation": baseline["mean_squared_perturbation"],
-                    "histogram_total_variation_distance": baseline["distribution"]["histogram_total_variation_distance"],
-                    "histogram_kl_cover_to_embedded_nats": baseline["distribution"]["histogram_kl_cover_to_embedded_nats"],
-                },
-                "budgeted": {
-                    "mean_squared_perturbation": selected["mean_squared_perturbation"],
-                    "histogram_total_variation_distance": selected["distribution"]["histogram_total_variation_distance"],
-                    "histogram_kl_cover_to_embedded_nats": selected["distribution"]["histogram_kl_cover_to_embedded_nats"],
-                    "ber_after_quantization": selected["ber_after_quantization"],
-                },
+                "baseline": baseline_metrics,
+                "comparison_methods": comparison_methods,
+                "budgeted": selected_metrics,
                 "paired_deltas": {
-                    "mean_squared_perturbation": selected["mean_squared_perturbation"] - baseline["mean_squared_perturbation"],
-                    "histogram_total_variation_distance": selected["distribution"]["histogram_total_variation_distance"] - baseline["distribution"]["histogram_total_variation_distance"],
-                    "histogram_kl_cover_to_embedded_nats": selected["distribution"]["histogram_kl_cover_to_embedded_nats"] - baseline["distribution"]["histogram_kl_cover_to_embedded_nats"],
+                    metric: selected_metrics[metric] - baseline_metrics[metric]
+                    for metric in (
+                        "mean_squared_perturbation",
+                        "histogram_total_variation_distance",
+                        "histogram_kl_cover_to_embedded_nats",
+                    )
+                },
+                "paired_deltas_vs_comparison_methods": {
+                    name: {
+                        metric: selected_metrics[metric] - alternative[metric]
+                        for metric in (
+                            "mean_squared_perturbation",
+                            "histogram_total_variation_distance",
+                            "histogram_kl_cover_to_embedded_nats",
+                        )
+                    }
+                    for name, alternative in comparison_methods.items()
                 },
                 "budget_check": budget_detail,
             })
@@ -94,11 +117,36 @@ def run_budget_sweep(
                 run["paired_deltas"]["histogram_kl_cover_to_embedded_nats"] < 0 for run in selected_runs
             ),
         }
+    comparison_summary = {}
+    for budget in budgets:
+        selected_runs = [run for run in runs if run["budget_fraction"] == budget]
+        method_names = selected_runs[0]["comparison_methods"].keys()
+        comparison_summary[str(budget)] = {}
+        for method_name in method_names:
+            comparison_summary[str(budget)][method_name] = {
+                "paired_delta_tv": summarize([
+                    run["paired_deltas_vs_comparison_methods"][method_name]["histogram_total_variation_distance"]
+                    for run in selected_runs
+                ]),
+                "paired_delta_kl": summarize([
+                    run["paired_deltas_vs_comparison_methods"][method_name]["histogram_kl_cover_to_embedded_nats"]
+                    for run in selected_runs
+                ]),
+                "budgeted_tv_wins": sum(
+                    run["paired_deltas_vs_comparison_methods"][method_name]["histogram_total_variation_distance"] < 0
+                    for run in selected_runs
+                ),
+                "budgeted_kl_wins": sum(
+                    run["paired_deltas_vs_comparison_methods"][method_name]["histogram_kl_cover_to_embedded_nats"] < 0
+                    for run in selected_runs
+                ),
+            }
     return {
         "experiment": "distortion-budgeted-batch-DCE-synthetic-budget-sweep",
         "status": "SYNTHETIC_MECHANICS_ONLY",
         "parameters": {"carriers": carriers, "seeds": list(seeds), "budget_fractions": list(budgets)},
         "summary_by_budget_fraction": summary,
+        "budgeted_vs_other_methods_by_budget": comparison_summary,
         "runs": runs,
         "interpretation_limit": (
             "Synthetic scalar quantizer only. Does not establish NF4 compatibility, "
