@@ -53,14 +53,26 @@ The first CI run caught a real zero-capacity allocation bug; it was fixed and th
 | QSE | `scripts/real_nf4_candidate_eval.py` | Only a single-tensor real-NF4 pilot exists; current formulation BER 0.4016 in the recorded run; needs a new artifact-only receiver and multi-layer protocol |
 | DCE | `scripts/real_nf4_candidate_eval.py` plus optimization modules | Single-tensor packed-NF4 pilot exists; parity recovery is a pilot result, not end-to-end proof; needs multi-layer serialization, model utility and detectability evaluation |
 
+## Milestone 3 — packed-NF4 candidate artifact adapter
+
+**Status: IMPLEMENTED; syntax/CI validation pending; real-model run NOT_RUN.**
+
+- `nes-llm/scripts/seven_method_nf4_pilot.py` adds a separate multi-tensor packed-NF4 `embed`/`extract` path for QSE and DCE. It consumes the same framed multi-message corpus and allocates its bitstream across explicitly named source-model tensors.
+- DCE writes modified packed NF4 code indices and recovers payload bits from code-index parity. Its decoder does not require the original FP16 cover.
+- QSE retains the current reference-assisted receiver contract: it records the clean NF4 carrier values and reference residual values needed by the receiver. This is **not** described as blind or artifact-only recovery.
+- The artifact is a research bundle of packed codes and receiver metadata, **not** a quantized Hugging Face checkpoint. The adapter records per-tensor reconstruction RMSE and refuses a clean-codebook layout mismatch.
+- `src/experiments/nf4_artifact_codec.py` centralizes nibble packing/unpacking and codebook reconstruction; `tests/test_nf4_artifact_codec.py` covers these operations without loading a model.
+- The expected framed corpus is stored separately. Extraction reloads the artifact, validates framing/integrity, and can report bit errors, BER and exact match in a fresh process.
+- The CI workflow now syntax-checks this runner and runs the NF4 codec tests. These tests do not substitute for a real model/cache run.
+
 ## Not yet implemented / not yet measured
 
-- No shared runner yet embeds the framed corpus into all seven methods.
-- No model checkpoint or multi-tensor artifact is yet saved and independently reloaded for the full seven-method roster.
+- The shared protocol exists, with separate residual-stream and packed-NF4 runners; a single orchestrator/report aggregator for all seven methods is still missing.
+- The packed-NF4 adapter has not yet been run against a real local model or independently reloaded on the user's machine; no seven-method combined artifact exists.
 - The tensor-capacity allocator is implemented and tested, but it is not yet wired to live model tensors or method-specific carrier selection.
 - No new seven-method × seven-model result matrix exists.
 - No new utility, detector, multi-seed or transformation-robustness results have been produced by this milestone.
 
 ## Next implementation milestone
 
-Run the residual-stream pilot on Qwen2.5-3B from the user's local cache, starting with one short message and then a multi-string Unicode corpus. Fix any runtime/receiver issues without changing historical code paths. In parallel, design a multi-tensor packed-NF4 artifact adapter for QSE and DCE that consumes the same framed corpus. Both lanes must emit a comparable report schema while preserving their true representation differences. Require fresh-process reload and exact recovery before declaring a method's artifact round trip successful.
+Run CI and then execute both lanes against the user's local Qwen2.5-3B cache: first a short one-message smoke test, then a multi-string Unicode corpus. Fix runtime/receiver issues without changing historical experiment paths. For each of the seven methods, require a fresh-process artifact reload and exact recovery check before calling the artifact round trip successful. Then add a report aggregator, utility/detectability metrics, and the fixed seven-model matrix. Keep QSE reference-assisted results clearly separate from DCE artifact-only parity recovery.
