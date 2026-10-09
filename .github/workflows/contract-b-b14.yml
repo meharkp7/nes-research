@@ -39,6 +39,9 @@ on:
 jobs:
   synthetic-tests:
     runs-on: ubuntu-latest
+    env:
+      # Scripts are run as files from nes-llm/ and import src/ and scripts/.
+      PYTHONPATH: .
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
