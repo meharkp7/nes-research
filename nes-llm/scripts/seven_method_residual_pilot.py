@@ -114,8 +114,38 @@ def _load_selected_residuals(model_id: str, expected_layers: int, layers: list[i
     return residuals, str(cache.model_cache_dir)
 
 
+def _select_layer_ids_from_profiles(profiles: list[dict[str, Any]]) -> list[int]:
+    """Select a data-dependent quality cohort using the observed median score.
+
+    Raw parameter count is not a useful stopping condition here: a single
+    transformer residual layer can have far more parameters than the payload,
+    causing the old greedy loop to select exactly one layer in practice.
+    Keep the above-median quality cohort instead, then let QACI allocate bits
+    across that cohort. No layer IDs or cohort size are fixed in advance.
+    """
+    if not profiles:
+        raise ValueError("cannot select layers from an empty profile list")
+    scores = sorted(float(profile["quality_score"]) for profile in profiles)
+    middle = len(scores) // 2
+    threshold = (
+        scores[middle]
+        if len(scores) % 2
+        else (scores[middle - 1] + scores[middle]) / 2.0
+    )
+    selected = [
+        int(profile["layer_id"])
+        for profile in profiles
+        if float(profile["quality_score"]) >= threshold
+    ]
+    if not selected:
+        # Defensive fallback for unusual non-finite/custom profile values.
+        best = max(profiles, key=lambda p: float(p["quality_score"]))
+        selected = [int(best["layer_id"])]
+    return sorted(set(selected))
+
+
 def _select_layers_automatically(model_id: str, expected_layers: int, total_payload_bits: int, gamma: float):
-    """Profile all cached layers one at a time; rank by QACI quality and capacity."""
+    """Profile every cached layer and select the observed above-median QACI cohort."""
     from src.carrier_intelligence.layer_profiler import LayerProfiler
     cache = _cache_for(model_id)
     if not cache.is_complete(expected_layers):
@@ -127,17 +157,17 @@ def _select_layers_automatically(model_id: str, expected_layers: int, total_payl
         residual = row["residual"].detach().cpu().contiguous()
         profiles.append(profiler.profile(residual, layer_id, "residual", expected_layers))
         del residual, row
-    ranked = sorted(profiles, key=lambda p: (p["quality_score"], p["num_params"]), reverse=True)
-    selected = []
-    capacity = 0
-    for profile in ranked:
-        selected.append(int(profile["layer_id"]))
-        capacity += int(profile["num_params"])
-        if capacity >= total_payload_bits:
-            break
-    if capacity < total_payload_bits:
-        raise ValueError(f"Payload needs {total_payload_bits} bits; all layers provide {capacity} parameters")
-    selected.sort()
+    selected = _select_layer_ids_from_profiles(profiles)
+    selected_capacity = sum(
+        int(profile["num_params"])
+        for profile in profiles
+        if int(profile["layer_id"]) in set(selected)
+    )
+    if selected_capacity < total_payload_bits:
+        raise ValueError(
+            f"Payload needs {total_payload_bits} bits; selected quality cohort "
+            f"provides only {selected_capacity} parameters"
+        )
     profile_map = {int(p["layer_id"]): p for p in profiles}
     return selected, profile_map, str(cache.model_cache_dir)
 
@@ -197,7 +227,7 @@ def run_embed(args: argparse.Namespace) -> dict:
         "model_family": context.family,
         "expected_model_layers": context.expected_layers,
         "selected_layers": layers,
-        "layer_selection": {"mode": "qaci_profile_then_capacity_gated_quality_ranking" if args.layers.strip().lower() == "auto" else "explicit", "profiles": {str(k): v for k, v in layer_profile_map.items()}, "selection_note": "All layers profiled one at a time; ranked by measured QACI quality without positional bias until estimated carrier capacity covers the payload." if args.layers.strip().lower() == "auto" else "Explicit layer IDs supplied."},
+        "layer_selection": {"mode": "qaci_profile_then_capacity_gated_quality_ranking" if args.layers.strip().lower() == "auto" else "explicit", "profiles": {str(k): v for k, v in layer_profile_map.items()}, "selection_note": "All layers profiled one at a time; selected the observed above-median quality cohort using measured QACI quality without positional bias. This avoids treating raw parameter count as a reason to stop after one layer; cohort size is data-dependent, not fixed." if args.layers.strip().lower() == "auto" else "Explicit layer IDs supplied."},
         "cache_dir": cache_dir,
         "config": _config_dict(config),
         "corpus": corpus_summary(rows),
