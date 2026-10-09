@@ -113,21 +113,55 @@ def _load_selected_residuals(model_id: str, expected_layers: int, layers: list[i
     return residuals, str(cache.model_cache_dir)
 
 
+def _select_layers_automatically(model_id: str, expected_layers: int, total_payload_bits: int, gamma: float):
+    """Profile all cached layers one at a time; rank by QACI quality and capacity."""
+    from src.carrier_intelligence.layer_profiler import LayerProfiler
+    cache = _cache_for(model_id)
+    if not cache.is_complete(expected_layers):
+        raise RuntimeError(f"Residual cache incomplete for {model_id}; expected {expected_layers} layers under {cache.model_cache_dir}")
+    profiler = LayerProfiler()
+    profiles = []
+    for layer_id in range(expected_layers):
+        row = torch.load(cache._layer_path(layer_id), map_location="cpu", weights_only=True)
+        residual = row["residual"].detach().cpu().contiguous()
+        profiles.append(profiler.profile(residual, layer_id, "residual", expected_layers))
+        del residual, row
+    ranked = sorted(profiles, key=lambda p: (p["adjusted_quality"], p["num_params"]), reverse=True)
+    selected = []
+    capacity = 0
+    for profile in ranked:
+        selected.append(int(profile["layer_id"]))
+        capacity += int(profile["num_params"])
+        if capacity >= total_payload_bits:
+            break
+    if capacity < total_payload_bits:
+        raise ValueError(f"Payload needs {total_payload_bits} bits; all layers provide {capacity} parameters")
+    selected.sort()
+    profile_map = {int(p["layer_id"]): p for p in profiles}
+    return selected, profile_map, str(cache.model_cache_dir)
+
 def run_embed(args: argparse.Namespace) -> dict:
     method = args.method
     registry_name = RESIDUAL_METHODS[method]
     context = make_context(args.model)
-    layers = _parse_layers(args.layers, context.expected_layers)
     rows = _records(args)
     corpus = encode_corpus(rows)
     bits = bytes_to_bits(corpus)
+    if args.layers.strip().lower() == "auto":
+        layers, layer_profile_map, cache_dir = _select_layers_automatically(
+            args.model, context.expected_layers, len(bits), args.gamma
+        )
+    else:
+        layers = _parse_layers(args.layers, context.expected_layers)
+        layer_profile_map, cache_dir = {}, ""
     output = args.output.expanduser().resolve()
     corpus_out = args.corpus_out.expanduser().resolve()
     if output == corpus_out:
         raise ValueError("artifact and corpus output paths must differ")
     if output.exists() or corpus_out.exists():
         raise FileExistsError("Refusing to overwrite existing artifact or corpus output")
-    residuals, cache_dir = _load_selected_residuals(args.model, context.expected_layers, layers)
+    residuals, loaded_cache_dir = _load_selected_residuals(args.model, context.expected_layers, layers)
+    cache_dir = loaded_cache_dir or cache_dir
 
     config = EmbeddingConfig(
         total_payload_bits=len(bits),
@@ -162,6 +196,7 @@ def run_embed(args: argparse.Namespace) -> dict:
         "model_family": context.family,
         "expected_model_layers": context.expected_layers,
         "selected_layers": layers,
+        "layer_selection": {"mode": "qaci_profile_then_capacity_gated_quality_ranking" if args.layers.strip().lower() == "auto" else "explicit", "profiles": {str(k): v for k, v in layer_profile_map.items()}, "selection_note": "All layers profiled one at a time; ranked by adjusted QACI quality until estimated carrier capacity covers the payload." if args.layers.strip().lower() == "auto" else "Explicit layer IDs supplied."},
         "cache_dir": cache_dir,
         "config": _config_dict(config),
         "corpus": corpus_summary(rows),
@@ -299,7 +334,7 @@ def parser() -> argparse.ArgumentParser:
     embed.add_argument("--method", choices=RESIDUAL_METHODS, required=True)
     embed.add_argument("--message", action="append", default=[])
     embed.add_argument("--messages-file", type=Path)
-    embed.add_argument("--layers", default="0,8,15,23,35")
+    embed.add_argument("--layers", default="auto", help="auto profiles all cached layers and selects by QACI quality/capacity; explicit comma-separated IDs are for controlled ablations")
     embed.add_argument("--output", type=Path, required=True)
     embed.add_argument("--corpus-out", type=Path, required=True)
     embed.add_argument("--gamma", type=float, default=2.5)
