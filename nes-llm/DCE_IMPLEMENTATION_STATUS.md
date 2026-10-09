@@ -269,3 +269,20 @@ respecting the budget does not establish model utility, NF4 compatibility,
 steganographic undetectability, cryptographic security, or checkpoint
 robustness. The sweep should be reviewed before any representation-specific
 pilot is considered.
+
+
+### Matched-comparator requirement added after the first budget sweep
+
+The first five-seed sweep respected all four hard budgets, but the gains over
+nearest-feasible baseline were small and mixed: TV improved in 4/5 seeds at
+5%, 5/5 numerically at 10% (one change was effectively zero), and 4/5 at 25%;
+cover-to-embedded KL improved in 2/5, 3/5, and 4/5 seeds respectively. The
+zero-budget control was identical to baseline. These results do not establish
+a robust win.
+
+The sweep now also records per-seed paired deltas between distortion-budgeted
+batch DCE and the independent-DCE and unconstrained greedy batch-DCE methods,
+in addition to nearest-feasible baseline. This is necessary to tell whether
+the hard budget adds value beyond the prior synthetic methods. Re-run the
+sweep after pulling the updated comparator output; do not use the earlier
+report as evidence for the new cross-method comparisons.
