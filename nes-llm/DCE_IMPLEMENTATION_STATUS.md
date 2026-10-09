@@ -186,3 +186,38 @@ Run from `nes-llm/`:
 The next decision is based on the matched comparison across multiple seeds,
 not a single favorable run. Any follow-up weight tuning must be declared and
 reported separately from a held-out evaluation.
+
+
+## Matched three-way single-seed result (20261009; 2,000 carriers)
+
+The user ran the matched comparison with the same synthetic cover, payload bits,
+candidate sets, and toy quantizer for all methods.
+
+| Metric | Nearest baseline | Independent DCE | Greedy batch DCE |
+|---|---:|---:|---:|
+| BER after toy quantization | 0.000000 | 0.000000 | 0.000000 |
+| Mean squared perturbation | 0.021024 | 0.064852 | 0.182516 |
+| Histogram TV distance | 0.036264 | 0.111773 | 0.005957 |
+| Cover-to-embedded histogram KL (nats) | 0.006574 | 0.068248 | 0.001111 |
+
+The greedy batch method reduced TV by about 83.6% and cover-to-embedded KL by
+about 83.1% versus nearest-feasible on this seed, but mean squared perturbation
+was about 8.68 times the baseline. Thus it shows a distribution/distortion
+tradeoff, not an overall win. Zero BER is expected by construction of the toy
+candidate sets. A single synthetic seed is not sufficient to select the method.
+
+Added `scripts/dce_three_way_multiseed.py` to report per-method mean,
+population standard deviation, range, strict wins against the baseline, and
+paired deltas over multiple seeds. Tests are in
+`tests/test_dce_three_way_multiseed.py`.
+
+Run from `nes-llm/`:
+
+```bash
+../.venv/bin/python -m unittest discover -s tests -p 'test_dce_three_way_multiseed.py' -v
+../.venv/bin/python scripts/dce_three_way_multiseed.py --carriers 2000 --seeds 20261009,20261010,20261011,20261012,20261013 --output ../cache/dce_three_way_multiseed_20261009.json
+```
+
+Decision gate: assess the full paired multi-seed tradeoff before changing
+weights or proposing an NF4 implementation. This remains synthetic scalar
+quantizer evidence only.
