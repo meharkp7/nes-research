@@ -33,7 +33,7 @@ From `nes-llm/`:
 ../.venv/bin/python -m unittest discover -s tests -p 'test_contract_b_nf4_b14.py' -v
 ```
 
-The CI suite covers deterministic payload/envelope accounting, carrier selection, nibble ordering, exact 10k recovery, pair-ID invariants, wrong-key rejection, corruption rejection, and synthetic SafeTensors parsing. CI also syntax-checks the Contract B scripts. These tests do not replace the actual cached-model run.
+The CI suite covers deterministic payload/envelope accounting, carrier selection, nibble ordering, exact 10k recovery, pair-ID invariants, wrong-key rejection, corruption rejection, capacity-payload generation, and synthetic SafeTensors parsing. CI syntax-checks all Contract B scripts. These tests do not replace the actual cached-model run.
 
 ## Phase 2 — capacity sweep
 
@@ -57,7 +57,17 @@ After the B1.4 receiver and reload checks pass:
   --stego ../cache/contract_b_nf4_b14_10k --device cpu --max-tokens 256
 ```
 
-This is deliberately labelled an exploratory fixed-text diagnostic, not a benchmark. A publication-quality utility result needs a larger held-out corpus, baseline/control variants, uncertainty, and a predeclared acceptance criterion.
+This is a fixed, small diagnostic text suite, not a benchmark. A publication-quality utility result needs a larger held-out corpus, baseline/control variants, uncertainty, and a predeclared acceptance criterion.
+
+## Phase 4 — descriptive detectability diagnostic
+
+```bash
+../.venv/bin/python scripts/contract_b_detectability_diagnostic.py \
+  --original ../cache/contract_b_nf4_probe_retry \
+  --stego ../cache/contract_b_nf4_b14_10k
+```
+
+This reports packed-code histograms, total-variation distance, KL divergence, LSB balance and changed-code localization. It is not a trained detector and cannot establish stealth or attacker success probability.
 
 ## Remaining phases
 
@@ -71,4 +81,4 @@ This is deliberately labelled an exploratory fixed-text diagnostic, not a benchm
 
 ## Execution boundary
 
-GitHub source access does not provide access to the user's local model cache or Mac runtime. The actual Qwen NF4 reload, capacity sweep and model-utility run must be executed locally; source review, synthetic tests, tracked artifact review and analysis can be done separately.
+GitHub source access does not provide access to the user's local model cache or Mac runtime. The actual Qwen NF4 reload, capacity sweep, utility and detectability runs must be executed locally; source review, synthetic tests, tracked artifact review and analysis can be done separately.

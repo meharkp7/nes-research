@@ -9,6 +9,7 @@ on:
       - "nes-llm/scripts/contract_b_nf4_b14.py"
       - "nes-llm/scripts/contract_b_capacity_sweep.py"
       - "nes-llm/scripts/contract_b_utility_eval.py"
+      - "nes-llm/scripts/contract_b_detectability_diagnostic.py"
       - "nes-llm/tests/test_contract_b_nf4_b14.py"
       - "nes-llm/CONTRACT_B_B14.md"
       - ".github/workflows/contract-b-b14.yml"
@@ -23,7 +24,7 @@ jobs:
           python-version: "3.11"
       - name: Syntax-check Contract B scripts
         working-directory: nes-llm
-        run: python -m py_compile scripts/contract_b_nf4_b14.py scripts/contract_b_capacity_sweep.py scripts/contract_b_utility_eval.py
+        run: python -m py_compile scripts/contract_b_nf4_b14.py scripts/contract_b_capacity_sweep.py scripts/contract_b_utility_eval.py scripts/contract_b_detectability_diagnostic.py
       - name: Run dependency-free synthetic tests
         working-directory: nes-llm
         run: python -m unittest discover -s tests -p 'test_contract_b_nf4_b14.py' -v
