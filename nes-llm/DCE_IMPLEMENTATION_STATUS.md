@@ -127,3 +127,33 @@ representation-specific NF4 candidate generator/decoder and controlled
 Qwen2.5-3B pilot be considered. Even improved synthetic metrics would not
 establish NF4 compatibility, model utility preservation, undetectability, or
 checkpoint robustness.
+
+
+## Batch-level prototype: implementation gate
+
+Added `src/optimization/batch_optimizer.py` as a separate greedy prototype.
+Unlike the previous per-carrier histogram-frequency proxy, it tracks selected
+quantized-bin counts and scores each feasible candidate by the projected
+aggregate squared-count mismatch for the current prefix plus perturbation.
+The optimizer requires one payload-feasible candidate per carrier and checks
+that the target histogram total matches the carrier count.
+
+This is a **greedy heuristic**, not a global optimizer. The candidate ordering
+can affect the result, and the squared-count prefix objective is not identical
+to minimizing final TV or KL. The first gate is correctness and transparent
+synthetic comparison, not a claim of superiority.
+
+Tests are in `tests/test_batch_distribution_optimizer.py`. Run from
+`nes-llm/`:
+
+```bash
+../.venv/bin/python -m unittest discover -s tests -p 'test_batch_distribution_optimizer.py' -v
+../.venv/bin/python -m unittest discover -s tests -p 'test_distribution_constrained_optimizer.py' -v
+../.venv/bin/python -m unittest discover -s tests -p 'test_dce_candidate_benchmark.py' -v
+```
+
+Next, construct a matched synthetic comparison using identical cover values,
+payload bits, candidate sets, and toy quantizer for (1) nearest-feasible,
+(2) the rejected independent per-carrier DCE objective, and (3) this batch
+heuristic. Report all seeds, final TV/KL, perturbation, and BER. Do not infer
+NF4 compatibility, model utility, or undetectability from synthetic results.
