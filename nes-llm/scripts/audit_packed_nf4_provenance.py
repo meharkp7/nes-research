@@ -4,8 +4,9 @@
 This is a preflight validator, not a detector. It verifies row metadata,
 within-pair model/tensor consistency, identical block-index coverage, distinct
 artifact identities for clean versus embedded, and enough independent source
-groups for a grouped split. It does not claim source independence from IDs alone;
-the experimenter must assign source_id truthfully and retain provenance records.
+groups for a grouped split. Because feature CSVs do not include a verified immutable
+model revision, the independent-group count is conservatively based on model_id,
+not source_id or tensor_key. This still cannot prove independence from IDs alone.
 """
 from __future__ import annotations
 
@@ -132,15 +133,18 @@ def audit(paths: list[Path], min_sources: int) -> dict:
         )
 
     source_ids = sorted({key[0] for key in pairs})
-    if len(source_ids) < min_sources:
+    model_ids = sorted({roles["clean"]["model_id"] for roles in pairs.values()})
+    if len(model_ids) < min_sources:
         raise ValueError(
-            f"Need >= {min_sources} independent source_id groups; found {len(source_ids)}. "
-            "Blocks and repeated runs do not increase independent source count."
+            f"Need >= {min_sources} distinct model_id groups for grouped train/validation/test; "
+            f"found {len(model_ids)}. Q/K/V tensors, nested/plain conditions, blocks, and repeated runs "
+            "from one model_id do not increase the independent group count."
         )
     return {
         "schema": "nes.packed_nf4_provenance_audit.v1",
         "status": "passed",
-        "source_group_count": len(source_ids),
+        "model_group_count": len(model_ids),
+        "grouping_key": "model_id",
         "pair_count": len(pair_summaries),
         "min_sources_required": min_sources,
         "source_ids": source_ids,
@@ -150,7 +154,8 @@ def audit(paths: list[Path], min_sources: int) -> dict:
         "limitations": [
             "Source independence is not inferable from identifiers; provenance must be verified externally.",
             "Passing preflight does not establish detector performance or statistical power.",
-            "Use source_id as the split grouping key to keep all repeated runs from one source in one partition.",
+            "Use model_id as the conservative split grouping key because immutable model revision is not recorded in feature rows.",
+            "Distinct model IDs are necessary but not sufficient proof of independent sources; verify model/revision provenance externally.",
         ],
     }
 
