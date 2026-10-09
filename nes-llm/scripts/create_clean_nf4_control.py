@@ -73,7 +73,8 @@ def create_clean_control(
     del state, model
 
     packed, quant_state = quantize_4bit(
-        flattened, quant_type="nf4", blocksize=blocksize
+        flattened, quant_type="nf4", blocksize=blocksize,
+        compress_statistics=True,
     )
     actual_blocksize = int(quant_state.blocksize)
     # Use bitsandbytes' own dequantizer so nested/compressed scale state, if
@@ -97,7 +98,7 @@ def create_clean_control(
             "quant_type": "nf4",
             "blocksize_requested": blocksize,
             "blocksize_observed": actual_blocksize,
-            "compress_statistics": "bitsandbytes default",
+            "compress_statistics": True,
             "note": "Runtime-observed clean control settings; historical QSE settings were only partially recorded.",
         },
         "weight_rmse_vs_fp16_source": rmse,
