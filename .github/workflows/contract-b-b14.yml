@@ -1,4 +1,4 @@
-name: Contract B B1.4 unit tests
+name: Contract B and DCE prototype tests
 
 on:
   push:
@@ -13,12 +13,15 @@ on:
       - "nes-llm/scripts/contract_b_robustness_matrix.py"
       - "nes-llm/scripts/contract_b_nf4_requantization.py"
       - "nes-llm/scripts/contract_b_error_pattern.py"
+      - "nes-llm/src/optimization/**"
       - "nes-llm/tests/test_contract_b_nf4_b14.py"
       - "nes-llm/tests/test_contract_b_robustness_matrix.py"
       - "nes-llm/tests/test_contract_b_nf4_requantization.py"
       - "nes-llm/tests/test_contract_b_error_pattern.py"
+      - "nes-llm/tests/test_distribution_constrained_optimizer.py"
       - "nes-llm/CONTRACT_B_B15_PLAN.md"
       - "nes-llm/CONTRACT_B_B14.md"
+      - "nes-llm/DCE_IMPLEMENTATION_STATUS.md"
       - ".github/workflows/contract-b-b14.yml"
 
 jobs:
@@ -29,13 +32,18 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: "3.11"
-      - name: Syntax-check Contract B scripts
+      - name: Syntax-check research scripts and DCE modules
         working-directory: nes-llm
-        run: python -m py_compile scripts/contract_b_nf4_b14.py scripts/contract_b_capacity_sweep.py scripts/contract_b_utility_eval.py scripts/contract_b_detectability_diagnostic.py scripts/contract_b_robustness_matrix.py scripts/contract_b_nf4_requantization.py scripts/contract_b_error_pattern.py
-      - name: Run B1.4 synthetic tests
+        run: |
+          python -m py_compile scripts/contract_b_nf4_b14.py scripts/contract_b_capacity_sweep.py scripts/contract_b_utility_eval.py scripts/contract_b_detectability_diagnostic.py scripts/contract_b_robustness_matrix.py scripts/contract_b_nf4_requantization.py scripts/contract_b_error_pattern.py
+          python -m py_compile src/optimization/__init__.py src/optimization/cost_function.py src/optimization/candidate_generator.py src/optimization/optimizer.py
+      - name: Run B1.4 and B1.5 synthetic tests
         working-directory: nes-llm
         run: |
           python -m unittest discover -s tests -p 'test_contract_b_nf4_b14.py' -v
           python -m unittest discover -s tests -p 'test_contract_b_robustness_matrix.py' -v
           python -m unittest discover -s tests -p 'test_contract_b_nf4_requantization.py' -v
           python -m unittest discover -s tests -p 'test_contract_b_error_pattern.py' -v
+      - name: Run DCE prototype tests
+        working-directory: nes-llm
+        run: python -m unittest discover -s tests -p 'test_distribution_constrained_optimizer.py' -v
