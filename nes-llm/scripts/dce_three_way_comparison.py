@@ -24,6 +24,7 @@ from scripts.dce_candidate_benchmark import (
 )
 from src.optimization import CandidateGenerator, CandidateOptimizer, CostWeights
 from src.optimization.batch_optimizer import BatchDistributionOptimizer
+from src.optimization.budgeted_batch_optimizer import DistortionBudgetedBatchOptimizer
 from src.optimization.candidate_generator import Candidate
 
 
@@ -35,6 +36,8 @@ def run_comparison(
     smoothing_alpha: float = 0.5,
     distribution_weight: float = 0.5,
     perturbation_weight: float = 1.0,
+    include_budgeted: bool = False,
+    distortion_budget_fraction: float = 0.10,
 ) -> dict:
     if carriers < 1:
         raise ValueError("carriers must be >= 1")
@@ -48,6 +51,8 @@ def run_comparison(
         raise ValueError("distribution_weight must be finite and >= 0")
     if not math.isfinite(perturbation_weight) or perturbation_weight < 0:
         raise ValueError("perturbation_weight must be finite and >= 0")
+    if not math.isfinite(distortion_budget_fraction) or distortion_budget_fraction < 0:
+        raise ValueError("distortion_budget_fraction must be finite and >= 0")
 
     rng = random.Random(seed)
     cover = [rng.gauss(0.0, 1.0) for _ in range(carriers)]
@@ -118,6 +123,18 @@ def run_comparison(
             cover, bits, list(batch_result.selected), step, smoothing_alpha
         ),
     }
+    budgeted_result = None
+    if include_budgeted:
+        budgeted_result = DistortionBudgetedBatchOptimizer(
+            max_relative_perturbation=distortion_budget_fraction
+        ).optimize(
+            candidate_sets=candidate_sets,
+            target_histogram={code * step: count for code, count in cover_histogram.items()},
+            target_bits=bits,
+        )
+        methods["batch_dce_distortion_budgeted"] = summarize_method(
+            cover, bits, list(budgeted_result.selected), step, smoothing_alpha
+        )
     baseline = methods["nearest_feasible_baseline"]
     deltas = {}
     for method_name, report in methods.items():
@@ -147,6 +164,8 @@ def run_comparison(
             "smoothing_alpha": smoothing_alpha,
             "distribution_weight": distribution_weight,
             "perturbation_weight": perturbation_weight,
+            "include_budgeted": include_budgeted,
+            "distortion_budget_fraction": distortion_budget_fraction,
             "candidate_count_per_carrier": 2 * radius_codes + 1,
         },
         "methods": methods,
@@ -157,6 +176,15 @@ def run_comparison(
             "final_histogram_tv": batch_result.histogram_total_variation_distance,
             "mean_squared_perturbation": batch_result.mean_squared_perturbation,
         },
+        "budgeted_batch_optimizer": ({
+            "max_relative_perturbation": budgeted_result.max_relative_perturbation,
+            "baseline_mean_squared_perturbation": budgeted_result.baseline_mean_squared_perturbation,
+            "mean_squared_perturbation": budgeted_result.mean_squared_perturbation,
+            "actual_total_perturbation": budgeted_result.actual_total_perturbation,
+            "perturbation_budget_total": budgeted_result.perturbation_budget_total,
+            "within_budget": budgeted_result.actual_total_perturbation <= budgeted_result.perturbation_budget_total + max(1e-12, budgeted_result.perturbation_budget_total * 1e-12),
+            "final_histogram_tv": budgeted_result.histogram_total_variation_distance,
+        } if budgeted_result is not None else None),
         "interpretation_limit": (
             "Synthetic scalar quantizer only. Does not establish NF4 compatibility, "
             "model utility preservation, steganographic undetectability, cryptographic "
@@ -174,6 +202,8 @@ def main() -> int:
     parser.add_argument("--smoothing-alpha", type=float, default=0.5)
     parser.add_argument("--distribution-weight", type=float, default=0.5)
     parser.add_argument("--perturbation-weight", type=float, default=1.0)
+    parser.add_argument("--include-budgeted", action="store_true")
+    parser.add_argument("--distortion-budget-fraction", type=float, default=0.10)
     parser.add_argument("--output", default="", help="Optional JSON path; refuses to overwrite.")
     args = parser.parse_args()
     report = run_comparison(
@@ -184,6 +214,8 @@ def main() -> int:
         smoothing_alpha=args.smoothing_alpha,
         distribution_weight=args.distribution_weight,
         perturbation_weight=args.perturbation_weight,
+        include_budgeted=args.include_budgeted,
+        distortion_budget_fraction=args.distortion_budget_fraction,
     )
     serialized = json.dumps(report, indent=2, sort_keys=True)
     if args.output:
