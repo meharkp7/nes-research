@@ -126,6 +126,8 @@ def main() -> int:
     run_id = datetime.now(timezone.utc).strftime("%Y%m%dT%H%M%SZ")
     output_root = (args.output_root or (REPO_ROOT / "cache" / "seven_method_long_matrix" / run_id)).expanduser().resolve()
     output_root.mkdir(parents=True, exist_ok=False)
+    print(f"\nRun output root: {output_root}", flush=True)
+    print("Per-cell embed.log, extract.log, and extract.json files will be saved under this directory.", flush=True)
     summary_path = output_root / "matrix_summary.json"
     csv_path = output_root / "matrix_summary.csv"
     results: list[dict[str, Any]] = []
@@ -216,7 +218,12 @@ def main() -> int:
                     if method in NF4_METHODS:
                         write_json(extract_report, extract_data)
                 except json.JSONDecodeError:
-                    extract_data = {}
+                    # Prefer the structured report if the extractor failed
+                    # before printing JSON, or emitted non-JSON diagnostics.
+                    try:
+                        extract_data = json.loads(extract_report.read_text(encoding="utf-8"))
+                    except (OSError, json.JSONDecodeError):
+                        extract_data = {}
                 if extract_rc == 0 and extract_data.get("exact_match") is True:
                     status = "PASS"
                     reason = ""
@@ -227,7 +234,18 @@ def main() -> int:
                     reason = extract_data.get("decode_error") or "payload did not match expected corpus"
                 else:
                     status = "EXTRACT_FAILED"
-                    reason = (extract_stderr or extract_stdout)[-2500:]
+                    reason = (
+                        extract_data.get("error")
+                        or extract_data.get("traceback")
+                        or extract_stderr
+                        or extract_stdout
+                    )[-2500:]
+                if extract_rc != 0 or status in {"BER_FAIL", "EXTRACT_FAILED"}:
+                    print(
+                        f"  extraction diagnostics: log={extract_log} report={extract_report} "
+                        f"(exit={extract_rc})",
+                        flush=True,
+                    )
                 record({
                     "model": model_id, "corpus": corpus.name, "method": method,
                     "status": status, "payload_bits": extract_data.get("expected_bits"),
