@@ -199,7 +199,7 @@ Before running the unified detectability suite, run the seven method families ov
 
 Each corpus contains three named messages. The corpora deliberately mix multi-sentence technical prose, structured fragments, punctuation, non-ASCII scripts, emoji and Unicode normalization edge cases. Use the exact same corpus files for every model and method. Do not rewrite or normalize text between cells; the framed UTF-8 bytes and hashes are the source of truth.
 
-The default full matrix is 7 models × 7 methods × 3 corpora = **147 cells**. Execute sequentially, model-major, with one cell's artifact reloaded by a separate extraction process. Record per-message/corpus exact match, BER, bit count, artifact/receiver contract, selected layers/tensors, and failure reason. The matrix runner writes incremental JSON and CSV summaries so interrupted runs still preserve completed cells.
+The default full matrix is 7 models × 7 methods × 3 corpora = **147 cells**. Execute sequentially, model-major, with one cell's artifact reloaded by a separate extraction process. Record corpus-level exact match and BER, per-record framing/digest validation, bit count, artifact/receiver contract, selected layers/tensors, and failure reason. The matrix runner writes incremental JSON and CSV summaries so interrupted runs still preserve completed cells.
 
 Run command from `nes-llm/`:
 
