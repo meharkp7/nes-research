@@ -75,28 +75,55 @@ Interpretation: the current per-candidate distribution proxy does not control
 the aggregate histogram well enough. Do not promote this configuration or
 choose a replacement weight from this single seed.
 
-## Next validation gate: repeated seeds and weight sweep
+## Repeated-seed weight sweep: negative result for current objective
 
-Added `scripts/dce_weight_sweep.py` to compare the same baseline against DCE
-across declared seeds and distribution weights. It reports per-run paired
-deltas, means, population standard deviations, ranges, and whether each metric
-beats baseline on every seed. The default exploratory grid is five seeds and
-weights 0, 0.1, 0.5, 1, 2, 5, and 10.
+The exploratory sweep compared the same nearest-feasible baseline against DCE
+for five seeds (20261009–20261013), 2,000 carriers per run, and distribution
+weights 0, 0.1, 0.5, 1, 2, 5, and 10. The user-provided terminal excerpt
+contains the summaries for weights 0.5, 1, 2, 5, and 10; the excerpt does not
+include the summaries for weights 0 and 0.1.
 
-From nes-llm/:
+For the five visible weights, the mean paired differences (DCE minus baseline)
+were:
 
-```bash
-../.venv/bin/python -m unittest discover -s tests -p 'test_dce_weight_sweep.py' -v
-../.venv/bin/python scripts/dce_weight_sweep.py --carriers 2000 --output ../cache/dce_weight_sweep_20261009.json
-```
+| Distribution weight | Δ mean squared perturbation | Δ histogram TV | Δ cover-to-embedded histogram KL (nats) |
+|---:|---:|---:|---:|
+| 0.5 | +0.041679 | +0.073205 | +0.055425 |
+| 1.0 | +0.110604 | +0.151870 | +0.189192 |
+| 2.0 | +0.251897 | +0.281189 | +0.550910 |
+| 5.0 | +0.507106 | +0.474271 | +1.322033 |
+| 10.0 | +0.646421 | +0.555017 | +1.731373 |
 
-This sweep is exploratory, not confirmatory: report all weights and seeds, and
-do not describe the best observed setting as validated without a separately
-declared held-out evaluation. Even a better synthetic sweep would not establish
-NF4 compatibility, model utility preservation, undetectability, or checkpoint
-robustness.
+Lower is better for all three reported metrics. The visible results show DCE
+losing to nearest-feasible selection on perturbation and both distribution
+metrics at every displayed weight. BER is zero for both methods by construction
+of the toy candidate set and does not differentiate them. Increasing the
+distribution weight makes the observed losses larger, rather than fixing them.
 
-After reviewing the sweep, decide whether to redesign the objective around
-aggregate batch-level distribution constraints or stop this DCE variant. Only
-then proceed to a representation-specific NF4 candidate generator/decoder and
-a controlled Qwen2.5-3B pilot.
+This is an exploratory synthetic result, not a model-level or NF4 result. Do
+not select a weight based on this sweep, claim DCE is stealthier, or wire this
+configuration into the production registry. The result supports stopping the
+current independent per-carrier objective.
+
+## Decision and next research gate
+
+**Decision: do not continue tuning the current per-carrier distribution proxy.**
+It scores individual candidates using cover-bin frequency, but the measured
+outcome is a property of the complete embedded batch. Selecting individually
+common bins can over-concentrate the aggregate histogram and increase both
+distortion and distribution mismatch.
+
+If DCE remains worth pursuing, the next design should make the batch-level
+constraint explicit—for example, choose payload-feasible candidates while
+tracking aggregate histogram counts against the cover histogram, and compare
+against the same nearest-feasible baseline under identical inputs. The new
+objective must have tests for its aggregate accounting and report every seed
+and parameter. If a batch-level approach cannot improve the baseline without
+unacceptable perturbation, stop DCE and prioritize the better-supported
+embedding direction.
+
+Only after a new synthetic method passes a declared validation gate should a
+representation-specific NF4 candidate generator/decoder and controlled
+Qwen2.5-3B pilot be considered. Even improved synthetic metrics would not
+establish NF4 compatibility, model utility preservation, undetectability, or
+checkpoint robustness.
