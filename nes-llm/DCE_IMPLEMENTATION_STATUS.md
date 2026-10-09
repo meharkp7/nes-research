@@ -221,3 +221,27 @@ Run from `nes-llm/`:
 Decision gate: assess the full paired multi-seed tradeoff before changing
 weights or proposing an NF4 implementation. This remains synthetic scalar
 quantizer evidence only.
+
+
+## Repeated-seed matched three-way result (five seeds; 2,000 carriers each)
+
+The user ran the repeated-seed script successfully. Its three unit tests passed.
+Across seeds 20261009–20261013, the method means were:
+
+| Metric | Nearest-feasible baseline | Independent DCE | Greedy batch DCE |
+|---|---:|---:|---:|
+| BER after toy quantization | 0.000000 | 0.000000 | 0.000000 |
+| Mean squared perturbation | 0.021028 | 0.062707 | 0.182154 |
+| Histogram TV distance | 0.037735 | 0.110940 | 0.006250 |
+| Cover-to-embedded histogram KL (nats) | 0.007226 | 0.062651 | 0.001368 |
+
+Paired batch-DCE minus baseline means were:
+- mean squared perturbation: +0.161127 (batch DCE has about 8.66x the baseline mean distortion);
+- histogram TV: -0.031484;
+- cover-to-embedded KL: -0.005858 nats.
+
+The batch method strictly improved TV and cover-to-embedded KL in all five seeds (5/5 each), but it did not beat the baseline on perturbation in any seed (0/5). Independent DCE strictly beat the baseline on none of the reported metrics. BER is zero for every method by construction of the synthetic candidate set, so it is not evidence of comparative robustness.
+
+**Decision:** the aggregate histogram improvement of greedy batch DCE is reproducible within this toy setup, but the distortion cost is too large to call it an overall improvement. Do not wire it into the production strategy registry and do not move directly to an NF4 pilot. Treat this as a reproducible synthetic trade-off, not evidence of stealth or model utility.
+
+A sensible final DCE design gate, if this line is pursued, is a distortion-budgeted batch objective: constrain mean squared perturbation to a declared budget relative to the nearest-feasible baseline, then optimize the aggregate histogram within that budget. Report infeasible runs as failures rather than silently relaxing the budget. Compare on the same five seeds, and add held-out seeds before making a method-selection claim. If the histogram advantage disappears under a reasonable distortion cap, stop DCE and redirect effort to the established sign-embedding approach and real transformation/utility tests.
