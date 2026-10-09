@@ -98,6 +98,11 @@ def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--original", required=True)
     parser.add_argument("--stego", required=True)
+    parser.add_argument(
+        "--tokenizer-path",
+        default="",
+        help="Local model/tokenizer directory or cached model ID. Defaults to --original.",
+    )
     parser.add_argument("--device", choices=("cpu", "mps"), default="cpu")
     parser.add_argument("--max-tokens", type=int, default=256)
     parser.add_argument("--output", default="")
@@ -114,9 +119,33 @@ def main() -> int:
 
     import torch
     from transformers import AutoTokenizer
+    tokenizer_source = args.tokenizer_path.strip() or str(original)
     tokenizer = AutoTokenizer.from_pretrained(
-        str(original), trust_remote_code=True, local_files_only=True
+        tokenizer_source, trust_remote_code=True, local_files_only=True
     )
+    # Preflight the entire diagnostic corpus before loading/evaluating both checkpoints.
+    token_lengths = []
+    for idx, text in enumerate(DIAGNOSTIC_TEXTS):
+        ids = tokenizer.encode(
+            text,
+            add_special_tokens=True,
+            truncation=True,
+            max_length=args.max_tokens,
+        )
+        token_lengths.append(len(ids))
+        if len(ids) < 2:
+            raw_ids = tokenizer.encode(text, add_special_tokens=False)
+            raise ValueError(
+                "Tokenizer preflight failed before model evaluation: "
+                f"text_index={idx}, token_length_with_special_tokens={len(ids)}, "
+                f"token_length_without_special_tokens={len(raw_ids)}, "
+                f"tokenizer_source={tokenizer_source!r}, "
+                f"tokenizer_class={type(tokenizer).__name__}, "
+                f"vocab_size={getattr(tokenizer, 'vocab_size', None)}, "
+                f"model_max_length={getattr(tokenizer, 'model_max_length', None)}, "
+                f"sample={text[:100]!r}. "
+                "Check that --tokenizer-path points to the matching Qwen tokenizer files."
+            )
     original_result = evaluate_checkpoint(original, tokenizer, args.device, args.max_tokens)
     stego_result = evaluate_checkpoint(stego, tokenizer, args.device, args.max_tokens)
     delta = (stego_result["perplexity"] / original_result["perplexity"] - 1.0) * 100.0
@@ -126,6 +155,9 @@ def main() -> int:
         "created_at_utc": datetime.now(timezone.utc).isoformat(),
         "device": args.device,
         "max_tokens_per_text": args.max_tokens,
+        "tokenizer_source": tokenizer_source,
+        "tokenizer_class": type(tokenizer).__name__,
+        "token_lengths": token_lengths,
         "diagnostic_text_count": len(DIAGNOSTIC_TEXTS),
         "diagnostic_corpus_sha256": hashlib.sha256("\n".join(DIAGNOSTIC_TEXTS).encode()).hexdigest(),
         "original": original_result,
