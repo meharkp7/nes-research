@@ -15,12 +15,14 @@ on:
       - "nes-llm/scripts/contract_b_error_pattern.py"
       - "nes-llm/src/optimization/**"
       - "nes-llm/scripts/dce_candidate_benchmark.py"
-      - "nes-llm/scripts/dce_three_way_comparison.py scripts/dce_three_way_multiseed.py"
       - "nes-llm/scripts/dce_three_way_multiseed.py"
+      - "nes-llm/scripts/dce_distortion_budget_sweep.py"
       - "nes-llm/scripts/dce_weight_sweep.py"
       - "nes-llm/tests/test_dce_candidate_benchmark.py"
       - "nes-llm/tests/test_dce_three_way_comparison.py"
       - "nes-llm/tests/test_dce_three_way_multiseed.py"
+      - "nes-llm/tests/test_budgeted_batch_optimizer.py"
+      - "nes-llm/tests/test_dce_distortion_budget_sweep.py"
       - "nes-llm/tests/test_dce_weight_sweep.py"
       - "nes-llm/tests/test_contract_b_nf4_b14.py"
       - "nes-llm/tests/test_contract_b_robustness_matrix.py"
@@ -46,7 +48,7 @@ jobs:
         working-directory: nes-llm
         run: |
           python -m py_compile scripts/contract_b_nf4_b14.py scripts/contract_b_capacity_sweep.py scripts/contract_b_utility_eval.py scripts/contract_b_detectability_diagnostic.py scripts/contract_b_robustness_matrix.py scripts/contract_b_nf4_requantization.py scripts/contract_b_error_pattern.py
-          python -m py_compile src/optimization/__init__.py src/optimization/cost_function.py src/optimization/candidate_generator.py src/optimization/optimizer.py src/optimization/batch_optimizer.py scripts/dce_candidate_benchmark.py scripts/dce_weight_sweep.py scripts/dce_three_way_comparison.py
+          python -m py_compile src/optimization/__init__.py src/optimization/cost_function.py src/optimization/candidate_generator.py src/optimization/optimizer.py src/optimization/batch_optimizer.py scripts/dce_candidate_benchmark.py scripts/dce_weight_sweep.py scripts/dce_three_way_comparison.py scripts/dce_three_way_multiseed.py scripts/dce_distortion_budget_sweep.py src/optimization/budgeted_batch_optimizer.py
       - name: Run B1.4 and B1.5 synthetic tests
         working-directory: nes-llm
         run: |
@@ -59,6 +61,8 @@ jobs:
         run: |
           python -m unittest discover -s tests -p 'test_distribution_constrained_optimizer.py' -v
           python -m unittest discover -s tests -p 'test_batch_distribution_optimizer.py' -v
+          python -m unittest discover -s tests -p 'test_budgeted_batch_optimizer.py' -v
+          python -m unittest discover -s tests -p 'test_dce_distortion_budget_sweep.py' -v
           python -m unittest discover -s tests -p 'test_dce_candidate_benchmark.py' -v
           python -m unittest discover -s tests -p 'test_dce_three_way_comparison.py' -v
           python -m unittest discover -s tests -p 'test_dce_three_way_multiseed.py' -v
@@ -66,4 +70,5 @@ jobs:
           python scripts/dce_candidate_benchmark.py --carriers 128 --seed 20261009
           python scripts/dce_three_way_comparison.py --carriers 128 --seed 20261009
           python scripts/dce_three_way_multiseed.py --carriers 64 --seeds 7,8
+          python scripts/dce_distortion_budget_sweep.py --carriers 32 --seeds 7,8 --budgets 0,0.1
           python scripts/dce_weight_sweep.py --carriers 64 --seeds 7,8 --distribution-weights 0,0.5
