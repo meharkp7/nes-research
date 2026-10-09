@@ -126,7 +126,7 @@ def _select_layers_automatically(model_id: str, expected_layers: int, total_payl
         residual = row["residual"].detach().cpu().contiguous()
         profiles.append(profiler.profile(residual, layer_id, "residual", expected_layers))
         del residual, row
-    ranked = sorted(profiles, key=lambda p: (p["adjusted_quality"], p["num_params"]), reverse=True)
+    ranked = sorted(profiles, key=lambda p: (p["quality_score"], p["num_params"]), reverse=True)
     selected = []
     capacity = 0
     for profile in ranked:
