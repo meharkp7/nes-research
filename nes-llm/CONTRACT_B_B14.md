@@ -25,13 +25,6 @@ Inspect `../cache/contract_b_nf4_b14_10k_b14_sender_report.json`, then copy `pay
 
 The receiver runs in a separate process and reloads the stego model on CPU by default. Do not use `--skip-model-reload` for an end-to-end PASS.
 
-## Expected accounting
-
-- Application payload: 10,000 bits = 1,250 bytes.
-- Envelope: 4-byte magic + 4-byte length + payload + 8-byte truncated SHA-256 = 1,266 bytes.
-- Carrier positions: 1,266 × 8 = 10,128 packed NF4 codes.
-- The low bit of each selected code carries one bit; `code // 2` is preserved.
-
 ## Automated tests
 
 From `nes-llm/`:
@@ -40,19 +33,42 @@ From `nes-llm/`:
 ../.venv/bin/python -m unittest discover -s tests -p 'test_contract_b_nf4_b14.py' -v
 ```
 
-Tests cover deterministic payload and envelope accounting, unique/prefix-stable carrier selection, nibble ordering, exact 10k round trip, pair-ID invariants, wrong-key rejection, corruption rejection, and synthetic SafeTensors parsing. They do not replace the actual cached-model run.
+The CI suite covers deterministic payload/envelope accounting, carrier selection, nibble ordering, exact 10k recovery, pair-ID invariants, wrong-key rejection, corruption rejection, and synthetic SafeTensors parsing. CI also syntax-checks the Contract B scripts. These tests do not replace the actual cached-model run.
+
+## Phase 2 — capacity sweep
+
+After B1.4 succeeds on the actual cached model:
+
+```bash
+../.venv/bin/python scripts/contract_b_capacity_sweep.py \
+  --checkpoint ../cache/contract_b_nf4_probe_retry \
+  --sizes-bits 1000 10000 25000 50000 --repeats 3
+```
+
+The report `../cache/contract_b_b14_capacity_sweep.json` records per-run exact recovery, bit error rate, carrier count, and changed-code count. This is a packed-code mechanism sweep, not a utility or stealth result.
+
+## Phase 3 — utility diagnostic
+
+After the B1.4 receiver and reload checks pass:
+
+```bash
+../.venv/bin/python scripts/contract_b_utility_eval.py \
+  --original ../cache/contract_b_nf4_probe_retry \
+  --stego ../cache/contract_b_nf4_b14_10k --device cpu --max-tokens 256
+```
+
+This is deliberately labelled an exploratory fixed-text diagnostic, not a benchmark. A publication-quality utility result needs a larger held-out corpus, baseline/control variants, uncertainty, and a predeclared acceptance criterion.
 
 ## Remaining phases
 
-1. Run B1.4 on the local Qwen cache and retain both reports.
-2. Add fresh-process negative tests and an artifact manifest/hash.
-3. Capacity sweep at 1k/10k/25k/50k bits, repeated for reproducibility.
-4. Model utility: original-versus-stego perplexity and task-level checks.
-5. Detectability: baselines, held-out evaluation, confidence intervals.
-6. Robustness: reload, fine-tuning, LoRA, pruning, merges, re-quantization; preserve failures.
-7. Multi-model evaluation after the single-model path is stable.
-8. Literature review, ablations, claim audit, reproducibility package, paper writing.
+1. Finish local B1.4 sender/receiver and negative tests.
+2. Run repeated capacity sweep and preserve all failures.
+3. Expand utility evaluation to a suitable held-out corpus and task-level checks.
+4. Evaluate detectability with pre-registered baselines, held-out data and uncertainty.
+5. Evaluate robustness under reload, fine-tuning, LoRA, pruning, merges and re-quantization.
+6. Expand across models only after the single-model path is stable.
+7. Complete literature review, ablations, claim audit, reproducibility bundle and paper.
 
 ## Execution boundary
 
-GitHub source access does not provide access to the user's local model cache or Mac runtime. The actual Qwen NF4 reload run must be executed locally; source review, synthetic tests, tracked artifact review and analysis can be done separately.
+GitHub source access does not provide access to the user's local model cache or Mac runtime. The actual Qwen NF4 reload, capacity sweep and model-utility run must be executed locally; source review, synthetic tests, tracked artifact review and analysis can be done separately.
