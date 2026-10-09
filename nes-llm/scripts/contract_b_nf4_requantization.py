@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Run a genuine NF4 dequantize -> FP16 save -> fresh NF4 requantization.
+"""Run a genuine NF4 dequantize -> floating-point save -> fresh NF4 requantization.
 
 This is an expensive local lifecycle experiment, not an in-memory code mutation.
 It never overwrites the input checkpoint or existing output/work directories.
@@ -114,7 +114,7 @@ def recoverability_diagnostic(packed: bytes, expected_payload: bytes, key: bytes
 def run(args: argparse.Namespace) -> int:
     source = Path(args.stego).expanduser().resolve()
     output = Path(args.output_dir).expanduser().resolve()
-    work = Path(args.work_dir).expanduser().resolve() if args.work_dir else output.with_name(output.name + "_fp16_intermediate")
+    work = Path(args.work_dir).expanduser().resolve() if args.work_dir else output.with_name(output.name + "_floating_intermediate")
     report_path = output.parent / (output.name + "_requantization_report.json")
     if not source.is_dir():
         raise FileNotFoundError(f"Stego source checkpoint not found: {source}")
@@ -129,7 +129,7 @@ def run(args: argparse.Namespace) -> int:
     output.parent.mkdir(parents=True, exist_ok=True)
     work.parent.mkdir(parents=True, exist_ok=True)
     source_bytes = directory_bytes(source)
-    # Conservative reserve for an FP16 copy, quantized output, temporary serialization,
+    # Conservative reserve for a floating-point copy, quantized output, temporary serialization,
     # and the source. This is a preflight estimate, not an exact memory/disk guarantee.
     required_free = source_bytes * 5 + 1024**3
     free_bytes = shutil.disk_usage(output.parent).free
@@ -151,7 +151,7 @@ def run(args: argparse.Namespace) -> int:
         "created_at_utc": datetime.now(timezone.utc).isoformat(),
         "source_checkpoint": str(source),
         "source_checkpoint_bytes": source_bytes,
-        "intermediate_fp16_checkpoint": str(work),
+        "intermediate_floating_checkpoint": str(work),
         "requantized_checkpoint": str(output),
         "tensor_key": args.tensor_key,
         "source_payload_bits": len(expected_payload) * 8,
@@ -212,7 +212,7 @@ def run(args: argparse.Namespace) -> int:
         # Ensure the intermediate config cannot imply that its floating weights are still NF4.
         if hasattr(model.config, "quantization_config"):
             model.config.quantization_config = None
-        print(f"[B1.4 requant] Saving FP16/floating intermediate: {work}")
+        print(f"[B1.4 requant] Saving floating-point intermediate: {work}")
         model.save_pretrained(work, safe_serialization=True, max_shard_size="2GB")
         report["intermediate_selected_weight_dtype"] = str(float_weight.dtype)
         del model, modules, float_weight
