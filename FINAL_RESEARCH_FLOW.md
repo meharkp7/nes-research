@@ -89,8 +89,8 @@ DCE was investigated as an extension to improve the aggregate weight distributio
 
 ## 5. Candidate status and final research position
 
-- **Candidate A (QSE / the original quantization-state or residual-channel direction): closed for the current scope.** Treat the investigation as complete, but keep its outcome precise: the QAE adapter round-tripped in the tested production interface, while `nf4_qae` remained blocked because the required reference weights are not carried by the contract. The original claim that quantization residuals themselves provide the validated channel was not established. This is a closed negative/partial result, not a validated successful method.
-- **Candidate B (DCE): current synthetic implementation closed with a negative/mixed result.** The budgeted batch version gives small average TV improvements over the nearest-feasible baseline at added distortion, but the greedy version's stronger histogram scores cost much more perturbation. No DCE variant dominates the measured objectives. Do not promote the current code to the production registry or claim a real-NF4 result.
+- **Candidate A (QSE / quantization-state or residual-channel direction): NOT CLOSED.** Earlier work measured the QAE adapter round trip, but `nf4_qae` was blocked at the production strategy interface. That is an integration gap, not a valid negative result for QSE. A new real-NF4 tensor pilot is now implemented in `nes-llm/scripts/real_nf4_candidate_eval.py`; its model-dependent run has not yet been executed in the user's local model environment.
+- **Candidate B (DCE): NOT CLOSED.** The existing optimizer evidence remains synthetic-only and does not count as a real-NF4 test. The same pilot now compares a nearest-feasible NF4-code baseline against a histogram-aware DCE selector on actual BitsAndBytes NF4 codes. Its model-dependent run has not yet been executed. Do not claim either candidate succeeds or fails until the real run and required follow-up validation are recorded.
 - **Established Exp1–Exp27 line: frozen as the main measured research record.** The final paper should be based on those artifact-backed results, plus Contract B1.4/B1.5 as a separate packed-artifact case study, with all limitations retained.
 
 A real-NF4 DCE pilot is not an automatic next step: the current DCE candidate objective is not integrated with the packed-code carrier contract, and the synthetic comparison did not establish a clear overall win. Reopen Candidate B only if a specific NF4-aware, receiver-reproducible protocol has a clear hypothesis worth testing. This avoids turning a negative result into another open-ended implementation cycle.
@@ -110,8 +110,9 @@ The best-supported research story is not “the method is undetectable under all
 | **DONE** | Fix CI standalone-script imports. | Added `PYTHONPATH=.` to the workflow; the standalone DCE scripts now run in CI. |
 | **DONE** | Re-run branch CI and inspect the failure. | Workflow run **147 passed**: syntax checks, Contract B synthetic tests, core artifact audits, DCE unit tests and smoke commands. |
 | **DONE** | Audit the recorded core results. | `claim_audit.py`: **152/152 claims verified**. `check_consistency.py`: **9/9 checks passed**. The historical absolute-path issue was fixed in the checker without changing results or gates. |
-| **DONE** | Make the Candidate B go/no-go decision. | Close the current DCE synthetic branch. Its trade-off does not justify another optimizer or an NF4 integration built around the current incompatible candidate interface. Reopen only with a specific NF4-aware, receiver-reproducible hypothesis. |
-| **LOCAL ONLY** | Any additional checkpoint reload or model-dependent validation. | GitHub Actions does not have the user's local Qwen cache. The already-recorded B1.4 pristine and re-quantization outcomes remain the evidence; no new local-model result is claimed here. |
+| **DONE** | Add a real-NF4 candidate pilot harness. | `scripts/real_nf4_candidate_eval.py` evaluates Candidate A/QSE after a real NF4 quantize/dequantize cycle and Candidate B/DCE over actual BitsAndBytes NF4 code indices, with a matched nearest-feasible baseline. Syntax is CI-checked. |
+| **NOT RUN — LOCAL** | Execute Candidate A and Candidate B on the actual cached FP16 model tensor. | Run the command in §7. The JSON output is the first real NF4 result for these candidates; GitHub Actions does not have the user's model cache, so this must run locally. |
+| **NOT RUN — FOLLOW-UP** | Validate full artifact save/reload, utility and detectability for any promising candidate. | Tensor-level BER alone is not an end-to-end result. Preserve every report and compare both candidates under the same payload, tensor, carrier positions, and NF4 settings. |
 | **PAPER** | Final manuscript and submission package. | Use this ledger and the committed artifacts to write the manuscript; every central claim must map to an artifact, and failures/limitations must remain explicit. This is paper-writing work, not a reason to add more experiments. |
 
 No new optimizer, embedding architecture, ECC design or broad benchmark sweep is planned. The current evidence is ready to be consolidated into the paper, with model-cache-dependent work clearly separated from completed CI validation.
@@ -127,6 +128,14 @@ Run from `nes-llm/` using the repository environment:
 ../.venv/bin/python claim_audit.py
 ../.venv/bin/python -m unittest discover -s tests -p 'test_*.py' -v
 
+# Real NF4 Candidate A/B pilot (use a local FP16/BF16 model directory; report path must be new)
+../.venv/bin/python scripts/real_nf4_candidate_eval.py \\
+  --model ../cache/models/Qwen2.5-3B \\
+  --tensor model.layers.0.self_attn.q_proj.weight \\
+  --payload-bits 10000 \\
+  --output ../cache/real_nf4_candidate_eval_qwen3b_$(date +%Y%m%d_%H%M%S).json \\
+  --local-files-only
+
 # DCE prototype tests
 ../.venv/bin/python -m unittest discover -s tests -p 'test_distribution_constrained_optimizer.py' -v
 ../.venv/bin/python -m unittest discover -s tests -p 'test_batch_distribution_optimizer.py' -v
@@ -138,7 +147,7 @@ Run from `nes-llm/` using the repository environment:
 ../.venv/bin/python -m unittest discover -s tests -p 'test_dce_weight_sweep.py' -v
 ```
 
-The synthetic DCE commands do not require the local Qwen cache. The real-model pilot and the core model experiments do.
+The synthetic DCE commands do not require the local Qwen cache. The real-NF4 pilot requires a local FP16/BF16 model directory and the installed PyTorch, Transformers, and BitsAndBytes environment. It writes a JSON report and refuses to overwrite an existing report. This first stage is tensor-level; it does not itself establish artifact-only recovery, utility, detectability, or transformation robustness.
 
 ## 8. Reporting rules
 
