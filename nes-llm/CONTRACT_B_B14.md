@@ -134,3 +134,25 @@ Interpretation:
 - `TRANSFORMATION_ERROR`: the transformation did not complete; this is not evidence either for or against payload survival.
 
 The report's carrier BER diagnostic and the independent receiver must agree before marking the result final. Do not infer utility preservation from recovery, or recovery robustness from the small mutation matrix. A new NF4 quantization result applies only to this checkpoint, configuration, and run.
+
+### Observed local result — 2026-10-09
+
+The first real B1.4 NF4 → floating-point → fresh NF4 lifecycle completed using the local Qwen2.5-3B artifact and Transformers 5.16.1. The intermediate weights were dequantized to BF16. Saving the intermediate required a guarded, version-specific workaround: after dequantization, the script clears the model's `_weight_conversions` only when every registered operation is `Bnb4bitDeserialize`, whose reverse operation is unimplemented in this Transformers version. Unknown operations are rejected rather than bypassed.
+
+Observed report values:
+
+- Lifecycle status: `TRANSFORMATION_COMPLETED_RECOVERY_FAILED`
+- Payload bit errors: 30 / 10,000
+- Payload BER: 0.003
+- Envelope header: valid
+- Payload checksum: invalid
+- Expected payload SHA-256: `32c3169092b64eed0a5900fecbd5c8714a94ff1b7f6c107c7cba1949b33e85d0`
+- Recovered payload SHA-256: `c6dcab21a20a46e8b28b660880d20650a076438d2b3a61ad9a6e80f17c2716f5`
+- The independent B1.4 receiver rejected the requantized artifact with `ValueError: Payload checksum mismatch`.
+
+This is a **negative result for exact artifact-only recovery after this specific NF4 requantization path**. The lifecycle transformation and serialization succeeded; the embedded payload did not survive exactly. It does not invalidate the earlier pristine-artifact recovery result, and it must not be reported as a serialization failure or as a general result for all NF4 checkpoints/configurations.
+
+The observed output directories were `cache/contract_b_b14_nf4_requantized_retry3_fp16` (floating-point intermediate; BF16 weights) and `cache/contract_b_b14_nf4_requantized_retry3` (fresh NF4 output). The report is `cache/contract_b_b14_nf4_requantized_retry3_requantization_report.json`. These are local generated artifacts and are not assumed to be tracked in Git.
+
+**Next experiment:** preserve B1.4 unchanged as the baseline. If testing error correction or redundant carrier coding, define it as a separately versioned protocol/experiment, then evaluate recovery, capacity, utility, and detectability under the same declared transformation. Do not overwrite or relabel this failed B1.4 run.
+
