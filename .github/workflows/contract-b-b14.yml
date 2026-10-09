@@ -15,10 +15,12 @@ on:
       - "nes-llm/scripts/contract_b_error_pattern.py"
       - "nes-llm/src/optimization/**"
       - "nes-llm/scripts/dce_candidate_benchmark.py"
-      - "nes-llm/scripts/dce_three_way_comparison.py"
+      - "nes-llm/scripts/dce_three_way_comparison.py scripts/dce_three_way_multiseed.py"
+      - "nes-llm/scripts/dce_three_way_multiseed.py"
       - "nes-llm/scripts/dce_weight_sweep.py"
       - "nes-llm/tests/test_dce_candidate_benchmark.py"
       - "nes-llm/tests/test_dce_three_way_comparison.py"
+      - "nes-llm/tests/test_dce_three_way_multiseed.py"
       - "nes-llm/tests/test_dce_weight_sweep.py"
       - "nes-llm/tests/test_contract_b_nf4_b14.py"
       - "nes-llm/tests/test_contract_b_robustness_matrix.py"
@@ -59,7 +61,9 @@ jobs:
           python -m unittest discover -s tests -p 'test_batch_distribution_optimizer.py' -v
           python -m unittest discover -s tests -p 'test_dce_candidate_benchmark.py' -v
           python -m unittest discover -s tests -p 'test_dce_three_way_comparison.py' -v
+          python -m unittest discover -s tests -p 'test_dce_three_way_multiseed.py' -v
           python -m unittest discover -s tests -p 'test_dce_weight_sweep.py' -v
           python scripts/dce_candidate_benchmark.py --carriers 128 --seed 20261009
           python scripts/dce_three_way_comparison.py --carriers 128 --seed 20261009
+          python scripts/dce_three_way_multiseed.py --carriers 64 --seeds 7,8
           python scripts/dce_weight_sweep.py --carriers 64 --seeds 7,8 --distribution-weights 0,0.5
