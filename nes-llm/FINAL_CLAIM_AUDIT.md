@@ -20,6 +20,10 @@
 | The method is robust. | Pristine exact recovery; specific requantization failure; combined pruning+requantization failure; older Exp23 surgery results use a different residual-domain protocol. | **Must be scoped by protocol and transformation.** Keep Exp23 residual-domain findings separate from B1.4 packed-NF4 evidence. Avoid universal robustness claims. |
 | DCE improves the overall method. | Synthetic multi-seed batch matching improves histogram TV/KL at roughly 8.66× baseline distortion. | **Not an overall win.** Report the trade-off and do not describe it as an improvement without qualification. |
 
+### Dataset group-count observation — local inspection, 10 October 2026
+
+The user inspected the frozen CSV `cache/packed_nf4_grouped_dataset_20261010.csv` without modifying it: 606,208 rows; 303,104 `clean` and 303,104 `embedded`; tensor-key counts are Q projection 540,672 rows, K projection 32,768, and V projection 32,768. The six Qwen source/run combinations are Q/K/V crossed with `nested`/`plain`; TinyLlama and Gemma each have one Q-projection group. These are dataset bookkeeping groups, not demonstrated independent replications. The summary still does not establish matched clean/embedded pairing, source checkpoint hashes/revisions, or unique run invocations. Original generation artifacts/logs remain to be checked locally.
+
 ## Required final gates
 
 - [ ] Inspect original local dataset-generation logs/manifests and hashes to determine whether detector source/run groups are genuinely independent and clean/embedded examples are matched.
