@@ -14,6 +14,7 @@ Close the project with a defensible answer to the research question: how reliabl
 - Artifact-only Contract B B1.4: pristine packed-NF4 recovery succeeded for 10,000 bits (BER 0); the observed fresh NF4 requantization lifecycle produced BER 0.003 and checksum failure.
 - DCE: synthetic multi-seed batch matching improves histogram TV/KL at roughly 8.66x baseline distortion; not an overall win. Do not wire it into production or spend more time tuning the current proxy.
 - Packed-NF4 detector benchmark: mixed-model RF test AUC 0.6641, driven by Qwen (AUC 0.7689); TinyLlama and Gemma are near chance (~0.52). Grouped Qwen-only OOF AUC 0.8913 varies strongly by held-out projection/variant group. This is not model-generalized evidence.
+- Cross-model leave-one-family-out benchmark (dataset SHA-256 `1b815887d73e40463bb7694d4e921108fb6bb2f29c1e8765ab4cb7240a60c58c`): all three estimators are near chance on every held-out family. Qwen AUC 0.5010–0.5014; TinyLlama 0.5141–0.5289; Gemma 0.5118–0.5223. This does not support transferable detector signal. TinyLlama and Gemma each have only one held-out source/run group, and the Qwen holdout has only two training groups, so the estimates are exploratory and group-limited—not proof of universal undetectability.
 - Qwen ablation: full features AUC 0.7699; without entropy 0.7668; entropy-only 0.5422. Entropy alone does not explain the signal. Treat as diagnostic only.
 - Existing reports, datasets, and frozen pilot remain unchanged.
 
@@ -24,7 +25,7 @@ Run the relevant test suites together after pulling this branch. Include the det
 
 ### Batch B — model generalization + provenance (same priority)
 1. Verify what `source_id` and `run_id` mean, and whether clean/embedded pairs differ only by the embedding operation.
-2. Use `scripts/run_packed_nf4_cross_model_detector.py` to train on two model families and test on the third, rotating the held-out model. Preprocessing is fitted on training models only; the primary transfer metric is ROC-AUC, with fixed-threshold secondary metrics and group counts. This is a new evaluation, not yet locally run.
+2. Use `scripts/run_packed_nf4_cross_model_detector.py` to train on two model families and test on the third, rotating the held-out model. Preprocessing is fitted on training models only; the primary transfer metric is ROC-AUC, with fixed-threshold secondary metrics and group counts. **Completed locally**; results are summarized in Current evidence. No held-out family shows meaningful cross-model discrimination.
 3. Keep the existing mixed-model and Qwen-only results as exploratory comparisons, not the headline generalization result.
 
 Run from `nes-llm/` after pulling the branch:
@@ -62,7 +63,7 @@ Run the claim audit, consistency checks, and reproducibility checks once after c
 - [x] Consolidated packed-NF4 detector benchmark implemented and tested.
 - [x] Qwen entropy ablation implemented and tested.
 - [ ] Provenance/source-run meaning checked against actual artifact generation.
-- [x] Cross-model holdout benchmark implementation and synthetic tests added; local dataset run pending.
+- [x] Cross-model holdout benchmark implementation, synthetic tests, and local dataset run completed; all held-out-family AUCs near chance, with source/run group-count limitations recorded.
 - [ ] B1.4 lifecycle attack matrix completed for feasible transformations.
 - [ ] Utility comparison expanded to held-out prompts and fixed acceptance criteria.
 - [ ] Final claim audit, consistency checks, and reproducibility bundle frozen.
