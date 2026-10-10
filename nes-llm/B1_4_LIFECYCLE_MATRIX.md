@@ -50,10 +50,14 @@ Each row is a separate experiment from the pristine B1.4 stego checkpoint. Alway
 |---|---|---|
 | Pristine artifact baseline | PASS | 10,000-bit payload recovered exactly, BER 0, as documented in `CONTRACT_B_B14.md`. |
 | Fresh NF4 requantization | COMPLETED — RECOVERY FAILED | Existing frozen run: 30/10,000 bit errors, BER 0.003, checksum mismatch. Keep this negative result unchanged. |
-| Reload/save control without intentional weight change | NOT RUN | Run only with a distinct output path; this controls serialization/reload effects separately from requantization. |
+| NF4 reload/save control without intentional weight change | ATTEMPTED — TRANSFORMATION ERROR | Local Transformers 5.16.1 loaded the NF4 checkpoint, but `save_pretrained()` raised `NotImplementedError` while reversing `Bnb4bitDeserialize`. No valid output checkpoint was produced; the receiver's `FileNotFoundError` on that incomplete directory is a consequence, not a payload-recovery result. Preserve the failed directory/report. This control is blocked by the serializer path; do not bypass the reverse conversion while weights remain quantized. |
 | Structured pruning | NOT RUN | Apply one declared sparsity/configuration to a fresh copy; record selected tensor changes and recovery. Do not conflate pruning with arbitrary code mutation. |
 | Fine-tuning / LoRA merge | NOT RUN | Optional only if a controlled, reproducible local training/update path already exists. No improvised training run is required to close the pilot. |
 | Task/weight merge | NOT RUN | Optional only if a compatible, documented second checkpoint and merge configuration are already available. Otherwise mark not available. |
+
+### Reload/save control attempt — local result
+
+On 2026-10-10, the user attempted to load `cache/contract_b_nf4_b14_10k` as NF4 and save to `cache/contract_b_b14_reload_save_control_20261010`. Loading completed, but `save_pretrained()` raised `NotImplementedError` in Transformers 5.16.1 when `revert_weight_conversion()` requested the reverse operation for `Bnb4bitDeserialize`. The follow-up receiver failed because the output directory did not contain a model safetensors file or index. This is a transformation/serialization error, not evidence of payload loss or survival. Keep the failed output path occupied and preserve it; don't retry there. The workaround used by the existing requantization script is guarded to run only after dequantization, so it must not be copied into this control while the model remains quantized.
 
 ### Per-run record requirements
 
