@@ -68,7 +68,7 @@ def test_paired_delta_distribution_reports_nonzero_fraction_and_quantiles():
     qwen = result["by_model"][ablation.QWEN]
     assert qwen["entropy_bits"]["matched_pairs"] == 8
     assert qwen["entropy_bits"]["nonzero_fraction"] == 1.0
-    assert qwen["entropy_bits"]["quantiles"]["0.5"] == -0.2
+    assert abs(qwen["entropy_bits"]["quantiles"]["0.5"] - (-0.2)) < 1e-12
     assert qwen["code_frequency_06"]["mean"] > 0
 
 
