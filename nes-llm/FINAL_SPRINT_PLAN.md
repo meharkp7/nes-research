@@ -67,6 +67,6 @@ Run the claim audit, consistency checks, and reproducibility checks once after c
 - [x] Cross-model holdout benchmark implementation, synthetic tests, and local dataset run completed; all held-out-family AUCs near chance, with source/run group-count limitations recorded.
 - [x] B1.4 lifecycle matrix and per-run evidence requirements documented in `B1_4_LIFECYCLE_MATRIX.md`; requantization negative result and direct NF4 reload/save serializer blocker frozen.
 - [x] Controlled selected-tensor 10% magnitude-pruning + fresh NF4 requantization completed twice from fresh copies. Both recoveries failed at envelope-header validation; BER unavailable. Combined attack only, not isolated pruning. Initial autograd error, fix, and both completed runs are documented in `B1_4_LIFECYCLE_MATRIX.md`; stop repeating this attack. Fine-tuning and task merge remain optional.
-- [ ] Utility comparison expanded to held-out prompts and fixed acceptance criteria.
+- [ ] Utility evaluation script added: `scripts/contract_b_utility_eval_heldout.py` uses 32 fixed project-curated prompts distinct from the earlier 8-text diagnostic, paired per-prompt NLL differences, deterministic 10,000-replicate bootstrap CI, and a predeclared project-defined 2% upper-CI threshold. Local run and report review still pending; this is not an external benchmark or task-utility claim.
 - [ ] Final claim audit, consistency checks, and reproducibility bundle frozen.
 - [ ] Paper figures/tables and final limitations aligned to the frozen evidence.
