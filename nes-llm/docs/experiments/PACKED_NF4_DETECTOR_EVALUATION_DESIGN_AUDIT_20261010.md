@@ -38,6 +38,33 @@ The Qwen validation set includes Q, K, and V projection sources and nested/plain
 runs. The test score would be based on a single clean and a single embedded
 Gemma artifact, with many block-level rows per artifact.
 
+## Pairing and provenance audit
+
+A local read-only grouping report showed that every displayed group has equal
+clean/embedded row counts and the same continuous block-index range beginning
+at zero. The ranges are:
+- Gemma Q: 0–73,727
+- TinyLlama Q: 0–65,535
+- Qwen Q: 0–65,535 for each nested/plain run
+- Qwen K and V: 0–8,191 for each nested/plain run
+
+The dataset has 16 distinct artifact hashes: eight clean and eight embedded.
+No hash is shared across roles. This is consistent with distinct serialized
+artifacts but does **not** prove clean-to-embedded parentage.
+
+The `artifact_id` label is not a unique artifact key: `clean_control` maps
+to multiple hashes, as does `clean_control_rebuilt`. Use `artifact_sha256`
+for byte-level identity, while retaining run/source/model/tensor/configuration
+as provenance metadata.
+
+The CSV has no explicit parent-artifact or paired-control identifier. Therefore,
+matching block indices and source/tensor labels establish structural pairing
+only; they do not prove that the clean artifact is the correct baseline for its
+embedded counterpart. A local `rg` search for `packed_nf4_grouped_dataset`,
+`clean_control_rebuilt`, and `qse_embedded` under `scripts`, `src`,
+`docs`, and `../scripts` found no references. The generator/assembly path
+remains unlocated and must be traced before asserting provenance.
+
 ## Interpretation
 
 1. A detector could exploit model-specific or tensor-specific distributions
@@ -52,6 +79,8 @@ Gemma artifact, with many block-level rows per artifact.
    experiment, but this particular three-model layout has only one model in each
    split and one held-out test model. Model identity and split are inseparable,
    so a single result cannot support broad generalization claims.
+6. The same `artifact_id` text can refer to multiple hashes, so `artifact_id`
+   must not be treated as a globally unique artifact key.
 
 ## Evaluation questions must be separated
 
@@ -73,24 +102,30 @@ the transfer target. Do not mix these claims into the cross-model result.
 
 ## Required work before detector training
 
-1. Trace how `artifact_id`, `artifact_sha256`, `run_id`, `source_id`,
-   `tensor_key`, `role`, `label`, and `block_index` are generated.
-2. Confirm whether clean and embedded artifacts are paired from the same base
-   artifact, and whether one clean artifact is reused across multiple embedded
-   configurations.
-3. Audit feature construction for source/label leakage and repeated patch/block
+1. Locate the dataset generation/assembly code and trace how `artifact_id`,
+   `artifact_sha256`, `run_id`, `source_id`, `tensor_key`, `role`,
+   `label`, and `block_index` are generated.
+2. Add an explicit pairing manifest linking each embedded artifact to its
+   intended clean control and recording base/source artifact hashes, model
+   revision, tensor key, run/configuration, quantization settings, and payload
+   mode where applicable.
+3. Confirm whether one clean control is reused across multiple embedded
+   configurations. Preserve this dependency in the grouping logic.
+4. Audit feature construction for source/label leakage and repeated patch/block
    overlap across any planned splits.
-4. Define a group key that prevents dependent blocks or reused source artifacts
+5. Define a group key that prevents dependent blocks or reused source artifacts
    from crossing train/validation/test boundaries.
-5. Create clean-vs-clean controls and a known-positive control, then evaluate
+6. Create clean-vs-clean controls and a known-positive control, then evaluate
    using a held-out group split with ROC-AUC, balanced accuracy, FPR at a stated
    operating point, and uncertainty estimated at the group/artifact level.
-6. Freeze the split manifest and report its hashes before training.
+7. Freeze the split manifest and report its hashes before training.
 
 ## Claim boundary
 
 Current evidence supports only: **the CSV passed the validator's specified
-bookkeeping and clean/embedded block-index pairing checks.**
+bookkeeping and clean/embedded block-index pairing checks, and displayed
+clean/embedded groups have matching block-index coverage.**
 
 It does not yet support claims about detector performance, statistical
-independence, detectability/undetectability, or cross-model generalization.
+independence, verified parentage, detectability/undetectability, or cross-model
+generalization.
