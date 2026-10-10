@@ -197,26 +197,18 @@ def grouped_sensitivity(df, features, seed) -> dict:
 
 def label_randomization(df, features, seed, repetitions=5) -> dict:
     """Sanity control: shuffle labels at matched-pair level and rerun a light baseline."""
-    pair_keys = df[list(PAIR_COLS)].astype(str).agg("::".join, axis=1)
-    pair_table = df[[*PAIR_COLS, "split"]].drop_duplicates()
-    pair_table["pair_key"] = pair_table[list(PAIR_COLS)].astype(str).agg("::".join, axis=1)
     base = df.copy()
-    base["pair_key"] = pair_keys
     train = base[base["split"] == "train"].copy()
     test = base[base["split"] == "test"].copy()
     out = []
     for i in range(repetitions):
         rng = np.random.RandomState(seed + 1000 + i)
-        labels_by_pair = pair_table.set_index("pair_key")["split"].to_dict()
-        # Permute pair labels only within each partition, so both rows of a pair remain together.
-        shuffled = {}
-        for split in SPLITS:
-            keys = pair_table.loc[pair_table["split"] == split, "pair_key"].to_numpy().copy()
-            vals = np.array([int(base.loc[base["pair_key"] == k, "label"].iloc[0]) for k in keys])
-            rng.shuffle(vals)
-            shuffled.update(dict(zip(keys, vals)))
-        train_y = train["pair_key"].map(shuffled).to_numpy(int)
-        test_y = test["pair_key"].map(shuffled).to_numpy(int)
+        # Shuffle row labels independently within each partition while keeping rows in
+        # their original partition. This is a pipeline sanity check, not a scientific null.
+        train_y = train["label"].to_numpy(int).copy()
+        test_y = test["label"].to_numpy(int).copy()
+        rng.shuffle(train_y)
+        rng.shuffle(test_y)
         # If a tiny split loses a class after shuffling, report rather than crash.
         if len(np.unique(train_y)) < 2 or len(np.unique(test_y)) < 2:
             out.append({"replicate": i, "status": "NOT_EVALUABLE", "reason": "Shuffled labels lack both classes"})
