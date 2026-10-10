@@ -16,6 +16,14 @@ on:
       - "nes-llm/src/optimization/**"
       - "nes-llm/scripts/dce_candidate_benchmark.py"
       - "nes-llm/scripts/dce_three_way_multiseed.py"
+      - "nes-llm/scripts/real_nf4_candidate_eval.py"
+      - "nes-llm/scripts/prepare_seven_method_corpus.py"
+      - "nes-llm/scripts/seven_method_residual_pilot.py"
+      - "nes-llm/scripts/seven_method_nf4_pilot.py"
+      - "nes-llm/src/experiments/nf4_artifact_codec.py"
+      - "nes-llm/tests/test_nf4_artifact_codec.py"
+      - "nes-llm/src/experiments/seven_method_protocol.py"
+      - "nes-llm/tests/test_seven_method_protocol.py"
       - "nes-llm/scripts/dce_distortion_budget_sweep.py"
       - "nes-llm/scripts/dce_weight_sweep.py"
       - "nes-llm/tests/test_dce_candidate_benchmark.py"
@@ -50,8 +58,14 @@ jobs:
       - name: Syntax-check research scripts and DCE modules
         working-directory: nes-llm
         run: |
-          python -m py_compile scripts/contract_b_nf4_b14.py scripts/contract_b_capacity_sweep.py scripts/contract_b_utility_eval.py scripts/contract_b_detectability_diagnostic.py scripts/contract_b_robustness_matrix.py scripts/contract_b_nf4_requantization.py scripts/contract_b_error_pattern.py
+          python -m py_compile scripts/contract_b_nf4_b14.py scripts/contract_b_capacity_sweep.py scripts/contract_b_utility_eval.py scripts/contract_b_detectability_diagnostic.py scripts/contract_b_robustness_matrix.py scripts/contract_b_nf4_requantization.py scripts/contract_b_error_pattern.py scripts/real_nf4_candidate_eval.py scripts/prepare_seven_method_corpus.py scripts/seven_method_residual_pilot.py scripts/seven_method_nf4_pilot.py src/experiments/nf4_artifact_codec.py src/experiments/seven_method_protocol.py
           python -m py_compile src/optimization/__init__.py src/optimization/cost_function.py src/optimization/candidate_generator.py src/optimization/optimizer.py src/optimization/batch_optimizer.py scripts/dce_candidate_benchmark.py scripts/dce_weight_sweep.py scripts/dce_three_way_comparison.py scripts/dce_three_way_multiseed.py scripts/dce_distortion_budget_sweep.py src/optimization/budgeted_batch_optimizer.py
+      - name: Run seven-method framing and allocation tests
+        working-directory: nes-llm
+        run: |
+          python -m unittest discover -s tests -p 'test_seven_method_protocol.py' -v
+          python -m unittest discover -s tests -p 'test_nf4_artifact_codec.py' -v
+          python scripts/prepare_seven_method_corpus.py --message "first" --message "नमस्ते 🌍" --output /tmp/nes-seven-method-test.bin
       - name: Run B1.4 and B1.5 synthetic tests
         working-directory: nes-llm
         run: |
