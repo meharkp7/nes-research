@@ -88,6 +88,7 @@ def main() -> int:
     extraction_evidence: dict[tuple[str, str], list[dict[str, Any]]] = {
         key: [] for key in attempts
     }
+    attempt_level_discrepancies: list[dict[str, Any]] = []
     observed_models: set[str] = set()
 
     for run_id, summary_path, summary in summaries:
@@ -125,6 +126,16 @@ def main() -> int:
             })
             if report:
                 bits, ber, exact = report_bits(report)
+                if exact is True and ber == 0 and row.get("status") != "PASS":
+                    attempt_level_discrepancies.append({
+                        "run_id": run_id,
+                        "model": model,
+                        "corpus": row.get("corpus"),
+                        "method": method,
+                        "matrix_status": row.get("status"),
+                        "report_path": str(extract_path),
+                        "report_sha256": sha256_file(extract_path),
+                    })
                 extraction_evidence[key].append({
                     "run_id": run_id,
                     "corpus": row.get("corpus"),
@@ -199,10 +210,13 @@ def main() -> int:
         "models_observed_in_summaries": sorted(observed_models),
         "planned_cells": len(MODELS) * len(METHODS),
         "rows": rows,
+        "attempt_level_exact_recovery_status_discrepancies": attempt_level_discrepancies,
+        "attempt_level_discrepancy_count": len(attempt_level_discrepancies),
         "limitations": [
             "This script inventories only cache/seven_method_long_matrix and its referenced reports.",
             "Absence from this cache is not proof that no evidence exists elsewhere.",
             "Historical matrix statuses are never rewritten.",
+            "Attempt-level status discrepancies are counted separately from the latest per-cell status; one cell can have multiple discrepant historical attempts.",
             "A recovery report is evidence for that artifact/protocol, not independent replication.",
             "Detector, utility, transformation, source revision, and independence status require separate evidence joins/audits.",
             "Artifact hashes are calculated only when the referenced artifact exists at the recorded path.",
@@ -219,7 +233,8 @@ def main() -> int:
     print(f"Intended cells: {len(rows)}")
     print(f"Observed model IDs in summaries: {len(observed_models)}")
     print(f"Exact-recovery evidence cells: {sum(r['recovery_evidence_status'] == 'VERIFIED_EXACT_RECOVERY' for r in rows)}")
-    print(f"Matrix-status/recovery discrepancies: {sum(r['recovery_evidence_status'] == 'VERIFIED_EXACT_RECOVERY' and r['latest_matrix_status'] != 'PASS' for r in rows)}")
+    print(f"Cells whose latest status differs from recovery evidence: {sum(r['recovery_evidence_status'] == 'VERIFIED_EXACT_RECOVERY' and r['latest_matrix_status'] != 'PASS' for r in rows)}")
+    print(f"Historical attempt-level exact-recovery/status discrepancies: {len(attempt_level_discrepancies)}")
     print(f"JSON: {json_path}")
     print(f"CSV:  {csv_path}")
     return 0
