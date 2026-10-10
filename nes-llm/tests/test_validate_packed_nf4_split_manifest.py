@@ -56,6 +56,22 @@ class ValidatePackedNF4SplitManifestTests(unittest.TestCase):
         self.assertEqual(result["status"], "FAIL")
         self.assertTrue(any("block indices differ" in e for e in result["errors"]))
 
+    def test_rejects_duplicate_block_rows(self):
+        rows = self.valid_rows()
+        rows.append(row("clean-hash", "run-a", "clean", "train", 0))
+        result = validate_rows(rows)
+        self.assertEqual(result["status"], "FAIL")
+        self.assertTrue(any("duplicate block row" in e for e in result["errors"]))
+
+    def test_rejects_multiple_artifacts_for_one_role_group(self):
+        rows = self.valid_rows()
+        rows.append(row("second-clean-artifact", "run-a", "clean", "train", 2))
+        rows.append(row("embedded-hash", "run-a", "embedded", "train", 2))
+        result = validate_rows(rows)
+        self.assertEqual(result["status"], "FAIL")
+        self.assertTrue(any("role clean maps to multiple artifacts" in e
+                            for e in result["errors"]))
+
 
 if __name__ == "__main__":
     unittest.main()
