@@ -54,3 +54,38 @@ Stage 1 remains open until the 7×7 evidence-backed coverage matrix is created; 
 
 ## Operating rule
 At the end of each stage, update this file and the matrix with evidence and exit decision before moving to the next stage. No stage changes order without a documented paper-critical blocker and explicit user agreement.
+
+## Stage 3 implementation note — residual descriptive batch (11 October 2026)
+
+A first residual-domain descriptive batch completed locally at
+`../cache/detectability_tinyllama_residual_20261011/`. The final report schema is
+`nes.seven_method_detectability_stage1.v2`; it records five discovered cells,
+five paired-descriptive-ready cells, zero blocked cells, 309,760 block-feature
+rows, 55 layer-descriptive rows, a 79.08-second runtime, block size 4096, and a
+deterministic evenly-spaced quantile sample capped at 32,768 values. Quantiles
+are approximate when the tensor exceeds that cap; other listed statistics use
+full values. The five methods are `sign`, `magnitude_aware`, `qae`,
+`lwe_grid_parity`, and `split_sign_parity`, all on
+`TinyLlama/TinyLlama-1.1B-Chat-v1.0`. Each cell reports recovery matrix status
+`PASS`, 61,952 feature rows, and 11 layer summaries.
+
+This batch is **paired descriptive feature export only**, not a trained detector
+benchmark. No classifier was fitted because available evidence does not support
+a leakage-resistant independent split. Blocks from the same tensor are
+correlated and must not be treated as independent inferential units. The batch
+does not establish stealth, undetectability, or cross-model generalization.
+Quantile approximation and all source/artifact identities should be preserved
+with the generated report and CSV outputs.
+
+QSE/DCE remain part of the seven-method plan; their comparative packed-NF4
+detectability remains **BLOCKED / NOT COMPARABLE** until a historically matched
+same-source clean packed-code control and its provenance are verified. Do not
+substitute a newly generated control and label it historically matched without
+evidence. Their existing recovery evidence remains intact and separate from
+this residual-domain batch.
+
+**Exit decision:** this batch is complete and may be frozen as descriptive
+evidence. Stage 3 overall remains open: this single-model, five-method batch
+does not satisfy matrix-wide detector coverage. Proceed with evidence indexing,
+focused tests, and claim audit; do not launch a classifier or repeat the batch
+without a specific, documented paper-critical reason.
