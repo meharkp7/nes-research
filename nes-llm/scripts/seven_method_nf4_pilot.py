@@ -16,11 +16,30 @@ import re
 import sys
 
 import torch
-from bitsandbytes.functional import quantize_4bit, dequantize_4bit
+from bitsandbytes.functional import (
+    quantize_4bit, dequantize_4bit, dequantize_blockwise,
+)
 from transformers import AutoModelForCausalLM
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 from src.experiments.nf4_artifact_codec import allocate_payload_segments, pack_codes, tensor_dequant, unpack_codes
+def decoded_nf4_absmax(qstate):
+    """Return actual NF4 block scales, decoding nested statistics if present."""
+    state2 = getattr(qstate, "state2", None)
+    if state2 is None:
+        return qstate.absmax.detach().float().cpu().flatten()
+
+    offset = getattr(qstate, "offset", None)
+    if offset is None:
+        raise ValueError("Nested NF4 state is missing its offset")
+
+    scales = dequantize_blockwise(
+        qstate.absmax, quant_state=state2
+    ).float()
+    scales = scales + offset.to(device=scales.device, dtype=scales.dtype)
+    return scales.detach().cpu().flatten()
+
+
 from src.experiments.seven_method_protocol import (
     MessageRecord, bytes_to_bits, bits_to_bytes, corpus_summary, decode_corpus,
     encode_corpus, keyed_positions, load_jsonl, normalize_records,
@@ -152,14 +171,14 @@ def run_embed(args) -> dict:
         original = originals[name]
         qweight, qstate = quantize_4bit(
             original, quant_type="nf4", blocksize=args.blocksize,
-            compress_statistics=True,
+            compress_statistics=args.compress_statistics,
         )
         base = dequantize_4bit(qweight, quant_state=qstate).float().cpu().flatten()
         n = len(segment)
         positions = keyed_positions(key, name, int(original.numel()), n)
         original_codes = unpack_codes(qweight, original.numel())
         codebook = qstate.code.detach().float().cpu().flatten()
-        absmax = qstate.absmax.detach().float().cpu().flatten()
+        absmax = decoded_nf4_absmax(qstate)
         if codebook.numel() != 16:
             raise RuntimeError(f"{name}: expected 16 NF4 codebook entries")
         recon = torch.tensor(tensor_dequant(original_codes, codebook, absmax, int(qstate.blocksize)), dtype=torch.float32)
@@ -196,11 +215,11 @@ def run_embed(args) -> dict:
                     qse_weight[pos] = original[pos] + delta if bit else original[pos] - delta
                 qse_q, qse_state = quantize_4bit(
                     qse_weight, quant_type="nf4", blocksize=args.blocksize,
-                    compress_statistics=True,
+                    compress_statistics=args.compress_statistics,
                 )
                 candidate_codes = unpack_codes(qse_q, original.numel())
                 candidate_codebook = qse_state.code.detach().float().cpu().flatten()
-                candidate_absmax = qse_state.absmax.detach().float().cpu().flatten()
+                candidate_absmax = decoded_nf4_absmax(qse_state)
                 candidate_blocksize = int(qse_state.blocksize)
                 candidate_values = torch.tensor(
                     tensor_dequant(
@@ -286,7 +305,7 @@ def run_embed(args) -> dict:
             "blocksize_observed_per_tensor": {
                 name: int(artifact_layers[name]["blocksize"]) for name in artifact_layers
             },
-            "compress_statistics": True,
+            "compress_statistics": args.compress_statistics,
         },
         "blocksize_requested": args.blocksize,
         "payload_bits": len(bits),
@@ -397,6 +416,11 @@ def main() -> int:
     embed.add_argument("--corpus-out", type=Path, required=True)
     embed.add_argument("--report", type=Path)
     embed.add_argument("--blocksize", type=int, default=64)
+    embed.add_argument(
+        "--compress-statistics", action=argparse.BooleanOptionalAction,
+        default=True,
+        help="Use nested quantization for NF4 block statistics (default: enabled)",
+    )
     embed.add_argument("--qse-margin", type=float, default=0.25,
                         help="initial QSE perturbation multiplier relative to NF4 residual std")
     embed.add_argument("--qse-max-attempts", type=int, default=8,

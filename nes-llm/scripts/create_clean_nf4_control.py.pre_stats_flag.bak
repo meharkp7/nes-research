@@ -40,7 +40,6 @@ def create_clean_control(
     artifact_path: Path,
     report_path: Path,
     local_files_only: bool = True,
-    compress_statistics: bool = True,
 ) -> dict:
     artifact_path = artifact_path.expanduser().resolve()
     report_path = report_path.expanduser().resolve()
@@ -75,7 +74,7 @@ def create_clean_control(
 
     packed, quant_state = quantize_4bit(
         flattened, quant_type="nf4", blocksize=blocksize,
-        compress_statistics=compress_statistics,
+        compress_statistics=True,
     )
     actual_blocksize = int(quant_state.blocksize)
     # Use bitsandbytes' own dequantizer so nested/compressed scale state, if
@@ -99,7 +98,7 @@ def create_clean_control(
             "quant_type": "nf4",
             "blocksize_requested": blocksize,
             "blocksize_observed": actual_blocksize,
-            "compress_statistics": compress_statistics,
+            "compress_statistics": True,
             "note": "Runtime-observed clean control settings; historical QSE settings were only partially recorded.",
         },
         "weight_rmse_vs_fp16_source": rmse,
@@ -149,10 +148,6 @@ def main() -> int:
     parser.add_argument("--report", type=Path, required=True)
     parser.add_argument("--allow-remote-files", action="store_true",
                         help="Allow downloading model files if absent locally")
-    parser.add_argument("--compress-statistics",
-                        action=argparse.BooleanOptionalAction,
-                        default=True,
-                        help="Use nested NF4 statistics (default: true)")
     args = parser.parse_args()
     report = create_clean_control(
         model_id=args.model,
@@ -162,7 +157,6 @@ def main() -> int:
         artifact_path=args.output,
         report_path=args.report,
         local_files_only=not args.allow_remote_files,
-        compress_statistics=args.compress_statistics,
     )
     print(json.dumps({
         "status": "clean_control_written",
@@ -174,7 +168,6 @@ def main() -> int:
         "tensor_key": report["tensor_key"],
         "tensor_shape": report["tensor_shape"],
         "blocksize_observed": report["quantizer_config"]["blocksize_observed"],
-        "compress_statistics": report["quantizer_config"]["compress_statistics"],
         "weight_rmse_vs_fp16_source": report["weight_rmse_vs_fp16_source"],
     }, indent=2))
     return 0
