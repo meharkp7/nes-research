@@ -14,20 +14,8 @@ Run from nes-llm/ after confirming artifact recovery and local tokenizer availab
 
 The output path must be new. The 2% threshold is a project-defined criterion, not a
 universal standard; freeze it before inspecting results.
-"""Exploratory original-vs-stego perplexity check for Contract B.
-
-This uses a fixed, locally defined diagnostic text suite, not a benchmark dataset.
-Run only after B1.4 sender/receiver recovery succeeds. Quantized-model evaluation
-runs sequentially to avoid keeping two 3B models in memory at once.
-
-Example from nes-llm:
-../.venv/bin/python scripts/contract_b_utility_eval.py \
-  --original ../cache/contract_b_nf4_probe_retry \
-  --stego ../cache/contract_b_nf4_b14_10k \
-  --device cpu --max-tokens 256
-
-The metric is exploratory utility evidence only; do not generalize it to all tasks.
 """
+
 from __future__ import annotations
 
 import argparse
