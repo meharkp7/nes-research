@@ -65,7 +65,8 @@ Run the claim audit, consistency checks, and reproducibility checks once after c
 - [x] Qwen entropy ablation implemented and tested.
 - [x] Tracked manifest-adapter semantics audited; independent provenance is explicitly **not established** by the adapter alone. Original local generation logs/artifact hashes still require a bounded local check.
 - [x] Cross-model holdout benchmark implementation, synthetic tests, and local dataset run completed; all held-out-family AUCs near chance, with source/run group-count limitations recorded.
-- [ ] B1.4 lifecycle matrix and per-run evidence requirements documented in `B1_4_LIFECYCLE_MATRIX.md`; requantization negative result frozen. A reload/save control and/or pruning result remains to be run if feasible; fine-tuning and task merge are optional and may be marked unavailable.
+- [x] B1.4 lifecycle matrix and per-run evidence requirements documented in `B1_4_LIFECYCLE_MATRIX.md`; requantization negative result and direct NF4 reload/save serializer blocker frozen.
+- [ ] Controlled selected-tensor 10% magnitude-pruning + fresh NF4 requantization script added (`scripts/contract_b_nf4_pruning_attack.py`); local syntax check, transformation, and independent receiver run pending. Interpret only as a combined attack, not isolated pruning. Fine-tuning and task merge remain optional.
 - [ ] Utility comparison expanded to held-out prompts and fixed acceptance criteria.
 - [ ] Final claim audit, consistency checks, and reproducibility bundle frozen.
 - [ ] Paper figures/tables and final limitations aligned to the frozen evidence.
