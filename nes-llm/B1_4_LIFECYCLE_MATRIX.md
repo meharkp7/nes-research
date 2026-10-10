@@ -51,7 +51,7 @@ Each row is a separate experiment from the pristine B1.4 stego checkpoint. Alway
 | Pristine artifact baseline | PASS | 10,000-bit payload recovered exactly, BER 0, as documented in `CONTRACT_B_B14.md`. |
 | Fresh NF4 requantization | COMPLETED — RECOVERY FAILED | Existing frozen run: 30/10,000 bit errors, BER 0.003, checksum mismatch. Keep this negative result unchanged. |
 | NF4 reload/save control without intentional weight change | ATTEMPTED — TRANSFORMATION ERROR | Local Transformers 5.16.1 loaded the NF4 checkpoint, but `save_pretrained()` raised `NotImplementedError` while reversing `Bnb4bitDeserialize`. No valid output checkpoint was produced; the receiver's `FileNotFoundError` on that incomplete directory is a consequence, not a payload-recovery result. Preserve the failed directory/report. This control is blocked by the serializer path; do not bypass the reverse conversion while weights remain quantized. |
-| Structured pruning | NOT RUN | Apply one declared sparsity/configuration to a fresh copy; record selected tensor changes and recovery. Do not conflate pruning with arbitrary code mutation. |
+| Structured pruning | SCRIPT ADDED; LOCAL RUN PENDING | `scripts/contract_b_nf4_pruning_attack.py` zeros the 10% smallest-magnitude entries of the selected layer-0 Q-projection after dequantization, then saves a float intermediate and freshly quantizes to NF4. This is explicitly a **combined pruning + requantization attack**, not an isolated pruning test. Fresh paths and receiver required. |
 | Fine-tuning / LoRA merge | NOT RUN | Optional only if a controlled, reproducible local training/update path already exists. No improvised training run is required to close the pilot. |
 | Task/weight merge | NOT RUN | Optional only if a compatible, documented second checkpoint and merge configuration are already available. Otherwise mark not available. |
 
@@ -71,6 +71,39 @@ On 2026-10-10, the user attempted to load `cache/contract_b_nf4_b14_10k` as NF4 
 ### Existing NF4 requantization run — do not repeat or overwrite
 
 The recorded run in `CONTRACT_B_B14.md` used `cache/contract_b_b14_nf4_requantized_retry3_fp16` (saved selected weights were BF16 despite the directory name) and `cache/contract_b_b14_nf4_requantized_retry3`. Its report is `cache/contract_b_b14_nf4_requantized_retry3_requantization_report.json`. Those paths are occupied and frozen.
+
+### Run the controlled 10% selected-tensor pruning attack
+
+The preflight passed locally: pristine B1.4 sender report is `PASS`, payload is 10,000 bits, source checkpoint is 2,054,632,227 bytes, and free disk was about 167 GB. Environment: PyTorch 2.13.0, Transformers 5.16.1, bitsandbytes 0.50.2. A direct NF4 load/save control failed because Transformers 5.16.1 cannot reverse `Bnb4bitDeserialize` while the weights remain quantized.
+
+A separate script has now been added. It follows the already exercised guarded dequantize/save/fresh-NF4 path, but zeros exactly `floor(10% * selected_tensor_numel)` lowest-magnitude entries in `model.layers.0.self_attn.q_proj.weight` before saving the floating intermediate. This remains a combined attack; if recovery fails, do not attribute the failure to pruning alone because the final fresh NF4 pass is also present.
+
+From `nes-llm/` after pulling the research branch, run the syntax check first:
+
+```bash
+../.venv/bin/python -m py_compile scripts/contract_b_nf4_pruning_attack.py
+```
+
+Then run the transformation (new output and intermediate paths; it refuses to overwrite either):
+
+```bash
+../.venv/bin/python scripts/contract_b_nf4_pruning_attack.py \\
+  --stego ../cache/contract_b_nf4_b14_10k \\
+  --output-dir ../cache/contract_b_b14_pruned10_nf4_20261010
+```
+
+If it reports a completed transformation, run the independent receiver:
+
+```bash
+PAYLOAD_SHA=$(../.venv/bin/python -c 'import json; print(json.load(open("../cache/contract_b_nf4_b14_10k_b14_sender_report.json"))["payload_sha256"])')
+
+../.venv/bin/python scripts/contract_b_nf4_b14.py receive \\
+  --stego-dir ../cache/contract_b_b14_pruned10_nf4_20261010 \\
+  --output-payload ../cache/contract_b_b14_pruned10_nf4_20261010_recovered.bin \\
+  --expected-sha256 "$PAYLOAD_SHA"
+```
+
+The attack report is `cache/contract_b_b14_pruned10_nf4_20261010_requantization_report.json`; the floating intermediate is `cache/contract_b_b14_pruned10_nf4_20261010_floating_intermediate`. Preserve all outputs even on failure. The direct NF4 reload/save control's partial output directory remains occupied and must not be reused.
 
 ## Stop condition
 
