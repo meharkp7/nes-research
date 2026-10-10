@@ -4,9 +4,9 @@
 This is an expensive local lifecycle experiment, not an in-memory code mutation.
 It never overwrites the input checkpoint or existing output/work directories.
 Run from nes-llm/:
-../.venv/bin/python scripts/contract_b_nf4_requantization.py \
+../.venv/bin/python scripts/contract_b_nf4_pruning_attack.py \
   --stego ../cache/contract_b_nf4_b14_10k \
-  --output-dir ../cache/contract_b_b14_nf4_requantized
+  --output-dir ../cache/contract_b_b14_pruned10_nf4_20261010
 Then run the normal B1.4 receiver against the output directory.
 """
 from __future__ import annotations
