@@ -189,6 +189,9 @@ def main() -> int:
             raise FileNotFoundError(path)
     if original == stego:
         parser.error("--original and --stego must be different checkpoint directories")
+    output = Path(args.output).expanduser().resolve() if args.output else stego.parent / "contract_b_utility_heldout.json"
+    if output.exists():
+        raise FileExistsError(f"Refusing to overwrite existing utility report: {output}")
 
     import torch
     from transformers import AutoTokenizer
@@ -256,7 +259,6 @@ def main() -> int:
             "prompt-level interval and report both, regardless of acceptance status."
         ),
     }
-    output = Path(args.output).expanduser().resolve() if args.output else stego.parent / "contract_b_utility_heldout.json"
     output.parent.mkdir(parents=True, exist_ok=True)
     output.write_text(json.dumps(report, indent=2, sort_keys=True), encoding="utf-8")
     print(f"[Contract B utility] Original PPL: {original_result['perplexity']:.6f}")
