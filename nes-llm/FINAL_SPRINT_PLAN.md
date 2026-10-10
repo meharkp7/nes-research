@@ -24,8 +24,17 @@ Run the relevant test suites together after pulling this branch. Include the det
 
 ### Batch B — model generalization + provenance (same priority)
 1. Verify what `source_id` and `run_id` mean, and whether clean/embedded pairs differ only by the embedding operation.
-2. Use a cross-model evaluation that trains on two model families and tests on the third, rotating the held-out model. Keep preprocessing fitted on training models only. Report per-model ROC-AUC, PR-AUC, balanced accuracy, FPR, and group counts.
+2. Use `scripts/run_packed_nf4_cross_model_detector.py` to train on two model families and test on the third, rotating the held-out model. Preprocessing is fitted on training models only; the primary transfer metric is ROC-AUC, with fixed-threshold secondary metrics and group counts. This is a new evaluation, not yet locally run.
 3. Keep the existing mixed-model and Qwen-only results as exploratory comparisons, not the headline generalization result.
+
+Run from `nes-llm/` after pulling the branch:
+
+```bash
+../.venv/bin/python -m pytest -q tests/test_run_packed_nf4_cross_model_detector.py
+../.venv/bin/python scripts/run_packed_nf4_cross_model_detector.py \\
+  --dataset ../cache/packed_nf4_grouped_dataset_20261010.csv \\
+  --output ../cache/packed_nf4_cross_model_detector_$(date +%Y%m%d_%H%M%S).json
+```
 4. If there are too few independent runs or matched provenance to support the split, mark the generalization claim blocked; do not manufacture independence by splitting rows.
 
 ### Batch C — packed-NF4 lifecycle attacks (parallel to Batch B)
@@ -53,7 +62,7 @@ Run the claim audit, consistency checks, and reproducibility checks once after c
 - [x] Consolidated packed-NF4 detector benchmark implemented and tested.
 - [x] Qwen entropy ablation implemented and tested.
 - [ ] Provenance/source-run meaning checked against actual artifact generation.
-- [ ] Cross-model holdout benchmark evaluated, or explicitly blocked for insufficient independent groups.
+- [x] Cross-model holdout benchmark implementation and synthetic tests added; local dataset run pending.
 - [ ] B1.4 lifecycle attack matrix completed for feasible transformations.
 - [ ] Utility comparison expanded to held-out prompts and fixed acceptance criteria.
 - [ ] Final claim audit, consistency checks, and reproducibility bundle frozen.
