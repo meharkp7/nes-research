@@ -11,7 +11,7 @@ Close the project with a defensible answer to the research question: how reliabl
 ## Current evidence — freeze these conclusions
 
 - Established Exp1–Exp27 line: broad capacity, recovery, utility, detector, and transformation-specific evidence exists; retain the recorded failures and caveats in `FINAL_RESEARCH_FLOW.md`.
-- Artifact-only Contract B B1.4: pristine packed-NF4 recovery succeeded for 10,000 bits (BER 0); the observed fresh NF4 requantization lifecycle produced BER 0.003 and checksum failure.
+- Artifact-only Contract B B1.4: pristine packed-NF4 recovery succeeded for 10,000 bits (BER 0); fresh NF4 requantization produced BER 0.003 and checksum failure. A separate 10% selected-tensor magnitude-pruning + fresh NF4 requantization attack completed but produced an invalid envelope header and checksum failure; BER unavailable. This is a combined transformation result, not isolated evidence about pruning.
 - DCE: synthetic multi-seed batch matching improves histogram TV/KL at roughly 8.66x baseline distortion; not an overall win. Do not wire it into production or spend more time tuning the current proxy.
 - Packed-NF4 detector benchmark: mixed-model RF test AUC 0.6641, driven by Qwen (AUC 0.7689); TinyLlama and Gemma are near chance (~0.52). Grouped Qwen-only OOF AUC 0.8913 varies strongly by held-out projection/variant group. This is not model-generalized evidence.
 - Cross-model leave-one-family-out benchmark (dataset SHA-256 `1b815887d73e40463bb7694d4e921108fb6bb2f29c1e8765ab4cb7240a60c58c`): all three estimators are near chance on every held-out family. Qwen AUC 0.5010–0.5014; TinyLlama 0.5141–0.5289; Gemma 0.5118–0.5223. This does not support transferable detector signal. TinyLlama and Gemma each have only one held-out source/run group, and the Qwen holdout has only two training groups, so the estimates are exploratory and group-limited—not proof of universal undetectability.
@@ -66,7 +66,7 @@ Run the claim audit, consistency checks, and reproducibility checks once after c
 - [x] Tracked manifest-adapter semantics audited; independent provenance is explicitly **not established** by the adapter alone. Original local generation logs/artifact hashes still require a bounded local check.
 - [x] Cross-model holdout benchmark implementation, synthetic tests, and local dataset run completed; all held-out-family AUCs near chance, with source/run group-count limitations recorded.
 - [x] B1.4 lifecycle matrix and per-run evidence requirements documented in `B1_4_LIFECYCLE_MATRIX.md`; requantization negative result and direct NF4 reload/save serializer blocker frozen.
-- [ ] Controlled selected-tensor 10% magnitude-pruning + fresh NF4 requantization script added (`scripts/contract_b_nf4_pruning_attack.py`); local syntax check, transformation, and independent receiver run pending. Interpret only as a combined attack, not isolated pruning. Fine-tuning and task merge remain optional.
+- [x] Controlled selected-tensor 10% magnitude-pruning + fresh NF4 requantization completed from a fresh copy. Recovery failed at envelope-header validation; BER unavailable. Combined attack only, not isolated pruning. Initial autograd error and patched successful transformation are documented in `B1_4_LIFECYCLE_MATRIX.md`. Fine-tuning and task merge remain optional.
 - [ ] Utility comparison expanded to held-out prompts and fixed acceptance criteria.
 - [ ] Final claim audit, consistency checks, and reproducibility bundle frozen.
 - [ ] Paper figures/tables and final limitations aligned to the frozen evidence.
