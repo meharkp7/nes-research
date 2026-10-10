@@ -164,7 +164,7 @@ def main() -> int:
     parser.add_argument("--device", choices=("cpu", "mps"), default="cpu")
     parser.add_argument("--max-tokens", type=int, default=256)
     parser.add_argument("--output", default="")
-    parser.add_argument("--acceptance-threshold-percent", type=float, default=2.0, help="Predeclared maximum allowed upper 95% CI for prompt-level relative PPL change; default 2.0 percent.")
+    parser.add_argument("--acceptance-threshold-percent", type=float, default=2.0, help="Predeclared maximum allowed upper 95%% CI for prompt-level relative PPL change; default 2.0 percent.")
     args = parser.parse_args()
     if args.max_tokens < 8:
         parser.error("--max-tokens must be at least 8")
