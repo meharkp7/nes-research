@@ -23,7 +23,7 @@ from sklearn.metrics import (
     accuracy_score, average_precision_score, balanced_accuracy_score,
     confusion_matrix, f1_score, precision_score, recall_score, roc_auc_score,
 )
-from sklearn.model_selection import GroupShuffleSplit, train_test_split
+from sklearn.model_selection import GroupKFold
 from sklearn.neural_network import MLPClassifier
 from sklearn.pipeline import make_pipeline
 from sklearn.preprocessing import StandardScaler
@@ -173,25 +173,62 @@ def evaluate_model(model, train, validation, test, features) -> dict:
 
 
 def grouped_sensitivity(df, features, seed) -> dict:
-    """Hold out complete source/run groups; report as sensitivity, not primary score."""
+    """GroupKFold out-of-fold sensitivity; every source/run group is held out once."""
     group_ids = df[list(GROUP_COLS)].astype(str).agg("::".join, axis=1).to_numpy()
-    splitter = GroupShuffleSplit(n_splits=1, test_size=0.25, random_state=seed)
-    train_idx, test_idx = next(splitter.split(df, df["label"], groups=group_ids))
-    train, test = df.iloc[train_idx].copy(), df.iloc[test_idx].copy()
-    train_groups = set(group_ids[train_idx])
-    # Keep model selection fixed to the primary benchmark's family; no hyperparameter search.
-    results = {"held_out_groups": sorted(set(group_ids[test_idx])),
-               "train_group_count": len(train_groups), "test_group_count": len(set(group_ids[test_idx])),
-               "models": {}, "warning": "Small number of source/run groups; exploratory sensitivity only."}
-    for name, model in model_zoo(seed).items():
-        if train["label"].nunique() < 2 or test["label"].nunique() < 2:
-            results["status"] = "NOT_EVALUABLE"
-            results["reason"] = "Grouped split did not contain both labels in train and test."
-            return results
-        fitted = clone(model).fit(train[features].to_numpy(float), train["label"].to_numpy(int))
-        scores = fitted.predict_proba(test[features].to_numpy(float))[:, 1]
-        results["models"][name] = metric_pack(test["label"].to_numpy(int), scores, 0.5)
-    results["status"] = "COMPLETED"
+    n_groups = len(np.unique(group_ids))
+    if n_groups < 3:
+        return {"status": "NOT_EVALUABLE", "reason": f"Need at least 3 source/run groups; found {n_groups}."}
+    n_splits = min(4, n_groups)
+    splitter = GroupKFold(n_splits=n_splits)
+    results = {
+        "status": "COMPLETED",
+        "method": "GroupKFold out-of-fold evaluation",
+        "fold_count": n_splits,
+        "total_group_count": n_groups,
+        "warning": "Exploratory grouped sensitivity. A small number of independent groups limits inference.",
+        "models": {},
+    }
+    y_all = df["label"].to_numpy(int)
+    model_ids = df["model_id"].astype(str).to_numpy()
+    for name, template in model_zoo(seed).items():
+        oof_scores = np.full(len(df), np.nan, dtype=float)
+        fold_details = []
+        for fold, (train_idx, test_idx) in enumerate(splitter.split(df, y_all, groups=group_ids)):
+            train, test = df.iloc[train_idx], df.iloc[test_idx]
+            train_groups = set(group_ids[train_idx])
+            test_groups = set(group_ids[test_idx])
+            if train_groups & test_groups:
+                raise AssertionError("Source/run group crossed grouped fold boundary")
+            if train["label"].nunique() < 2 or test["label"].nunique() < 2:
+                return {"status": "NOT_EVALUABLE",
+                        "reason": f"Fold {fold} lacks both labels in train or held-out groups.",
+                        "fold_count": n_splits, "total_group_count": n_groups}
+            fitted = clone(template).fit(train[features].to_numpy(float), train["label"].to_numpy(int))
+            oof_scores[test_idx] = fitted.predict_proba(test[features].to_numpy(float))[:, 1]
+            fold_details.append({
+                "fold": fold,
+                "train_group_count": len(train_groups),
+                "held_out_group_count": len(test_groups),
+                "held_out_groups": sorted(test_groups),
+                "held_out_models": sorted(test["model_id"].astype(str).unique().tolist()),
+            })
+        if np.isnan(oof_scores).any():
+            raise AssertionError("GroupKFold did not produce an out-of-fold score for every row")
+        pooled = metric_pack(y_all, oof_scores, 0.5)
+        by_model = {}
+        for model_id in sorted(np.unique(model_ids)):
+            mask = model_ids == model_id
+            by_model[model_id] = metric_pack(y_all[mask], oof_scores[mask], 0.5)
+        results["models"][name] = {
+            "oof_pooled": pooled,
+            "oof_by_model": by_model,
+            "folds": fold_details,
+        }
+    results["interpretation"] = (
+        "Each source/run group is held out once across folds. These are out-of-fold grouped "
+        "metrics, not a single fixed test split; report model-specific results and the small "
+        "number of independent groups. They are not confirmatory uncertainty estimates."
+    )
     return results
 
 
