@@ -18,10 +18,22 @@ Observed validation report:
 This is a bookkeeping/pairing pass only. It does not establish statistical
 independence, valid detector evaluation, or absence of all leakage.
 
-The local dataset-builder test file was run with pytest:
-`python -m pytest tests/test_prepare_packed_nf4_grouped_dataset.py -q`
-result: **3 passed**. An earlier `unittest` invocation ran zero tests because
-these test functions are pytest-style; that zero-test result is not a pass.
+## Verification performed
+
+The user ran the builder and split-validator test suites in the isolated audit
+worktree after fetching the audit branch head:
+
+```text
+python -m pytest tests/test_prepare_packed_nf4_grouped_dataset.py \
+  tests/test_validate_packed_nf4_split_manifest.py -q
+
+11 passed in 0.27s
+```
+
+The 11 passing tests include the three original builder tests, two new builder
+regression tests, and six split-validator tests. An earlier `unittest`
+invocation ran zero tests because the builder tests are pytest-style; that
+zero-test result is not a pass.
 
 ## Observed split structure
 
@@ -67,32 +79,36 @@ matching block indices and source/tensor labels establish structural pairing
 only; they do not prove that the clean artifact is the correct baseline for its
 embedded counterpart.
 
-## Local dataset-builder code review
+## Local dataset-builder code review and patch
 
-The local `scripts/prepare_packed_nf4_grouped_dataset.py` has useful safeguards:
-- rejects missing required metadata, unexpected roles, and role/label mismatch;
-- rejects duplicate rows using the key `(source_id, run_id, role, block_index)`;
-- requires both clean and embedded roles for each `(source_id, run_id)`;
-- assigns all rows from one `model_id` to one split and writes input CSV hashes
-  and model-to-split mapping to a split manifest;
-- refuses to overwrite existing output paths.
+The builder has been updated on this audit branch to:
+- include model ID and tensor key in duplicate-block identity;
+- require each source/run to map to exactly one model/tensor combination;
+- compare clean and embedded block-index sets for each source/run/model/tensor
+  pair and reject any mismatch;
+- require exactly one distinct artifact hash per role in each pair group;
+- preserve the existing role/label checks, model-group split, input CSV hashes,
+  split manifest, and no-overwrite behavior.
 
-But these safeguards do not establish parentage or full paired-block equivalence:
-- the builder does not compare clean and embedded block-index sets directly;
-- its role-presence check does not prove that both roles derive from the same
-  base artifact;
-- it does not record an explicit clean-control-to-embedded-artifact mapping;
-- duplicate-row identity omits `model_id` and `tensor_key`, so metadata
-  collisions across tensors sharing source/run/role/block index can be rejected
-  ambiguously rather than diagnosed with full context;
-- the manifest records feature-CSV hashes, not proof of scientific pairing.
+Two regression tests were added:
+- reject clean/embedded groups with different block-index sets;
+- reject multiple artifact hashes within one pair-group role.
 
-The test suite for this builder passed (3/3) under pytest. These are basic
-behavioral tests, not tests of artifact provenance or scientific validity.
+**Verification:** the combined builder and split-validator suites passed, 11/11,
+in the isolated worktree at branch head `6fe803ea7a1ddbb24a28b9bdf200515b8eaccfab`.
+
+These checks strengthen structural consistency but do not establish artifact
+parentage. A clean and embedded artifact can have compatible metadata and block
+indices while still being the wrong scientific pair. The builder does not yet
+consume an authoritative clean-control-to-embedded-artifact mapping.
+
 The local `README.md` does not document the specific command that produced the
-current 606,208-row CSV, and a bounded search under `../cache` found no
-split/manifest JSON files. The exact generation invocation and original input
-feature CSV inventory still need to be recovered.
+current 606,208-row CSV. A search found no other CSV feature inputs under the
+searched `../cache` path and no dataset-generation invocation outside the
+builder/tests. No split/manifest JSON was found in the bounded cache search.
+Thus, the exact original generation invocation, original input feature CSVs,
+and their recorded hashes have not been recovered. This is a reproducibility
+gap, not proof that the assembled CSV is invalid.
 
 ## Interpretation
 
@@ -132,30 +148,29 @@ the transfer target. Do not mix these claims into the cross-model result.
 ## Required work before detector training
 
 1. Recover the exact dataset-generation command and inventory the source feature
-   CSVs; verify each input hash against the split manifest if one can be found.
-2. Add an explicit pairing manifest linking each embedded artifact to its
+   CSVs if available elsewhere; verify their hashes against a split manifest.
+2. Add an authoritative pairing manifest linking each embedded artifact to its
    intended clean control and recording base/source artifact hashes, model
    revision, tensor key, run/configuration, quantization settings, and payload
    mode where applicable.
 3. Confirm whether one clean control is reused across multiple embedded
-   configurations. Preserve this dependency in the grouping logic.
-4. Strengthen the builder to compare clean/embedded block-index sets per
-   complete pair key and validate metadata consistency; add regression tests.
-5. Audit feature construction for source/label leakage and repeated patch/block
+   configurations. Preserve this dependency in grouping and uncertainty analysis.
+4. Audit feature construction for source/label leakage and repeated patch/block
    overlap across any planned splits.
-6. Define the evaluation target and group split before training. With the current
+5. Define the evaluation target and group split before training. With the current
    three-model layout, model-disjoint evaluation has one model per split and is
    not sufficient for broad generalization claims.
-7. Create clean-vs-clean controls and a known-positive control, then evaluate
+6. Create clean-vs-clean controls and a known-positive control, then evaluate
    using a held-out group split with ROC-AUC, balanced accuracy, FPR at a stated
    operating point, and uncertainty estimated at the group/artifact level.
-8. Freeze the split manifest and report its hashes before training.
+7. Freeze the split manifest and report its hashes before training.
 
 ## Claim boundary
 
 Current evidence supports only: **the CSV passed the validator's specified
 bookkeeping and clean/embedded block-index pairing checks, the displayed groups
-have matching block-index coverage, and the three existing builder tests pass.**
+have matching block-index coverage, the builder now enforces stricter pair
+consistency checks, and all 11 builder/validator tests pass.**
 
 It does not yet support claims about detector performance, statistical
 independence, verified parentage, detectability/undetectability, or cross-model
