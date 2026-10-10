@@ -1,4 +1,19 @@
-#!/usr/bin/env python3
+"""Paired utility evaluation on 32 fixed prompts held out from the prior 8-text diagnostic.
+
+The suite is project-curated, not an external benchmark. The script evaluates original
+and stego checkpoints sequentially, reports paired per-prompt NLL differences and a
+deterministic prompt-level bootstrap interval, and applies a predeclared 2% PPL
+non-inferiority threshold. This remains exploratory model-fidelity evidence, not task utility.
+
+Run from nes-llm/ after confirming artifact recovery and local tokenizer availability:
+../.venv/bin/python scripts/contract_b_utility_eval_heldout.py \
+  --original ../cache/contract_b_nf4_probe_retry \
+  --stego ../cache/contract_b_nf4_b14_10k \
+  --tokenizer-path Qwen/Qwen2.5-3B --device cpu --max-tokens 256 \
+  --output ../cache/contract_b_utility_heldout_20261010.json
+
+The output path must be new. The 2% threshold is a project-defined criterion, not a
+universal standard; freeze it before inspecting results.
 """Exploratory original-vs-stego perplexity check for Contract B.
 
 This uses a fixed, locally defined diagnostic text suite, not a benchmark dataset.
