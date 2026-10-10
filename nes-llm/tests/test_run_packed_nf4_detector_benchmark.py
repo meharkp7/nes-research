@@ -57,3 +57,15 @@ def test_invalid_pair_is_rejected():
     df = df.drop(df.index[0])
     with pytest.raises(ValueError, match="matched pair"):
         benchmark.validate_dataset(df)
+
+
+def test_grouped_sensitivity_holds_out_each_group_once_and_reports_models():
+    df = synthetic_dataset()
+    features = benchmark.validate_dataset(df)
+    result = benchmark.grouped_sensitivity(df, features, seed=11)
+    assert result["status"] == "COMPLETED"
+    assert result["method"] == "GroupKFold out-of-fold evaluation"
+    for name, details in result["models"].items():
+        assert set(details["oof_by_model"]) == {"qwen", "tinyllama", "gemma"}
+        held_out = [g for fold in details["folds"] for g in fold["held_out_groups"]]
+        assert len(held_out) == len(set(held_out)) == result["total_group_count"]
