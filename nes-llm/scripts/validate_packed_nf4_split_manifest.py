@@ -34,7 +34,8 @@ def validate_rows(rows: Iterable[dict[str, str]]) -> dict:
     pair_groups: dict[tuple[str, str, str, str], dict[str, set[str]]] = defaultdict(
         lambda: defaultdict(set)
     )
-    counts = defaultdict(int)
+    seen_blocks: set[tuple[str, str, str, str, str, str]] = set()
+    pair_artifacts: dict[tuple[str, str, str, str, str], set[str]] = defaultdict(set)
 
     for line_no, row in enumerate(rows, start=2):
         artifact = row["artifact_sha256"].strip()
@@ -50,10 +51,20 @@ def validate_rows(rows: Iterable[dict[str, str]]) -> dict:
         if role not in PAIRED_ROLES:
             errors.append(f"line {line_no}: unexpected role {role!r}")
             continue
+
+        block_key = (source, run, tensor, split, role, block)
+        if block_key in seen_blocks:
+            errors.append(
+                f"line {line_no}: duplicate block row for "
+                f"{source}/{run}/{tensor}/{split}/{role}/{block}"
+            )
+        seen_blocks.add(block_key)
+
         artifact_splits[artifact].add(split)
         run_splits[run].add(split)
-        pair_groups[(source, run, tensor, split)][role].add(block)
-        counts[(run, role, split)] += 1
+        group_key = (source, run, tensor, split)
+        pair_groups[group_key][role].add(block)
+        pair_artifacts[group_key + (role,)].add(artifact)
 
     for artifact, splits in sorted(artifact_splits.items()):
         if len(splits) > 1:
@@ -75,6 +86,13 @@ def validate_rows(rows: Iterable[dict[str, str]]) -> dict:
                 f"pair group {label}: block indices differ; "
                 f"clean_only={only_clean}, embedded_only={only_embedded}"
             )
+        for role in sorted(PAIRED_ROLES):
+            artifacts = pair_artifacts.get(key + (role,), set())
+            if len(artifacts) > 1:
+                errors.append(
+                    f"pair group {label}: role {role} maps to multiple artifacts: "
+                    f"{len(artifacts)}"
+                )
 
     return {
         "schema": "nes.packed_nf4_split_validation.v1",
@@ -85,8 +103,9 @@ def validate_rows(rows: Iterable[dict[str, str]]) -> dict:
         "status": "PASS" if not errors else "FAIL",
         "errors": errors,
         "scope_note": (
-            "Validates artifact/run split exclusivity and clean/embedded block-index "
-            "pairing only; it does not establish statistical independence or detector validity."
+            "Validates artifact/run split exclusivity, duplicate block rows, one artifact "
+            "per role/group, and clean/embedded block-index pairing only; it does not "
+            "establish statistical independence or detector validity."
         ),
     }
 
