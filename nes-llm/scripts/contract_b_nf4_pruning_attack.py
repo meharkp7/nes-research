@@ -222,7 +222,10 @@ def run(args: argparse.Namespace) -> int:
         prune_indices = torch.topk(flat_abs, k=prune_count, largest=False, sorted=False).indices
         flat_weight = float_weight.view(-1)
         before_nonzero = int(torch.count_nonzero(flat_weight).item())
-        flat_weight[prune_indices] = 0
+        # This is an inference-time artifact transformation, not model training.
+        # Disable autograd for the in-place weight edit on the leaf parameter.
+        with torch.no_grad():
+            flat_weight[prune_indices] = 0
         after_nonzero = int(torch.count_nonzero(flat_weight).item())
         report["pruning"] = {
             "scope": "selected tensor only",
