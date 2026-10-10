@@ -16,6 +16,7 @@ Close the project with a defensible answer to the research question: how reliabl
 - Packed-NF4 detector benchmark: mixed-model RF test AUC 0.6641, driven by Qwen (AUC 0.7689); TinyLlama and Gemma are near chance (~0.52). Grouped Qwen-only OOF AUC 0.8913 varies strongly by held-out projection/variant group. This is not model-generalized evidence.
 - Cross-model leave-one-family-out benchmark (dataset SHA-256 `1b815887d73e40463bb7694d4e921108fb6bb2f29c1e8765ab4cb7240a60c58c`): all three estimators are near chance on every held-out family. Qwen AUC 0.5010–0.5014; TinyLlama 0.5141–0.5289; Gemma 0.5118–0.5223. This does not support transferable detector signal. TinyLlama and Gemma each have only one held-out source/run group, and the Qwen holdout has only two training groups, so the estimates are exploratory and group-limited—not proof of universal undetectability.
 - Qwen ablation: full features AUC 0.7699; without entropy 0.7668; entropy-only 0.5422. Entropy alone does not explain the signal. Treat as diagnostic only.
+- Provenance audit of the tracked manifest adapter: `source_id` can default to `revision-unrecorded`; `run_id` is caller-supplied and not independently validated. Therefore group IDs do not prove independent replications. The original local generation logs still need checking; see `B1_4_LIFECYCLE_MATRIX.md`.
 - Existing reports, datasets, and frozen pilot remain unchanged.
 
 ## Parallel execution plan
@@ -62,9 +63,9 @@ Run the claim audit, consistency checks, and reproducibility checks once after c
 - [x] Synthetic DCE trade-off evaluated across five seeds; current objective stopped.
 - [x] Consolidated packed-NF4 detector benchmark implemented and tested.
 - [x] Qwen entropy ablation implemented and tested.
-- [ ] Provenance/source-run meaning checked against actual artifact generation.
+- [x] Tracked manifest-adapter semantics audited; independent provenance is explicitly **not established** by the adapter alone. Original local generation logs/artifact hashes still require a bounded local check.
 - [x] Cross-model holdout benchmark implementation, synthetic tests, and local dataset run completed; all held-out-family AUCs near chance, with source/run group-count limitations recorded.
-- [ ] B1.4 lifecycle attack matrix completed for feasible transformations.
+- [ ] B1.4 lifecycle matrix and per-run evidence requirements documented in `B1_4_LIFECYCLE_MATRIX.md`; requantization negative result frozen. A reload/save control and/or pruning result remains to be run if feasible; fine-tuning and task merge are optional and may be marked unavailable.
 - [ ] Utility comparison expanded to held-out prompts and fixed acceptance criteria.
 - [ ] Final claim audit, consistency checks, and reproducibility bundle frozen.
 - [ ] Paper figures/tables and final limitations aligned to the frozen evidence.
