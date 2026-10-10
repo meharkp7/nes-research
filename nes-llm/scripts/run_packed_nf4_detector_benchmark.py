@@ -19,6 +19,7 @@ from sklearn.base import clone
 from sklearn.ensemble import HistGradientBoostingClassifier, RandomForestClassifier
 from sklearn.impute import SimpleImputer
 from sklearn.linear_model import LogisticRegression
+from sklearn.inspection import permutation_importance
 from sklearn.metrics import (
     accuracy_score, average_precision_score, balanced_accuracy_score,
     confusion_matrix, f1_score, precision_score, recall_score, roc_auc_score,
@@ -262,6 +263,63 @@ def label_randomization(df, features, seed, repetitions=5) -> dict:
             "interpretation": "Pipeline sanity control only; not a biological/stealth control."}
 
 
+def paired_feature_diagnostics(df: pd.DataFrame, features: list[str]) -> dict:
+    """Descriptive clean/embedded paired effects, pooled and by model."""
+    output = {"interpretation": "Descriptive paired effects only; no p-values or independent-run claims.", "by_model": {}}
+    for model_id, subset in df.groupby("model_id", sort=True):
+        effects = {}
+        for feature in features:
+            p = subset.pivot_table(index=list(PAIR_COLS), columns="label", values=feature, aggfunc="first")
+            if 0 not in p.columns or 1 not in p.columns:
+                continue
+            paired = (p[1] - p[0]).dropna()
+            scale = float(subset[feature].std(ddof=1))
+            effects[feature] = {
+                "mean_embedded_minus_clean": float(paired.mean()) if len(paired) else None,
+                "median_embedded_minus_clean": float(paired.median()) if len(paired) else None,
+                "std_paired_difference": float(paired.std(ddof=1)) if len(paired) > 1 else 0.0,
+                "standardized_mean_difference": float(paired.mean() / scale) if len(paired) and scale > 0 else None,
+                "matched_pairs": int(len(paired)),
+            }
+        output["by_model"][str(model_id)] = effects
+    return output
+
+
+def qwen_random_forest_permutation_importance(train, test, features, seed, max_rows=3000) -> dict:
+    """Held-out Qwen permutation importance to localize RF signal without using IDs as features."""
+    qwen = "Qwen/Qwen2.5-3B"
+    if train[train["model_id"].astype(str) == qwen].empty or test[test["model_id"].astype(str) == qwen].empty:
+        return {"status": "NOT_EVALUABLE", "reason": "Qwen absent from train or primary test partition."}
+    model = make_pipeline(
+        SimpleImputer(strategy="median"),
+        RandomForestClassifier(n_estimators=250, min_samples_leaf=3, class_weight="balanced",
+                               n_jobs=-1, random_state=seed),
+    )
+    model.fit(train[features].to_numpy(float), train["label"].to_numpy(int))
+    sample = test[test["model_id"].astype(str) == qwen]
+    if len(sample) > max_rows:
+        sample = sample.sample(n=max_rows, random_state=seed).sort_index()
+    result = permutation_importance(
+        model, sample[features].to_numpy(float), sample["label"].to_numpy(int),
+        scoring="roc_auc", n_repeats=3, random_state=seed, n_jobs=-1,
+    )
+    ranking = sorted(
+        [{"feature": feature, "mean_auc_drop": float(result.importances_mean[i]),
+          "std_auc_drop": float(result.importances_std[i])}
+         for i, feature in enumerate(features)],
+        key=lambda item: item["mean_auc_drop"], reverse=True,
+    )
+    return {
+        "status": "COMPLETED",
+        "evaluation_scope": "Qwen rows from primary held-out test partition",
+        "n_test_rows_used": int(len(sample)),
+        "method": "Permutation importance; ROC-AUC decrease after permuting one feature",
+        "top_features": ranking[:10],
+        "all_features": ranking,
+        "warning": "Correlated features can share or mask importance. Importance localizes model reliance; it does not establish a causal mechanism.",
+    }
+
+
 def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--dataset", type=Path, required=True)
@@ -300,9 +358,12 @@ def main() -> int:
     model_results = {}
     for name, model in zoo.items():
         model_results[name] = evaluate_model(model, parts["train"], parts["validation"], parts["test"], features)
-    # One label-randomization sanity control, plus one grouped sensitivity evaluation.
+    # Integrated diagnostics: grouped sensitivity, label control, paired feature effects,
+    # and Qwen-specific RF permutation importance. This is one benchmark report.
     randomized = label_randomization(mixed, features, args.seed, max(1, args.permutations))
     grouped = grouped_sensitivity(mixed, features, args.seed)
+    paired_effects = paired_feature_diagnostics(mixed, features)
+    qwen_importance = qwen_random_forest_permutation_importance(parts["train"], parts["test"], features, args.seed)
     report = {
         "schema": "nes.packed_nf4_detector_benchmark.v1",
         "status": "COMPLETED",
@@ -320,6 +381,8 @@ def main() -> int:
         },
         "grouped_leakage_sensitivity": grouped,
         "label_randomization_control": randomized,
+        "paired_feature_diagnostics": paired_effects,
+        "qwen_random_forest_permutation_importance": qwen_importance,
         "clean_vs_clean_control": {
             "status": "NOT_AVAILABLE_IN_CURRENT_DATASET",
             "reason": "The supplied dataset contains clean and embedded labels, but no independent clean-vs-clean artifact class with suitable provenance. Do not substitute duplicate clean files as independent negatives.",
