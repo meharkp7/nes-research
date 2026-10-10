@@ -51,7 +51,7 @@ Each row is a separate experiment from the pristine B1.4 stego checkpoint. Alway
 | Pristine artifact baseline | PASS | 10,000-bit payload recovered exactly, BER 0, as documented in `CONTRACT_B_B14.md`. |
 | Fresh NF4 requantization | COMPLETED — RECOVERY FAILED | Existing frozen run: 30/10,000 bit errors, BER 0.003, checksum mismatch. Keep this negative result unchanged. |
 | NF4 reload/save control without intentional weight change | ATTEMPTED — TRANSFORMATION ERROR | Local Transformers 5.16.1 loaded the NF4 checkpoint, but `save_pretrained()` raised `NotImplementedError` while reversing `Bnb4bitDeserialize`. No valid output checkpoint was produced; the receiver's `FileNotFoundError` on that incomplete directory is a consequence, not a payload-recovery result. Preserve the failed directory/report. This control is blocked by the serializer path; do not bypass the reverse conversion while weights remain quantized. |
-| Selected-tensor magnitude pruning + fresh NF4 requantization | COMPLETED — RECOVERY FAILED | Retry 2 completed: 10% lowest-magnitude positions in `model.layers.0.self_attn.q_proj.weight` were zeroed in the dequantized BF16 tensor; floating checkpoint saved; checkpoint freshly quantized to NF4 and saved. Built-in recovery failed with `Envelope header invalid after requantization`; header/checksum invalid, BER unavailable (`null`). This is a **combined pruning + requantization attack**, not isolated pruning. Preserve report and output. |
+| Selected-tensor magnitude pruning + fresh NF4 requantization | COMPLETED — RECOVERY FAILED (REPLICATED IN RETRY 3) | Retry 2 and retry 3 both completed dequantization, selected-tensor pruning, float save, fresh NF4 quantization, and checkpoint save. Both reported `Envelope header invalid after requantization`, with invalid header/checksum and BER unavailable (`null`). Retry 3 reproduces the same qualitative outcome. This is a **combined pruning + requantization attack**, not isolated pruning. Preserve all reports/outputs and stop repeating this attack. |
 | Fine-tuning / LoRA merge | NOT RUN | Optional only if a controlled, reproducible local training/update path already exists. No improvised training run is required to close the pilot. |
 | Task/weight merge | NOT RUN | Optional only if a compatible, documented second checkpoint and merge configuration are already available. Otherwise mark not available. |
 
@@ -60,17 +60,20 @@ Each row is a separate experiment from the pristine B1.4 stego checkpoint. Alway
 On 2026-10-10, the user attempted to load `cache/contract_b_nf4_b14_10k` as NF4 and save to `cache/contract_b_b14_reload_save_control_20261010`. Loading completed, but `save_pretrained()` raised `NotImplementedError` in Transformers 5.16.1 when `revert_weight_conversion()` requested the reverse operation for `Bnb4bitDeserialize`. The follow-up receiver failed because the output directory did not contain a model safetensors file or index. This is a transformation/serialization error, not evidence of payload loss or survival. Keep the failed output path occupied and preserve it; don't retry there. The workaround used by the existing requantization script is guarded to run only after dequantization, so it must not be copied into this control while the model remains quantized.
 
 
-### Selected-tensor pruning + NF4 requantization — completed result
+### Selected-tensor pruning + NF4 requantization — replicated completed result
 
-On 2026-10-10, retry 2 completed the model lifecycle after the initial attempt hit a PyTorch autograd guard. The script was patched to zero the selected parameter under `torch.no_grad()`. The successful run dequantized the pristine NF4 checkpoint to BF16, zeroed the 10% lowest-magnitude positions in `model.layers.0.self_attn.q_proj.weight`, saved the floating-point intermediate, freshly quantized the model to NF4, and saved the transformed checkpoint. The script reported `TRANSFORMATION_COMPLETED_RECOVERY_FAILED` because the B1.4 envelope header was invalid after requantization; checksum and header validation failed, and BER / bit-error count were unavailable. Do not convert the missing BER into a numeric BER or claim a measured bit-error rate for this run.
+On 2026-10-10, retry 2 completed the model lifecycle after the initial attempt hit a PyTorch autograd guard. The script was patched to zero the selected parameter under `torch.no_grad()`. Retry 2 and retry 3 both dequantized the pristine NF4 checkpoint to BF16, zeroed the 10% lowest-magnitude positions in `model.layers.0.self_attn.q_proj.weight`, saved the floating-point intermediate, freshly quantized the model to NF4, and saved the transformed checkpoint. Both reported `TRANSFORMATION_COMPLETED_RECOVERY_FAILED` because the B1.4 envelope header was invalid after requantization; header/checksum validation failed and BER / bit-error count were unavailable. Retry 3 reproduces the same qualitative failure. Do not convert missing BER into a numeric BER.
 
 Artifacts (preserve all):
-- Transformed checkpoint: `cache/contract_b_b14_pruned10_nf4_retry2_20261010`
-- Floating intermediate: `cache/contract_b_b14_pruned10_nf4_retry2_20261010_floating_intermediate`
-- Run report: `cache/contract_b_b14_pruned10_nf4_retry2_20261010_requantization_report.json`
-- First failed attempt/report remain preserved under the non-retry2 `contract_b_b14_pruned10_nf4_20261010` paths.
+- First autograd-error attempt/report: `cache/contract_b_b14_pruned10_nf4_20261010_requantization_report.json`
+- Retry 2 checkpoint: `cache/contract_b_b14_pruned10_nf4_retry2_20261010`
+- Retry 2 floating intermediate: `cache/contract_b_b14_pruned10_nf4_retry2_20261010_floating_intermediate`
+- Retry 2 report: `cache/contract_b_b14_pruned10_nf4_retry2_20261010_requantization_report.json`
+- Retry 3 checkpoint: `cache/contract_b_b14_pruned10_nf4_retry3_20261010`
+- Retry 3 floating intermediate: `cache/contract_b_b14_pruned10_nf4_retry3_20261010_floating_intermediate`
+- Retry 3 report: `cache/contract_b_b14_pruned10_nf4_retry3_20261010_requantization_report.json`
 
-Interpretation: this is evidence that the **combined selected-tensor magnitude-pruning plus fresh-NF4-requantization pipeline** did not preserve a decodable payload envelope. It does not isolate pruning as the cause because the NF4 requantization stage is also part of the attack. No additional receiver retry is needed for this already-recorded invalid-header outcome; do not overwrite any of these paths.
+Interpretation: this is evidence that the **combined selected-tensor magnitude-pruning plus fresh-NF4-requantization pipeline** did not preserve a decodable payload envelope in two completed runs. It does not isolate pruning as the cause because fresh NF4 requantization is also part of the attack. This qualitative replication is sufficient for the pilot; do not run further retries.
 
 ### Per-run record requirements
 
