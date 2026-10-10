@@ -14,9 +14,13 @@ The current repository evidence does not establish that `source_id` and `run_id`
 - The current grouped detector dataset has only eight source/run groups across three model families, and Q/K/V projections from the same Qwen checkpoint are not independent model sources.
 - Cross-model AUCs are near chance, but small group counts limit uncertainty and transfer claims.
 
-**Audit verdict: provenance independence is not established from the tracked adapter contract alone.** Treat source/run groups as bookkeeping groups, not proven independent replications, until the original dataset-generation logs/manifests and artifact hashes are checked locally. Do not regenerate or relabel the frozen dataset to make it appear more independent.
+**Audit verdict: provenance independence is not established from the tracked adapter contract or current CSV summary.** The local CSV contains 606,208 rows balanced across clean/embedded labels and eight source/run combinations. Six Qwen groups are three layer-16 projection types (Q/K/V) crossed with `nested`/`plain` variants; TinyLlama and Gemma each have one Q-projection group. These are not eight independent model sources. The output does not establish that each clean/embedded pair differs only by embedding. Treat these as bookkeeping groups, not proven independent replications, until original dataset-generation logs/manifests and artifact hashes are checked locally. Do not regenerate or relabel the frozen dataset to make it appear more independent.
 
-### Minimal local evidence capture
+### Local CSV summary — completed
+
+The user inspected the existing CSV without modifying it. Counts: Qwen 327,680 rows, Gemma 147,456, TinyLlama 131,072; 303,104 clean and 303,104 embedded rows. Eight source/run combinations: six Qwen projection/variant groups, one TinyLlama Q-projection group, and one Gemma Q-projection group. The CSV does not by itself prove source independence or matched-pair construction.
+
+### Remaining minimal evidence capture
 
 From `nes-llm/`, inspect the existing CSV's group counts and metadata without changing it:
 
