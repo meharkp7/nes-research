@@ -69,3 +69,13 @@ def test_grouped_sensitivity_holds_out_each_group_once_and_reports_models():
         assert set(details["oof_by_model"]) == {"qwen", "tinyllama", "gemma"}
         held_out = [g for fold in details["folds"] for g in fold["held_out_groups"]]
         assert len(held_out) == len(set(held_out)) == result["total_group_count"]
+
+
+def test_paired_feature_diagnostics_reports_model_specific_effects():
+    df = synthetic_dataset()
+    features = benchmark.validate_dataset(df)
+    result = benchmark.paired_feature_diagnostics(df, features)
+    assert set(result["by_model"]) == {"qwen", "tinyllama", "gemma"}
+    qwen_entropy = result["by_model"]["qwen"]["entropy_bits"]
+    assert qwen_entropy["matched_pairs"] == 15
+    assert qwen_entropy["mean_embedded_minus_clean"] > 0
