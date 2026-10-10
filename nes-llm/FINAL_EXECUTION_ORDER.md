@@ -42,5 +42,15 @@ Compare every claim in abstract, introduction, methods, results, figures, captio
 ## Current starting point
 Existing seven-method recovery work and detector work are substantial, but complete 49-cell embedding/recovery/detection coverage has not yet been demonstrated by the current audit. Detector provenance is limited: the grouped dataset has eight bookkeeping source/run groups across three model IDs; run IDs are caller-supplied, some source revisions are unrecorded, and hardlinked duplicate artifacts exist. Cross-model AUCs are near chance but exploratory and group-limited. A clean-control repeat was deterministic (0 changed packed codes), while the matched QSE comparison had 76,336 changed codes, including 40,955 non-carrier changes; this is consistent with possible block-local spillover but does not establish the cause or imply that non-carrier codes carry payload bits. The latest QSE artifact recovered 36,128/36,128 bits exactly under reference-assisted decoding.
 
+## Stage 1 investigation note — historical matrix status discrepancy (10 October 2026)
+
+The local Git history shows commit `53cb25ffc043c241a31db439845b473448d896b2` (`Parse extraction JSON despite device logs and preserve failure reports`) dated 2026-10-10 00:47:19+05:30. It adds stdout JSON scanning after device/progress text and preserves structured extraction failures. The inspected local working tree is clean at `6463630da77af55d702a391e00f14fa59e8b5b85`.
+
+In the historical matrix run `20261009T185340Z`, the `sign` row is marked `EXTRACT_FAILED` and has null top-level `ber`/`exact_match`, while the row's `reason` contains a full extraction JSON report with `exact_match=true`, `ber=0.0`, `bit_errors=0`, `expected_bits=recovered_bits=36128`, and `embedded_manifest_digest_match=true`. The per-method `extract.json` reports for `sign`, `magnitude_aware`, `qae`, `lwe_grid_parity`, and `split_sign_parity` in that run show the same exact-recovery indicators.
+
+This is consistent with the older runner failing to parse stdout prefixed by `Using device: mps`; it is not proof of the exact subprocess exit code or of every historical row's cause. Run IDs are UTC: the early runs ending in `185340Z`, `185703Z`, `185921Z`, `190017Z`, `190043Z`, and `191611Z` predate the parser-fix commit timestamp; `191727Z` and later runs postdate it. Keep historical matrix statuses unchanged. In the evidence inventory, classify rows with corroborating exact-recovery reports as **recovery verified / matrix status inconsistent**, retain their original status, and do not count repeated/hardlinked artifacts as independent replications.
+
+Stage 1 remains open until the 7×7 evidence-backed coverage matrix is created; this note does not establish complete model coverage.
+
 ## Operating rule
 At the end of each stage, update this file and the matrix with evidence and exit decision before moving to the next stage. No stage changes order without a documented paper-critical blocker and explicit user agreement.
