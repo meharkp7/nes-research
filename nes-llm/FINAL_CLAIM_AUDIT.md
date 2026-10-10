@@ -20,9 +20,17 @@
 | The method is robust. | Pristine exact recovery; specific requantization failure; combined pruning+requantization failure; older Exp23 surgery results use a different residual-domain protocol. | **Must be scoped by protocol and transformation.** Keep Exp23 residual-domain findings separate from B1.4 packed-NF4 evidence. Avoid universal robustness claims. |
 | DCE improves the overall method. | Synthetic multi-seed batch matching improves histogram TV/KL at roughly 8.66× baseline distortion. | **Not an overall win.** Report the trade-off and do not describe it as an improvement without qualification. |
 
-### Dataset group-count observation — local inspection, 10 October 2026
+### Follow-up: local provenance report inspection — 10 October 2026
 
-The user inspected the frozen CSV `cache/packed_nf4_grouped_dataset_20261010.csv` without modifying it: 606,208 rows; 303,104 `clean` and 303,104 `embedded`; tensor-key counts are Q projection 540,672 rows, K projection 32,768, and V projection 32,768. The six Qwen source/run combinations are Q/K/V crossed with `nested`/`plain`; TinyLlama and Gemma each have one Q-projection group. These are dataset bookkeeping groups, not demonstrated independent replications. The summary still does not establish matched clean/embedded pairing, source checkpoint hashes/revisions, or unique run invocations. Original generation artifacts/logs remain to be checked locally.
+The user inspected the existing `packed_nf4_provenance_audit_20261010.json`, `packed_nf4_qkv_provenance_audit_20261010.json`, `packed_nf4_qse_manifest_20261009.json`, `packed_nf4_grouped_splits_20261010.json`, and `exact_duplicate_hardlink_manifest_20261010.json`.
+
+- The main provenance audit reports 8 clean/embedded feature pairs across 3 model IDs, with distinct clean vs embedded artifact SHA-256 values and matching model ID, tensor key, and block-index coverage per pair. This establishes structural pairing/coverage in the feature CSV metadata, not that the underlying source tensors differ only by embedding.
+- The six Qwen combinations represent Q/K/V projections crossed with nested/plain variants, not six independent model checkpoints. Gemma and TinyLlama each contribute one Q-projection group.
+- The grouped split manifest assigns one model ID each to train, validation, and test. This is leakage-conscious at model-ID level but leaves only one model family/checkpoint ID per partition, so cross-model generalization estimates are highly group-limited.
+- The QKV-specific audit contains the six Qwen pairs and only three source groups, all the same model ID. It is not independent model-level replication.
+- The QSE manifest records a single measured reference-assisted artifact with 36,128 payload bits, but its source ID explicitly says `revision-unrecorded` and its quantizer config is partial.
+- The exact-duplicate hardlink manifest shows that several experiment paths share identical artifact bytes across timestamps. Those paths must not be counted as independent replications.
+- These reports do not establish immutable checkpoint revisions/hashes or the exact original clean/embedded construction procedure. Detector claims remain exploratory; do not claim independent replication or that the pair differs only by embedding without additional source evidence.
 
 ## Required final gates
 
