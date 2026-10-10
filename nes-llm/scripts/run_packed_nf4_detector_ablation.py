@@ -122,9 +122,9 @@ def qwen_grouped_sensitivity(qwen: pd.DataFrame, features: list[str], seed: int)
     }
 
 
-def paired_delta_distribution(qwen_all: pd.DataFrame, features: list[str]) -> dict:
+def paired_delta_distribution(df: pd.DataFrame, features: list[str]) -> dict:
     by_model = {}
-    for model_id, subset in qwen_all.groupby("model_id", sort=True):
+    for model_id, subset in df.groupby("model_id", sort=True):
         feature_results = {}
         for feature in features:
             pairs = subset.pivot_table(
@@ -192,7 +192,7 @@ def main() -> int:
     # Grouped sensitivity on the full Qwen subset, plus distribution diagnostics over
     # matched pairs. These are diagnostic complements, not substitutes for the held-out test.
     grouped = qwen_grouped_sensitivity(qwen_all, features, args.seed)
-    deltas = paired_delta_distribution(qwen_all, features)
+    deltas = paired_delta_distribution(df, features)
     report = {
         "schema": "nes.packed_nf4_detector_ablation.v1",
         "status": "COMPLETED",
