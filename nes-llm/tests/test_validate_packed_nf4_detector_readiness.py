@@ -13,7 +13,7 @@ FIELDS = [
 ]
 
 
-def write_fixture(tmp_path: Path, model_ids=("m1", "m2", "m3", "m4", "m5")):
+def write_fixture(tmp_path: Path, model_ids=("m1", "m2", "m3", "m4", "m5", "m6", "m7")):
     csv_path = tmp_path / "dataset.csv"
     split_path = tmp_path / "splits.json"
     assignments = {
@@ -54,7 +54,7 @@ def test_passes_matched_dataset_with_sufficient_groups(tmp_path):
     dataset, splits = write_fixture(tmp_path)
     report = audit_dataset(dataset, splits)
     assert report["status"] == "PASS"
-    assert report["model_groups_per_split"] == {"test": 1, "train": 3, "validation": 1}
+    assert report["model_groups_per_split"] == {"test": 3, "train": 3, "validation": 1}
 
 
 def test_blocks_too_few_independent_test_models(tmp_path):
