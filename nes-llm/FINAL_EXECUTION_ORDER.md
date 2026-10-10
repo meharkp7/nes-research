@@ -89,3 +89,25 @@ evidence. Stage 3 overall remains open: this single-model, five-method batch
 does not satisfy matrix-wide detector coverage. Proceed with evidence indexing,
 focused tests, and claim audit; do not launch a classifier or repeat the batch
 without a specific, documented paper-critical reason.
+
+## Stage 6 checkpoint — focused test gate (11 October 2026)
+
+Local focused test command completed successfully from `nes-llm/`:
+
+```bash
+python -m pytest -q \
+  tests/test_seven_method_protocol.py \
+  tests/test_embedding.py \
+  tests/test_extraction.py \
+  tests/test_residuals.py \
+  tests/test_matrix_extraction_report_parser.py \
+  tests/test_contract_b_robustness_matrix.py \
+  tests/test_validate_packed_nf4_detector_readiness.py \
+  tests/test_run_packed_nf4_cross_model_detector.py \
+  tests/test_run_packed_nf4_detector_ablation.py \
+  tests/test_run_packed_nf4_detector_benchmark.py
+```
+
+Observed result: **30 passed, 4 warnings in 4.54 seconds**. All four warnings are scikit-learn MLP warnings that the requested `batch_size` is below 1 or exceeds the sample size and will be clipped, emitted by `test_grouped_sensitivity_holds_out_each_group_once_and_reports_models`. No test failed. This is a focused gate over the ten listed files, not a claim that the entire repository test suite passed.
+
+Stage 6 is **partially verified**: focused tests pass, but the evidence index with relative paths and SHA-256 hashes and final consistency review still need to be generated/checked locally. Preserve the warning in the test record; do not silently suppress or reinterpret it.
