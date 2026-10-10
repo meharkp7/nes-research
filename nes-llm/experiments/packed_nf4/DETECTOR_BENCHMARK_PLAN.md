@@ -34,3 +34,25 @@ From `nes-llm/`:
 ```
 
 The output directory must not already exist. Existing dataset files, the frozen split, and the pilot report are not modified.
+
+
+## Focused Qwen detector ablation
+
+Entry point: `scripts/run_packed_nf4_detector_ablation.py`
+
+This is a new, separate report; it does not overwrite the consolidated benchmark or frozen pilot. It runs three matched conditions on a Qwen-only 60/20/20 split: (1) Random Forest with all artifact features, (2) entropy-only, and (3) all features except entropy. Matched clean/embedded rows stay together. Each condition reports validation metrics, held-out test metrics, the validation-selected threshold, and test metrics by source/run group.
+
+The report also includes a Qwen-only GroupKFold sensitivity analysis when at least three Qwen source/run groups are available. If fewer than three groups are present, it explicitly reports that grouped sensitivity is not evaluable rather than relaxing the requirement. Grouped sensitivity is exploratory and can remain unstable with few groups.
+
+Paired-delta distribution diagnostics report, by model and feature, matched-pair count, zero/nonzero fractions, mean, standard deviation, and quantiles from the embedded-minus-clean differences. This exposes sparse changes that a zero median and small mean can hide.
+
+Run from `nes-llm/`:
+
+```bash
+../.venv/bin/python -m pytest -q tests/test_run_packed_nf4_detector_benchmark.py tests/test_run_packed_nf4_detector_ablation.py && \
+../.venv/bin/python scripts/run_packed_nf4_detector_ablation.py \
+  --dataset ../cache/packed_nf4_grouped_dataset_20261010.csv \
+  --output-dir ../cache/packed_nf4_detector_ablation_$(date +%Y%m%d_%H%M%S)
+```
+
+Interpretation: a Qwen-only random split tests within-model discrimination but source/run groups can still cross partitions. Entropy-only and without-entropy are ablations, not causal proofs. Do not interpret blocks as independent samples or claim stealth from these results alone.
