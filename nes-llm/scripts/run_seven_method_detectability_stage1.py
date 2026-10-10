@@ -62,7 +62,7 @@ def quantile_sample(x: torch.Tensor, max_points: int = QUANTILE_SAMPLE_MAX) -> t
     return x.index_select(0, indices)
 
 
-def features(values: torch.Tensor, bins: int = HISTOGRAM_BINS) -> dict[str, float]:
+def features(values: torch.Tensor, bins: int = HISTOGRAM_BINS, quantile_sample_max: int = QUANTILE_SAMPLE_MAX) -> dict[str, float]:
     """Compute full-data moments plus deterministic sampled quantiles."""
     x = values.detach().to(device="cpu", dtype=torch.float32).reshape(-1)
     if x.numel() == 0:
@@ -91,7 +91,7 @@ def features(values: torch.Tensor, bins: int = HISTOGRAM_BINS) -> dict[str, floa
     probs = probs[probs > 0]
     entropy = float(-(probs * torch.log2(probs)).sum())
 
-    qsample = quantile_sample(x)
+    qsample = quantile_sample(x, max_points=quantile_sample_max)
     # One quantile call sorts at most QUANTILE_SAMPLE_MAX values.
     qs = torch.quantile(qsample, torch.tensor([0.25, 0.50, 0.75]))
     return {
@@ -223,8 +223,6 @@ def main() -> int:
     if args.quantile_sample_max < 1024:
         parser.error("--quantile-sample-max must be >=1024")
 
-    global QUANTILE_SAMPLE_MAX
-    QUANTILE_SAMPLE_MAX = args.quantile_sample_max
 
     out = args.output_dir.expanduser().resolve()
     if out.exists():
@@ -272,7 +270,7 @@ def main() -> int:
             "current_cell": current_cell,
             "elapsed_seconds": round(time.monotonic() - started, 2),
             "quantile_method": "deterministic evenly-spaced sample; exact only when tensor <= sample cap",
-            "quantile_sample_max": QUANTILE_SAMPLE_MAX,
+            "quantile_sample_max": args.quantile_sample_max,
         })
 
     try:
@@ -303,7 +301,7 @@ def main() -> int:
                         print(f"    layer {layer_num}/{len(pairs)}: {layer_id}", flush=True)
                         changed = int(torch.count_nonzero(clean != stego).item())
                         cache_hash = sha256(clean_path)
-                        cfeat, efeat = features(clean), features(stego)
+                        cfeat, efeat = features(clean, quantile_sample_max=args.quantile_sample_max), features(stego, quantile_sample_max=args.quantile_sample_max)
                         layer_meta = {
                             **base, "artifact_sha256": artifact_hash, "layer_id": layer_id,
                             "num_values": clean.numel(), "changed_values": changed,
@@ -325,7 +323,7 @@ def main() -> int:
                             e = stego[start:start + args.block_size]
                             if c.numel() < 64:
                                 continue
-                            cf, ef = features(c), features(e)
+                            cf, ef = features(c, quantile_sample_max=args.quantile_sample_max), features(e, quantile_sample_max=args.quantile_sample_max)
                             common = {
                                 "model_id": model, "method": method, "layer_id": layer_id,
                                 "block_index": start // args.block_size, "block_start": start,
