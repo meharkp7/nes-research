@@ -12,12 +12,12 @@ The runner:
 3. Trains logistic regression, random forest, histogram gradient boosting and a compact MLP on the same feature set. Preprocessing is fitted only on training data.
 4. Selects the classification threshold on validation using Youden's J, then evaluates the test set once.
 5. Reports pooled and per-model ROC-AUC, PR-AUC, balanced accuracy, precision, recall, F1, FPR and confusion matrix.
-6. Runs a grouped source/run holdout sensitivity check and five default label-randomization sanity controls.
+6. Runs source/run-grouped cross-validation (each group held out once) and five default label-randomization sanity controls.
 7. Emits one JSON report and a separate reproducible split manifest.
 
 ## Interpretation guardrails
 - **Primary mixed-block split:** matched pairs are held together, but source/run groups can cross partitions. The primary estimate can be optimistic due to correlated blocks and is not a confirmatory independent-sample estimate.
-- **Grouped sensitivity:** complete source/run groups are held out. The available number of independent groups may be too small for stable inference; if either side lacks both labels, the report explicitly marks it not evaluable.
+- **Grouped sensitivity:** uses GroupKFold out-of-fold predictions so each complete source/run group is held out once. Per-model metrics and fold membership are recorded. The available number of independent groups may still be too small for stable inference.
 - **Label randomization:** a pipeline sanity check only, not evidence about stealth.
 - **Clean-vs-clean:** marked unavailable because this dataset does not provide an independent, provenance-qualified clean-vs-clean class. Repeated copies of the same packed codes are not independent negatives.
 - **Uncertainty:** no naive row-level confidence intervals. A credible cluster-level interval requires enough independent source/run groups.
