@@ -98,7 +98,10 @@ def main() -> int:
 
     assert common_features is not None
     by_source_role = defaultdict(set)
-    by_source_run = defaultdict(set)
+    pair_blocks = defaultdict(lambda: defaultdict(set))
+    pair_hashes = defaultdict(lambda: defaultdict(set))
+    pair_artifact_ids = defaultdict(lambda: defaultdict(set))
+    pair_metadata = defaultdict(set)
     seen_blocks = set()
     for row in all_rows:
         for field in ("source_id", "run_id", "model_id", "tensor_key", "role", "label", "block_index", "artifact_sha256"):
@@ -109,12 +112,20 @@ def main() -> int:
         expected_label = "0" if row["role"] == "clean" else "1"
         if row["label"] != expected_label:
             raise ValueError(f"Role/label mismatch for {row['role']!r}")
-        identity = (row["source_id"], row["run_id"], row["role"], row["block_index"])
+        pair_key = (
+            row["source_id"], row["run_id"], row["model_id"], row["tensor_key"]
+        )
+        identity = (*pair_key, row["role"], row["block_index"])
         if identity in seen_blocks:
             raise ValueError(f"Duplicate block row: {identity}")
         seen_blocks.add(identity)
         by_source_role[(row["source_id"], row["run_id"])].add(row["role"])
-        by_source_run[(row["source_id"], row["run_id"], row["model_id"], row["tensor_key"])].add(row["role"])
+        pair_blocks[pair_key][row["role"]].add(row["block_index"])
+        pair_hashes[pair_key][row["role"]].add(row["artifact_sha256"])
+        pair_artifact_ids[pair_key][row["role"]].add(row.get("artifact_id", ""))
+        pair_metadata[(row["source_id"], row["run_id"])].add(
+            (row["model_id"], row["tensor_key"])
+        )
 
     incomplete = [key for key, roles in by_source_role.items() if roles != {"clean", "embedded"}]
     if incomplete:
@@ -122,6 +133,33 @@ def main() -> int:
             "Every source_id/run_id pair must have both clean and embedded rows; "
             f"first incomplete group: {incomplete[0]}"
         )
+
+    inconsistent_metadata = [key for key, values in pair_metadata.items() if len(values) != 1]
+    if inconsistent_metadata:
+        raise ValueError(
+            "A source_id/run_id pair must map to exactly one model_id/tensor_key; "
+            f"first inconsistent group: {inconsistent_metadata[0]}"
+        )
+
+    for pair_key, roles in pair_blocks.items():
+        if set(roles) != {"clean", "embedded"}:
+            raise ValueError(f"Pair group must contain clean and embedded roles: {pair_key}")
+        clean_blocks = roles["clean"]
+        embedded_blocks = roles["embedded"]
+        if clean_blocks != embedded_blocks:
+            missing_from_embedded = sorted(clean_blocks - embedded_blocks)[:5]
+            missing_from_clean = sorted(embedded_blocks - clean_blocks)[:5]
+            raise ValueError(
+                f"Clean/embedded block-index mismatch for {pair_key}; "
+                f"missing_from_embedded={missing_from_embedded}, "
+                f"missing_from_clean={missing_from_clean}"
+            )
+        for role in ("clean", "embedded"):
+            if len(pair_hashes[pair_key][role]) != 1:
+                raise ValueError(
+                    f"Expected exactly one artifact_sha256 per pair group/role; "
+                    f"pair={pair_key}, role={role}"
+                )
 
     model_ids = sorted({row["model_id"] for row in all_rows})
     split_for_model = assign_group_splits(model_ids, args.seed)

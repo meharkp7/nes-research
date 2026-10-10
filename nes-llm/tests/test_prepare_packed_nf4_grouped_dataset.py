@@ -94,3 +94,44 @@ def test_missing_paired_role_is_rejected(tmp_path: Path):
     result, _, _ = invoke(tmp_path, inputs)
     assert result.returncode != 0
     assert "must have both clean and embedded rows" in result.stderr
+
+
+
+def test_mismatched_clean_embedded_block_indices_are_rejected(tmp_path: Path):
+    inputs = []
+    for source in ("A", "B", "C"):
+        for role in ("clean", "embedded"):
+            path = tmp_path / f"{source}_{role}.csv"
+            write_feature_csv(path, source, role)
+            if source == "A" and role == "embedded":
+                with path.open(newline="", encoding="utf-8") as stream:
+                    rows = list(csv.DictReader(stream))
+                rows.pop()
+                with path.open("w", newline="", encoding="utf-8") as stream:
+                    writer = csv.DictWriter(stream, fieldnames=rows[0].keys())
+                    writer.writeheader()
+                    writer.writerows(rows)
+            inputs.append(path)
+    result, _, _ = invoke(tmp_path, inputs)
+    assert result.returncode != 0
+    assert "Clean/embedded block-index mismatch" in result.stderr
+
+
+def test_multiple_artifact_hashes_per_pair_role_are_rejected(tmp_path: Path):
+    inputs = []
+    for source in ("A", "B", "C"):
+        for role in ("clean", "embedded"):
+            path = tmp_path / f"{source}_{role}.csv"
+            write_feature_csv(path, source, role)
+            if source == "A" and role == "clean":
+                with path.open(newline="", encoding="utf-8") as stream:
+                    rows = list(csv.DictReader(stream))
+                rows[1]["artifact_sha256"] = "f" * 64
+                with path.open("w", newline="", encoding="utf-8") as stream:
+                    writer = csv.DictWriter(stream, fieldnames=rows[0].keys())
+                    writer.writeheader()
+                    writer.writerows(rows)
+            inputs.append(path)
+    result, _, _ = invoke(tmp_path, inputs)
+    assert result.returncode != 0
+    assert "Expected exactly one artifact_sha256" in result.stderr
