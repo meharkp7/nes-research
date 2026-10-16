@@ -1,0 +1,44 @@
+{
+  "checkpoint": "/Users/meharkapoor7/nes-research/cache/method_paper_20261016/tinyllama_clean",
+  "checkpoint_hashes": {
+    "/Users/meharkapoor7/nes-research/cache/method_paper_20261016/tinyllama_clean/model.safetensors": "a9ca62649ea22bd0aa62b6445bb6bf7b1676e3d9e7340501b09d5c618a12fa07"
+  },
+  "created_at": "2026-10-16T13:45:33.503425+00:00",
+  "cycles": 3,
+  "methods": [
+    "pair_parity",
+    "nearest_parity",
+    "interior_nearest",
+    "interior_pair"
+  ],
+  "payload": "Deterministic random bytes; B1.4 16-byte framing; no ECC or encryption",
+  "payload_bits": [
+    10000,
+    50000,
+    250000
+  ],
+  "platform": "macOS-26.3-arm64-arm-64bit-Mach-O",
+  "scope": "Development tensor experiment; one checkpoint; no steganalysis or task utility",
+  "seeds": [
+    20261016,
+    20261017,
+    20261018
+  ],
+  "source_hashes": {
+    "/Users/meharkapoor7/nes-research/nes-llm/scripts/contract_b_nf4_b14.py": "ba8beaa196eb4939de5d5c5c9d93b25c8a8cd6faacd65ddb0bb29613f864b14a",
+    "/Users/meharkapoor7/nes-research/nes-llm/scripts/run_nf4_anchor_pilot.py": "ff2e5883e0a5be6efe25e9f68bb3a3b71c0397ab7a398a0b0cb4cb0109ab394f",
+    "/Users/meharkapoor7/nes-research/nes-llm/src/experiments/nf4_anchor_channel.py": "07ce008dcabebb7ac0d4fa10c88251bf10dc9f2a7ae27dfc79bf23b8cd75b764"
+  },
+  "tensors": [
+    "model.layers.0.self_attn.q_proj.weight",
+    "model.layers.10.self_attn.k_proj.weight",
+    "model.layers.20.self_attn.v_proj.weight"
+  ],
+  "transformation": "bitsandbytes dequantize to stored dtype then fresh NF4 with same block size and nesting",
+  "versions": {
+    "bitsandbytes": "0.50.2",
+    "numpy": "2.5.2",
+    "safetensors": "0.8.0",
+    "torch": "2.13.0"
+  }
+}

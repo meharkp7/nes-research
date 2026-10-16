@@ -73,7 +73,7 @@ def test_grouped_dataset_keeps_source_groups_intact(tmp_path: Path):
     assert all(len(splits) == 1 for splits in by_source.values())
 
 
-def test_requires_three_independent_source_groups(tmp_path: Path):
+def test_requires_five_distinct_model_groups(tmp_path: Path):
     inputs = []
     for source in ("A", "B"):
         for role in ("clean", "embedded"):
@@ -82,7 +82,7 @@ def test_requires_three_independent_source_groups(tmp_path: Path):
             inputs.append(path)
     result, _, _ = invoke(tmp_path, inputs)
     assert result.returncode != 0
-    assert "Need >=3 distinct model_id groups" in result.stderr
+    assert "Need >=5 distinct model_id groups" in result.stderr
 
 
 def test_missing_paired_role_is_rejected(tmp_path: Path):

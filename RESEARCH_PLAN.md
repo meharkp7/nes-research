@@ -1,3 +1,5 @@
+> Closeout status (2026-10-16): the [status ledger](PHASE0_STATUS_LEDGER.md) and [final evidence table](PHASE3_CONSOLIDATED_SEVEN_METHOD.md) supersede status/count summaries below. Current validation is 419 passed plus 3 subtests, 152 claims verified, and 9/9 consistency checks. Older 66/80/108-test and 127-claim counts remain historical checkpoints. The package is reviewed but uncommitted; experimental failures and source-revision uncertainty remain.
+
 # NES Research & Productization Plan
 
 Continuation document. Every claim below carries one of five statuses, defined in

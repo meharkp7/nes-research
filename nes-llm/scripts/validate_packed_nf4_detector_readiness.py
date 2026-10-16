@@ -108,8 +108,13 @@ def audit_dataset(
             )
 
         block_identity = (
-            row["artifact_sha256"], row["tensor_key"], row["block_index"],
-            row["role"], row["split"],
+            row["source_id"],
+            row["run_id"],
+            row["artifact_sha256"],
+            row["tensor_key"],
+            row["block_index"],
+            row["role"],
+            row["split"],
         )
         if block_identity in seen_blocks:
             errors.append(f"row {row_number}: duplicate artifact/tensor/block {block_identity}")

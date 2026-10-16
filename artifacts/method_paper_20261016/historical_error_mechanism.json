@@ -1,0 +1,314 @@
+{
+  "scope": "Retrospective analysis of one historical Qwen B1.4 tensor; development evidence",
+  "tensor": "model.layers.0.self_attn.q_proj.weight",
+  "source_tensor_sha256": {
+    "cache/contract_b_nf4_probe_retry": "ce26ecb75d4ce5058dc7ccc93f2a06f26262cef13dc8e0e8d3db91f844b80ea8",
+    "cache/contract_b_nf4_b14_10k": "1583cc2e5811e5187c4d2e044c4f29a0173dde942b22362a3ec289a3a2d1cbe5",
+    "cache/contract_b_b14_nf4_requantized_retry3": "3e1de4e493e9d7da66a8c6805341b68cd1de47926c0268cdca101a4ce9447d3c"
+  },
+  "payload_errors": 30,
+  "errors_in_blocks_losing_all_endpoints": 30,
+  "errors_at_removed_endpoints": 28,
+  "rows": [
+    {
+      "payload_bit": 320,
+      "position": 425248,
+      "block": 6644,
+      "clean_code": 15,
+      "stego_code": 14,
+      "requantized_code": 15,
+      "clean_endpoint_count": 1,
+      "stego_endpoint_count": 0
+    },
+    {
+      "payload_bit": 372,
+      "position": 1734273,
+      "block": 27098,
+      "clean_code": 15,
+      "stego_code": 14,
+      "requantized_code": 15,
+      "clean_endpoint_count": 1,
+      "stego_endpoint_count": 0
+    },
+    {
+      "payload_bit": 670,
+      "position": 2598262,
+      "block": 40597,
+      "clean_code": 15,
+      "stego_code": 14,
+      "requantized_code": 15,
+      "clean_endpoint_count": 1,
+      "stego_endpoint_count": 0
+    },
+    {
+      "payload_bit": 893,
+      "position": 3797233,
+      "block": 59331,
+      "clean_code": 15,
+      "stego_code": 14,
+      "requantized_code": 15,
+      "clean_endpoint_count": 1,
+      "stego_endpoint_count": 0
+    },
+    {
+      "payload_bit": 1635,
+      "position": 44705,
+      "block": 698,
+      "clean_code": 15,
+      "stego_code": 14,
+      "requantized_code": 15,
+      "clean_endpoint_count": 1,
+      "stego_endpoint_count": 0
+    },
+    {
+      "payload_bit": 2446,
+      "position": 2473831,
+      "block": 38653,
+      "clean_code": 15,
+      "stego_code": 14,
+      "requantized_code": 15,
+      "clean_endpoint_count": 1,
+      "stego_endpoint_count": 0
+    },
+    {
+      "payload_bit": 2759,
+      "position": 1271752,
+      "block": 19871,
+      "clean_code": 0,
+      "stego_code": 1,
+      "requantized_code": 0,
+      "clean_endpoint_count": 1,
+      "stego_endpoint_count": 0
+    },
+    {
+      "payload_bit": 3065,
+      "position": 3435505,
+      "block": 53679,
+      "clean_code": 0,
+      "stego_code": 1,
+      "requantized_code": 0,
+      "clean_endpoint_count": 1,
+      "stego_endpoint_count": 0
+    },
+    {
+      "payload_bit": 3156,
+      "position": 4186875,
+      "block": 65419,
+      "clean_code": 0,
+      "stego_code": 1,
+      "requantized_code": 0,
+      "clean_endpoint_count": 1,
+      "stego_endpoint_count": 0
+    },
+    {
+      "payload_bit": 3383,
+      "position": 1024585,
+      "block": 16009,
+      "clean_code": 0,
+      "stego_code": 1,
+      "requantized_code": 0,
+      "clean_endpoint_count": 1,
+      "stego_endpoint_count": 0
+    },
+    {
+      "payload_bit": 3401,
+      "position": 1324961,
+      "block": 20702,
+      "clean_code": 15,
+      "stego_code": 14,
+      "requantized_code": 15,
+      "clean_endpoint_count": 1,
+      "stego_endpoint_count": 0
+    },
+    {
+      "payload_bit": 3542,
+      "position": 3489951,
+      "block": 54530,
+      "clean_code": 15,
+      "stego_code": 14,
+      "requantized_code": 15,
+      "clean_endpoint_count": 1,
+      "stego_endpoint_count": 0
+    },
+    {
+      "payload_bit": 3707,
+      "position": 2401286,
+      "block": 37520,
+      "clean_code": 12,
+      "stego_code": 13,
+      "requantized_code": 14,
+      "clean_endpoint_count": 1,
+      "stego_endpoint_count": 0
+    },
+    {
+      "payload_bit": 4379,
+      "position": 3872222,
+      "block": 60503,
+      "clean_code": 0,
+      "stego_code": 1,
+      "requantized_code": 0,
+      "clean_endpoint_count": 1,
+      "stego_endpoint_count": 0
+    },
+    {
+      "payload_bit": 4821,
+      "position": 2715523,
+      "block": 42430,
+      "clean_code": 0,
+      "stego_code": 1,
+      "requantized_code": 0,
+      "clean_endpoint_count": 1,
+      "stego_endpoint_count": 0
+    },
+    {
+      "payload_bit": 5068,
+      "position": 2401336,
+      "block": 37520,
+      "clean_code": 15,
+      "stego_code": 14,
+      "requantized_code": 15,
+      "clean_endpoint_count": 1,
+      "stego_endpoint_count": 0
+    },
+    {
+      "payload_bit": 5224,
+      "position": 3389412,
+      "block": 52959,
+      "clean_code": 15,
+      "stego_code": 14,
+      "requantized_code": 15,
+      "clean_endpoint_count": 1,
+      "stego_endpoint_count": 0
+    },
+    {
+      "payload_bit": 5455,
+      "position": 69766,
+      "block": 1090,
+      "clean_code": 15,
+      "stego_code": 14,
+      "requantized_code": 15,
+      "clean_endpoint_count": 1,
+      "stego_endpoint_count": 0
+    },
+    {
+      "payload_bit": 5763,
+      "position": 2665693,
+      "block": 41651,
+      "clean_code": 15,
+      "stego_code": 14,
+      "requantized_code": 15,
+      "clean_endpoint_count": 1,
+      "stego_endpoint_count": 0
+    },
+    {
+      "payload_bit": 5877,
+      "position": 3304024,
+      "block": 51625,
+      "clean_code": 0,
+      "stego_code": 1,
+      "requantized_code": 0,
+      "clean_endpoint_count": 1,
+      "stego_endpoint_count": 0
+    },
+    {
+      "payload_bit": 6840,
+      "position": 718595,
+      "block": 11228,
+      "clean_code": 15,
+      "stego_code": 14,
+      "requantized_code": 15,
+      "clean_endpoint_count": 1,
+      "stego_endpoint_count": 0
+    },
+    {
+      "payload_bit": 7391,
+      "position": 686227,
+      "block": 10722,
+      "clean_code": 15,
+      "stego_code": 14,
+      "requantized_code": 15,
+      "clean_endpoint_count": 1,
+      "stego_endpoint_count": 0
+    },
+    {
+      "payload_bit": 7626,
+      "position": 756461,
+      "block": 11819,
+      "clean_code": 0,
+      "stego_code": 1,
+      "requantized_code": 0,
+      "clean_endpoint_count": 1,
+      "stego_endpoint_count": 0
+    },
+    {
+      "payload_bit": 7634,
+      "position": 69780,
+      "block": 1090,
+      "clean_code": 8,
+      "stego_code": 9,
+      "requantized_code": 10,
+      "clean_endpoint_count": 1,
+      "stego_endpoint_count": 0
+    },
+    {
+      "payload_bit": 7865,
+      "position": 2364673,
+      "block": 36948,
+      "clean_code": 0,
+      "stego_code": 1,
+      "requantized_code": 0,
+      "clean_endpoint_count": 1,
+      "stego_endpoint_count": 0
+    },
+    {
+      "payload_bit": 7975,
+      "position": 2825680,
+      "block": 44151,
+      "clean_code": 0,
+      "stego_code": 1,
+      "requantized_code": 0,
+      "clean_endpoint_count": 1,
+      "stego_endpoint_count": 0
+    },
+    {
+      "payload_bit": 8531,
+      "position": 1695218,
+      "block": 26487,
+      "clean_code": 15,
+      "stego_code": 14,
+      "requantized_code": 15,
+      "clean_endpoint_count": 1,
+      "stego_endpoint_count": 0
+    },
+    {
+      "payload_bit": 9207,
+      "position": 3703720,
+      "block": 57870,
+      "clean_code": 0,
+      "stego_code": 1,
+      "requantized_code": 0,
+      "clean_endpoint_count": 1,
+      "stego_endpoint_count": 0
+    },
+    {
+      "payload_bit": 9507,
+      "position": 3581614,
+      "block": 55962,
+      "clean_code": 15,
+      "stego_code": 14,
+      "requantized_code": 15,
+      "clean_endpoint_count": 1,
+      "stego_endpoint_count": 0
+    },
+    {
+      "payload_bit": 9735,
+      "position": 1424782,
+      "block": 22262,
+      "clean_code": 0,
+      "stego_code": 1,
+      "requantized_code": 0,
+      "clean_endpoint_count": 1,
+      "stego_endpoint_count": 0
+    }
+  ]
+}

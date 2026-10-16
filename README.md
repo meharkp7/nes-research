@@ -1,3 +1,9 @@
+# NES Research — Closeout
+
+Current status (2026-10-16): [closeout ledger](PHASE0_STATUS_LEDGER.md), [seven-method evidence and final claims](PHASE3_CONSOLIDATED_SEVEN_METHOD.md). Tests and audits pass; the reviewed package is uncommitted and retains scientific failures and provenance limitations.
+
+The following paired-analysis patch note describes the historical 20261010 dataset; its row/model counts do not describe the newer grouped evaluation.
+
 # Packed-NF4 paired analysis patch
 
 Adds a standalone analysis script and unit tests without modifying existing files.

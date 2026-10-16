@@ -46,18 +46,21 @@ def sha256(path: Path) -> str:
 
 def assign_group_splits(groups: list[str], seed: int) -> dict[str, str]:
     unique = sorted(set(groups))
-    if len(unique) < 3:
+    if len(unique) < 5:
         raise ValueError(
-            f"Need >=3 distinct model_id groups for train/validation/test; "
-            f"found {len(unique)}. Blocks and tensors from one model are not independent groups."
+            f"Need >=5 distinct model_id groups for at least 2 train, "
+            f"1 validation, and 2 test groups; found {len(unique)}."
         )
     rng = random.Random(seed)
     rng.shuffle(unique)
     n = len(unique)
-    n_test = max(1, round(n * 0.15))
+    n_test = max(2, round(n * 0.20))
     n_val = max(1, round(n * 0.15))
     if n_test + n_val >= n:
-        n_test, n_val = 1, 1
+        raise ValueError(
+            f"Cannot allocate train/validation/test groups from {n} models "
+            f"with {n_val} validation and {n_test} test groups."
+        )
     n_train = n - n_test - n_val
     ordered = (
         [(g, "train") for g in unique[:n_train]]

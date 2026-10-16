@@ -1,0 +1,33 @@
+{
+  "arguments": {
+    "bits": 10000,
+    "checkpoint": "/Users/meharkapoor7/.cache/huggingface/hub/models--TinyLlama--TinyLlama-1.1B-Chat-v1.0/snapshots/fe8a4ea1ffedaf415f4da2f062534de366a451e6",
+    "intermediate": null,
+    "method": "clean",
+    "mode": "export",
+    "output": "cache/method_paper_20261016/tinyllama_clean",
+    "report": "artifacts/method_paper_20261016/tinyllama_export.json",
+    "seed": 20261016,
+    "tensor": "model.layers.0.self_attn.q_proj.weight",
+    "tokenizer": "Qwen/Qwen2.5-3B",
+    "utility": false
+  },
+  "codec_sha256": "07ce008dcabebb7ac0d4fa10c88251bf10dc9f2a7ae27dfc79bf23b8cd75b764",
+  "duration_seconds": 4.611698540998987,
+  "nested_statistics": true,
+  "output_file_hashes": {
+    "config.json": "145f22d9ddccbb420a0025edfa7f551e2a9c107da61050b03e391d116e3124c0",
+    "generation_config.json": "dff238ad6e830d47e580677eab2de8ada6d28507698b9532e45ffdc9fe81df02",
+    "model.safetensors": "a9ca62649ea22bd0aa62b6445bb6bf7b1676e3d9e7340501b09d5c618a12fa07"
+  },
+  "runner_sha256": "18dbe6fb9da621d1aba6148806a585962fb16f80d7be79cc65ca9c8a676c871b",
+  "scope": "Clean NF4 export, no payload",
+  "source_file_hashes": {
+    "config.json": "486bedda3a6988332e60d9638a09ca4b260d34ebcf1b19e22cf3b140b63d8fe9",
+    "generation_config.json": "18046d04f5bd8b4998095ecabdd17a1bf0053d9acdccead4a05be4a3575f3c5c",
+    "model.safetensors": "6e6001da2106d4757498752a021df6c2bdc332c650aae4bae6b0c004dcf14933"
+  },
+  "source_snapshot": "/Users/meharkapoor7/.cache/huggingface/hub/models--TinyLlama--TinyLlama-1.1B-Chat-v1.0/snapshots/fe8a4ea1ffedaf415f4da2f062534de366a451e6",
+  "status": "PASS",
+  "stored_dtype": "bfloat16"
+}
