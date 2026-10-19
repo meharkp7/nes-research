@@ -1,0 +1,4 @@
+Failed to load CPU gemm_4bit_forward from kernels-community: No module named 'kernels'. Please make sure you already `pip install kernels` and the kernels >= 0.11.1
+Loading weights:   0%|          | 0/340 [00:00<?, ?it/s]Loading weights:  57%|█████▋    | 194/340 [00:00<00:00, 1916.70it/s]Loading weights: 100%|██████████| 340/340 [00:00<00:00, 2395.34it/s]
+10 seqs (5110 tok) in 67.0s -> 76.3 tok/s
+est 580 seqs: 64.7 min/condition

@@ -1,0 +1,17 @@
+{
+  "clean_tensor_sha256": "c6190382b98b4f968a3733c79219ceda7e4a9040e9c718ff4dbf76976fbbae0f",
+  "differing_keys": [
+    "gpt_neox.layers.0.attention.query_key_value.weight"
+  ],
+  "finite_logits_and_loss": true,
+  "model": "EleutherAI/pythia-1.4b",
+  "n_tensors": 772,
+  "only_intended_tensor_differs": true,
+  "payload_exact_recovery": true,
+  "revision": "fedc38a16eea3bd36a96b906d78d11d2ce18ed79",
+  "seed": 20261016,
+  "shape_preserved": true,
+  "size": 10000,
+  "stego_tensor_sha256": "4f1cdcdae2c57f07dcfe51d655f17e0c9ca37556acd84f13bba14592eb440cd9",
+  "tensor": "gpt_neox.layers.0.attention.query_key_value.weight"
+}

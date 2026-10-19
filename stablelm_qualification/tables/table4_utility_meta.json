@@ -1,0 +1,9 @@
+{
+  "clean_ppl": 12.977961663618768,
+  "n_conditions": 6,
+  "n_within_margin": 6,
+  "equivalence_margin_pct": 0.5,
+  "n_sequences": 580,
+  "n_tokens_per_condition": 296380,
+  "all_within_margin": true
+}

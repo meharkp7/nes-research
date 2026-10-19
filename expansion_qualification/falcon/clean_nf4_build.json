@@ -1,0 +1,20 @@
+{
+  "elapsed_s": 105.8,
+  "output": "/tmp/nes_stage/falcon_clean",
+  "output_core_bytes": 1658349545,
+  "output_core_files": {
+    "config.json": "be17cd0119134d5ca580eb13b3b19d4af84102d2dfcf3d7bbb4bc16aae1dfb97",
+    "generation_config.json": "f68a5f5c772589e7cc8bb6950dd23916c1f750c166c44b47b88033ea5a2942cc",
+    "model.safetensors": "18e67b5966de978a2335de5ef9c4c8b235ad14ae262e233261c4f18e42a2f6b5"
+  },
+  "quantization": {
+    "blocksize": 64,
+    "compute_dtype": "float16",
+    "double_quant": true,
+    "quant_storage": "uint8",
+    "quant_type": "nf4"
+  },
+  "source": "/tmp/nes_stage/falcon_fp16",
+  "status": "DONE",
+  "torch": "2.14.1+cpu"
+}

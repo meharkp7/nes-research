@@ -1,0 +1,167 @@
+{
+  "checks": {
+    "anchor_ablation_ad_v2": {
+      "interior_nearest_anchored": {
+        "ber_c3": 0.0,
+        "chg_anchor_c3": 0,
+        "exact_c3": true
+      },
+      "interior_nearest_unanchored": {
+        "ber_c3": 0.0,
+        "chg_anchor_c3": 0,
+        "exact_c3": true
+      },
+      "nearest_parity_anchored": {
+        "ber_c3": 0.0038,
+        "chg_anchor_c3": 110,
+        "exact_c3": false
+      },
+      "pair_parity_unrestricted": {
+        "ber_c3": 0.004,
+        "chg_anchor_c3": 110,
+        "exact_c3": false
+      }
+    },
+    "anchor_arm_e_v1": {
+      "interior_parity_baseline_op": {
+        "ber_c3": 0.4913,
+        "chg_anchor_c3": 0,
+        "exact_c3": false
+      }
+    },
+    "capacity": {
+      "interior_failures": 0,
+      "pair_parity_failures": 54,
+      "rows": 240
+    },
+    "qwen_matrix_v1": {
+      "interior_exact": "6/6",
+      "interior_maxBER": 0.0,
+      "interior_sum_chg_anchor": 0,
+      "pp_BER_range": [
+        0.0035,
+        0.007
+      ],
+      "pp_exact": "0/6",
+      "pp_sum_chg_anchor": 1077,
+      "rows": 48
+    },
+    "tensor_matrix_v1": {
+      "interior_exact": "6/6",
+      "interior_maxBER": 0.0,
+      "interior_sum_chg_anchor": 0,
+      "pp_BER_range": [
+        0.0025,
+        0.0051
+      ],
+      "pp_exact": "0/6",
+      "pp_sum_chg_anchor": 979,
+      "rows": 48
+    },
+    "utility_qwen50k_v3": {
+      "clean_ppl": 10.139183298738534,
+      "conditions": {
+        "20261016": {
+          "ci": [
+            -0.7693655904134115,
+            0.20609614054361933
+          ],
+          "ppl": 10.133207478276034,
+          "rel_pct": -0.05893788766243724
+        },
+        "20261017": {
+          "ci": [
+            -0.13699157714843752,
+            0.43733428955078124
+          ],
+          "ppl": 10.142324401598344,
+          "rel_pct": 0.03097984095229376
+        },
+        "20261018": {
+          "ci": [
+            -0.5309623209635417,
+            0.28607666015624916
+          ],
+          "ppl": 10.136487011896795,
+          "rel_pct": -0.026592741863870138
+        }
+      }
+    },
+    "utility_v2": {
+      "qwen::embedded_10000_seed20261016": {
+        "ci": [
+          -0.41517313639322917,
+          0.44785705566406236
+        ],
+        "ppl": 10.139591511599804,
+        "rel_pct": 0.0040260921342739455
+      },
+      "qwen::embedded_10000_seed20261017": {
+        "ci": [
+          -0.32878946940104165,
+          0.4474284362792968
+        ],
+        "ppl": 10.140386629219844,
+        "rel_pct": 0.011868120398413876
+      },
+      "qwen::embedded_10000_seed20261018": {
+        "ci": [
+          -0.7636314900716146,
+          0.16001703898111977
+        ],
+        "ppl": 10.133059051775573,
+        "rel_pct": -0.060401777761745844
+      },
+      "tinyllama::embedded_10000_seed20261016": {
+        "ci": [
+          -0.2736252848307292,
+          0.1536808268229165
+        ],
+        "ppl": 10.693686529643625,
+        "rel_pct": -0.010652515917633897
+      },
+      "tinyllama::embedded_10000_seed20261017": {
+        "ci": [
+          -0.26625706990559894,
+          0.22973175048828093
+        ],
+        "ppl": 10.694362956723767,
+        "rel_pct": -0.004327709016244225
+      },
+      "tinyllama::embedded_10000_seed20261018": {
+        "ci": [
+          -0.25221710205078124,
+          0.22374704996744768
+        ],
+        "ppl": 10.694575086119983,
+        "rel_pct": -0.0023442321440713685
+      },
+      "tinyllama::embedded_50000_seed20261016": {
+        "ci": [
+          -0.3673748779296875,
+          0.18990763346354164
+        ],
+        "ppl": 10.693165326356084,
+        "rel_pct": -0.015525931318700191
+      },
+      "tinyllama::embedded_50000_seed20261017": {
+        "ci": [
+          -0.3700818888346354,
+          0.27798365275065046
+        ],
+        "ppl": 10.69379007509563,
+        "rel_pct": -0.009684333228512823
+      },
+      "tinyllama::embedded_50000_seed20261018": {
+        "ci": [
+          -0.3215723673502604,
+          0.24773518880208323
+        ],
+        "ppl": 10.694021140046154,
+        "rel_pct": -0.007523802941288764
+      }
+    }
+  },
+  "codec_sha256": "07ce008dcabebb7ac0d4fa10c88251bf10dc9f2a7ae27dfc79bf23b8cd75b764",
+  "compiled": "2026-10-16"
+}

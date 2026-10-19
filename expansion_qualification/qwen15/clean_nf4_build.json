@@ -1,0 +1,20 @@
+{
+  "elapsed_s": 59.1,
+  "output": "ckpt/qwen15_clean",
+  "output_core_bytes": 1143329354,
+  "output_core_files": {
+    "config.json": "8dcb7570e016fa24d818a3487e8914395091b3f280a17d9c7bc0f834223ab1ea",
+    "generation_config.json": "842227a2e8f3a6f20226711de202722a16e61ac7bd99812ca1adcdf09243126c",
+    "model.safetensors": "0fb957e774a353fb4ca0921bee43e3fa4262c36b7485f74109dd2f49d5ff679d"
+  },
+  "quantization": {
+    "blocksize": 64,
+    "compute_dtype": "float16",
+    "double_quant": true,
+    "quant_storage": "uint8",
+    "quant_type": "nf4"
+  },
+  "source": "/tmp/nes_stage/qwen15_fp16",
+  "status": "DONE",
+  "torch": "2.14.1+cpu"
+}

@@ -1,0 +1,4 @@
+nohup: ignoring input
+Failed to load CPU gemm_4bit_forward from kernels-community: No module named 'kernels'. Please make sure you already `pip install kernels` and the kernels >= 0.11.1
+{"tensor": "model.layers.0.self_attn.q_proj.weight", "eligible_capacity_bits": 4091662, "max_feasible_payload_bits": 4091534, "source_tensor_sha256": "283aa75d1f34daff33b4aae984c42fac6a8741deecd3348eaed6459852fd2161"}
+{"status": "COMPLETED", "measured_rows": 72, "failures": []}

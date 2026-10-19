@@ -1,0 +1,33 @@
+{
+  "arguments": {
+    "bits": 10000,
+    "checkpoint": "/workspace/nes_run_20261016_anchor_ablation/ckpt/tinyllama_fp16",
+    "intermediate": null,
+    "method": "interior_nearest",
+    "mode": "export",
+    "output": "/workspace/nes_run_20261016_anchor_ablation/ckpt/tinyllama_clean",
+    "report": "/workspace/nes_run_20261016_anchor_ablation/out/export_clean_v2.json",
+    "seed": 20261016,
+    "tensor": "model.layers.0.self_attn.q_proj.weight",
+    "tokenizer": "TinyLlama/TinyLlama-1.1B-Chat-v1.0",
+    "utility": false
+  },
+  "codec_sha256": "07ce008dcabebb7ac0d4fa10c88251bf10dc9f2a7ae27dfc79bf23b8cd75b764",
+  "duration_seconds": 22.15891505500622,
+  "nested_statistics": true,
+  "output_file_hashes": {
+    "config.json": "d3ddf7c75b07caee8af832ea93742a71eb84f5615bef76a6334d262165584134",
+    "generation_config.json": "0386b55d747fa988dbd9ffcb44ce3b9530a0845e28cb9acb4858f773df92fc92",
+    "model.safetensors": "f84d0a8ec6e011d683ae7d1aec961d4bb021b254da9d84516185df428f3b37a7"
+  },
+  "runner_sha256": "18dbe6fb9da621d1aba6148806a585962fb16f80d7be79cc65ca9c8a676c871b",
+  "scope": "Clean NF4 export, no payload",
+  "source_file_hashes": {
+    "config.json": "486bedda3a6988332e60d9638a09ca4b260d34ebcf1b19e22cf3b140b63d8fe9",
+    "generation_config.json": "18046d04f5bd8b4998095ecabdd17a1bf0053d9acdccead4a05be4a3575f3c5c",
+    "model.safetensors": "6e6001da2106d4757498752a021df6c2bdc332c650aae4bae6b0c004dcf14933"
+  },
+  "source_snapshot": "/workspace/nes_run_20261016_anchor_ablation/ckpt/tinyllama_fp16",
+  "status": "PASS",
+  "stored_dtype": "bfloat16"
+}

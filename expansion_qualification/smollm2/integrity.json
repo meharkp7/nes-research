@@ -1,0 +1,17 @@
+{
+  "clean_tensor_sha256": "37b26c49a03b8a7c4bd4bca6f59751cf83343c06aa19cda6c48a2fd1524b421f",
+  "differing_keys": [
+    "model.layers.0.self_attn.q_proj.weight"
+  ],
+  "finite_logits_and_loss": true,
+  "model": "HuggingFaceTB/SmolLM2-1.7B",
+  "n_tensors": 1058,
+  "only_intended_tensor_differs": true,
+  "payload_exact_recovery": true,
+  "revision": "effd688a12921b4cc83e3312b6feb579f70f9c71",
+  "seed": 20261016,
+  "shape_preserved": true,
+  "size": 10000,
+  "stego_tensor_sha256": "8b6c9547e28393a6d8c9164b034b4c57c8338705fc03be44bc3a8c7ba95b5ebe",
+  "tensor": "model.layers.0.self_attn.q_proj.weight"
+}

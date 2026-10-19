@@ -1,0 +1,107 @@
+{
+  "conditions": {
+    "tinyllama::clean": {
+      "finite_logits_and_loss": true,
+      "manual_mean_nll": 2.369760054198263,
+      "model_scalar_loss_mean": 2.369759956995646,
+      "n_sequences": 30,
+      "n_tokens": 15330,
+      "ppl": 10.694825797664084,
+      "runtime_s": 153.6
+    },
+    "tinyllama::embedded_10000_seed20261016": {
+      "delta_ppl_abs": -0.001139268020459383,
+      "delta_ppl_rel_pct": -0.010652515917633897,
+      "finite_logits_and_loss": true,
+      "manual_mean_nll": 2.369653523364879,
+      "materialization": {
+        "changed_codes": 5089,
+        "checkpoint_files": {
+          "config.json": "d3ddf7c75b07caee8af832ea93742a71eb84f5615bef76a6334d262165584134",
+          "generation_config.json": "0386b55d747fa988dbd9ffcb44ce3b9530a0845e28cb9acb4858f773df92fc92",
+          "model.safetensors": "a9682272f5e8fca4b17bdf13959ba5412e4810ca99e5a7e32ea818c61ddb2457",
+          "special_tokens_map.json": "82d96d7a9e6ced037f12394b7ea6a5b02e6ca87e0d11edaa8d60d9be857ce7db",
+          "tokenizer.json": "bcd04f0eadf90287bd26e1a183ac487d8a141b09b06aecb7725bbdd343640f2e",
+          "tokenizer.model": "9e556afd44213b6bd1be2b850ebbbd98f5481437a8021afaf58ee7fb1818d347",
+          "tokenizer_config.json": "7b41ba7d0eb91e77914ca3dafde559ea3e19878769b7e68409e89bed5222e77a"
+        },
+        "framed_bits": 10128,
+        "payload_sha256": "580fde145167ba17d539b08631a82ccc0889b6b695b332d55777e3cfd3a6cdc9",
+        "stego_tensor_sha256": "783d43d8932897e70aa6279053d2af40e5adbef75dd8e4a0500235fc22d95b80"
+      },
+      "model_scalar_loss_mean": 2.3696534633636475,
+      "n_sequences": 30,
+      "n_tokens": 15330,
+      "paired_vs_clean": {
+        "ci95": [
+          -0.2736252848307292,
+          0.1536808268229165
+        ],
+        "mean_delta_nll": -0.054437255859375,
+        "n_sequences": 30
+      },
+      "ppl": 10.693686529643625,
+      "runtime_s": 152.6
+    },
+    "tinyllama::embedded_50000_seed20261016": {
+      "delta_ppl_abs": -0.0016604713079999556,
+      "delta_ppl_rel_pct": -0.015525931318700191,
+      "finite_logits_and_loss": true,
+      "manual_mean_nll": 2.369604782831101,
+      "materialization": {
+        "changed_codes": 25012,
+        "checkpoint_files": {
+          "config.json": "d3ddf7c75b07caee8af832ea93742a71eb84f5615bef76a6334d262165584134",
+          "generation_config.json": "0386b55d747fa988dbd9ffcb44ce3b9530a0845e28cb9acb4858f773df92fc92",
+          "model.safetensors": "a689348db27717c7ec65091a682eb1debe279c3e5f4edca0e1f57ae5a6824966",
+          "special_tokens_map.json": "82d96d7a9e6ced037f12394b7ea6a5b02e6ca87e0d11edaa8d60d9be857ce7db",
+          "tokenizer.json": "bcd04f0eadf90287bd26e1a183ac487d8a141b09b06aecb7725bbdd343640f2e",
+          "tokenizer.model": "9e556afd44213b6bd1be2b850ebbbd98f5481437a8021afaf58ee7fb1818d347",
+          "tokenizer_config.json": "7b41ba7d0eb91e77914ca3dafde559ea3e19878769b7e68409e89bed5222e77a"
+        },
+        "framed_bits": 50128,
+        "payload_sha256": "d2074ef2906389acca3941c0a73410571f5f73794ea8bb7c5c204366b1d7005f",
+        "stego_tensor_sha256": "d55c2cd8ecbe06e4e7346efd6042971565c5d93710d13ad27e45c1985d3c94a9"
+      },
+      "model_scalar_loss_mean": 2.3696046471595764,
+      "n_sequences": 30,
+      "n_tokens": 15330,
+      "paired_vs_clean": {
+        "ci95": [
+          -0.3673748779296875,
+          0.18990763346354164
+        ],
+        "mean_delta_nll": -0.07934366861979167,
+        "n_sequences": 30
+      },
+      "ppl": 10.693165326356084,
+      "runtime_s": 154.7
+    }
+  },
+  "corpus_tokens": {
+    "tinyllama": {
+      "total_corpus_tokens": 338533,
+      "windows_available": 661
+    }
+  },
+  "integrity": {
+    "tinyllama::embedded_10000_seed20261016": {
+      "differing_keys": [
+        "model.layers.0.self_attn.q_proj.weight"
+      ],
+      "exact_recovery": true,
+      "extract_error": null,
+      "only_intended_tensor_differs": true,
+      "source_tensor_sha256": "283aa75d1f34daff33b4aae984c42fac6a8741deecd3348eaed6459852fd2161"
+    },
+    "tinyllama::embedded_50000_seed20261016": {
+      "differing_keys": [
+        "model.layers.0.self_attn.q_proj.weight"
+      ],
+      "exact_recovery": true,
+      "extract_error": null,
+      "only_intended_tensor_differs": true,
+      "source_tensor_sha256": "283aa75d1f34daff33b4aae984c42fac6a8741deecd3348eaed6459852fd2161"
+    }
+  }
+}

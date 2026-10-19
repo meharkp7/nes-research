@@ -1,0 +1,13 @@
+nohup: ignoring input
+Failed to load CPU gemm_4bit_forward from kernels-community: No module named 'kernels'. Please make sure you already `pip install kernels` and the kernels >= 0.11.1
+{"source_tensor_sha256": "283aa75d1f34daff33b4aae984c42fac6a8741deecd3348eaed6459852fd2161", "blocksize": 64, "nested": true, "total_codes": 4194304}
+Traceback (most recent call last):
+  File "/workspace/nes_run_20261016_anchor_ablation/code/nes-llm/scripts/exp_anchor_ablation_ad.py", line 262, in <module>
+    raise SystemExit(main())
+                     ~~~~^^
+  File "/workspace/nes_run_20261016_anchor_ablation/code/nes-llm/scripts/exp_anchor_ablation_ad.py", line 213, in main
+    stego, info = embed_arm(raw, payload, key, args.tensor, arm, cb)
+                  ~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/workspace/nes_run_20261016_anchor_ablation/code/nes-llm/scripts/exp_anchor_ablation_ad.py", line 105, in embed_arm
+    raise AssertionError("Embedding changed receiver eligibility")
+AssertionError: Embedding changed receiver eligibility

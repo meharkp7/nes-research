@@ -1,0 +1,15 @@
+{
+  "clean_tensor_sha256": "216ebcf4c9eb7a6ff889ad6311449ff248112dfc85113d0b4710f29bf8153a6e",
+  "differing_keys": [
+    "model.layers.0.self_attn.q_proj.weight"
+  ],
+  "finite_logits_and_loss": true,
+  "n_tensors": 1180,
+  "only_intended_tensor_differs": true,
+  "payload_exact_recovery": true,
+  "seed": 20261016,
+  "shape_preserved": true,
+  "size": 10000,
+  "stego_tensor_sha256": "658877c285bc2d8f03f4178fa8f51753b146edcbe7e7267507b9947d53fa47e7",
+  "tensor": "model.layers.0.self_attn.q_proj.weight"
+}

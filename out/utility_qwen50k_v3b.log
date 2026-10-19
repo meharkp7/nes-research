@@ -1,0 +1,8 @@
+nohup: ignoring input
+Failed to load CPU gemm_4bit_forward from kernels-community: No module named 'kernels'. Please make sure you already `pip install kernels` and the kernels >= 0.11.1
+[transformers] Token indices sequence length is longer than the specified maximum sequence length for this model (298938 > 131072). Running this sequence through the model will result in indexing errors
+Loading weights:   0%|          | 0/434 [00:00<?, ?it/s]Loading weights:  39%|███▊      | 168/434 [00:00<00:00, 1678.78it/s]Loading weights: 100%|██████████| 434/434 [00:00<00:00, 2173.94it/s]
+{"done": "50000_20261017", "ppl": 10.142324401598344, "rel_pct": 0.03097984095229376, "exact": true, "only_intended": true}
+Loading weights:   0%|          | 0/434 [00:00<?, ?it/s]Loading weights:  37%|███▋      | 161/434 [00:00<00:00, 1606.07it/s]Loading weights: 100%|██████████| 434/434 [00:00<00:00, 2173.88it/s]
+{"done": "50000_20261018", "ppl": 10.136487011896795, "rel_pct": -0.026592741863870138, "exact": true, "only_intended": true}
+{"status": "COMPLETE"}
