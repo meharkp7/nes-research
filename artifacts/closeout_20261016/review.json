@@ -1,0 +1,150 @@
+{
+  "schema": "nes.closeout_review.v1",
+  "review_date": "2026-10-16",
+  "timezone": "Asia/Kolkata",
+  "status": "REVIEWED_UNCOMMITTED",
+  "base_commit": "c81edda7893128d120c2b417af92f3f74c282ce7",
+  "branch": "research/contract-b-b14-and-evaluation",
+  "checks": [
+    {
+      "check": "20261011 report, split, readiness and provenance counts agree",
+      "passed": true,
+      "detail": null
+    },
+    {
+      "check": "20261011 model assignment agrees with detector",
+      "passed": true,
+      "detail": null
+    },
+    {
+      "check": "exp18 28 exact bit recoveries and robustness gates, including seven LWE detector results",
+      "passed": true,
+      "detail": null
+    },
+    {
+      "check": "Corpus summaries agree with 49 successful extract reports; earlier QSE failure retained",
+      "passed": true,
+      "detail": [
+        {
+          "run": "20261009T192218Z",
+          "method": "qse",
+          "status": "BER_FAIL",
+          "ber": 0.3982783436669619
+        }
+      ]
+    },
+    {
+      "check": "Seven model IDs per method in saved corpus recovery",
+      "passed": true,
+      "detail": null
+    },
+    {
+      "check": "All ten LOLO summaries re-derived from saved predictions and fold metrics",
+      "passed": true,
+      "detail": "No detector fitting; tolerance 1e-12"
+    },
+    {
+      "check": "Six closeout scripts parse without execution",
+      "passed": true,
+      "detail": null
+    },
+    {
+      "check": "All closeout Markdown source links resolve",
+      "passed": true,
+      "detail": []
+    },
+    {
+      "check": "All 296 frozen source files and backup remain byte-identical",
+      "passed": true,
+      "detail": []
+    },
+    {
+      "check": "Final claims audit",
+      "passed": true,
+      "detail": "all 152 claims verified"
+    },
+    {
+      "check": "Final consistency audit",
+      "passed": true,
+      "detail": "9/9 checks passed"
+    },
+    {
+      "check": "git diff --check",
+      "passed": true,
+      "detail": null
+    },
+    {
+      "check": "Untracked Markdown and scripts have no trailing whitespace",
+      "passed": true,
+      "detail": []
+    }
+  ],
+  "selected_for_future_commit": [
+    "METHODOLOGY_SUMMARY.md",
+    "PHASE0_STATUS_LEDGER.md",
+    "PHASE1_PACKED_NF4_EVIDENCE_AUDIT.md",
+    "PHASE2_RESIDUAL_DETECTOR_READINESS.md",
+    "PHASE3_CONSOLIDATED_SEVEN_METHOD.md",
+    "README.md",
+    "RESEARCH_PLAN.md",
+    "artifacts/closeout_20261016/claims.txt",
+    "artifacts/closeout_20261016/consistency.txt",
+    "artifacts/closeout_20261016/evidence.json",
+    "artifacts/closeout_20261016/full.txt",
+    "artifacts/closeout_20261016/targeted.txt",
+    "artifacts/closeout_20261016/utility.txt",
+    "nes-llm/scripts/packed_nf4_method_eval_utils.py",
+    "nes-llm/scripts/prepare_packed_nf4_grouped_dataset.py",
+    "nes-llm/scripts/run_packed_nf4_method_specific_detector.py",
+    "nes-llm/scripts/run_seven_method_residual_detector_lolo.py",
+    "nes-llm/scripts/stream_packed_nf4_grouped_dataset.py",
+    "nes-llm/scripts/validate_packed_nf4_detector_readiness.py",
+    "nes-llm/src/evaluation/strategy_comparator.py",
+    "nes-llm/tests/test_packed_nf4_method_eval_utils.py",
+    "nes-llm/tests/test_phase7b.py",
+    "nes-llm/tests/test_prepare_packed_nf4_grouped_dataset.py",
+    "artifacts/closeout_20261016/review.json"
+  ],
+  "selected_file_sha256": {
+    "METHODOLOGY_SUMMARY.md": "4376d7deeaa33f4dd35823d9548becce95d73b65af09ca740cb3d61d6991f43d",
+    "PHASE0_STATUS_LEDGER.md": "f593c768000cbff292f58a2b8dcedbb8305fee0e916eceff252da0964b1d3220",
+    "PHASE1_PACKED_NF4_EVIDENCE_AUDIT.md": "45d044ef965ac884279cf98f0e147f788014d29ac697cd93afcacfc0f3d78564",
+    "PHASE2_RESIDUAL_DETECTOR_READINESS.md": "b8fe8c5dcd612d312d746ac142d7d840996f4991463fe2f5094c4cec817c3cb8",
+    "PHASE3_CONSOLIDATED_SEVEN_METHOD.md": "24c9fd9c9fa9a951bbcf2666f548f03641acb650ff0ec4d26f3dd3e9b2ae7b68",
+    "README.md": "9f29922deeeb2296711b6872d543e3a2b75a7e7b2c60bbf68c589afb5a506c15",
+    "RESEARCH_PLAN.md": "5b33ead993cc945df9e603c040dacd081900aebd7e4c30fa704ec553811c9fcd",
+    "artifacts/closeout_20261016/claims.txt": "bc4c7196a236c4aa94451fd75c3f4fa219e943d07b5ebcff5362bc55a8837bfe",
+    "artifacts/closeout_20261016/consistency.txt": "4ac6a0e5286f5c35c74e8a696efbb9ef977c6111eeb9cd1ed78b57bffd39af1a",
+    "artifacts/closeout_20261016/evidence.json": "c44829c938c3eb9f01a3cfc5c202dbd56b5a32da39ae04fa8b1e3c19bf450e5c",
+    "artifacts/closeout_20261016/full.txt": "89ded4f095eb54d76380f7f9dcb0505e562eeb1552c1c76f5abb2fe0fffdf7b8",
+    "artifacts/closeout_20261016/targeted.txt": "2beced4bc23c15339fc20f5d042be8100f51bceeb1e78199d170ff974de0437c",
+    "artifacts/closeout_20261016/utility.txt": "bfb71ff885b655792c7c90000cbed5d04bcd9a434d347321bd152b7dda72f67e",
+    "nes-llm/scripts/packed_nf4_method_eval_utils.py": "ce3b6caac666a66c1c86432c094dd0d12873f78ce631fc5a3e7adfc07fffb92e",
+    "nes-llm/scripts/prepare_packed_nf4_grouped_dataset.py": "8f768859117d3e5e68c78ebf3f3cfca4f8d1052582b0841fea3d0bf7e25f50c9",
+    "nes-llm/scripts/run_packed_nf4_method_specific_detector.py": "06396ed1ae96217b3d8ac0954e8a0f45877b56d090387ab63e08f4a0f192b9de",
+    "nes-llm/scripts/run_seven_method_residual_detector_lolo.py": "d916bf33661a127ed3cbeda320b069d9043b152972e8c2bf52a0cafd769403d6",
+    "nes-llm/scripts/stream_packed_nf4_grouped_dataset.py": "9b784e235133ce5e24640dc839652370ea3e5d4cc5fe84d2ecbf061c6bc72366",
+    "nes-llm/scripts/validate_packed_nf4_detector_readiness.py": "74a7559e4c043357cf23658c47bc81f5598e9bf071888826bfb45d532c0e66d6",
+    "nes-llm/src/evaluation/strategy_comparator.py": "83ff91245447520f8748d559cf8da9ba69535766cf64df948991c35e619a5938",
+    "nes-llm/tests/test_packed_nf4_method_eval_utils.py": "5cec319edde06f2dce2e5750ef5ef452c8cf2f6f22bec61e1d61778c85d34626",
+    "nes-llm/tests/test_phase7b.py": "6007bd73cb1de1584a26c4ceae085933c5ae4bdab1d1a9f252b5ae3f38e4a3f8",
+    "nes-llm/tests/test_prepare_packed_nf4_grouped_dataset.py": "4c04250f9c75897cd9b6675c198cd291a1ac157c8447e6f929f12072c9b0a721"
+  },
+  "excluded_untouched": {
+    "nes-llm/scripts/prepare_packed_nf4_grouped_dataset.py.bak": "6653c8ceac192c62e9e486a927170180bf720cfe1f1a538dd3ba816bf2047fcd"
+  },
+  "code_review": [
+    "Comparator: module-scope SignExtractor; existing robustness thresholds now supplied to required result fields.",
+    "LWE tests preserve ignored-key limitation. No LWE embedding code changed.",
+    "Group preparation enforces >=5 model IDs; readiness run/source identity permits reused same-model clean controls while retaining artifact conflict checks.",
+    "Method evaluator uses train-only preprocessing and validation-selected Youden J; report family wording is bounded to model IDs in final phase documents.",
+    "LOLO runner groups by layer and refuses output overwrite; experiment-specific fixed paths and one-model scope documented.",
+    "Streaming preparation is a dated 28-file/seven-ID helper, uses audited hashes, refuses existing outputs; not rerun."
+  ],
+  "limitations": [
+    "No model loading, dataset regeneration, detector fitting, fresh extraction, Git staging, commit or push during closeout.",
+    "Full test suite includes tiny synthetic classifier fixtures.",
+    "Hashes verify local byte identity, not source checkpoint independence. Large datasets and checkpoints are not included in the evidence bundle.",
+    "review.json omits its own hash to avoid self-reference."
+  ]
+}

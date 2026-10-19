@@ -1,0 +1,195 @@
+{
+  "arguments": {
+    "bits": 10000,
+    "checkpoint": "cache/method_paper_20261016/interior_nearest_10k",
+    "intermediate": null,
+    "method": "interior_nearest",
+    "mode": "receive",
+    "output": null,
+    "report": "artifacts/method_paper_20261016/interior_utility.json",
+    "seed": 20261016,
+    "tensor": "model.layers.0.self_attn.q_proj.weight",
+    "tokenizer": "Qwen/Qwen2.5-3B",
+    "utility": true
+  },
+  "codec_sha256": "ed0cdbe8de3f77feb4031208353e75baf6210357963df2b13c62b6b9bce9cb1a",
+  "duration_seconds": 28.31426695800019,
+  "inference_finite": true,
+  "loaded_payload_sha256": "580fde145167ba17d539b08631a82ccc0889b6b695b332d55777e3cfd3a6cdc9",
+  "mean_nll": 3.9399385733482166,
+  "original_or_expected_payload_accessed": false,
+  "per_text": [
+    {
+      "mean_nll": 4.677212715148926,
+      "scored_tokens": 20,
+      "text_index": 0
+    },
+    {
+      "mean_nll": 2.861020803451538,
+      "scored_tokens": 15,
+      "text_index": 1
+    },
+    {
+      "mean_nll": 3.6786999702453613,
+      "scored_tokens": 20,
+      "text_index": 2
+    },
+    {
+      "mean_nll": 2.6797144412994385,
+      "scored_tokens": 14,
+      "text_index": 3
+    },
+    {
+      "mean_nll": 4.585862159729004,
+      "scored_tokens": 21,
+      "text_index": 4
+    },
+    {
+      "mean_nll": 2.803532838821411,
+      "scored_tokens": 17,
+      "text_index": 5
+    },
+    {
+      "mean_nll": 2.6927878856658936,
+      "scored_tokens": 19,
+      "text_index": 6
+    },
+    {
+      "mean_nll": 3.9980759620666504,
+      "scored_tokens": 21,
+      "text_index": 7
+    },
+    {
+      "mean_nll": 2.787877321243286,
+      "scored_tokens": 21,
+      "text_index": 8
+    },
+    {
+      "mean_nll": 3.1165404319763184,
+      "scored_tokens": 17,
+      "text_index": 9
+    },
+    {
+      "mean_nll": 4.274338245391846,
+      "scored_tokens": 20,
+      "text_index": 10
+    },
+    {
+      "mean_nll": 2.545302629470825,
+      "scored_tokens": 19,
+      "text_index": 11
+    },
+    {
+      "mean_nll": 4.178810119628906,
+      "scored_tokens": 23,
+      "text_index": 12
+    },
+    {
+      "mean_nll": 3.885833501815796,
+      "scored_tokens": 11,
+      "text_index": 13
+    },
+    {
+      "mean_nll": 3.5311872959136963,
+      "scored_tokens": 19,
+      "text_index": 14
+    },
+    {
+      "mean_nll": 3.6895864009857178,
+      "scored_tokens": 22,
+      "text_index": 15
+    },
+    {
+      "mean_nll": 4.116471767425537,
+      "scored_tokens": 11,
+      "text_index": 16
+    },
+    {
+      "mean_nll": 4.743638038635254,
+      "scored_tokens": 16,
+      "text_index": 17
+    },
+    {
+      "mean_nll": 5.353919506072998,
+      "scored_tokens": 18,
+      "text_index": 18
+    },
+    {
+      "mean_nll": 2.8879523277282715,
+      "scored_tokens": 11,
+      "text_index": 19
+    },
+    {
+      "mean_nll": 4.3761796951293945,
+      "scored_tokens": 17,
+      "text_index": 20
+    },
+    {
+      "mean_nll": 5.295496940612793,
+      "scored_tokens": 21,
+      "text_index": 21
+    },
+    {
+      "mean_nll": 3.2861101627349854,
+      "scored_tokens": 16,
+      "text_index": 22
+    },
+    {
+      "mean_nll": 4.41868782043457,
+      "scored_tokens": 22,
+      "text_index": 23
+    },
+    {
+      "mean_nll": 4.575608253479004,
+      "scored_tokens": 20,
+      "text_index": 24
+    },
+    {
+      "mean_nll": 4.6910014152526855,
+      "scored_tokens": 16,
+      "text_index": 25
+    },
+    {
+      "mean_nll": 3.6674652099609375,
+      "scored_tokens": 22,
+      "text_index": 26
+    },
+    {
+      "mean_nll": 3.2267658710479736,
+      "scored_tokens": 16,
+      "text_index": 27
+    },
+    {
+      "mean_nll": 4.759443759918213,
+      "scored_tokens": 21,
+      "text_index": 28
+    },
+    {
+      "mean_nll": 4.988239288330078,
+      "scored_tokens": 17,
+      "text_index": 29
+    },
+    {
+      "mean_nll": 3.8140311241149902,
+      "scored_tokens": 19,
+      "text_index": 30
+    },
+    {
+      "mean_nll": 4.562257289886475,
+      "scored_tokens": 23,
+      "text_index": 31
+    }
+  ],
+  "perplexity": 51.41544292501485,
+  "prompt_sha256": "de03dbf7c3c940e7152ac8026089a4f55966bf4cbf611ccc1572e1dbb699783b",
+  "raw_payload_sha256": "580fde145167ba17d539b08631a82ccc0889b6b695b332d55777e3cfd3a6cdc9",
+  "receiver_inputs": [
+    "delivered checkpoint",
+    "test key from seed",
+    "fixed tensor/method/protocol"
+  ],
+  "runner_sha256": "65de30512246fad77373882e3455676946b598ffe88979e83e130c4a4cb5bdb7",
+  "scope": "Development check; fixed project prompts, not external task benchmark",
+  "status": "PASS",
+  "token_count": 585
+}

@@ -127,7 +127,6 @@ class StrategyComparator:
         elif name == "adaptive":
             # Adaptive delegates to another strategy — force sign for comparison
             from src.embedding.strategies.adaptive_strategy import AdaptiveStrategy
-            from src.extraction.sign_extractor              import SignExtractor
             config2   = EmbeddingConfig(
                 total_payload_bits=total_bits,
                 embedding_strategy="adaptive",
@@ -221,6 +220,7 @@ class StrategyComparator:
             ber_curve=ber_curve, ber_at_001=ber_001, ber_at_002=ber_002,
             status="PASS" if passed else "FAIL",
             total_bits=len(bits), num_trials=self.num_trials,
+            max_ber_at_001=0.02, max_ber_at_002=0.10,
         )
 
     def print_table(self, results: Dict[str, dict]) -> None:

@@ -1,0 +1,195 @@
+{
+  "arguments": {
+    "bits": 10000,
+    "checkpoint": "cache/contract_b_nf4_probe_retry",
+    "intermediate": null,
+    "method": "clean",
+    "mode": "receive",
+    "output": null,
+    "report": "artifacts/method_paper_20261016/clean_utility.json",
+    "seed": 20261016,
+    "tensor": "model.layers.0.self_attn.q_proj.weight",
+    "tokenizer": "Qwen/Qwen2.5-3B",
+    "utility": true
+  },
+  "codec_sha256": "ed0cdbe8de3f77feb4031208353e75baf6210357963df2b13c62b6b9bce9cb1a",
+  "duration_seconds": 25.025222792000022,
+  "inference_finite": true,
+  "loaded_payload_sha256": null,
+  "mean_nll": 3.9423516249045347,
+  "original_or_expected_payload_accessed": false,
+  "per_text": [
+    {
+      "mean_nll": 4.676644802093506,
+      "scored_tokens": 20,
+      "text_index": 0
+    },
+    {
+      "mean_nll": 2.8758721351623535,
+      "scored_tokens": 15,
+      "text_index": 1
+    },
+    {
+      "mean_nll": 3.680624008178711,
+      "scored_tokens": 20,
+      "text_index": 2
+    },
+    {
+      "mean_nll": 2.6755940914154053,
+      "scored_tokens": 14,
+      "text_index": 3
+    },
+    {
+      "mean_nll": 4.606042861938477,
+      "scored_tokens": 21,
+      "text_index": 4
+    },
+    {
+      "mean_nll": 2.8011372089385986,
+      "scored_tokens": 17,
+      "text_index": 5
+    },
+    {
+      "mean_nll": 2.682849645614624,
+      "scored_tokens": 19,
+      "text_index": 6
+    },
+    {
+      "mean_nll": 4.016510486602783,
+      "scored_tokens": 21,
+      "text_index": 7
+    },
+    {
+      "mean_nll": 2.794128179550171,
+      "scored_tokens": 21,
+      "text_index": 8
+    },
+    {
+      "mean_nll": 3.1167759895324707,
+      "scored_tokens": 17,
+      "text_index": 9
+    },
+    {
+      "mean_nll": 4.274383068084717,
+      "scored_tokens": 20,
+      "text_index": 10
+    },
+    {
+      "mean_nll": 2.539499521255493,
+      "scored_tokens": 19,
+      "text_index": 11
+    },
+    {
+      "mean_nll": 4.192299842834473,
+      "scored_tokens": 23,
+      "text_index": 12
+    },
+    {
+      "mean_nll": 3.877321481704712,
+      "scored_tokens": 11,
+      "text_index": 13
+    },
+    {
+      "mean_nll": 3.5349113941192627,
+      "scored_tokens": 19,
+      "text_index": 14
+    },
+    {
+      "mean_nll": 3.6693975925445557,
+      "scored_tokens": 22,
+      "text_index": 15
+    },
+    {
+      "mean_nll": 4.105408191680908,
+      "scored_tokens": 11,
+      "text_index": 16
+    },
+    {
+      "mean_nll": 4.745272636413574,
+      "scored_tokens": 16,
+      "text_index": 17
+    },
+    {
+      "mean_nll": 5.3636860847473145,
+      "scored_tokens": 18,
+      "text_index": 18
+    },
+    {
+      "mean_nll": 2.8878417015075684,
+      "scored_tokens": 11,
+      "text_index": 19
+    },
+    {
+      "mean_nll": 4.380977153778076,
+      "scored_tokens": 17,
+      "text_index": 20
+    },
+    {
+      "mean_nll": 5.307133197784424,
+      "scored_tokens": 21,
+      "text_index": 21
+    },
+    {
+      "mean_nll": 3.287081003189087,
+      "scored_tokens": 16,
+      "text_index": 22
+    },
+    {
+      "mean_nll": 4.42040491104126,
+      "scored_tokens": 22,
+      "text_index": 23
+    },
+    {
+      "mean_nll": 4.576352119445801,
+      "scored_tokens": 20,
+      "text_index": 24
+    },
+    {
+      "mean_nll": 4.711468696594238,
+      "scored_tokens": 16,
+      "text_index": 25
+    },
+    {
+      "mean_nll": 3.6561453342437744,
+      "scored_tokens": 22,
+      "text_index": 26
+    },
+    {
+      "mean_nll": 3.2280795574188232,
+      "scored_tokens": 16,
+      "text_index": 27
+    },
+    {
+      "mean_nll": 4.757216930389404,
+      "scored_tokens": 21,
+      "text_index": 28
+    },
+    {
+      "mean_nll": 4.998693466186523,
+      "scored_tokens": 17,
+      "text_index": 29
+    },
+    {
+      "mean_nll": 3.826475143432617,
+      "scored_tokens": 19,
+      "text_index": 30
+    },
+    {
+      "mean_nll": 4.554819107055664,
+      "scored_tokens": 23,
+      "text_index": 31
+    }
+  ],
+  "perplexity": 51.53966085143933,
+  "prompt_sha256": "de03dbf7c3c940e7152ac8026089a4f55966bf4cbf611ccc1572e1dbb699783b",
+  "raw_payload_sha256": null,
+  "receiver_inputs": [
+    "delivered checkpoint",
+    "test key from seed",
+    "fixed tensor/method/protocol"
+  ],
+  "runner_sha256": "65de30512246fad77373882e3455676946b598ffe88979e83e130c4a4cb5bdb7",
+  "scope": "Development check; fixed project prompts, not external task benchmark",
+  "status": "PASS",
+  "token_count": 585
+}
