@@ -1,0 +1,11 @@
+{
+  "detector": "logistic_regression",
+  "split": "leave-one-tensor-out (GroupKFold, 4 groups)",
+  "observed_auc": 0.5342904478311539,
+  "null_mean": 0.4997901563346386,
+  "null_std": 0.005160253783844811,
+  "null_p95": 0.5073695828517278,
+  "n_permutations": 200,
+  "p_value": 0.004975124378109453,
+  "note": "null permutes clean/embedded labels within each group; exploratory given 4 groups"
+}

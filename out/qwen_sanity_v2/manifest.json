@@ -1,0 +1,49 @@
+{
+  "checkpoint": "/workspace/nes_run_20261016_anchor_ablation/ckpt/qwen_clean",
+  "checkpoint_hashes": {
+    "/workspace/nes_run_20261016_anchor_ablation/ckpt/qwen_clean/model-00001-of-00002.safetensors": "10b8e0f8611dcf63309cb497fa66c6ec9a4eb5dc282b0eda31ebe7efff103585",
+    "/workspace/nes_run_20261016_anchor_ablation/ckpt/qwen_clean/model-00002-of-00002.safetensors": "70512912ec9f1d304350717cb1d7a741db2503f845dac77e2fe270e302cb4a7a"
+  },
+  "created_at": "2026-10-16T19:51:36.084465+00:00",
+  "cycles": 0,
+  "methods": [
+    "interior_nearest",
+    "pair_parity"
+  ],
+  "payload": "Deterministic random bytes; B1.4 16-byte framing; no ECC or encryption",
+  "payload_bits": 10000,
+  "platform": "Linux-6.8.0-1055-gke-x86_64-with-glibc2.41",
+  "predeclared_tensors": [
+    "model.layers.0.self_attn.q_proj.weight"
+  ],
+  "preflight": [
+    {
+      "blocks": 65536,
+      "blocksize": 64,
+      "eligible_interior_nearest": 4051738,
+      "eligible_pair_parity": 4194304,
+      "exists": true,
+      "nested": true,
+      "num_codes": 4194304,
+      "quant_type": "nf4",
+      "source_tensor_sha256": "ce26ecb75d4ce5058dc7ccc93f2a06f26262cef13dc8e0e8d3db91f844b80ea8",
+      "tensor": "model.layers.0.self_attn.q_proj.weight"
+    }
+  ],
+  "run_id": "nes_qwen_sanity",
+  "scope": "Tensor generalization of interior_nearest vs pair_parity; one checkpoint; no steganalysis or utility",
+  "seed": 20261016,
+  "source_hashes": {
+    "/workspace/nes_run_20261016_anchor_ablation/code/nes-llm/scripts/contract_b_nf4_b14.py": "ba8beaa196eb4939de5d5c5c9d93b25c8a8cd6faacd65ddb0bb29613f864b14a",
+    "/workspace/nes_run_20261016_anchor_ablation/code/nes-llm/scripts/exp_tensor_matrix.py": "416298216c1f3536b9f08f2fddcfc494354bce831027252e482a7df02516b94a",
+    "/workspace/nes_run_20261016_anchor_ablation/code/nes-llm/scripts/run_nf4_anchor_pilot.py": "ff2e5883e0a5be6efe25e9f68bb3a3b71c0397ab7a398a0b0cb4cb0109ab394f",
+    "/workspace/nes_run_20261016_anchor_ablation/code/nes-llm/src/experiments/nf4_anchor_channel.py": "07ce008dcabebb7ac0d4fa10c88251bf10dc9f2a7ae27dfc79bf23b8cd75b764"
+  },
+  "transformation": "bitsandbytes dequantize to stored dtype then fresh NF4 with same block size and nesting",
+  "versions": {
+    "bitsandbytes": "0.50.2",
+    "numpy": "2.5.4",
+    "safetensors": "0.8.0",
+    "torch": "2.14.1+cpu"
+  }
+}

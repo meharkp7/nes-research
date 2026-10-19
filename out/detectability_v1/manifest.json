@@ -1,0 +1,60 @@
+{
+  "baseline": "pair_parity",
+  "blocks_per_artifact": 1024,
+  "checkpoints": {
+    "qwen": "/workspace/nes_run_20261016_anchor_ablation/ckpt/qwen_clean",
+    "tinyllama": "/workspace/nes_run_20261016_anchor_ablation/ckpt/tinyllama_clean"
+  },
+  "created_at": "2026-10-16T20:38:28.156664+00:00",
+  "feature_rationale": {
+    "adjacent_equal_frac/adjacent_parity_change/max_run": "transition/run-length statistics",
+    "distinct_codes/code_entropy": "remap reduces distinct codes / flattens entropy",
+    "endpoint_frac/zero_count/fifteen_count": "anchor preservation may itself be a tell",
+    "interior_frac/mean_code/std_code": "interior remap shifts the code distribution",
+    "mean_abs_value/absmax_value": "dequantized magnitude and block-scale shift",
+    "odd_frac/parity_imbalance/odd_interior_frac": "embedding forces carrier parity"
+  },
+  "features": [
+    "endpoint_frac",
+    "zero_count",
+    "fifteen_count",
+    "interior_frac",
+    "mean_code",
+    "std_code",
+    "odd_frac",
+    "parity_imbalance",
+    "odd_interior_frac",
+    "distinct_codes",
+    "code_entropy",
+    "mean_abs_value",
+    "absmax_value",
+    "adjacent_equal_frac",
+    "adjacent_parity_change",
+    "max_run"
+  ],
+  "method": "interior_nearest",
+  "platform": "Linux-6.8.0-1055-gke-x86_64-with-glibc2.41",
+  "run_id": "nes_detectability_20261016",
+  "sample_seed": 424242,
+  "scope": "Detectability of frozen interior_nearest artifacts vs matched clean controls",
+  "seeds": [
+    20261016,
+    20261017,
+    20261018
+  ],
+  "sizes": [
+    10000,
+    50000
+  ],
+  "source_hashes": {
+    "/workspace/nes_run_20261016_anchor_ablation/code/nes-llm/scripts/exp_detectability.py": "94a85e0fa9994272d5800b9ccc2818e7f3f43a2bd7a6b30257875f077b265761",
+    "codec": "07ce008dcabebb7ac0d4fa10c88251bf10dc9f2a7ae27dfc79bf23b8cd75b764"
+  },
+  "versions": {
+    "bitsandbytes": "0.50.2",
+    "numpy": "2.5.4",
+    "safetensors": "0.8.0",
+    "scikit-learn": "1.9.1",
+    "torch": "2.14.1+cpu"
+  }
+}

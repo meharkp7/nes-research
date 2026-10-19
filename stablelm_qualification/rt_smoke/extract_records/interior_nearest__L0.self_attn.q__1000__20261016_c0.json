@@ -1,0 +1,17 @@
+{
+  "artifact_sha256": "eba9f7a259b994eaeb35ddba6691066bea166b61a8d3eaeaea3f582bb8ede99a",
+  "bits": 1000,
+  "checksum_ok": true,
+  "condition": "interior_nearest__L0.self_attn.q__1000__20261016_c0",
+  "cycle": 0,
+  "decode_error": null,
+  "elapsed_s": 0.08,
+  "exact_recovery": true,
+  "length_ok": true,
+  "method": "interior_nearest",
+  "payload_ber": 0.0,
+  "payload_sha256": "51bda895893f4c73596992bbdccbae699a0e6e4d14b53754528690c0f2e8794c",
+  "recovered_sha256": "51bda895893f4c73596992bbdccbae699a0e6e4d14b53754528690c0f2e8794c",
+  "seed": 20261016,
+  "tensor": "model.layers.0.self_attn.q_proj.weight"
+}

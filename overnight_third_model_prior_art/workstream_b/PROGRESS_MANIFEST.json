@@ -1,0 +1,17 @@
+{
+  "decision": "Potentially novel, but important comparisons remain unresolved",
+  "deliverables": [
+    "PRIOR_ART_REVIEW.md",
+    "PRIOR_ART_BIBLIOGRAPHY.bib"
+  ],
+  "differentiator": "NF4 code-index carriers + interior-only endpoint-preserving nearest-same-parity + exact recovery over repeated requantization",
+  "run_id": "nes_prior_art_20261016",
+  "sources_reviewed": 12,
+  "status": "COMPLETE_SCOPED",
+  "unresolved": [
+    "terminology sweep",
+    "EmMark full-text proximity",
+    "TransMark abstract-only",
+    "IEEE/ACM access gaps"
+  ]
+}

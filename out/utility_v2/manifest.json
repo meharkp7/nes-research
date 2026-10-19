@@ -1,0 +1,35 @@
+{
+  "batch": 5,
+  "codec_sha256": "07ce008dcabebb7ac0d4fa10c88251bf10dc9f2a7ae27dfc79bf23b8cd75b764",
+  "corpus": {
+    "config": "wikitext-2-raw-v1",
+    "file_sha256": "5f1bea067869d04849c0f975a2b29c4ff47d867f484f5010ea5e861eab246d91",
+    "name": "Salesforce/wikitext",
+    "split": "test"
+  },
+  "created_at": "2026-10-17T09:10:05.247171+00:00",
+  "extra_seeds": [
+    20261017,
+    20261018
+  ],
+  "method": "interior_nearest",
+  "n_seq_target": 30,
+  "platform": "Linux-6.8.0-1055-gke-x86_64-with-glibc2.41",
+  "primary_seed": 20261016,
+  "purpose": "language-model utility (perplexity) preservation",
+  "run_id": "nes_utility_20261016",
+  "seqlen": 512,
+  "sizes": [
+    10000,
+    50000
+  ],
+  "tensor": "model.layers.0.self_attn.q_proj.weight",
+  "versions": {
+    "bitsandbytes": "0.50.2",
+    "numpy": "2.5.4",
+    "pyarrow": "26.0.0",
+    "safetensors": "0.8.0",
+    "torch": "2.14.1+cpu",
+    "transformers": "5.20.1"
+  }
+}

@@ -1,0 +1,20 @@
+{
+  "elapsed_s": 35.2,
+  "output": "ckpt/smollm2_clean",
+  "output_core_bytes": 1032729702,
+  "output_core_files": {
+    "config.json": "c272ab199e14196a18902242c11b9505b7450f3732695d955770deddc42d3dc5",
+    "generation_config.json": "6fe8a83deb712f50824daf445409bd15e8504e659841949e43839e5557e302f7",
+    "model.safetensors": "d03f816fb6889414f821df4593473531927ce8f643bf0558187dc70baee8ff22"
+  },
+  "quantization": {
+    "blocksize": 64,
+    "compute_dtype": "float16",
+    "double_quant": true,
+    "quant_storage": "uint8",
+    "quant_type": "nf4"
+  },
+  "source": "/tmp/nes_stage/smollm2_fp16",
+  "status": "DONE",
+  "torch": "2.14.1+cpu"
+}

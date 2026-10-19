@@ -1,0 +1,6 @@
+{
+  "qwen:model.layers.17.self_attn.k_proj.weight": "d0e3f9a091e6b3e2508449de3638683b41318e64512e5473dc2d3dc1026932dc",
+  "qwen:model.layers.35.self_attn.v_proj.weight": "ee64cbac291a81d7aebea4cdb73d1eaaa4451696c730272b5ac061cc40cbb3ef",
+  "tinyllama:model.layers.21.self_attn.k_proj.weight": "310ad7e7e3a56b4d95fbb9da0dfbae5f0e038713c0fff835bbdf8ccd548b273a",
+  "tinyllama:model.layers.21.self_attn.v_proj.weight": "c85ac395217f03340080dff94385e50e9b2825688d9df221fbdef22acc040c49"
+}

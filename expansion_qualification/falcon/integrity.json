@@ -1,0 +1,17 @@
+{
+  "clean_tensor_sha256": "f6185ffa3335fc5d1ce782fcef2adf62d8cb74509b97ad4fc40c0327ea731f6a",
+  "differing_keys": [
+    "model.layers.0.self_attn.q_proj.weight"
+  ],
+  "finite_logits_and_loss": true,
+  "model": "tiiuae/Falcon3-1B-Base",
+  "n_tensors": 795,
+  "only_intended_tensor_differs": true,
+  "payload_exact_recovery": true,
+  "revision": "cb37ef3559b157b5c9d9226296ba01a5162da1f7",
+  "seed": 20261016,
+  "shape_preserved": true,
+  "size": 10000,
+  "stego_tensor_sha256": "3b9549ba3adfc36fdf7ee402cf4336351ea0461245c0aeba4a922d1b7ff67773",
+  "tensor": "model.layers.0.self_attn.q_proj.weight"
+}

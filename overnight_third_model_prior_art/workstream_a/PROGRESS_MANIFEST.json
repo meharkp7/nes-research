@@ -1,0 +1,25 @@
+{
+  "aggregate": {
+    "interior_nearest": {
+      "ber_max": 0.0,
+      "chg_anchor": 0,
+      "exact": 40,
+      "total": 40
+    },
+    "pair_parity": {
+      "ber_max": 0.00558,
+      "chg_anchor": 7928,
+      "exact": 10,
+      "total": 40
+    }
+  },
+  "capacity_conditions": 32,
+  "clean_nf4_sha256": "bff3b65ebb686092b7234ddef66d3a69b762299826ac3e29e2015343c432d591",
+  "codec_sha256": "07ce008dcabebb7ac0d4fa10c88251bf10dc9f2a7ae27dfc79bf23b8cd75b764",
+  "fp16_sha256": "8bdf317e2b35ab5c8009cbb6c7ce495e4e608a6b9b843d44054edf25b8c5860d",
+  "matrix_conditions": 48,
+  "model": "stabilityai/stablelm-2-1_6b",
+  "revision": "f499ead74c53749bd93cebc6ce8bc0d7bdf1eaef",
+  "run_id": "nes_third_model_stablelm_20261016",
+  "status": "COMPLETE"
+}
