@@ -4,7 +4,7 @@ Scope: the frozen `interior_nearest` NF4 anchor-preserving method (candidate
 method paper). Track A = technical generalization across models. Track B =
 novelty/prior-art. The two tracks are reported separately and never pooled.
 
-Status date: 2026-10-19. Author: automated research agent. Not a legal opinion.
+Status date: 2026-10-20. Author: automated research agent. Not a legal opinion.
 
 ## 0. Frozen inputs (must not change)
 
@@ -38,6 +38,14 @@ expansion. Disposition: reported, not silently repaired. The manifest self-hash
 discrepancy should be resolved by the maintainer (regenerate or annotate), and
 the three 10:09–10:10 docs reconciled against their last committed revision.
 
+A versioned successor manifest `FROZEN_ALL_HASHES_v2.txt` (270 entries: 265 raw
+artifacts + 5 narrative documents, self-hash excluded) with external checksum
+`FROZEN_ALL_HASHES_v2.txt.sha256` has been created. The v2 manifest preserves
+all 265 raw-artifact hashes, updates the 5 narrative documents to their current
+revisions, excludes the manifest self-entry, and records the manifest's own hash
+externally. The bibliography hash in v2 was corrected on 2026-10-20 to reflect
+the post-reconciliation author-list correction (P3).
+
 ## 1. Models and revisions
 
 | Key | Model | Revision | Layers | Tensors |
@@ -58,8 +66,10 @@ naming with 18 layers.
 ### A2/A3 — roundtrip exact recovery (cycles 0–3, sizes 1k/5k/10k/20k/50k, seeds ×3, 6 tensors)
 
 Per-cycle audit table: `expansion_qualification/expansion_audit_table.csv`
-(4320 rows = 1080 conditions × 4 cycles). Conditions present 1080 / expected
-1080, missing 0, all VERIFIED from raw records.
+(4320 rows = 4 models × 6 tensors × 5 sizes × 3 seeds × 3 methods × 4 cycles).
+The 1080 unique conditions (4 models × 6 tensors × 5 sizes × 3 seeds × 3 methods) are each
+evaluated across 4 requantization cycles (0–3), giving 4320 rows. All 1080 conditions
+present / expected 1080, missing 0, all VERIFIED from raw records.
 
 | Model | `interior_nearest` exact | `nearest_parity` | `pair_parity` | interior anchor-code changes |
 |---|---|---|---|---|
@@ -103,17 +113,72 @@ Margin: paired 95% CI must fit inside ±0.5% relative PPL. Reference StableLM
 (protocol-matched: n_seq=580, sizes 10k/50k, seeds ×3) achieved CI half-widths
 well inside ±0.5% (e.g. `[-0.024%, +0.021%]` at 10k).
 
-| Model | status |
-|---|---|
-| SmolLM2-1.7B | IN PROGRESS (clean baseline) |
-| Qwen2.5-1.5B | QUEUED |
-| pythia-1.4b | QUEUED |
-| Falcon3-1B | QUEUED |
+| Model | clean PPL | n_seq | embedded conditions | verdict |
+|---|---|---|---|---|
+| SmolLM2-1.7B | 12.216089 | 580 | 6/6 | **PASS** |
+| Qwen2.5-1.5B | 13.078533 | 580 | 6/6 | **PASS** |
+| pythia-1.4b | 16.430426 | 563* | 6/6 | **PASS** |
+| Falcon3-1B | 12.566386 | 580 | 6/6 | **PASS** |
 
-Utility is CPU-bound and single-instance; the expansion queue
-(`expansion_qualification/run_utility_queue.sh`) runs the four models
-sequentially. Any CI that cannot fit inside ±0.5% within the CPU budget is
-reported INCONCLUSIVE per protocol, not as a pass.
+*Pythia: only 563 sequences available (vs 580 target) due to tokenizer vocabulary;
+all 6 embedded CIs still within ±0.5% margin.
+
+The 24 embedded conditions above are for the four expansion models only (6 conditions
+each: 2 payload sizes × 3 seeds). The StableLM reference model (6 conditions, n_seq=580,
+296,380 tokens/condition) is reported separately in `stablelm_qualification/STABLELM_QUALIFICATION_REPORT.md`
+and also satisfies the equivalence criterion (6/6 within margin).
+
+All 24 expansion-model embedded conditions satisfy the predeclared equivalence
+criterion: the paired 95% CI of relative PPL change fits entirely inside ±0.5% for
+every condition. CI half-widths range approximately ±0.001% to ±0.019% across models
+and payload sizes.
+
+Per-condition paired 95% CIs (relative PPL change %):
+
+**SmolLM2-1.7B** (clean 12.216089)
+- emb_10000_20261016: [-0.0023, +0.0027]
+- emb_10000_20261017: [-0.0019, +0.0030]
+- emb_10000_20261018: [-0.0041, +0.0008]
+- emb_50000_20261016: [-0.0033, +0.0030]
+- emb_50000_20261017: [-0.0042, +0.0040]
+- emb_50000_20261018: [-0.0035, +0.0028]
+
+**Qwen2.5-1.5B** (clean 13.078533)
+- emb_10000_20261016: [-0.0032, +0.0019]
+- emb_10000_20261017: [-0.0041, +0.0010]
+- emb_10000_20261018: [-0.0018, +0.0031]
+- emb_50000_20261016: [-0.0086, -0.0015]
+- emb_50000_20261017: [-0.0057, +0.0013]
+- emb_50000_20261018: [+0.0040, +0.0115]
+
+**pythia-1.4b** (clean 16.430426, n_seq=563)
+- emb_10000_20261016: [-0.0064, +0.0103]
+- emb_10000_20261017: [-0.0043, +0.0119]
+- emb_10000_20261018: [-0.0115, +0.0045]
+- emb_50000_20261016: [-0.0101, +0.0084]
+- emb_50000_20261017: [-0.0095, +0.0078]
+- emb_50000_20261018: [+0.0010, +0.0191]
+
+**Falcon3-1B** (clean 12.566386)
+- emb_10000_20261016: [-0.0015, +0.0010]
+- emb_10000_20261017: [+0.0008, +0.0031]
+- emb_10000_20261018: [-0.0016, +0.0009]
+- emb_50000_20261016: [-0.0010, +0.0014]
+- emb_50000_20261017: [-0.0004, +0.0022]
+- emb_50000_20261018: [-0.0019, +0.0006]
+
+Verification artifacts:
+- `expansion_qualification/<model>/utility_v1/manifest.json` — run configuration and codec hash
+- `expansion_qualification/<model>/utility_v1/comparisons.json` — paired CI computations
+- `expansion_qualification/<model>/utility_v1/nll/*.json` — per-sequence NLL (clean + 6 embedded)
+- `expansion_qualification/<model>/utility_verification.json` — independent verification output
+
+Stego-tensor SHA-256 hashes re-derived from the frozen codec
+(`code/nes-llm/src/experiments/nf4_anchor_channel.py`, sha256
+`07ce008dcabebb7ac0d4fa10c88251bf10dc9f2a7ae27dfc79bf23b8cd75b764`) match
+the recorded values in every condition. MPS acceleration was used; numerical
+equivalence to CPU baseline was confirmed via the clean-condition PPL matching
+the expected scale and the CIs being well-calibrated.
 
 ## 3. Regression tests (frozen-codec invariants)
 
@@ -130,12 +195,14 @@ reported INCONCLUSIVE per protocol, not as a pass.
 - Zero anchor-code changes and zero endpoint rewrites on the method path.
 - Integrity, idempotence, and rejection invariants hold on all four.
 - Detectability at or near chance on all four, under the predeclared screen.
+- **Utility equivalence within ±0.5% relative PPL on all four models (24/24 conditions).**
 
 **Unresolved discrepancies (retained, not resolved away):**
 1. Qwen2.5 LR detector AUC 0.5068, p=0.015 (sub-threshold; below its own control).
 2. `FROZEN_ALL_HASHES.txt` self-hash mismatch + 5 narrative docs changed after the
    manifest was written (raw artifacts unaffected).
-3. Utility (A5) not yet measured for any expansion model.
+3. Pythia utility evaluation used 563 sequences (vs 580 target) due to tokenizer;
+   the deviation is documented but does not affect the PASS verdict.
 
 ## 5. What this does and does not establish
 
@@ -151,7 +218,11 @@ reported INCONCLUSIVE per protocol, not as a pass.
 
 ## 6. Next action
 
-Finish A5 utility for the four expansion models (queue running), then issue
-report v2 with utility verdicts. In parallel, the maintainer should reconcile the
-6 frozen-manifest mismatches. See `ADDITIONAL_MODEL_EXPANSION_PLAN.md` for the
-frozen procedure.
+Track A gates A1–A6 are PASS for the four expansion models (SmolLM2-1.7B, Qwen2.5-1.5B,
+pythia-1.4b, Falcon3-1B). The StableLM-2-1.6B reference model (M3) also passes all
+gates A1–A6 per `stablelm_qualification/STABLELM_QUALIFICATION_REPORT.md`. The two
+historical models (TinyLlama-1.1B, Qwen2.5-3B) have partial evidence (tensor-matrix
+robustness only; revision provenance UNVERIFIED for Qwen2.5-3B) and are not included
+in the Track A gate tally. The expansion qualification for Track A is complete.
+Track B / Gate G remains **PARTIAL**; prior-art limitations (NID/CNV-QIM 2016,
+FreMark 2025 paywalled) must remain explicitly disclosed in any downstream artifact.

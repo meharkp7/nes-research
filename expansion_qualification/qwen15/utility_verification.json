@@ -1,0 +1,178 @@
+{
+  "all_artifacts_match_codec": true,
+  "all_conditions_present": true,
+  "checks": [
+    {
+      "check": "codec_sha256",
+      "detail": "07ce008dcabebb7ac0d4fa10c88251bf10dc9f2a7ae27dfc79bf23b8cd75b764",
+      "pass": true
+    },
+    {
+      "check": "revision",
+      "detail": "8faed761d45a263340a0528343f099c05c9a4323",
+      "pass": true
+    },
+    {
+      "check": "model",
+      "detail": "Qwen/Qwen2.5-1.5B",
+      "pass": true
+    },
+    {
+      "check": "tensor",
+      "detail": "model.layers.0.self_attn.q_proj.weight",
+      "pass": true
+    },
+    {
+      "check": "corpus_sha256",
+      "detail": "",
+      "pass": true
+    },
+    {
+      "check": "seqlen",
+      "detail": "512",
+      "pass": true
+    },
+    {
+      "check": "n_sequences",
+      "detail": "580",
+      "pass": true
+    },
+    {
+      "check": "batch",
+      "detail": "4",
+      "pass": true
+    },
+    {
+      "check": "margin",
+      "detail": "0.5",
+      "pass": true
+    }
+  ],
+  "conditions": [
+    {
+      "ci95_pct": [
+        -0.0032321163815463017,
+        0.0019078327607280343
+      ],
+      "clean_ppl": 13.078533294119358,
+      "condition": "emb_10000_20261016",
+      "embedded_ppl": 13.078450398949023,
+      "n_sequences": 580,
+      "n_tokens": null,
+      "rel_ppl_change_pct": -0.0006338261980265436,
+      "seed": 20261016,
+      "size": 10000,
+      "size_seed_predeclared": true,
+      "stego_sha_derived": "eb979f770c8a89cfe3b6d5faca23ee10e7f405d3a0fc402369c70ea353035bab",
+      "stego_sha_matches_codec": true,
+      "stego_tensor_sha256": "eb979f770c8a89cfe3b6d5faca23ee10e7f405d3a0fc402369c70ea353035bab",
+      "verdict": "PASS"
+    },
+    {
+      "ci95_pct": [
+        -0.004065838898670293,
+        0.0010400717164626982
+      ],
+      "clean_ppl": 13.078533294119358,
+      "condition": "emb_10000_20261017",
+      "embedded_ppl": 13.078345276519475,
+      "n_sequences": 580,
+      "n_tokens": null,
+      "rel_ppl_change_pct": -0.001437604627785305,
+      "seed": 20261017,
+      "size": 10000,
+      "size_seed_predeclared": true,
+      "stego_sha_derived": "6a887cca2baf83afd3faa1654c8dc38219aea0eff4a11c36d80302cca43896bd",
+      "stego_sha_matches_codec": true,
+      "stego_tensor_sha256": "6a887cca2baf83afd3faa1654c8dc38219aea0eff4a11c36d80302cca43896bd",
+      "verdict": "PASS"
+    },
+    {
+      "ci95_pct": [
+        -0.0017523987527523488,
+        0.0031217550967355123
+      ],
+      "clean_ppl": 13.078533294119358,
+      "condition": "emb_10000_20261018",
+      "embedded_ppl": 13.078634289146654,
+      "n_sequences": 580,
+      "n_tokens": null,
+      "rel_ppl_change_pct": 0.0007722198279047632,
+      "seed": 20261018,
+      "size": 10000,
+      "size_seed_predeclared": true,
+      "stego_sha_derived": "743f8e89c1cc0b8a2857c674cdd422be29cbd51356ce33b500b89340c15bc7f0",
+      "stego_sha_matches_codec": true,
+      "stego_tensor_sha256": "743f8e89c1cc0b8a2857c674cdd422be29cbd51356ce33b500b89340c15bc7f0",
+      "verdict": "PASS"
+    },
+    {
+      "ci95_pct": [
+        -0.008563671132266748,
+        -0.001514687197778919
+      ],
+      "clean_ppl": 13.078533294119358,
+      "condition": "emb_50000_20261016",
+      "embedded_ppl": 13.077886252798422,
+      "n_sequences": 580,
+      "n_tokens": null,
+      "rel_ppl_change_pct": -0.004947353853745895,
+      "seed": 20261016,
+      "size": 50000,
+      "size_seed_predeclared": true,
+      "stego_sha_derived": "2435644b8e8a289f3d6b0e158b5b3e4df6cf860c58862266cb7617f162b839f2",
+      "stego_sha_matches_codec": true,
+      "stego_tensor_sha256": "2435644b8e8a289f3d6b0e158b5b3e4df6cf860c58862266cb7617f162b839f2",
+      "verdict": "PASS"
+    },
+    {
+      "ci95_pct": [
+        -0.0057180751781849,
+        0.0012840149039128335
+      ],
+      "clean_ppl": 13.078533294119358,
+      "condition": "emb_50000_20261017",
+      "embedded_ppl": 13.07824399823689,
+      "n_sequences": 580,
+      "n_tokens": null,
+      "rel_ppl_change_pct": -0.0022119902588935147,
+      "seed": 20261017,
+      "size": 50000,
+      "size_seed_predeclared": true,
+      "stego_sha_derived": "9575e843d22e799ca8d7c0755e59fb7a76cefef4fd827042d1f630c2c214318c",
+      "stego_sha_matches_codec": true,
+      "stego_tensor_sha256": "9575e843d22e799ca8d7c0755e59fb7a76cefef4fd827042d1f630c2c214318c",
+      "verdict": "PASS"
+    },
+    {
+      "ci95_pct": [
+        0.004004129435308812,
+        0.011455294851048237
+      ],
+      "clean_ppl": 13.078533294119358,
+      "condition": "emb_50000_20261018",
+      "embedded_ppl": 13.079549504265668,
+      "n_sequences": 580,
+      "n_tokens": null,
+      "rel_ppl_change_pct": 0.007770062005074685,
+      "seed": 20261018,
+      "size": 50000,
+      "size_seed_predeclared": true,
+      "stego_sha_derived": "00e2cef2a81c57cb9efc5d9d84402bc8604a2da50dc498efdcd636388e463c4e",
+      "stego_sha_matches_codec": true,
+      "stego_tensor_sha256": "00e2cef2a81c57cb9efc5d9d84402bc8604a2da50dc498efdcd636388e463c4e",
+      "verdict": "PASS"
+    }
+  ],
+  "conditions_expected": [],
+  "model": "Qwen/Qwen2.5-1.5B",
+  "n_conditions": 6,
+  "revision": "8faed761d45a263340a0528343f099c05c9a4323",
+  "status": "VERIFIED",
+  "tensor": "model.layers.0.self_attn.q_proj.weight",
+  "verdicts": {
+    "FAIL": 0,
+    "INCONCLUSIVE": 0,
+    "PASS": 6
+  }
+}

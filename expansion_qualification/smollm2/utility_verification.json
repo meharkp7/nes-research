@@ -1,0 +1,178 @@
+{
+  "all_artifacts_match_codec": true,
+  "all_conditions_present": true,
+  "checks": [
+    {
+      "check": "codec_sha256",
+      "detail": "07ce008dcabebb7ac0d4fa10c88251bf10dc9f2a7ae27dfc79bf23b8cd75b764",
+      "pass": true
+    },
+    {
+      "check": "revision",
+      "detail": "effd688a12921b4cc83e3312b6feb579f70f9c71",
+      "pass": true
+    },
+    {
+      "check": "model",
+      "detail": "HuggingFaceTB/SmolLM2-1.7B",
+      "pass": true
+    },
+    {
+      "check": "tensor",
+      "detail": "model.layers.0.self_attn.q_proj.weight",
+      "pass": true
+    },
+    {
+      "check": "corpus_sha256",
+      "detail": "",
+      "pass": true
+    },
+    {
+      "check": "seqlen",
+      "detail": "512",
+      "pass": true
+    },
+    {
+      "check": "n_sequences",
+      "detail": "580",
+      "pass": true
+    },
+    {
+      "check": "batch",
+      "detail": "4",
+      "pass": true
+    },
+    {
+      "check": "margin",
+      "detail": "0.5",
+      "pass": true
+    }
+  ],
+  "conditions": [
+    {
+      "ci95_pct": [
+        -0.0022837818705601087,
+        0.0026756123028270906
+      ],
+      "clean_ppl": 12.216088542015543,
+      "condition": "emb_10000_20261016",
+      "embedded_ppl": 12.21611193577405,
+      "n_sequences": 580,
+      "n_tokens": null,
+      "rel_ppl_change_pct": 0.00019149958210284979,
+      "seed": 20261016,
+      "size": 10000,
+      "size_seed_predeclared": true,
+      "stego_sha_derived": "8b6c9547e28393a6d8c9164b034b4c57c8338705fc03be44bc3a8c7ba95b5ebe",
+      "stego_sha_matches_codec": true,
+      "stego_tensor_sha256": "8b6c9547e28393a6d8c9164b034b4c57c8338705fc03be44bc3a8c7ba95b5ebe",
+      "verdict": "PASS"
+    },
+    {
+      "ci95_pct": [
+        -0.0018585097242729276,
+        0.003029094668915988
+      ],
+      "clean_ppl": 12.216088542015543,
+      "condition": "emb_10000_20261017",
+      "embedded_ppl": 12.216153088168136,
+      "n_sequences": 580,
+      "n_tokens": null,
+      "rel_ppl_change_pct": 0.0005283700455382956,
+      "seed": 20261017,
+      "size": 10000,
+      "size_seed_predeclared": true,
+      "stego_sha_derived": "d2a5bfa5d99630bc5e4e378b0b4a151508276b2edf992d8ed29ce6a0a46db12b",
+      "stego_sha_matches_codec": true,
+      "stego_tensor_sha256": "d2a5bfa5d99630bc5e4e378b0b4a151508276b2edf992d8ed29ce6a0a46db12b",
+      "verdict": "PASS"
+    },
+    {
+      "ci95_pct": [
+        -0.0040850436584194405,
+        0.0007541164169344583
+      ],
+      "clean_ppl": 12.216088542015543,
+      "condition": "emb_10000_20261018",
+      "embedded_ppl": 12.215878606484457,
+      "n_sequences": 580,
+      "n_tokens": null,
+      "rel_ppl_change_pct": -0.0017185167769828702,
+      "seed": 20261018,
+      "size": 10000,
+      "size_seed_predeclared": true,
+      "stego_sha_derived": "79e83bdc6817869926de505590ed498fd85971322a0f2bee1efa881696de9cda",
+      "stego_sha_matches_codec": true,
+      "stego_tensor_sha256": "79e83bdc6817869926de505590ed498fd85971322a0f2bee1efa881696de9cda",
+      "verdict": "PASS"
+    },
+    {
+      "ci95_pct": [
+        -0.0033036333756952807,
+        0.0030243863265999593
+      ],
+      "clean_ppl": 12.216088542015543,
+      "condition": "emb_50000_20261016",
+      "embedded_ppl": 12.216074469052385,
+      "n_sequences": 580,
+      "n_tokens": null,
+      "rel_ppl_change_pct": -0.00011520023868172302,
+      "seed": 20261016,
+      "size": 50000,
+      "size_seed_predeclared": true,
+      "stego_sha_derived": "a7c0269eb06e05e9b37e56c0cc0a4e1608eb8439f866ee006fa1cf826d0f9ae8",
+      "stego_sha_matches_codec": true,
+      "stego_tensor_sha256": "a7c0269eb06e05e9b37e56c0cc0a4e1608eb8439f866ee006fa1cf826d0f9ae8",
+      "verdict": "PASS"
+    },
+    {
+      "ci95_pct": [
+        -0.0042150417250752525,
+        0.004006355172103682
+      ],
+      "clean_ppl": 12.216088542015543,
+      "condition": "emb_50000_20261017",
+      "embedded_ppl": 12.216066363395228,
+      "n_sequences": 580,
+      "n_tokens": null,
+      "rel_ppl_change_pct": -0.00018155255046004015,
+      "seed": 20261017,
+      "size": 50000,
+      "size_seed_predeclared": true,
+      "stego_sha_derived": "23f733867d8b2a32d4cfd7afedce632d37336683d2627dd4d5fe80f923e6c8f3",
+      "stego_sha_matches_codec": true,
+      "stego_tensor_sha256": "23f733867d8b2a32d4cfd7afedce632d37336683d2627dd4d5fe80f923e6c8f3",
+      "verdict": "PASS"
+    },
+    {
+      "ci95_pct": [
+        -0.0035169999639150795,
+        0.0027685761663454045
+      ],
+      "clean_ppl": 12.216088542015543,
+      "condition": "emb_50000_20261018",
+      "embedded_ppl": 12.216040992370896,
+      "n_sequences": 580,
+      "n_tokens": null,
+      "rel_ppl_change_pct": -0.00038923788484579447,
+      "seed": 20261018,
+      "size": 50000,
+      "size_seed_predeclared": true,
+      "stego_sha_derived": "65ce22fb2e24c6d67246d0fbe7f319efc25272b44257e9b46ed0245a25f7dc62",
+      "stego_sha_matches_codec": true,
+      "stego_tensor_sha256": "65ce22fb2e24c6d67246d0fbe7f319efc25272b44257e9b46ed0245a25f7dc62",
+      "verdict": "PASS"
+    }
+  ],
+  "conditions_expected": [],
+  "model": "HuggingFaceTB/SmolLM2-1.7B",
+  "n_conditions": 6,
+  "revision": "effd688a12921b4cc83e3312b6feb579f70f9c71",
+  "status": "VERIFIED",
+  "tensor": "model.layers.0.self_attn.q_proj.weight",
+  "verdicts": {
+    "FAIL": 0,
+    "INCONCLUSIVE": 0,
+    "PASS": 6
+  }
+}

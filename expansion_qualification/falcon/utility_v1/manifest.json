@@ -1,0 +1,19 @@
+{
+  "batch": 4,
+  "codec_sha256": "07ce008dcabebb7ac0d4fa10c88251bf10dc9f2a7ae27dfc79bf23b8cd75b764",
+  "corpus": {
+    "config": "wikitext-2-raw-v1",
+    "file_sha256": "5f1bea067869d04849c0f975a2b29c4ff47d867f484f5010ea5e861eab246d91",
+    "name": "Salesforce/wikitext",
+    "split": "test"
+  },
+  "equivalence_margin_pct": 0.5,
+  "method": "interior_nearest",
+  "model": "tiiuae/Falcon3-1B-Base",
+  "n_sequences": 580,
+  "revision": "cb37ef3559b157b5c9d9226296ba01a5162da1f7",
+  "run_id": "nes_falcon_utility_20261019",
+  "seqlen": 512,
+  "tensor": "model.layers.0.self_attn.q_proj.weight",
+  "windows_available": 647
+}

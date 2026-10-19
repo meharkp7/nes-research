@@ -1,0 +1,178 @@
+{
+  "all_artifacts_match_codec": true,
+  "all_conditions_present": true,
+  "checks": [
+    {
+      "check": "codec_sha256",
+      "detail": "07ce008dcabebb7ac0d4fa10c88251bf10dc9f2a7ae27dfc79bf23b8cd75b764",
+      "pass": true
+    },
+    {
+      "check": "revision",
+      "detail": "fedc38a16eea3bd36a96b906d78d11d2ce18ed79",
+      "pass": true
+    },
+    {
+      "check": "model",
+      "detail": "EleutherAI/pythia-1.4b",
+      "pass": true
+    },
+    {
+      "check": "tensor",
+      "detail": "gpt_neox.layers.0.attention.query_key_value.weight",
+      "pass": true
+    },
+    {
+      "check": "corpus_sha256",
+      "detail": "",
+      "pass": true
+    },
+    {
+      "check": "seqlen",
+      "detail": "512",
+      "pass": true
+    },
+    {
+      "check": "n_sequences",
+      "detail": "563",
+      "pass": false
+    },
+    {
+      "check": "batch",
+      "detail": "4",
+      "pass": true
+    },
+    {
+      "check": "margin",
+      "detail": "0.5",
+      "pass": true
+    }
+  ],
+  "conditions": [
+    {
+      "ci95_pct": [
+        -0.006352878263504724,
+        0.010307663865383176
+      ],
+      "clean_ppl": 16.43042605935915,
+      "condition": "emb_10000_20261016",
+      "embedded_ppl": 16.43073226331508,
+      "n_sequences": 563,
+      "n_tokens": null,
+      "rel_ppl_change_pct": 0.0018636397791871318,
+      "seed": 20261016,
+      "size": 10000,
+      "size_seed_predeclared": true,
+      "stego_sha_derived": "19f05a3c1bc4a174067e86cf39375d9ec8d6900ea0dce5a7d633d5188cb25b07",
+      "stego_sha_matches_codec": true,
+      "stego_tensor_sha256": "19f05a3c1bc4a174067e86cf39375d9ec8d6900ea0dce5a7d633d5188cb25b07",
+      "verdict": "PASS"
+    },
+    {
+      "ci95_pct": [
+        -0.0042515847888835445,
+        0.011882316585998254
+      ],
+      "clean_ppl": 16.43042605935915,
+      "condition": "emb_10000_20261017",
+      "embedded_ppl": 16.431037385374655,
+      "n_sequences": 563,
+      "n_tokens": null,
+      "rel_ppl_change_pct": 0.003720694845599226,
+      "seed": 20261017,
+      "size": 10000,
+      "size_seed_predeclared": true,
+      "stego_sha_derived": "4991cd8a97ec5bdf6213fc19fc22874c649a6fbe1ee6e518477516c54eb77738",
+      "stego_sha_matches_codec": true,
+      "stego_tensor_sha256": "4991cd8a97ec5bdf6213fc19fc22874c649a6fbe1ee6e518477516c54eb77738",
+      "verdict": "PASS"
+    },
+    {
+      "ci95_pct": [
+        -0.011544736724611315,
+        0.004516824071276737
+      ],
+      "clean_ppl": 16.43042605935915,
+      "condition": "emb_10000_20261018",
+      "embedded_ppl": 16.429834136298453,
+      "n_sequences": 563,
+      "n_tokens": null,
+      "rel_ppl_change_pct": -0.0036026032347646897,
+      "seed": 20261018,
+      "size": 10000,
+      "size_seed_predeclared": true,
+      "stego_sha_derived": "85702ebf52a7e95fcfce41eb7a99f9a2df3dea7c2ad7dc088752677bff31246b",
+      "stego_sha_matches_codec": true,
+      "stego_tensor_sha256": "85702ebf52a7e95fcfce41eb7a99f9a2df3dea7c2ad7dc088752677bff31246b",
+      "verdict": "PASS"
+    },
+    {
+      "ci95_pct": [
+        -0.010051169424085682,
+        0.008412701358695429
+      ],
+      "clean_ppl": 16.43042605935915,
+      "condition": "emb_50000_20261016",
+      "embedded_ppl": 16.430267328301912,
+      "n_sequences": 563,
+      "n_tokens": null,
+      "rel_ppl_change_pct": -0.0009660799827337918,
+      "seed": 20261016,
+      "size": 50000,
+      "size_seed_predeclared": true,
+      "stego_sha_derived": "c08835980cce53671f76ac37a9c335b8dbcce1d095087bb146c4b5532465b68f",
+      "stego_sha_matches_codec": true,
+      "stego_tensor_sha256": "c08835980cce53671f76ac37a9c335b8dbcce1d095087bb146c4b5532465b68f",
+      "verdict": "PASS"
+    },
+    {
+      "ci95_pct": [
+        -0.009528423844873402,
+        0.0077882180377963905
+      ],
+      "clean_ppl": 16.43042605935915,
+      "condition": "emb_50000_20261017",
+      "embedded_ppl": 16.430251178861358,
+      "n_sequences": 563,
+      "n_tokens": null,
+      "rel_ppl_change_pct": -0.0010643698292289727,
+      "seed": 20261017,
+      "size": 50000,
+      "size_seed_predeclared": true,
+      "stego_sha_derived": "042ff9d720905897131ba47a676e92b0e8b49446166df816df218abfcfbe3477",
+      "stego_sha_matches_codec": true,
+      "stego_tensor_sha256": "042ff9d720905897131ba47a676e92b0e8b49446166df816df218abfcfbe3477",
+      "verdict": "PASS"
+    },
+    {
+      "ci95_pct": [
+        0.0010455586766155989,
+        0.019132320451564766
+      ],
+      "clean_ppl": 16.43042605935915,
+      "condition": "emb_50000_20261018",
+      "embedded_ppl": 16.432091689825477,
+      "n_sequences": 563,
+      "n_tokens": null,
+      "rel_ppl_change_pct": 0.010137475804383733,
+      "seed": 20261018,
+      "size": 50000,
+      "size_seed_predeclared": true,
+      "stego_sha_derived": "92f9287ff0eec9696de5b0021a0487a4e8ab472a99bae25de5dd76a9d914f099",
+      "stego_sha_matches_codec": true,
+      "stego_tensor_sha256": "92f9287ff0eec9696de5b0021a0487a4e8ab472a99bae25de5dd76a9d914f099",
+      "verdict": "PASS"
+    }
+  ],
+  "conditions_expected": [],
+  "model": "EleutherAI/pythia-1.4b",
+  "n_conditions": 6,
+  "revision": "fedc38a16eea3bd36a96b906d78d11d2ce18ed79",
+  "status": "DISCREPANCY",
+  "tensor": "gpt_neox.layers.0.attention.query_key_value.weight",
+  "verdicts": {
+    "FAIL": 0,
+    "INCONCLUSIVE": 0,
+    "PASS": 6
+  }
+}
