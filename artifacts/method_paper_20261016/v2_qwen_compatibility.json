@@ -1,0 +1,8 @@
+{
+  "status": "PASS",
+  "checked_embeddings": 108,
+  "all_byte_identical": true,
+  "scope": "v2 anchorless-block guard preserves every v1 Qwen embedding byte; transforms were unchanged",
+  "current_codec_sha256": "07ce008dcabebb7ac0d4fa10c88251bf10dc9f2a7ae27dfc79bf23b8cd75b764",
+  "v1_codec_sha256": "ed0cdbe8de3f77feb4031208353e75baf6210357963df2b13c62b6b9bce9cb1a"
+}

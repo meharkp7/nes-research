@@ -1,0 +1,21 @@
+======================================================================
+CONSISTENCY CHECK
+======================================================================
+
+  [OK  ] every completed cell has an artifact on disk
+         41 artifacts verified
+  [OK  ] manifest status matches artifact status
+  [OK  ] no PASS recorded without a gate_status
+  [OK  ] exp7_neural FAIL preserved (not weakened to PASS)
+         accuracy=0.705 gate=0.55 status=FAIL
+  [OK  ] exp7 statistical and exp7_neural are distinct cells
+  [OK  ] capacity labelled 'maximum tested', not absolute
+  [OK  ] exp8 overall never hides a failed or unrun gate
+  [OK  ] exp8 records actual layer counts
+  [OK  ] no unvalidated architecture marked VALIDATED
+
+  Models with no manifest cells: 0
+
+======================================================================
+9/9 checks passed
+======================================================================

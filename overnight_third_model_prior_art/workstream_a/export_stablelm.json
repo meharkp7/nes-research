@@ -1,0 +1,33 @@
+{
+  "arguments": {
+    "bits": 10000,
+    "checkpoint": "/workspace/nes_run_20261016_anchor_ablation/ckpt/stablelm_fp16",
+    "intermediate": null,
+    "method": "interior_nearest",
+    "mode": "export",
+    "output": "/workspace/nes_run_20261016_anchor_ablation/ckpt/stablelm_clean",
+    "report": "/workspace/nes_run_20261016_anchor_ablation/overnight_third_model_prior_art/workstream_a/export_stablelm.json",
+    "seed": 20261016,
+    "tensor": "model.layers.0.self_attn.q_proj.weight",
+    "tokenizer": "/workspace/nes_run_20261016_anchor_ablation/ckpt/stablelm_fp16",
+    "utility": false
+  },
+  "codec_sha256": "07ce008dcabebb7ac0d4fa10c88251bf10dc9f2a7ae27dfc79bf23b8cd75b764",
+  "duration_seconds": 33.591568135998386,
+  "nested_statistics": true,
+  "output_file_hashes": {
+    "config.json": "7655d0048dadcab8f411e81dc9f81b5643d195322b016703dc69f34ffed7817d",
+    "generation_config.json": "f33f8eff93d698730dd39c9c61d200702b108b6af1aa68f18c9cf8729e9620c6",
+    "model.safetensors": "bff3b65ebb686092b7234ddef66d3a69b762299826ac3e29e2015343c432d591"
+  },
+  "runner_sha256": "18dbe6fb9da621d1aba6148806a585962fb16f80d7be79cc65ca9c8a676c871b",
+  "scope": "Clean NF4 export, no payload",
+  "source_file_hashes": {
+    "config.json": "e14f378901a37d07b275e5899d2733aeb4363abdb48748bd8b32714f25d9becb",
+    "generation_config.json": "fbb65002ab227b98b2e0ed8f78cc5dd7a8283ff017bdb4a305650e4791578f3c",
+    "model.safetensors": "8bdf317e2b35ab5c8009cbb6c7ce495e4e608a6b9b843d44054edf25b8c5860d"
+  },
+  "source_snapshot": "/workspace/nes_run_20261016_anchor_ablation/ckpt/stablelm_fp16",
+  "status": "PASS",
+  "stored_dtype": "bfloat16"
+}

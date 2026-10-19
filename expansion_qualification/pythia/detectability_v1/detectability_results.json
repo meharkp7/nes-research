@@ -1,0 +1,77 @@
+{
+  "build_seconds": 24.3,
+  "control_clean_vs_clean": {
+    "auc": 0.4998732805252075,
+    "auc_ci95": [
+      0.49102555380927193,
+      0.5083564122517904
+    ]
+  },
+  "detectors": {
+    "gradient_boosting": {
+      "auc": 0.5001592222187254,
+      "auc_ci95": [
+        0.4993987499701755,
+        0.5007149301193379
+      ],
+      "auc_tensor_gpt_neox.layers.0.attention.query_key_value.weight": 0.500538428624471,
+      "auc_tensor_gpt_neox.layers.0.mlp.dense_h_to_4h.weight": 0.49981758991877245,
+      "auc_tensor_gpt_neox.layers.11.attention.dense.weight": 0.4998900095621745,
+      "auc_tensor_gpt_neox.layers.11.mlp.dense_4h_to_h.weight": 0.5008443792661031,
+      "auc_tensor_gpt_neox.layers.23.attention.query_key_value.weight": 0.4985490640004476,
+      "auc_tensor_gpt_neox.layers.23.mlp.dense_h_to_4h.weight": 0.5008461872736613,
+      "permutation_n": 200,
+      "permutation_p": 0.5174129353233831,
+      "runtime_s": 71.2,
+      "tpr_at_fpr_0.01": 0.009833441840277778,
+      "tpr_at_fpr_0.05": 0.05052354600694445
+    },
+    "logistic_regression": {
+      "auc": 0.5007354948255751,
+      "auc_ci95": [
+        0.500439915392134,
+        0.5012614991929796
+      ],
+      "auc_tensor_gpt_neox.layers.0.attention.query_key_value.weight": 0.5007729331652324,
+      "auc_tensor_gpt_neox.layers.0.mlp.dense_h_to_4h.weight": 0.50057981411616,
+      "auc_tensor_gpt_neox.layers.11.attention.dense.weight": 0.5022091468175252,
+      "auc_tensor_gpt_neox.layers.11.mlp.dense_4h_to_h.weight": 0.5004067818323772,
+      "auc_tensor_gpt_neox.layers.23.attention.query_key_value.weight": 0.5006536841392517,
+      "auc_tensor_gpt_neox.layers.23.mlp.dense_h_to_4h.weight": 0.5002947052319845,
+      "permutation_n": 200,
+      "permutation_p": 0.39303482587064675,
+      "runtime_s": 70.6,
+      "tpr_at_fpr_0.01": 0.010050455729166666,
+      "tpr_at_fpr_0.05": 0.05014377170138889
+    },
+    "mlp_exploratory": {
+      "auc": 0.5000159138882602,
+      "auc_ci95": [
+        0.4998161819935949,
+        0.5002243215287173
+      ],
+      "auc_tensor_gpt_neox.layers.0.attention.query_key_value.weight": 0.4999784628550212,
+      "auc_tensor_gpt_neox.layers.0.mlp.dense_h_to_4h.weight": 0.4997499187787373,
+      "auc_tensor_gpt_neox.layers.11.attention.dense.weight": 0.5003188451131184,
+      "auc_tensor_gpt_neox.layers.11.mlp.dense_4h_to_h.weight": 0.49968385696411133,
+      "auc_tensor_gpt_neox.layers.23.attention.query_key_value.weight": 0.5000753601392111,
+      "auc_tensor_gpt_neox.layers.23.mlp.dense_h_to_4h.weight": 0.5003934701283773,
+      "permutation_n": 200,
+      "permutation_p": 0.5024875621890548,
+      "runtime_s": 84.6,
+      "tpr_at_fpr_0.01": 0.009860568576388888,
+      "tpr_at_fpr_0.05": 0.04991319444444445
+    }
+  },
+  "group_labels": [
+    "pythia-1.4b::gpt_neox.layers.0.attention.query_key_value.weight",
+    "pythia-1.4b::gpt_neox.layers.0.mlp.dense_h_to_4h.weight",
+    "pythia-1.4b::gpt_neox.layers.11.attention.dense.weight",
+    "pythia-1.4b::gpt_neox.layers.11.mlp.dense_4h_to_h.weight",
+    "pythia-1.4b::gpt_neox.layers.23.attention.query_key_value.weight",
+    "pythia-1.4b::gpt_neox.layers.23.mlp.dense_h_to_4h.weight"
+  ],
+  "n_embedded_artifacts": 36,
+  "n_examples": 86016,
+  "n_groups": 6
+}

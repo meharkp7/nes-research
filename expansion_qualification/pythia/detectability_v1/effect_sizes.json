@@ -1,0 +1,484 @@
+{
+  "effects": [
+    {
+      "cohen_d": 0.0,
+      "feature": "endpoint_frac",
+      "tensor": "gpt_neox.layers.0.attention.query_key_value.weight"
+    },
+    {
+      "cohen_d": 0.0,
+      "feature": "zero_count",
+      "tensor": "gpt_neox.layers.0.attention.query_key_value.weight"
+    },
+    {
+      "cohen_d": 0.0,
+      "feature": "fifteen_count",
+      "tensor": "gpt_neox.layers.0.attention.query_key_value.weight"
+    },
+    {
+      "cohen_d": 0.0,
+      "feature": "interior_frac",
+      "tensor": "gpt_neox.layers.0.attention.query_key_value.weight"
+    },
+    {
+      "cohen_d": 0.0002395100756739561,
+      "feature": "mean_code",
+      "tensor": "gpt_neox.layers.0.attention.query_key_value.weight"
+    },
+    {
+      "cohen_d": -0.0018629739574595736,
+      "feature": "std_code",
+      "tensor": "gpt_neox.layers.0.attention.query_key_value.weight"
+    },
+    {
+      "cohen_d": 0.0004099502510941205,
+      "feature": "odd_frac",
+      "tensor": "gpt_neox.layers.0.attention.query_key_value.weight"
+    },
+    {
+      "cohen_d": -0.00040288087684658833,
+      "feature": "parity_imbalance",
+      "tensor": "gpt_neox.layers.0.attention.query_key_value.weight"
+    },
+    {
+      "cohen_d": 0.00043971534389074094,
+      "feature": "odd_interior_frac",
+      "tensor": "gpt_neox.layers.0.attention.query_key_value.weight"
+    },
+    {
+      "cohen_d": 0.0,
+      "feature": "distinct_codes",
+      "tensor": "gpt_neox.layers.0.attention.query_key_value.weight"
+    },
+    {
+      "cohen_d": -0.0010658725538172764,
+      "feature": "code_entropy",
+      "tensor": "gpt_neox.layers.0.attention.query_key_value.weight"
+    },
+    {
+      "cohen_d": -0.002094013432578566,
+      "feature": "mean_abs_value",
+      "tensor": "gpt_neox.layers.0.attention.query_key_value.weight"
+    },
+    {
+      "cohen_d": 0.0,
+      "feature": "absmax_value",
+      "tensor": "gpt_neox.layers.0.attention.query_key_value.weight"
+    },
+    {
+      "cohen_d": -0.00030375988815891557,
+      "feature": "adjacent_equal_frac",
+      "tensor": "gpt_neox.layers.0.attention.query_key_value.weight"
+    },
+    {
+      "cohen_d": -0.00030549305577870766,
+      "feature": "adjacent_parity_change",
+      "tensor": "gpt_neox.layers.0.attention.query_key_value.weight"
+    },
+    {
+      "cohen_d": 0.0,
+      "feature": "max_run",
+      "tensor": "gpt_neox.layers.0.attention.query_key_value.weight"
+    },
+    {
+      "cohen_d": 0.0,
+      "feature": "endpoint_frac",
+      "tensor": "gpt_neox.layers.0.mlp.dense_h_to_4h.weight"
+    },
+    {
+      "cohen_d": 0.0,
+      "feature": "zero_count",
+      "tensor": "gpt_neox.layers.0.mlp.dense_h_to_4h.weight"
+    },
+    {
+      "cohen_d": 0.0,
+      "feature": "fifteen_count",
+      "tensor": "gpt_neox.layers.0.mlp.dense_h_to_4h.weight"
+    },
+    {
+      "cohen_d": 0.0,
+      "feature": "interior_frac",
+      "tensor": "gpt_neox.layers.0.mlp.dense_h_to_4h.weight"
+    },
+    {
+      "cohen_d": 0.00014069638706066222,
+      "feature": "mean_code",
+      "tensor": "gpt_neox.layers.0.mlp.dense_h_to_4h.weight"
+    },
+    {
+      "cohen_d": -0.0014959142864546947,
+      "feature": "std_code",
+      "tensor": "gpt_neox.layers.0.mlp.dense_h_to_4h.weight"
+    },
+    {
+      "cohen_d": -0.00011942376778263979,
+      "feature": "odd_frac",
+      "tensor": "gpt_neox.layers.0.mlp.dense_h_to_4h.weight"
+    },
+    {
+      "cohen_d": 0.0006604338469801992,
+      "feature": "parity_imbalance",
+      "tensor": "gpt_neox.layers.0.mlp.dense_h_to_4h.weight"
+    },
+    {
+      "cohen_d": -0.00012577023131277187,
+      "feature": "odd_interior_frac",
+      "tensor": "gpt_neox.layers.0.mlp.dense_h_to_4h.weight"
+    },
+    {
+      "cohen_d": 0.00018435586839145332,
+      "feature": "distinct_codes",
+      "tensor": "gpt_neox.layers.0.mlp.dense_h_to_4h.weight"
+    },
+    {
+      "cohen_d": -0.0006140110390812425,
+      "feature": "code_entropy",
+      "tensor": "gpt_neox.layers.0.mlp.dense_h_to_4h.weight"
+    },
+    {
+      "cohen_d": -0.0017063466559357303,
+      "feature": "mean_abs_value",
+      "tensor": "gpt_neox.layers.0.mlp.dense_h_to_4h.weight"
+    },
+    {
+      "cohen_d": 0.0,
+      "feature": "absmax_value",
+      "tensor": "gpt_neox.layers.0.mlp.dense_h_to_4h.weight"
+    },
+    {
+      "cohen_d": -0.0007334354807490965,
+      "feature": "adjacent_equal_frac",
+      "tensor": "gpt_neox.layers.0.mlp.dense_h_to_4h.weight"
+    },
+    {
+      "cohen_d": 0.0009869510727891192,
+      "feature": "adjacent_parity_change",
+      "tensor": "gpt_neox.layers.0.mlp.dense_h_to_4h.weight"
+    },
+    {
+      "cohen_d": -0.0007725343041675853,
+      "feature": "max_run",
+      "tensor": "gpt_neox.layers.0.mlp.dense_h_to_4h.weight"
+    },
+    {
+      "cohen_d": 0.0,
+      "feature": "endpoint_frac",
+      "tensor": "gpt_neox.layers.11.attention.dense.weight"
+    },
+    {
+      "cohen_d": 0.0,
+      "feature": "zero_count",
+      "tensor": "gpt_neox.layers.11.attention.dense.weight"
+    },
+    {
+      "cohen_d": 0.0,
+      "feature": "fifteen_count",
+      "tensor": "gpt_neox.layers.11.attention.dense.weight"
+    },
+    {
+      "cohen_d": 0.0,
+      "feature": "interior_frac",
+      "tensor": "gpt_neox.layers.11.attention.dense.weight"
+    },
+    {
+      "cohen_d": 0.0007274664055582533,
+      "feature": "mean_code",
+      "tensor": "gpt_neox.layers.11.attention.dense.weight"
+    },
+    {
+      "cohen_d": -0.0057351066395457334,
+      "feature": "std_code",
+      "tensor": "gpt_neox.layers.11.attention.dense.weight"
+    },
+    {
+      "cohen_d": -0.0004792534609274565,
+      "feature": "odd_frac",
+      "tensor": "gpt_neox.layers.11.attention.dense.weight"
+    },
+    {
+      "cohen_d": -0.0023039960224288964,
+      "feature": "parity_imbalance",
+      "tensor": "gpt_neox.layers.11.attention.dense.weight"
+    },
+    {
+      "cohen_d": -0.0004279076894483108,
+      "feature": "odd_interior_frac",
+      "tensor": "gpt_neox.layers.11.attention.dense.weight"
+    },
+    {
+      "cohen_d": -0.0015433471334419901,
+      "feature": "distinct_codes",
+      "tensor": "gpt_neox.layers.11.attention.dense.weight"
+    },
+    {
+      "cohen_d": -0.0028579200618258655,
+      "feature": "code_entropy",
+      "tensor": "gpt_neox.layers.11.attention.dense.weight"
+    },
+    {
+      "cohen_d": -0.006371703156005783,
+      "feature": "mean_abs_value",
+      "tensor": "gpt_neox.layers.11.attention.dense.weight"
+    },
+    {
+      "cohen_d": 0.0,
+      "feature": "absmax_value",
+      "tensor": "gpt_neox.layers.11.attention.dense.weight"
+    },
+    {
+      "cohen_d": 0.00029877417947480434,
+      "feature": "adjacent_equal_frac",
+      "tensor": "gpt_neox.layers.11.attention.dense.weight"
+    },
+    {
+      "cohen_d": -0.0007235106405994135,
+      "feature": "adjacent_parity_change",
+      "tensor": "gpt_neox.layers.11.attention.dense.weight"
+    },
+    {
+      "cohen_d": -0.0012312499855722174,
+      "feature": "max_run",
+      "tensor": "gpt_neox.layers.11.attention.dense.weight"
+    },
+    {
+      "cohen_d": 0.0,
+      "feature": "endpoint_frac",
+      "tensor": "gpt_neox.layers.11.mlp.dense_4h_to_h.weight"
+    },
+    {
+      "cohen_d": 0.0,
+      "feature": "zero_count",
+      "tensor": "gpt_neox.layers.11.mlp.dense_4h_to_h.weight"
+    },
+    {
+      "cohen_d": 0.0,
+      "feature": "fifteen_count",
+      "tensor": "gpt_neox.layers.11.mlp.dense_4h_to_h.weight"
+    },
+    {
+      "cohen_d": 0.0,
+      "feature": "interior_frac",
+      "tensor": "gpt_neox.layers.11.mlp.dense_4h_to_h.weight"
+    },
+    {
+      "cohen_d": 0.00028742836269047233,
+      "feature": "mean_code",
+      "tensor": "gpt_neox.layers.11.mlp.dense_4h_to_h.weight"
+    },
+    {
+      "cohen_d": -0.0012354419678252612,
+      "feature": "std_code",
+      "tensor": "gpt_neox.layers.11.mlp.dense_4h_to_h.weight"
+    },
+    {
+      "cohen_d": 0.0009072317429434989,
+      "feature": "odd_frac",
+      "tensor": "gpt_neox.layers.11.mlp.dense_4h_to_h.weight"
+    },
+    {
+      "cohen_d": 0.0017714972476378108,
+      "feature": "parity_imbalance",
+      "tensor": "gpt_neox.layers.11.mlp.dense_4h_to_h.weight"
+    },
+    {
+      "cohen_d": 0.0009311838115385178,
+      "feature": "odd_interior_frac",
+      "tensor": "gpt_neox.layers.11.mlp.dense_4h_to_h.weight"
+    },
+    {
+      "cohen_d": -0.0010068695667758577,
+      "feature": "distinct_codes",
+      "tensor": "gpt_neox.layers.11.mlp.dense_4h_to_h.weight"
+    },
+    {
+      "cohen_d": -0.0010514968797000277,
+      "feature": "code_entropy",
+      "tensor": "gpt_neox.layers.11.mlp.dense_4h_to_h.weight"
+    },
+    {
+      "cohen_d": -0.0014218084641817068,
+      "feature": "mean_abs_value",
+      "tensor": "gpt_neox.layers.11.mlp.dense_4h_to_h.weight"
+    },
+    {
+      "cohen_d": 0.0,
+      "feature": "absmax_value",
+      "tensor": "gpt_neox.layers.11.mlp.dense_4h_to_h.weight"
+    },
+    {
+      "cohen_d": 0.0017646328409195217,
+      "feature": "adjacent_equal_frac",
+      "tensor": "gpt_neox.layers.11.mlp.dense_4h_to_h.weight"
+    },
+    {
+      "cohen_d": -0.0018106906844557364,
+      "feature": "adjacent_parity_change",
+      "tensor": "gpt_neox.layers.11.mlp.dense_4h_to_h.weight"
+    },
+    {
+      "cohen_d": -0.0007169622106355629,
+      "feature": "max_run",
+      "tensor": "gpt_neox.layers.11.mlp.dense_4h_to_h.weight"
+    },
+    {
+      "cohen_d": 0.0,
+      "feature": "endpoint_frac",
+      "tensor": "gpt_neox.layers.23.attention.query_key_value.weight"
+    },
+    {
+      "cohen_d": 0.0,
+      "feature": "zero_count",
+      "tensor": "gpt_neox.layers.23.attention.query_key_value.weight"
+    },
+    {
+      "cohen_d": 0.0,
+      "feature": "fifteen_count",
+      "tensor": "gpt_neox.layers.23.attention.query_key_value.weight"
+    },
+    {
+      "cohen_d": 0.0,
+      "feature": "interior_frac",
+      "tensor": "gpt_neox.layers.23.attention.query_key_value.weight"
+    },
+    {
+      "cohen_d": 0.0002127685543178798,
+      "feature": "mean_code",
+      "tensor": "gpt_neox.layers.23.attention.query_key_value.weight"
+    },
+    {
+      "cohen_d": -0.0015120172852119015,
+      "feature": "std_code",
+      "tensor": "gpt_neox.layers.23.attention.query_key_value.weight"
+    },
+    {
+      "cohen_d": -0.0008911971274212325,
+      "feature": "odd_frac",
+      "tensor": "gpt_neox.layers.23.attention.query_key_value.weight"
+    },
+    {
+      "cohen_d": 0.001141700388448092,
+      "feature": "parity_imbalance",
+      "tensor": "gpt_neox.layers.23.attention.query_key_value.weight"
+    },
+    {
+      "cohen_d": -0.0009115235872407989,
+      "feature": "odd_interior_frac",
+      "tensor": "gpt_neox.layers.23.attention.query_key_value.weight"
+    },
+    {
+      "cohen_d": -0.0007016267762493901,
+      "feature": "distinct_codes",
+      "tensor": "gpt_neox.layers.23.attention.query_key_value.weight"
+    },
+    {
+      "cohen_d": -0.0009829650570750436,
+      "feature": "code_entropy",
+      "tensor": "gpt_neox.layers.23.attention.query_key_value.weight"
+    },
+    {
+      "cohen_d": -0.0018080246993994152,
+      "feature": "mean_abs_value",
+      "tensor": "gpt_neox.layers.23.attention.query_key_value.weight"
+    },
+    {
+      "cohen_d": 0.0,
+      "feature": "absmax_value",
+      "tensor": "gpt_neox.layers.23.attention.query_key_value.weight"
+    },
+    {
+      "cohen_d": 0.000904996825031251,
+      "feature": "adjacent_equal_frac",
+      "tensor": "gpt_neox.layers.23.attention.query_key_value.weight"
+    },
+    {
+      "cohen_d": -0.0025349049369152226,
+      "feature": "adjacent_parity_change",
+      "tensor": "gpt_neox.layers.23.attention.query_key_value.weight"
+    },
+    {
+      "cohen_d": 0.0006949124549616568,
+      "feature": "max_run",
+      "tensor": "gpt_neox.layers.23.attention.query_key_value.weight"
+    },
+    {
+      "cohen_d": 0.0,
+      "feature": "endpoint_frac",
+      "tensor": "gpt_neox.layers.23.mlp.dense_h_to_4h.weight"
+    },
+    {
+      "cohen_d": 0.0,
+      "feature": "zero_count",
+      "tensor": "gpt_neox.layers.23.mlp.dense_h_to_4h.weight"
+    },
+    {
+      "cohen_d": 0.0,
+      "feature": "fifteen_count",
+      "tensor": "gpt_neox.layers.23.mlp.dense_h_to_4h.weight"
+    },
+    {
+      "cohen_d": 0.0,
+      "feature": "interior_frac",
+      "tensor": "gpt_neox.layers.23.mlp.dense_h_to_4h.weight"
+    },
+    {
+      "cohen_d": 0.0001497999804404401,
+      "feature": "mean_code",
+      "tensor": "gpt_neox.layers.23.mlp.dense_h_to_4h.weight"
+    },
+    {
+      "cohen_d": -0.0015987381070210578,
+      "feature": "std_code",
+      "tensor": "gpt_neox.layers.23.mlp.dense_h_to_4h.weight"
+    },
+    {
+      "cohen_d": -0.0013191673591344312,
+      "feature": "odd_frac",
+      "tensor": "gpt_neox.layers.23.mlp.dense_h_to_4h.weight"
+    },
+    {
+      "cohen_d": -0.0007476856012418405,
+      "feature": "parity_imbalance",
+      "tensor": "gpt_neox.layers.23.mlp.dense_h_to_4h.weight"
+    },
+    {
+      "cohen_d": -0.001365560601997725,
+      "feature": "odd_interior_frac",
+      "tensor": "gpt_neox.layers.23.mlp.dense_h_to_4h.weight"
+    },
+    {
+      "cohen_d": -0.00027060522543720454,
+      "feature": "distinct_codes",
+      "tensor": "gpt_neox.layers.23.mlp.dense_h_to_4h.weight"
+    },
+    {
+      "cohen_d": -0.0004804888604572048,
+      "feature": "code_entropy",
+      "tensor": "gpt_neox.layers.23.mlp.dense_h_to_4h.weight"
+    },
+    {
+      "cohen_d": -0.001700921791307955,
+      "feature": "mean_abs_value",
+      "tensor": "gpt_neox.layers.23.mlp.dense_h_to_4h.weight"
+    },
+    {
+      "cohen_d": 0.0,
+      "feature": "absmax_value",
+      "tensor": "gpt_neox.layers.23.mlp.dense_h_to_4h.weight"
+    },
+    {
+      "cohen_d": -0.00038854729050238126,
+      "feature": "adjacent_equal_frac",
+      "tensor": "gpt_neox.layers.23.mlp.dense_h_to_4h.weight"
+    },
+    {
+      "cohen_d": 0.0025900015086765356,
+      "feature": "adjacent_parity_change",
+      "tensor": "gpt_neox.layers.23.mlp.dense_h_to_4h.weight"
+    },
+    {
+      "cohen_d": 0.0003175895788093857,
+      "feature": "max_run",
+      "tensor": "gpt_neox.layers.23.mlp.dense_h_to_4h.weight"
+    }
+  ]
+}

@@ -1,0 +1,195 @@
+======================================================================
+CLAIM AUDIT — every MEASURED claim, re-derived from disk
+======================================================================
+
+suite state
+  [OK  ] coverage is 35 PASS / 6 FAIL / 0 NOT_RUN / 0 ERROR  -- {'PASS': 35, 'FAIL': 6}
+  [OK  ] every cell carries a gate_status
+  [OK  ] exp7_neural still FAIL at 70.5% (not weakened to PASS)  -- FAIL
+  [OK  ] cell counts match the tables (exp1/2/3/6/7 are 7 cells, exp4/5/7_neural/8 are 1, exp9 is 2)  -- {'exp1': 7, 'exp2': 7, 'exp3': 7, 'exp4': 1, 'exp5': 1, 'exp6': 7, 'exp7': 7, 'exp7_neural': 1, 'exp8': 1, 'exp9': 2}
+
+NF4 grid (exp3-exp8)
+  [OK  ] exp2 fails on 4 of 7 models (claim said 6 of 7)  -- n=7 FAIL=4 ['Qwen/Qwen2.5-3B', 'Qwen/Qwen2.5-7B', 'TinyLlama/TinyLlama-1.1B-Chat-v1.0', 'meta-llama/Llama-3.1-8B']
+  [OK  ] exp2 PASS cells are gemma-2-9b, Phi-3-mini, Mistral-7B  -- ['google/gemma-2-9b', 'microsoft/Phi-3-mini-4k-instruct', 'mistralai/Mistral-7B-v0.3']
+  [OK  ] calibration's models_passing matches its own rows  -- says 3/8, rows give 3/8
+  [OK  ] calibration's finding string states its own count  -- finding='3 of 8 profiled models meet the exp2 gate (>=80% of layers w'
+  [OK  ] calibration and exp2 agree on every shared model  -- disagree=[]
+  [OK  ] exp3 sign round trip BER 0.0 on every model  -- n=7 bers=[0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
+  [OK  ] exp3 compared 48,256 bits with 0 errors  -- compared=[48256, 48256, 48256, 48256, 48256, 48256, 48256]
+  [OK  ] exp4 capacity >= 10M bits at BER 0  -- bits=10000000
+  [OK  ] exp5 sign fidelity PPL delta is +0.0053% and under the 2% gate  -- pct=0.005286623081384053
+  [OK  ] exp6 every model under the robustness gates (0.02 / 0.10)  -- sigma0.001=[0.0, 0.0, 0.0, 0.0011505460218408738, 0.0, 0.0, 0.0] sigma0.002=[0.00044851794071762874, 0.0, 0.0, 0.010744929797191887, 0.0, 0.0, 0.0]
+  [OK  ] exp6 BER 0.0 at sigma=0.001 on 6 of 7 models (Mistral-7B 0.00115)  -- zeros=6/7 max=0.0011505460218408738
+  [OK  ] exp7 statistical detection under the 55% gate, every model  -- n=14 max=0.55
+  [OK  ] exp7 neural detects sign at 70.5% -> FAIL stands  -- acc=0.705 status=FAIL
+  [OK  ] exp8 cross-model FAIL (inherits the neural FAIL)  -- status=FAIL
+
+non-NF4 formats (exp9)
+  [OK  ] GPTQ: BER 0.0, 10256/10256 bits, 0 errors  -- ber=0.0 bits=10256 err=0
+  [OK  ] GPTQ: corr 0.9903, all 36 layers, no scale correction  -- corr=0.9902718408193982 layers=36 corrected=False
+  [OK  ] AWQ: BER 0.0, 10256/10256 bits, 0 errors  -- ber=0.0 bits=10256 err=0
+  [OK  ] AWQ: corr 0.9941 (raw 0.9890), 35/36 layers  -- corr=0.9940740101859922 raw=0.9890012168260888 layers=35
+  [OK  ] AWQ: the excluded layer is named, not dropped silently  -- excluded=['2']
+
+LWE (exp10, exp12)
+  [OK  ] exp10 lists an LWE strategy entry
+  [OK  ] LWE extracts without the cover (BER 0.0000, was 0.5036)  -- needs_cover=False ber=0.0
+  [OK  ] exp10: lwe row current (wins all three axes); stored conclusion is pre-Phase-3 stale — cite rows, not conclusion  -- conclusion_stale=True
+  [OK  ] exp12: every measured model passes both gates  -- 5/5 passing, 1 skipped
+  [OK  ] exp12: recorded counts match the rows in the file  -- file says 5/5, rows are 5/5
+  [OK  ] exp12 covers all 5 non-skipped cached models (closes the audit finding)  -- measured=5 present=['TinyLlama/TinyLlama-1.1B-Chat-v1.0', 'Qwen/Qwen2.5-3B', 'Qwen/Qwen2.5-7B', 'mistralai/Mistral-7B-v0.3', 'meta-llama/Llama-3.1-8B', 'google/gemma-2-9b']
+
+keyless recovery (exp13)
+  [OK  ] exp13: shipped path is one public constant, key ignored  -- w=0.01 distinct=[0.01] keyed_branch=False
+  [OK  ] exp13: designed HMAC formula key-independent on 0/36 layers  -- key-dependent=0/36
+  [OK  ] exp13: six keys decode identical streams (max pairwise BER 0.0)  -- max_pairwise=0.0 bers={'embedder_key': 0.0, 'registry_default': 0.0, 'random_a': 0.0, 'random_b': 0.0, 'random_c': 0.0, 'random_d': 0.0}
+  [OK  ] exp13: keyless read of all 10256 bits at BER 0.0 (precision/recall 1.0, clean control 0)  -- ber=0.0 len=10256/10256 p=1.0 r=1.0 clean=0
+  [OK  ] exp13: public-pipeline re-run reads at chance (0.4 <= BER <= 0.6)  -- ber=0.49434477379095165 precision=0.6527886115444618 alloc_match=0
+  [OK  ] exp13: search spikes on the true lattice, tied with w/5  -- argmax=0.002 scores=153/153
+  [OK  ] exp13: gate FAIL stands and matches THRESHOLDS['exp13']  -- status=FAIL failed=['min_keyless_ber']
+  [OK  ] exp13: all three docstring security claims recorded REFUTED  -- REFUTED the grid spacing is key-derived and secret; REFUTED the interval parity mapping is secret without the key; REFUTED carrier positions are secret without the key
+
+blind-patch adversary (exp14)
+  [OK  ] exp14: gate matches THRESHOLDS['exp14'], blind PASS at 0.5000  -- gate=PASS blind=0.5
+  [OK  ] exp14: blind detector learned nothing (576 pairs, tp=fp=0)  -- acc=0.5 tp=0 fp=0 pairs=576
+  [OK  ] exp14: carrier-centered control clears the gate, so the blind result is informative  -- control=0.6875 blind=0.5
+  [OK  ] exp14: blind positions almost never contain a carrier (4/576)  -- 4/576
+  [OK  ] exp14: detector unchanged from exp7, split by embedding  -- epochs=30 split=by embedding (sample_id = embed index), 80/20; no stego tensor on both sides
+
+LWE fidelity (exp15)
+  [OK  ] exp15: both model artifacts present  -- 2/2
+  [OK  ] exp15: gate matches THRESHOLDS['exp15'] (2%), both models PASS  -- PASS PASS; PASS PASS
+  [OK  ] exp15: LWE degradation pinned (Qwen 0.0077%, gemma 0.0501%), both far under 2%  -- fidelity=0.0077%, fidelity=0.0501%
+  [OK  ] exp15: exp5 protocol intact — 200 texts, 50k bits, reconstruction delta reported separately  -- recon -8.99%; recon -5.27%
+  [OK  ] exp15: exp5's own numbers reproduce exactly (12.4707 / 11.3494); sign re-run agrees in verdict, not in digit  -- rerun=0.052922665779643496% recorded=-0.005286623081384053%
+
+cross-scheme detector (exp16)
+  [OK  ] exp16: gate matches THRESHOLDS['exp16'], both cross directions at chance (0.5000), PASS as pre-registered  -- cross={'sign_to_lwe': 0.5, 'lwe_to_sign': 0.5} status=PASS
+  [OK  ] exp16: sign pipeline validated (62.85% within-scheme, clears the 55% line) — so sign->LWE at chance is informative  -- sign within=0.6284722222222222
+  [OK  ] exp16: LWE control collapsed at 0.5000 — recorded, and consistent with exp12's measured LWE detector accuracy of 50.00%; LWE->sign direction read as NOT established  -- lwe within=0.5 controls_valid=False
+  [OK  ] exp16: 432 pairs per scheme, split by embedding, detector unchanged from exp7  -- pairs=432 split=4 embeds train / 2 test, per scheme; no stego tensor on both sides
+
+QAE round trip (exp17)
+  [OK  ] exp17: gate matches THRESHOLDS['exp17'] (exp3's 0.0), PASS — BER 0.0 over 48,256 bits, decrypt and match required  -- ber=0.0 status=PASS
+  [OK  ] exp17: full bit comparison, not a stats field — 48,256 transmitted = 48,256 extracted, 0 errors  -- compared=48256 errors=0
+  [OK  ] exp17: no-cover probe passes for qae, records BLOCKED error for nf4_qae (registered, not faked)  -- qae usable=True nf4 error=RuntimeError: nf4_qae is BLOCKED: its re...
+  [OK  ] exp17: statuses as registered — qae READY, nf4_qae BLOCKED; exp3's exact flow through QaeDictAdapter  -- status={'qae': 'READY', 'nf4_qae': 'BLOCKED'}
+
+strategy matrix (exp18)
+  [OK  ] exp18: all seven grid model artifacts present (3 first pass + 4 widened 2026-10-06; TinyLlama SKIPPED under the incomplete-cache rule)  -- 7/7
+  [OK  ] exp18: every artifact's gate matches THRESHOLDS['exp18'] (exp3's 0.0, exp6's 0.02/0.10, exp7's 0.55 — all reused)  -- gate={'description': "Strategy x model matrix (W1.3): per cell, the round trip must hold (exp3's 0.0), robustness must hold at sigma 0.001/0.002 (exp6's 0.02/0.10), and the strategy's own detector must stay at chance (exp7's 0.55). Four numbers, four reused sources, none new.", 'max_ber': 0.0, 'max_ber_at_sigma_0_001': 0.02, 'max_ber_at_sigma_0_002': 0.1, 'max_detector_accuracy': 0.55}
+  [OK  ] exp18: four READY strategies measured on every model; neural and nf4_qae excluded BY NAME with reasons  -- cells=['sign', 'magnitude_aware', 'lwe', 'qae']
+  [OK  ] exp18: protocol pins — 800 detector samples per cell (400 pairs), payload 10k, 30 epochs, seed 42 (exp10's)  -- samples=[800, 800, 800, 800]
+  [OK  ] exp18: every cell's verdict booleans recompute exactly from its recorded numbers (no rounding either way)  -- 28/28 consistent
+  [OK  ] exp18: 28/28 round trips at BER 0.0 and 28/28 robustness gates pass; LWE detector exactly 0.50 on all seven models (7/7 wins) with exactly one other winning cell — magnitude_aware on Mistral-7B (0.525)  -- ber_set=[0.0] wins=8 lwe_dets=[0.5, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5]
+
+adaptive routing (exp19)
+  [OK  ] exp19: all three first-pass model artifacts present  -- 3/3
+  [OK  ] exp19: every artifact's gate matches THRESHOLDS['exp19'] (exp3's 0.0 reused; routing choice is measurement, not gate)  -- gate=0.0
+  [OK  ] exp19: each branch recomputes exactly from its recorded sigma and thresholds; three models -> three DIFFERENT branches (lwe / neural / sign)  -- routes=['lwe', 'neural', 'sign']
+  [OK  ] exp19: Qwen's design route (neural) failing is recorded as the design's own — EmbeddingError text kept, both available branches round-tripped as fallback; gemma/llama routes available  -- failure='EmbeddingError: Neural strategy selected but no trained model available. Train 
+  [OK  ] exp19: every round trip that ran holds BER 0.0 and each gate status recomputes exactly from its measured list  -- 4/4 at 0.0
+  [OK  ] exp19: protocol pins — payload 10k (exp10's), deterministic sigma recompute recorded (EmbedResult drops inner metadata), lwe fresh-random-key caveat in method  -- payload/method pins
+  [OK  ] exp19: DecryptPipeline attempted only where it is the right decoder (sign routes, all recovered) and every non-attempt carries the exp10 sign-only note  -- flags consistent
+
+sign/parity split (exp20)
+  [OK  ] exp20: artifact present (W5.3 first pass, Qwen2.5-3B)  -- exp20_split_dial_qwen__qwen2.5_3b.json
+  [OK  ] exp20: gate matches THRESHOLDS['exp20'] — the same four numbers exp18 reused (exp3's 0.0, exp6's 0.02/0.10, exp7's 0.55)  -- gate={'max_ber': 0.0, 'max_ber_at_sigma_0_001': 0.02, 'max_ber_at_sigma_0_002': 0.1, 'max_detector_accuracy': 0.55}
+  [OK  ] exp20: exactly the five dial fractions, in order (0.0 / 0.25 / 0.5 / 0.75 / 1.0)  -- [0.0, 0.25, 0.5, 0.75, 1.0]
+  [OK  ] exp20: every cell's verdict booleans recompute exactly from its recorded numbers (no rounding either way)  -- 5/5 consistent
+  [OK  ] exp20: all five round trips hold exp3's BER 0.0 (the dial must not cost the round trip at any fraction)  -- bers=[0.0, 0.0, 0.0, 0.0, 0.0]
+  [OK  ] exp20: protocol pins — payload 10k, 400 pairs / 20 embeds / 30 epochs / seed 42 (exp10's), keyless partition stated  -- protocol
+  [OK  ] exp20: endpoint anchors read from exp18's committed artifact with deltas recomputing exactly (f=0 vs sign, f=1 vs lwe); nothing defaulted  -- anchors consistent
+  [OK  ] exp20: the dial's numbers as measured — detector [0.7875, 0.69375, 0.70, 0.5875, 0.50] and BER@sigma0.002 [0, 0.0034, 0.0067, 0.0095, 0.0127] across parity share 0.0->1.0  -- det=[0.7875, 0.69375, 0.7, 0.5875, 0.5] s2=[0.0, 0.0034451378055122203, 0.00672776911076443, 0.009490379615184607, 0.01267550702028081]
+  [OK  ] exp20: both trade-off directions hold — robustness (BER@0.002) nondecreasing with parity share, detector falls from pure sign to pure parity; only the pure-parity cell wins; its detector REPRODUCES exp18's lwe cell exactly (delta 0.0)  -- monotonic_s2=True det_drop=0.7875->0.5 anchor_lwe_delta=0.0
+
+QAE/LWE interop (exp21)
+  [OK  ] exp21: artifact present (W5.2 interop, Qwen2.5-3B)  -- exp21_qae_lwe_qwen__qwen2.5_3b.json
+  [OK  ] exp21: gate matches THRESHOLDS['exp21'] — both readings at exp3's 0.0 (reused), never relaxed  -- max_ber=0.0 max_control_ber=0.0
+  [OK  ] exp21: the matched control holds exp3's 0.0 over the full transmitted stream — a non-zero interop BER is therefore attributable to the pairing, not a broken embed  -- control=0.0 (0/10256)
+  [OK  ] exp21: raw LWE read-out of the qae stream measures BER 0.5432917316692668 (5572/10256, near chance) — gate FAIL, and the artifact's verdict recomputes from the two readings  -- interop=0.5432917316692668 verdict=FAIL
+  [OK  ] exp21: the public cell-parity correction returns exactly 0.0 — the parity(v) = sign(v) XOR cell-parity(|v|) identity is measured, not asserted; recorded as structure with an explicit 'not a gate rescue' role  -- corrected=0.0
+  [OK  ] exp21: the plan's plausibility claim is quoted verbatim and its premise recorded half-false against exp17 (qae forces sign flips) — the claim is not silently reworded  -- half-false as written (exp17): QAE-V1 forces sign flips — +m
+  [OK  ] exp21: protocol pins — payload 10k, exp17's model, one embed with both read-outs on the SAME stego (pairing is the only variable); all three readings compare the same bit count  -- protocol
+
+per-layer LWE width (exp22)
+  [OK  ] exp22: artifact present (W5.4 first pass, Qwen2.5-3B)  -- exp22_layer_widths_qwen__qwen2.5_3b.json
+  [OK  ] exp22: gate matches THRESHOLDS['exp22'] — exp10's four reused numbers (0.0, 0.02, 0.10, 0.55), per cell  -- gate={'max_ber': 0.0, 'max_ber_at_sigma_0_001': 0.02, 'max_ber_at_sigma_0_002': 0.1, 'max_detector_accuracy': 0.55}
+  [OK  ] exp22: exactly the three width rules, in order, with the right overrides (global = defaults, per_layer and layer_rank = lwe_width_rule) — nothing else may vary  -- rules=['global', 'per_layer', 'layer_rank']
+  [OK  ] exp22: every recorded width recomputes from the artifact's own per-layer stds — global = 0.010 everywhere, per_layer = clip(4.0*round(std,4), 0.005, 0.020), layer_rank = the fixed ladder by rank, w/std consistent  -- 36 layers x 3 rules recomputed
+  [OK  ] exp22: all three cells' verdict booleans recompute exactly from their recorded numbers (no rounding either way)  -- 3/3 consistent
+  [OK  ] exp22: all three round trips hold exp3's BER 0.0 — the width rule must not cost the round trip (per_layer's bucket agreement held at sigma=0 in run 1; layer_rank's is true by construction)  -- bers=[0.0, 0.0, 0.0]
+  [OK  ] exp22: protocol pins — payload 10k, 400 pairs / 20 embeds / 30 epochs / seed 42 (exp10's), exp11's window cited as the clip source  -- protocol
+  [OK  ] exp22: the global-width control anchors to exp18's committed lwe cell, delta recomputed; nothing defaulted  -- anchor consistent
+  [OK  ] exp22: both deltas vs the global control (per_layer - global, layer_rank - global) recompute exactly from the cells — detector and both sigma points  -- deltas={'per_layer': {'detector': 0.0, 'ber_sigma_0_001': 0.022588403536141447, 'ber_sigma_0_002': 0.563605044201768}, 'layer_rank': {'detector': 0.0, 'ber_sigma_0_001': 0.0014625585023400937, 'ber_sigma_0_002': 0.06093993759750391}}
+  [OK  ] exp22: the recorded diagnosis recomputes — noise moves every layer's std bucket (36/36 at each sigma on this model), which is the verified cause of per_layer's robustness collapse under the extractor's drifting grid  -- 36/36 at all three sigmas
+  [OK  ] exp22: the result as measured — per_layer FAILS robustness (0.0226 / 0.5763, gates 0.02 / 0.10) with the drift diagnosis above; layer_rank PASSES everything (0.0015 / 0.0736); detector 0.50 on all three cells (lwe's invariant, again); only global and layer_rank win; and the global control REPRODUCES exp18's lwe curve bit-for-bit (detector delta 0.0)  -- pl={'0.0': 0.0, '0.001': 0.022588403536141447, '0.002': 0.5762805512220489, '0.005': 0.6606214248569943} lr={'0.0': 0.0, '0.001': 0.0014625585023400937, '0.002': 0.07361544461778471, '0.005': 0.42693707748309934}
+
+model surgery survival (exp23)
+  [OK  ] exp23: artifact present (W6, first pass + legs run 2026-10-07, Qwen2.5-3B)  -- exp23_model_surgery_qwen__qwen2.5_3b.json
+  [OK  ] exp23: gate matches THRESHOLDS['exp23'] — exp3's 0.0 twice (max_ber, max_control_ber); degradation is read from the BER column, never from a relaxed gate  -- max_ber=0.0 max_control_ber=0.0
+  [OK  ] exp23: the weight-path control holds both readings at exp3's 0.0 and the cached residuals equal a fresh pair residual exactly — the cell arithmetic is validated before any surgery is measured  -- direct=0.0 weight=0.0 pair=0.0
+  [OK  ] exp23: exactly the twelve surgery cells, in order (control, 2 LoRA, 2 prune, NF4, 3 merge, then the three legs that were NOT_RUN in the first pass — fine-tune, GPTQ, AWQ) — nothing added, nothing silently dropped  -- cells=['control', 'lora_0.001', 'lora_0.01', 'prune_10', 'prune_30', 'nf4_requant', 'merge_0.01', 'merge_0.05', 'merge_0.5', 'finetune_1k', 'gptq_requant', 'awq_requant']
+  [OK  ] exp23: every cell's BER recomputes exactly from its own error count over 10,256 compared bits, and every verdict boolean recomputes from exp3's 0.0 (no rounding either way)  -- 12/12 consistent
+  [OK  ] exp23: the result as measured — eight cells survive at BER 0.0 (control, both LoRA ratios, both prunes, merge t<=0.05, and the real 1,000-step fine-tune); NF4 re-quant fails at 0.3832 (3930/10256), the half-merge at 0.2476 (2539/10256), GPTQ at 0.4956 (5083/10256, near chance) and AWQ at 0.4108 (4213/10256) — every failure short of chance 0.5, so the degradation is graceful rather than erased; total-vs-graceful read from the numbers, gate untouched  -- nf4=0.3831903276131045 merge_0.5=0.24756240249609984 gptq=0.4956123244929797 awq=0.4107839313572543 survivors=['control', 'lora_0.001', 'lora_0.01', 'prune_10', 'prune_30', 'merge_0.01', 'merge_0.05', 'finetune_1k']
+  [OK  ] exp23: pruning's pass is explained by its own numbers — a real delta (RMS 2.1% / 10.9% of the weights) that lands on zero carriers, so the payload sits outside the pruned mass by placement, not by luck  -- displaced=[0, 0]
+  [OK  ] exp23: the LoRA-shaped deltas hit their stated RMS scale (1.0e-3 and 1.0e-2 of RMS(W)) — a delta off its scale would make 'survives LoRA merge' mean nothing  -- 0.001 / 0.01 hit
+  [OK  ] exp23: the merge deltas scale linearly with t (rms 0.05/0.01 = 5, rms 0.5/0.05 = 10) — the recorded task vector W' = W_stego + t*(W_instruct - W_stego) is measured, not asserted  -- r=1.342e-04 6.710e-04 6.710e-03
+  [OK  ] exp23: protocol pins — payload 10k (10,256 compared bits), one production-path sign embed shared by every cell, seed 42, fp32 throughout, surgery scope mlp.down_proj only  -- protocol
+  [OK  ] exp23: the first pass's three named blockers are now measured cells — not_run is empty (a leg that ran leaves no finding) and method carries the protocol each leg ran under: fine-tune 1,000 steps, lr 1e-4 cosine with 3% warmup, down_proj only, loss falling 2.271010437011719 -> 2.169337158203125 (identical across runs); GPTQ int4 group 128 sym on 64 stated wikitext windows, read back via save() -> safetensors; AWQ int4 group 128 zero-point on 32 stated windows through exp8's reader  -- 0 blockers; fine-tune/GPTQ/AWQ measured with stated protocol in method.finetune/gptq/awq
+  [OK  ] exp23: pre-registration preserved with the misses recorded, not rewritten — method.pre_registered names the control 0.0 and both heavy-loss expectations (nf4, merge dies as t grows), and notes[0] states exp18's rule with no gate relaxed  -- pre_registered + notes[0]
+  [OK  ] exp23: reproducibility recorded — 36/36 layers matched, seed and versions captured, residual definition intact  -- layers=36/36
+
+Pareto frontier (exp24)
+  [OK  ] exp24: artifact present (W7 first pass, 35 points over 11 committed sources)  -- exp24_pareto_frontier.json
+  [OK  ] exp24: gate matches THRESHOLDS['exp24'] — max_source_delta 0.0 (citation integrity: every y/marker equals its source exactly; a synthesis cannot PASS by being plausible)  -- max_source_delta=0.0
+  [OK  ] exp24: counts match the lists they summarise — 35 points, 1 frontier, 10 excluded, 2 related, 6 omitted source groups  -- {'points': 35, 'frontier': 1, 'excluded': 10, 'related': 2, 'omitted_source_groups': 6}
+  [OK  ] exp24: every one of the 35 cited y values recomputes exactly from its source cell (detector accuracy; exp7's study key 'accuracy') at delta 0.0 — a synthesis cannot be plausible, it must be exact  -- 35/35 at delta 0.0
+  [OK  ] exp24: every marker (BER@σ0.001) recomputes exactly from its source's robustness_ber_curve, and all 6 null markers stay null — exp7's study measured no curve, so none was borrowed or invented to make a point look annotated  -- 35/35 at delta 0.0, 6 nulls preserved
+  [OK  ] exp24: every round-trip BER carried beside a point recomputes from its source (extractability.ber, else the curve's σ0 entry, else null) — the sanity column is measured too  -- 35/35 at delta 0.0
+  [OK  ] exp24: the frontier recomputes from the artifact's own 35 points (nondominated on x-down, y-down; equal points do not dominate each other) and equals the stored frontier exactly  -- recomputed=['exp22:qwen__qwen2.5_3b:lwe:layer_rank']
+  [OK  ] exp24: the frontier as measured — exp22's layer_rank width rule is the single nondominated point: x=0.00372693 (smallest of all 35), y=0.50 detector (the floor), marker 0.00146256 — the rank-keyed width wins the trade-off outright instead of trading along it  -- id=exp22:qwen__qwen2.5_3b:lwe:layer_rank x=0.0037269348978949783 y=0.5 marker=0.0014625585023400937
+  [OK  ] exp24: why the frontier is one point — the winner is minimal on BOTH axes at once (its x is the set minimum and its y sits at the detector floor 0.5), so no point in the set can dominate it and every other point is dominated  -- min x=0.00372693 min y=0.5
+  [OK  ] exp24: x is measured here for every point — mean |delta| over changed values, each point carrying its x, changed-value count and embedded bits, with the definition and the reason it had to be measured (no committed artifact pairs magnitude with a detector) recorded in method; no count substituted for it  -- 35/35 carry x
+  [OK  ] exp24: every point's config reconstructs its source's own mechanism — exp11/exp12 pinned by their alpha=1.0 & min_magnitude=w/2 patch, exp20's split_fraction, exp22's width_rule, exp7's alpha→min_magnitude (its module's own mapping) + gamma + payload, exp10/exp18 at the shipped default — so a shared point means the same embed, not a lookalike  -- 35/35 reconstruct
+  [OK  ] exp24: all 10 exclusions recorded with what + reason + source, never dropped — the neural cell by its NEEDS_TRAINING status, tinyllama by its incomplete cache, gemma-2-2b's 8 cells by its absence from experiment_registry (4 group-level + 4 magnitude follow-ons), each reason carried in full  -- 10 exclusions, all with reasons
+  [OK  ] exp24: 6 omitted source groups each carry the reason they cannot form a frontier point (no detector axis), exp2/exp17 named as priors rather than x, and the catch-all names every remaining experiment — including exp23 and exp21 — so the frontier's coverage is stated rather than implied  -- 6 groups
+  [OK  ] exp24: both related citations recompute from their sources exactly — exp14's blind/control accuracies + carrier count, exp16's four cross-scheme readings — recorded as readings of an existing point, never folded into the frontier  -- exp14=(0.5, 0.6875, 4) exp16_keys=['lwe_to_lwe', 'lwe_to_sign', 'sign_to_lwe', 'sign_to_sign']
+  [OK  ] exp24: both prior-magnitude citations recompute from their sources exactly (exp2's mean_mag_mean; exp17's mean_abs_delta_over_changed at 48,256 bits) and each records its own protocol as cited-not-used — different payloads, so neither was merged into x  -- exp2=0.00184349390231849 exp17=0.03546278966703097
+  [OK  ] exp24: protocol pins — seed 42, payload default 10,000, marker σ=0.001 named in method, all 11 sources_read present on disk (9 frontier sources + the 2 related readings)  -- seed=42 sources=11 missing=[]
+
+paper hardening W9 (exp25-27)
+  [OK  ] exp25: artifact present (W9.1 selection-policy ablation, Qwen2.5-3B)  -- exp25_selection_ablation_qwen__qwen2.5_3b.json
+  [OK  ] exp25: gate mirrors THRESHOLDS['exp25'] field-for-field — all arms 0.0, production 0.55/0.05/0.02 — with the source pinned  -- status=PASS failures=[]
+  [OK  ] exp25: exactly three arms — random x3, magnitude x1 (production), keyed x3  -- arms=['keyed', 'magnitude', 'random']
+  [OK  ] exp25: every replicate recomputes — BER from errors/bits at exp3's 0.0 over the 10,256-carrier construction, decrypt + message match, detectability/robustness flags re-derived from the numbers beside them, keyless precision/recall from TP/FP/FN  -- bad=[]
+  [OK  ] exp25: one shared QACI Hamilton allocation across all seven replicates (digest-pinned) and the artifact says so — the ablation's control variable  -- digests=['8660969e1ddd']
+  [OK  ] exp25: production arm holds exp7's detectability lines (0.55/0.05) and exp6's sigma=0.001 line (0.02)  -- acc=0.5028000026941299 kl=3.624785313149914e-05 robust=0.0
+  [OK  ] exp25: baselines are FLAGGED, not gated — every random/keyed replicate sits past exp6's 0.02 line (the measured cost of importance-blind selection) with flags saying False, while status stays PASS exactly as THRESHOLDS['exp25'] prescribes  -- baseline_robustness=[0.0735, 0.0748, 0.0726, 0.0731, 0.0724, 0.0757]
+  [OK  ] exp25: the keyless public-rule attacker reads at chance for EVERY arm (exact-size BER in [0.4, 0.6]) — no policy leaks a readable stream to the public re-run  -- exact_ber=[0.4987, 0.5068, 0.5084, 0.4713, 0.4919, 0.4988, 0.4949]
+  [OK  ] exp25: hypothesis verdicts recompute from the recorded numbers — H1/H2/H4 supported (round trip, detectability, robustness ordering), H3 (public re-run => BER < 0.1) NOT supported and kept as written: a miss is recorded, not rewritten  -- recorded={'H1': True, 'H2': True, 'H3': False, 'H4': True} recomputed={'H1': True, 'H2': True, 'H3': False, 'H4': True}
+  [OK  ] exp25: H3's recorded mechanism holds in the numbers — the public re-run never reproduces the writer's allocation in full while position precision stays >= 0.98, which is why near-exact position knowledge still reads near chance  -- alloc_match=7/36 precision=0.9898595943837754
+  [OK  ] exp26: artifact present (W9.2 capacity curve, Qwen2.5-3B)  -- exp26_capacity_scaling_qwen__qwen2.5_3b.json
+  [OK  ] exp26: gate mirrors THRESHOLDS['exp26'] field-for-field (0.0 / 0.55 / 0.05) with the source pinned  -- failures=[]
+  [OK  ] exp26: exactly the six pre-registered sizes, in order — no point dropped because it failed  -- sizes=[1000, 2500, 5000, 10000, 20000, 50000]
+  [OK  ] exp26: every point recomputes — BER from errors/bits at 0.0, decrypt + message match, both gate flags re-derived from the numbers beside them  -- bad=[]
+  [OK  ] exp26: metrics recompute from the points — six sizes at BER 0.0, the 50k maximum, and the detector/KL ranges equal the observed min/max exactly  -- acc_range=[0.5028000026941299, 0.5028000026941299] kl_range=[0.0, 5.53399404452648e-05]
+  [OK  ] exp26: the committed figure exists and is non-empty — the one artifact reviewers can see without running anything  -- /Users/meharkapoor7/nes-research/results/exp26_capacity_scaling_qwen__qwen2.5_3b.svg
+  [OK  ] exp26: status PASS with no gate failures  -- status=PASS
+  [OK  ] exp27: artifact present (W9.3 threat-model boundary, Qwen2.5-3B)  -- exp27_threat_model_qwen__qwen2.5_3b.json
+  [OK  ] exp27: gate mirrors THRESHOLDS['exp27'] field-for-field (control 0.0, >=10 wrong keys, 0 recoveries) with the source pinned  -- status=PASS failures=[]
+  [OK  ] exp27: the measured boundary — control recovers at 0.0, >=10 wrong keys tested with 0 recoveries and 0 plaintext emissions, 0 partial-access recoveries  -- measured={'control_ber': 0.0, 'control_recovered': True, 'wrong_keys_tested': 10, 'wrong_key_recoveries': 0, 'wrong_key_plaintext_emitted': 0, 'partial_access_recoveries': 0}
+  [OK  ] exp27: control arithmetic — 0 errors over the 10,256-bit construction, message recovered  -- control={'has': ['carrier map', 'correct key', 'all layers'], 'ber': 0.0, 'bit_errors': 0, 'bits_compared': 10256, 'recovered_matches': True}
+  [OK  ] exp27: every wrong key fails the same authenticated way — 10/10 GCM authentication, no header failures, no garbage success, and the channel remains readable with the map (0.0): channel readability and message confidentiality measured as separate axes  -- kinds={'gcm_authentication': 10} channel_ber=0.0
+  [OK  ] exp27: six partial-access cells, none decrypts, none recovers the message, every available bit reads clean (0.0), and coverage falls monotonically with the layer fraction for both access patterns  -- prefix=[0.5209633385335414, 0.1998829953198128, 0.03695397815912636] scattered=[0.42609204368174725, 0.2750585023400936, 0.056162246489859596]
+  [OK  ] exp27: the public-rule attacker is chance-level on this embed (exact-size BER in [0.4, 0.6]) with precision recomputing from TP/FP, and the message-protection basis cites C2 rather than asserting secrecy  -- ber=0.4875195007800312 precision=0.9898595943837754
+  [OK  ] exp27: status PASS with no gate failures  -- status=PASS
+
+gates
+  [OK  ] dequant gate thresholds unchanged (0.95 / 0.5)  -- {'min_dequant_correlation': 0.95, 'max_dequant_residual_ratio': 0.5}
+  [OK  ] exp2 residual threshold untouched (0.002)  -- 0.002
+  [OK  ] detectability gate untouched (0.55) for statistical and neural  -- 0.55 / 0.55
+
+======================================================================
+all 152 claims verified
+======================================================================

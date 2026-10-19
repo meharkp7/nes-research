@@ -1,0 +1,5 @@
+Failed to load CPU gemm_4bit_forward from kernels-community: No module named 'kernels'. Please make sure you already `pip install kernels` and the kernels >= 0.11.1
+{"detector": "gradient_boosting", "auc": 0.4999052059871179, "tpr@1%": 0.010036892361111112, "perm_p": 0.4626865671641791}
+{"detector": "logistic_regression", "auc": 0.5012333288236901, "tpr@1%": 0.009941948784722222, "perm_p": 0.3482587064676617}
+{"detector": "mlp_exploratory", "auc": 0.4998771371664824, "tpr@1%": 0.009955512152777778, "perm_p": 0.5373134328358209}
+{"status": "COMPLETED", "n_examples": 86016, "n_groups": 6, "aucs": {"gradient_boosting": 0.4999052059871179, "logistic_regression": 0.5012333288236901, "mlp_exploratory": 0.4998771371664824}}

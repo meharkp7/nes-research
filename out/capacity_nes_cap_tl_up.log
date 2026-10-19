@@ -1,0 +1,3 @@
+Failed to load CPU gemm_4bit_forward from kernels-community: No module named 'kernels'. Please make sure you already `pip install kernels` and the kernels >= 0.11.1
+{"tensor": "model.layers.11.mlp.up_proj.weight", "eligible_capacity_bits": 11128339, "max_feasible_payload_bits": 11128211, "source_tensor_sha256": "7f221cb7e2015377bf36739d7eba496f0128aaeefe333adf36e8e759f622c5cd"}
+{"status": "COMPLETED", "measured_rows": 24, "failures": []}

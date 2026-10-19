@@ -1,0 +1,62 @@
+{
+  "anchor_codes_before": 108911,
+  "bits": 5000,
+  "blocksize": 64,
+  "carrier_agreement_cycle0": 1.0,
+  "changed_anchor_codes": 81,
+  "changed_codes": 2527,
+  "clean_tensor_sha256": "216ebcf4c9eb7a6ff889ad6311449ff248112dfc85113d0b4710f29bf8153a6e",
+  "condition": "pair_parity__L0.self_attn.q__5000__20261018",
+  "cycles": [
+    {
+      "anchor_codes_after": 108927,
+      "anchor_codes_delta": 16,
+      "artifact": "artifacts/pair_parity__L0.self_attn.q__5000__20261018_c0.bin",
+      "artifact_sha256": "37879c43e2b5cc69ed510240b353e18fdfb621f0cb88beaaeae011517c0d34a4",
+      "blocks_without_endpoint": 28,
+      "changed_anchor_codes": 81,
+      "cycle": 0,
+      "packed_code_hamming_vs_source": 2527
+    },
+    {
+      "anchor_codes_after": 108991,
+      "anchor_codes_delta": 80,
+      "artifact": "artifacts/pair_parity__L0.self_attn.q__5000__20261018_c1.bin",
+      "artifact_sha256": "2a66013ce1b908afb3cfbf83e3bc4c75db2ad9b69f2fed084db12db01a1a6f8a",
+      "blocks_without_endpoint": 0,
+      "changed_anchor_codes": 81,
+      "cycle": 1,
+      "packed_code_hamming_vs_source": 3097
+    },
+    {
+      "anchor_codes_after": 108991,
+      "anchor_codes_delta": 80,
+      "artifact": "artifacts/pair_parity__L0.self_attn.q__5000__20261018_c2.bin",
+      "artifact_sha256": "2a66013ce1b908afb3cfbf83e3bc4c75db2ad9b69f2fed084db12db01a1a6f8a",
+      "blocks_without_endpoint": 0,
+      "changed_anchor_codes": 81,
+      "cycle": 2,
+      "packed_code_hamming_vs_source": 3097
+    },
+    {
+      "anchor_codes_after": 108991,
+      "anchor_codes_delta": 80,
+      "artifact": "artifacts/pair_parity__L0.self_attn.q__5000__20261018_c3.bin",
+      "artifact_sha256": "2a66013ce1b908afb3cfbf83e3bc4c75db2ad9b69f2fed084db12db01a1a6f8a",
+      "blocks_without_endpoint": 0,
+      "changed_anchor_codes": 81,
+      "cycle": 3,
+      "packed_code_hamming_vs_source": 3097
+    }
+  ],
+  "elapsed_s": 0.23,
+  "eligible_codes": 4194304,
+  "method": "pair_parity",
+  "nested": true,
+  "payload_sha256": "b764fe9f2f846c918539712c4b30e134c86ededfbea4259044e0c62eef96ad94",
+  "quant_type": "nf4",
+  "seed": 20261018,
+  "status": "EMBEDDED",
+  "stego_tensor_sha256": "37879c43e2b5cc69ed510240b353e18fdfb621f0cb88beaaeae011517c0d34a4",
+  "tensor": "model.layers.0.self_attn.q_proj.weight"
+}

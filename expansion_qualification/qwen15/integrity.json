@@ -1,0 +1,17 @@
+{
+  "clean_tensor_sha256": "e955d7d09770fc4a900da00e7fd7a37352bc76703a135d68e0ab0e70867fae56",
+  "differing_keys": [
+    "model.layers.0.self_attn.q_proj.weight"
+  ],
+  "finite_logits_and_loss": true,
+  "model": "Qwen/Qwen2.5-1.5B",
+  "n_tensors": 1318,
+  "only_intended_tensor_differs": true,
+  "payload_exact_recovery": true,
+  "revision": "8faed761d45a263340a0528343f099c05c9a4323",
+  "seed": 20261016,
+  "shape_preserved": true,
+  "size": 10000,
+  "stego_tensor_sha256": "eb979f770c8a89cfe3b6d5faca23ee10e7f405d3a0fc402369c70ea353035bab",
+  "tensor": "model.layers.0.self_attn.q_proj.weight"
+}

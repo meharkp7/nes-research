@@ -1,0 +1,36 @@
+........................................................................ [ 17%]
+........................................................................ [ 34%]
+........................................................................ [ 51%]
+........................................................................ [ 68%]
+........................................................................ [ 85%]
+...........................................................           [100%]
+=============================== warnings summary ===============================
+../.venv/lib/python3.14/site-packages/torch/jit/_script.py:359: 14 warnings
+  /Users/meharkapoor7/nes-research/.venv/lib/python3.14/site-packages/torch/jit/_script.py:359: DeprecationWarning: `torch.jit.script_method` is not supported in Python 3.14+ and may break. Please switch to `torch.compile` or `torch.export`.
+    warnings.warn(
+
+tests/test_run_packed_nf4_cross_model_detector.py::test_cross_model_evaluation_holds_out_each_model_and_reports_transfer
+  /Users/meharkapoor7/nes-research/.venv/lib/python3.14/site-packages/joblib/externals/loky/backend/context.py:134: UserWarning: Could not find the number of physical cores for the following reason:
+  invalid literal for int() with base 10: ''
+  Returning the number of logical cores instead. You can silence this warning by setting LOKY_MAX_CPU_COUNT to the number of cores you want to use.
+    warnings.warn(
+
+tests/test_run_packed_nf4_detector_benchmark.py::test_grouped_sensitivity_holds_out_each_group_once_and_reports_models
+tests/test_run_packed_nf4_detector_benchmark.py::test_grouped_sensitivity_holds_out_each_group_once_and_reports_models
+tests/test_run_packed_nf4_detector_benchmark.py::test_grouped_sensitivity_holds_out_each_group_once_and_reports_models
+tests/test_run_packed_nf4_detector_benchmark.py::test_grouped_sensitivity_holds_out_each_group_once_and_reports_models
+  /Users/meharkapoor7/nes-research/.venv/lib/python3.14/site-packages/sklearn/neural_network/_multilayer_perceptron.py:695: UserWarning: Got `batch_size` less than 1 or larger than sample size. It is going to be clipped
+    warnings.warn(
+
+tests/test_strategy_registry.py::RoundTripTests::test_probe_reports_for_every_registered_strategy
+tests/test_strategy_registry.py::RoundTripTests::test_qae_round_trips_without_cover
+  /Users/meharkapoor7/nes-research/nes-llm/src/embedding/strategies/quantization_strategy.py:56: UserWarning: To copy construct from a tensor, it is recommended to use sourceTensor.detach().clone() or sourceTensor.detach().clone().requires_grad_(True), rather than torch.tensor(sourceTensor).
+    return torch.tensor(
+
+tests/test_strategy_registry.py::RoundTripTests::test_probe_reports_for_every_registered_strategy
+tests/test_strategy_registry.py::RoundTripTests::test_qae_round_trips_without_cover
+  /Users/meharkapoor7/nes-research/nes-llm/src/embedding/strategies/quantization_strategy.py:51: UserWarning: To copy construct from a tensor, it is recommended to use sourceTensor.detach().clone() or sourceTensor.detach().clone().requires_grad_(True), rather than torch.tensor(sourceTensor).
+    return torch.tensor(
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+419 passed, 23 warnings, 3 subtests passed in 18.64s

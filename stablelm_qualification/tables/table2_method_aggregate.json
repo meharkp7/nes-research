@@ -1,0 +1,20 @@
+[
+  {
+    "method": "interior_nearest",
+    "cycle_extractions": 360,
+    "exact": 360,
+    "anchor_codes_changed": 0
+  },
+  {
+    "method": "nearest_parity",
+    "cycle_extractions": 360,
+    "exact": 93,
+    "anchor_codes_changed": 88150
+  },
+  {
+    "method": "pair_parity",
+    "cycle_extractions": 360,
+    "exact": 93,
+    "anchor_codes_changed": 88297
+  }
+]

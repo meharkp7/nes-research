@@ -1,0 +1,563 @@
+"""
+Experiment registry and dependency graph.
+
+Separates three things the handoff §23 asks to keep apart:
+
+    registry         what experiments exist and what their gates are
+    dependency graph which experiment needs which earlier experiment
+    runner           how a selected experiment is actually executed
+
+Gates live here, not inside individual experiment bodies, so that no
+experiment can quietly relax its own threshold (§25 rule 12).
+"""
+
+from typing import Dict, List
+
+# ---------------------------------------------------------------------
+# Thresholds — the research gates.
+#
+# These are never changed to make an experiment pass. Changing one is a
+# research decision, recorded in the manifest notes, not a code fix.
+# ---------------------------------------------------------------------
+
+THRESHOLDS = {
+    "exp1": {
+        "description": "Residual extraction succeeds and QACI accepts the result.",
+        "max_allowed_layer_mismatch": 0,
+    },
+    "exp2": {
+        "description": "Residual fingerprint is informative.",
+        "min_mean_magnitude": 0.002,
+        "min_fraction_layers_above": 0.80,
+    },
+    "exp3": {
+        "description": "Clean embed -> extract -> decrypt round trip.",
+        "max_ber": 0.0,
+    },
+    "exp4": {
+        "description": "Capacity curve: payload sizes recovering at BER=0.",
+        "min_bits_required_by_guide": 500_000,
+    },
+    "exp5": {
+        "description": "Perplexity degradation attributable to embedding.",
+        "max_ppl_degradation_pct": 2.0,
+    },
+    "exp6": {
+        "description": "BER under additive Gaussian noise.",
+        "max_ber_at_sigma_0_001": 0.02,
+        "max_ber_at_sigma_0_002": 0.10,
+    },
+    "exp7_statistical": {
+        "description": "Statistical undetectability of the embedding.",
+        "max_kl_divergence": 0.05,
+        "max_detector_accuracy": 0.55,
+    },
+    "exp7_neural": {
+        "description": "Carrier-centered neural steganalysis stress test.",
+        "max_detector_accuracy": 0.55,
+    },
+    "exp11": {
+        "description": "LWE grid width vs both gates (robustness + detectability).",
+        "max_ber_at_sigma_0_001": 0.02,
+        "max_detector_accuracy": 0.55,
+    },
+    "exp8": {
+        "description": "Cross-model aggregation of G2-G6.",
+        "required_gates": [
+            "g2_qaci",
+            "g3_ber",
+            "g4_ppl",
+            "g5_robustness",
+            "g6_statistical",
+            "g6_neural_detector",
+        ],
+    },
+    "exp9": {
+        "description": (
+            "Clean BER through format-specific dequantization "
+            "(GPTQ / AWQ), each verified against its FP16 reference."
+        ),
+        "max_ber": 0.0,
+        # The dequantizer gate, stated here rather than only as a
+        # default in `verify_dequantization`, so that ground rule 2
+        # ("thresholds live in experiment_registry.THRESHOLDS") is
+        # true of *every* threshold the suite uses. Exp9 reads these
+        # and passes them in; adapters.py keeps the same numbers as
+        # its defaults for callers outside the suite.
+        "min_dequant_correlation": 0.95,
+        "max_dequant_residual_ratio": 0.5,
+    },
+    "exp13": {
+        "description": (
+            "Keyless recovery (W4.2): without any key, an attacker "
+            "holding only the released model must be at chance reading "
+            "the embedded bitstream, and must not locate the LWE grid "
+            "width to within 1% from the weights alone."
+        ),
+        "min_keyless_ber": 0.5,
+        "min_width_search_relative_error": 0.01,
+    },
+    "exp14": {
+        "description": (
+            "Blind-patch adversary (W3.2): an attacker who does not "
+            "know carrier positions must be at chance. The 55% number "
+            "is exp7_neural's existing gate, reused, not a new "
+            "threshold; the carrier-centered control arm is a "
+            "validity check and carries no gate of its own."
+        ),
+        "max_blind_detector_accuracy": 0.55,
+    },
+    "exp15": {
+        "description": (
+            "LWE fidelity (W2): three-way perplexity in exp5's "
+            "protocol — only reconstruction-control to embedded is "
+            "attributable to the payload. The 2% number is exp5's own "
+            "threshold, reused, not a new one."
+        ),
+        "max_ppl_degradation_pct": 2.0,
+    },
+    "exp16": {
+        "description": (
+            "Cross-scheme detector (W3.1): BOTH cross directions — "
+            "sign-trained tested on LWE, and LWE-trained tested on "
+            "sign — must stay at chance. The 55% number is "
+            "exp7_neural's existing gate, reused, not a new "
+            "threshold; within-scheme controls carry no gate but "
+            "claim_audit requires them to clear the line."
+        ),
+        "max_cross_scheme_detector_accuracy": 0.55,
+    },
+    "exp17": {
+        "description": (
+            "QAE round trip (W1.1): the new dict-adapter must "
+            "survive exp3's exact production round trip. The BER "
+            "number is exp3's own gate, reused, not a new one."
+        ),
+        "max_ber": 0.0,
+    },
+    "exp18": {
+        "description": (
+            "Strategy x model matrix (W1.3): per cell, the round "
+            "trip must hold (exp3's 0.0), robustness must hold at "
+            "sigma 0.001/0.002 (exp6's 0.02/0.10), and the "
+            "strategy's own detector must stay at chance (exp7's "
+            "0.55). Four numbers, four reused sources, none new."
+        ),
+        "max_ber": 0.0,
+        "max_ber_at_sigma_0_001": 0.02,
+        "max_ber_at_sigma_0_002": 0.10,
+        "max_detector_accuracy": 0.55,
+    },
+    "exp19": {
+        "description": (
+            "Adaptive routing (W5.1): every branch round trip that "
+            "runs must hold at the round-trip gate — exp3's 0.0, "
+            "reused. WHICH branch the noise estimate selects is "
+            "measurement, not gate; a route to an unavailable "
+            "branch is recorded as the design's own failure."
+        ),
+        "max_ber": 0.0,
+    },
+    "exp20": {
+        "description": (
+            "Sign/parity split dial (W5.3): the same four numbers "
+            "exp18 reused, per fraction cell — round trip exp3's "
+            "0.0, robustness exp6's 0.02/0.10, detector exp7's "
+            "0.55. The TRADE-OFF SHAPE across fractions is the "
+            "measurement; per-cell verdicts, no experiment verdict."
+        ),
+        "max_ber": 0.0,
+        "max_ber_at_sigma_0_001": 0.02,
+        "max_ber_at_sigma_0_002": 0.10,
+        "max_detector_accuracy": 0.55,
+    },
+    "exp21": {
+        "description": (
+            "QAE encode + LWE read-out (W5.2): the plan called the "
+            "combination 'plausible', so the interop round trip must "
+            "hold at exp3's 0.0 — and the SAME stream read through "
+            "its own (matched) extractor must also be 0.0, so a "
+            "failure is attributable to the read-out pairing, not "
+            "to a broken embed. Two numbers, exp3's, both reused."
+        ),
+        "max_ber": 0.0,
+        "max_control_ber": 0.0,
+    },
+    "exp22": {
+        "description": (
+            "Per-layer LWE grid width (W5.4): exp10's four numbers, "
+            "per cell — the global-width cell must hold them (it is "
+            "exp10's own lwe cell under another name) and the "
+            "per-layer cell must hold them too, or the rule is not "
+            "viable. The DELTA between cells is the measurement; "
+            "per-cell verdicts, no experiment verdict."
+        ),
+        "max_ber": 0.0,
+        "max_ber_at_sigma_0_001": 0.02,
+        "max_ber_at_sigma_0_002": 0.10,
+        "max_detector_accuracy": 0.55,
+    },
+    "exp23": {
+        "description": (
+            "Model surgery survival (W6): exp3's 0.0 per cell — "
+            "'survives' means the payload reads back exactly after "
+            "the surgery, so every non-zero BER is a cell failing "
+            "and its number is the degradation (total vs graceful "
+            "is read from the numbers, not from a relaxed gate). "
+            "The weight-path control must also be 0.0: it is the "
+            "pipeline's validity check, not a result."
+        ),
+        "max_ber": 0.0,
+        "max_control_ber": 0.0,
+    },
+    "exp24": {
+        "description": (
+            "W7 Pareto frontier: citation integrity, not a scientific "
+            "threshold — every detector accuracy and robustness value "
+            "this synthesis cites must equal its source artifact "
+            "exactly (recomputed by claim_audit from the sources), "
+            "and the frontier must recompute from the artifact's own "
+            "points. A synthesis cannot PASS by being plausible."
+        ),
+        "max_source_delta": 0.0,
+    },
+    "exp25": {
+        "description": (
+            "Selection-policy ablation (W9.1): write rule (sign), QACI "
+            "Hamilton layer allocation (digest-pinned), payload "
+            "(10,000 bits) and message are held identical across "
+            "three within-layer position policies — random, magnitude "
+            "(production), key-derived. Every policy must round-trip "
+            "at BER 0.0 (a policy that cannot carry the payload makes "
+            "the comparison meaningless), and the PRODUCTION arm must "
+            "hold exp7's detectability gates and exp6's sigma=0.001 "
+            "robustness gate. Baseline arms are not deployment "
+            "candidates: their numbers are reported against the same "
+            "reference lines as per-arm flags, not as status "
+            "drivers. The keyless question (can an attacker re-running "
+            "the public selection rule locate carriers?) is measured "
+            "and compared against pre-registered hypotheses, not "
+            "gated."
+        ),
+        "max_ber_all_arms": 0.0,
+        "max_detector_accuracy": 0.55,
+        "max_kl_divergence": 0.05,
+        "max_production_ber_at_sigma_0_001": 0.02,
+    },
+    "exp26": {
+        "description": (
+            "Capacity scaling (W9.2): the unchanged production path at "
+            "1k / 2.5k / 5k / 10k / 20k / 50k payload bits — every "
+            "size must round-trip at BER 0.0 (exp3's gate reused) and "
+            "stay inside exp7's detectability gates (0.55 accuracy, "
+            "0.05 KL). A failed size is a measured capacity or "
+            "detectability limit and stays in the artifact; points "
+            "are never dropped because they fail. exp4 owns the "
+            "500k–10M end of the curve; this is the 1k–50k band with "
+            "detectability attached."
+        ),
+        "max_ber": 0.0,
+        "max_detector_accuracy": 0.55,
+        "max_kl_divergence": 0.05,
+    },
+    "exp27": {
+        "description": (
+            "Threat-model boundary (W9.3): on ONE production embed. "
+            "The control (full access + correct key) must recover the "
+            "message at BER 0.0. Wrong-key decryption must recover 0 "
+            "messages across at least 10 distinct wrong keys and must "
+            "never emit plaintext (AES-GCM authentication is the "
+            "claim; the count is the evidence). Partial model access "
+            "— first 50/25/10% of layers and a seeded scattered "
+            "50/25/10% subset — must recover 0 messages. "
+            "Channel-level readability per condition (raw BER with "
+            "and without the carrier map, public-rule position "
+            "re-derivation) is measured and reported, not gated: the "
+            "boundary this experiment draws is about message "
+            "confidentiality."
+        ),
+        "max_control_ber": 0.0,
+        "min_wrong_keys_tested": 10,
+        "max_wrong_key_recoveries": 0,
+        "max_partial_access_recoveries": 0,
+    },
+}
+
+
+# ---------------------------------------------------------------------
+# Target models (§5).
+#
+# expected_layers is a guide-level expectation, never an assumption. The
+# real orchestrator records both expected and actual layer counts and
+# flags a mismatch rather than silently trusting either.
+# ---------------------------------------------------------------------
+
+TARGET_MODELS: List[Dict] = [
+    {
+        "model_id": "meta-llama/Llama-3.1-8B",
+        "family": "llama",
+        "expected_layers": 32,
+    },
+    {
+        "model_id": "mistralai/Mistral-7B-v0.3",
+        "family": "mistral",
+        "expected_layers": 32,
+    },
+    {
+        "model_id": "google/gemma-2-9b",
+        "family": "gemma",
+        "expected_layers": 42,
+    },
+    {
+        "model_id": "Qwen/Qwen2.5-7B",
+        "family": "qwen",
+        "expected_layers": 28,
+    },
+    {
+        "model_id": "Qwen/Qwen2.5-3B",
+        "family": "qwen",
+        "expected_layers": 36,
+    },
+    {
+        "model_id": "TinyLlama/TinyLlama-1.1B-Chat-v1.0",
+        "family": "llama",
+        "expected_layers": 22,
+    },
+    {
+        "model_id": "microsoft/Phi-3-mini-4k-instruct",
+        "family": "phi3",
+        "expected_layers": 32,
+    },
+]
+
+# Architectures claimed by the registry versus architectures with real
+# experimental evidence (§6). MoE/Falcon are NOT validated merely
+# because registry entries could be written for them.
+ARCHITECTURE_SUPPORT = {
+    "llama": "VALIDATED",
+    "mistral": "VALIDATED",
+    "gemma": "VALIDATED",
+    "qwen": "VALIDATED",
+    "phi3": "VALIDATED",
+    "falcon": "NOT_VALIDATED",
+    "mixtral": "NOT_VALIDATED",
+    "moe": "NOT_VALIDATED",
+}
+
+
+def get_model(model_id: str) -> Dict:
+    for entry in TARGET_MODELS:
+        if entry["model_id"] == model_id:
+            return dict(entry)
+
+    raise KeyError(f"Unknown model: {model_id}")
+
+
+def expected_layers(model_id: str) -> int:
+    return int(get_model(model_id)["expected_layers"])
+
+
+def family_of(model_id: str) -> str:
+    return str(get_model(model_id)["family"])
+
+
+def is_known_architecture(family: str) -> bool:
+    return family in ARCHITECTURE_SUPPORT
+
+
+def architecture_status(family: str) -> str:
+    return ARCHITECTURE_SUPPORT.get(family, "UNKNOWN")
+
+
+# ---------------------------------------------------------------------
+# Experiment definitions
+# ---------------------------------------------------------------------
+
+EXPERIMENTS: Dict[str, Dict] = {
+    "exp1": {
+        "name": "Architecture Probe",
+        "gate_key": "exp1",
+        "depends_on": [],
+        # No model load. Loading NF4 + FP16 together costs ~19GB for a 7B
+        # model and OOMs MPS, purely to read a layer count the residual
+        # dictionary already states. Everything from exp1 to exp7 then
+        # runs cache-only.
+        "requires_models": False,
+        "requires_residuals": True,
+        "module": "src.experiments.experiments.exp1_architecture",
+    },
+    "exp2": {
+        "name": "Residual Fingerprint",
+        "gate_key": "exp2",
+        "depends_on": ["exp1"],
+        "requires_models": False,
+        "requires_residuals": True,
+        "module": "src.experiments.experiments.exp2_fingerprint",
+    },
+    "exp3": {
+        "name": "Clean BER",
+        "gate_key": "exp3",
+        "depends_on": ["exp1", "exp2"],
+        "requires_models": False,
+        "requires_residuals": True,
+        "module": "src.experiments.experiments.exp3_clean_ber",
+    },
+    "exp4": {
+        "name": "Capacity Curve",
+        "gate_key": "exp4",
+        "depends_on": ["exp3"],
+        "requires_models": False,
+        "requires_residuals": True,
+        "module": "src.experiments.experiments.exp4_capacity",
+    },
+    "exp5": {
+        "name": "Fidelity (real PPL)",
+        "gate_key": "exp5",
+        "depends_on": ["exp3"],
+        # Loaded lazily by the experiment itself: it reuses a recorded
+        # three-way PPL result when one exists, and preloading two models
+        # would cost exactly the resources that reuse avoids.
+        "requires_models": False,
+        "requires_residuals": True,
+        "module": "src.experiments.experiments.exp5_fidelity",
+    },
+    "exp6": {
+        "name": "Robustness",
+        "gate_key": "exp6",
+        "depends_on": ["exp3"],
+        "requires_models": False,
+        "requires_residuals": True,
+        "module": "src.experiments.experiments.exp6_robustness",
+    },
+    "exp7": {
+        "name": "Security (statistical)",
+        "gate_key": "exp7_statistical",
+        "depends_on": ["exp3"],
+        "requires_models": False,
+        "requires_residuals": True,
+        "module": "src.experiments.experiments.exp7_security",
+    },
+    "exp7_neural": {
+        "name": "Security (neural steganalysis)",
+        "gate_key": "exp7_neural",
+        # Depends on the same embedding evidence as exp7, and tracked as
+        # its own cell so its FAIL verdict stays visible next to the
+        # statistical PASS rather than being averaged into one number.
+        "depends_on": ["exp3"],
+        "requires_models": False,
+        "requires_residuals": False,
+        "module": (
+            "src.experiments.experiments.exp7_neural_detector"
+        ),
+    },
+    "exp10": {
+        "name": "Strategy Head-to-Head",
+        "gate_key": "exp10",
+        "depends_on": ["exp3"],
+        "requires_models": False,
+        "requires_residuals": True,
+        "module": "src.experiments.exp10_strategy_comparison",
+    },
+    "exp11": {
+        "name": "LWE Grid Width Frontier",
+        "gate_key": "exp11",
+        "depends_on": ["exp10"],
+        "requires_models": False,
+        "requires_residuals": True,
+        "module": "src.experiments.exp11_lwe_alpha_pareto",
+    },
+    "exp8": {
+        "name": "Real Cross-Model Table",
+        "gate_key": "exp8",
+        "depends_on": [
+            "exp1", "exp2", "exp3", "exp4",
+            "exp5", "exp6", "exp7", "exp7_neural",
+        ],
+        "requires_models": True,
+        "requires_residuals": False,
+        "module": "src.experiments.experiments.exp8_cross_model",
+    },
+    "exp9": {
+        "name": "GPTQ / AWQ",
+        "gate_key": "exp9",
+        "depends_on": ["exp3"],
+        "requires_models": False,
+        "requires_residuals": False,
+        "module": "src.experiments.experiments.exp9_alternative_quant",
+    },
+}
+
+
+def experiment_names() -> List[str]:
+    return list(EXPERIMENTS.keys())
+
+
+def gate_for(experiment: str) -> Dict:
+    """Return the thresholds for an experiment name or a gate key.
+
+    Accepting either keeps call sites honest: experiment modules refer to
+    themselves by registry name, while their gates are named
+    ``exp7_statistical`` / ``exp7_neural``. Looking up a gate key as if it
+    were an experiment name raises a KeyError at run time, which is how
+    that mix-up surfaces when it happens.
+    """
+    if experiment in EXPERIMENTS:
+        return THRESHOLDS[EXPERIMENTS[experiment]["gate_key"]]
+
+    if experiment in THRESHOLDS:
+        return THRESHOLDS[experiment]
+
+    raise KeyError(f"Unknown experiment or gate: {experiment}")
+
+
+def dependencies_of(experiment: str) -> List[str]:
+    return list(EXPERIMENTS[experiment]["depends_on"])
+
+
+def resolve_order(requested: List[str]) -> List[str]:
+    """Topologically order the requested experiments by dependency.
+
+    The handoff requires dependency order to be preserved even when an
+    experiment is reused from an existing artifact: a reused artifact
+    still needs its prerequisites to have been decided.
+    """
+    if not requested:
+        return list(EXPERIMENTS.keys())
+
+    for name in requested:
+        if name not in EXPERIMENTS:
+            raise KeyError(f"Unknown experiment: {name}")
+
+    ordered: List[str] = []
+    visiting = set()
+
+    def visit(name: str) -> None:
+        if name in ordered:
+            return
+        if name in visiting:
+            raise ValueError(f"Circular dependency at {name}")
+        visiting.add(name)
+        for dep in dependencies_of(name):
+            if dep in requested:
+                visit(dep)
+        visiting.discard(name)
+        ordered.append(name)
+
+    for name in requested:
+        visit(name)
+
+    return ordered
+
+
+def transitive_dependencies(experiment: str) -> List[str]:
+    """All prerequisites of an experiment, in dependency order."""
+    seen: List[str] = []
+
+    def visit(name: str) -> None:
+        for dep in dependencies_of(name):
+            if dep not in seen:
+                seen.append(dep)
+                visit(dep)
+
+    visit(experiment)
+    return seen

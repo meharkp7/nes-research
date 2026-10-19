@@ -1,0 +1,131 @@
+{
+  "all_within_margin": true,
+  "clean_ppl": 12.977961663618768,
+  "comparisons": [
+    {
+      "ci95_nll": [
+        -0.0002365797760917941,
+        0.00020560244186919294
+      ],
+      "clean_ppl": 12.977961663618768,
+      "condition": "emb_10000_20261016",
+      "embedded_ppl": 12.977800133980212,
+      "mean_delta_per_token_nll": -1.2446534208090135e-05,
+      "n_sequences": 580,
+      "relative_ppl_change_ci95_pct": [
+        -0.02365517933033967,
+        0.020562357949982513
+      ],
+      "relative_ppl_change_pct": -0.0012446456750359047,
+      "seed": 20261016,
+      "size": 10000,
+      "stego_tensor_sha256": "658877c285bc2d8f03f4178fa8f51753b146edcbe7e7267507b9947d53fa47e7",
+      "within_margin_0p5pct": true
+    },
+    {
+      "ci95_nll": [
+        -9.996030758456731e-05,
+        0.00032764717718312676
+      ],
+      "clean_ppl": 12.977961663618768,
+      "condition": "emb_10000_20261017",
+      "embedded_ppl": 12.979483028337418,
+      "mean_delta_per_token_nll": 0.00011721991424385501,
+      "n_sequences": 580,
+      "relative_ppl_change_ci95_pct": [
+        -0.009995531171946848,
+        0.03277008593822739
+      ],
+      "relative_ppl_change_pct": 0.011722678476644433,
+      "seed": 20261017,
+      "size": 10000,
+      "stego_tensor_sha256": "156e75b8466c19e997943a2754161be8738a887c317c6a934b34d2ab1e632b8a",
+      "within_margin_0p5pct": true
+    },
+    {
+      "ci95_nll": [
+        -8.852796440657369e-05,
+        0.000354636390727737
+      ],
+      "clean_ppl": 12.977961663618768,
+      "condition": "emb_10000_20261018",
+      "embedded_ppl": 12.979699834660856,
+      "mean_delta_per_token_nll": 0.0001339235466029675,
+      "n_sequences": 580,
+      "relative_ppl_change_ci95_pct": [
+        -0.008852404592196716,
+        0.03546992816467753
+      ],
+      "relative_ppl_change_pct": 0.013393251476156998,
+      "seed": 20261018,
+      "size": 10000,
+      "stego_tensor_sha256": "c6245cfbaa484316b79ff5c4e9a89ff5e24e061b14a5d8165b79853a416a74e1",
+      "within_margin_0p5pct": true
+    },
+    {
+      "ci95_nll": [
+        -7.560287734034959e-05,
+        0.0003162426919265911
+      ],
+      "clean_ppl": 12.977961663618768,
+      "condition": "emb_50000_20261016",
+      "embedded_ppl": 12.979503398798732,
+      "mean_delta_per_token_nll": 0.00011878934850318851,
+      "n_sequences": 580,
+      "relative_ppl_change_ci95_pct": [
+        -0.00756000195148987,
+        0.031629270191824155
+      ],
+      "relative_ppl_change_pct": 0.011879640423728688,
+      "seed": 20261016,
+      "size": 50000,
+      "stego_tensor_sha256": "92eb348f8239fd8d59b295b96263b331a206af6899a2792858015c91c71f2255",
+      "within_margin_0p5pct": true
+    },
+    {
+      "ci95_nll": [
+        -0.00010652643666189205,
+        0.0003356908109234898
+      ],
+      "clean_ppl": 12.977961663618768,
+      "condition": "emb_50000_20261017",
+      "embedded_ppl": 12.979480892661721,
+      "mean_delta_per_token_nll": 0.00011705537179887307,
+      "n_sequences": 580,
+      "relative_ppl_change_ci95_pct": [
+        -0.010652076292250179,
+        0.03357471613889551
+      ],
+      "relative_ppl_change_pct": 0.011706222304619374,
+      "seed": 20261017,
+      "size": 50000,
+      "stego_tensor_sha256": "7a7241f92e25e6a648c43680ee952f42bced2681893863caebcfd0629fe890f8",
+      "within_margin_0p5pct": true
+    },
+    {
+      "ci95_nll": [
+        -9.295953109250055e-05,
+        0.0003656403623746067
+      ],
+      "clean_ppl": 12.977961663618768,
+      "condition": "emb_50000_20261018",
+      "embedded_ppl": 12.979768666768292,
+      "mean_delta_per_token_nll": 0.0001392265910344195,
+      "n_sequences": 580,
+      "relative_ppl_change_ci95_pct": [
+        -0.00929552104891318,
+        0.03657072169598319
+      ],
+      "relative_ppl_change_pct": 0.01392362835059835,
+      "seed": 20261018,
+      "size": 50000,
+      "stego_tensor_sha256": "c103eddaf02f58c40dc933a802a5056458d4df918e9dc960d13ade8070f70ff0",
+      "within_margin_0p5pct": true
+    }
+  ],
+  "equivalence_margin_pct": 0.5,
+  "n_conditions": 6,
+  "n_sequences": 580,
+  "n_tokens_per_condition": 296380,
+  "n_within_margin": 6
+}

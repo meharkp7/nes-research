@@ -1,0 +1,40 @@
+{
+  "arguments": {
+    "bits": 10000,
+    "checkpoint": "cache/method_paper_20261016/interior_requantized",
+    "intermediate": null,
+    "method": "interior_nearest",
+    "mode": "receive",
+    "output": null,
+    "report": "artifacts/method_paper_20261016/interior_requantized_receive.json",
+    "seed": 20261016,
+    "tensor": "model.layers.0.self_attn.q_proj.weight",
+    "tokenizer": "Qwen/Qwen2.5-3B",
+    "utility": false
+  },
+  "codec_sha256": "07ce008dcabebb7ac0d4fa10c88251bf10dc9f2a7ae27dfc79bf23b8cd75b764",
+  "duration_seconds": 6.807657125000333,
+  "inference_finite": true,
+  "loaded_payload_sha256": "580fde145167ba17d539b08631a82ccc0889b6b695b332d55777e3cfd3a6cdc9",
+  "mean_nll": 4.669953346252441,
+  "original_or_expected_payload_accessed": false,
+  "per_text": [
+    {
+      "mean_nll": 4.669953346252441,
+      "scored_tokens": 20,
+      "text_index": 0
+    }
+  ],
+  "perplexity": 106.69276469902617,
+  "prompt_sha256": "03380806d6427cbe288997ea617b9888d454a78374cebd7e8700ed88533a723f",
+  "raw_payload_sha256": "580fde145167ba17d539b08631a82ccc0889b6b695b332d55777e3cfd3a6cdc9",
+  "receiver_inputs": [
+    "delivered checkpoint",
+    "test key from seed",
+    "fixed tensor/method/protocol"
+  ],
+  "runner_sha256": "18dbe6fb9da621d1aba6148806a585962fb16f80d7be79cc65ca9c8a676c871b",
+  "scope": "Development check; fixed project prompts, not external task benchmark",
+  "status": "PASS",
+  "token_count": 20
+}

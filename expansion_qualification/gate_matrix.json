@@ -1,0 +1,126 @@
+[
+  {
+    "gates": {
+      "A1_integrity": {
+        "detail": "n_tensors=1058",
+        "status": "PASS"
+      },
+      "A2_A3_roundtrip": {
+        "detail": "n_done=270/270 embed_failed=0 cycle_extractions=1080",
+        "status": "PASS"
+      },
+      "A4_detectability": {
+        "control_clean_vs_clean_auc": 0.5031,
+        "detail": {
+          "gradient_boosting": 0.4999,
+          "logistic_regression": 0.5012,
+          "mlp_exploratory": 0.4999
+        },
+        "max_tpr_at_1pct": 0.01,
+        "status": "PASS"
+      },
+      "A5_utility": {
+        "status": "NOT COMPLETE"
+      },
+      "A6_regressions": {
+        "detail": "12/12",
+        "status": "PASS"
+      }
+    },
+    "model": "HuggingFaceTB/SmolLM2-1.7B",
+    "revision": "effd688a12921b4cc83e3312b6feb579f70f9c71"
+  },
+  {
+    "gates": {
+      "A1_integrity": {
+        "detail": "n_tensors=1318",
+        "status": "PASS"
+      },
+      "A2_A3_roundtrip": {
+        "detail": "n_done=270/270 embed_failed=0 cycle_extractions=1080",
+        "status": "PASS"
+      },
+      "A4_detectability": {
+        "control_clean_vs_clean_auc": 0.512,
+        "detail": {
+          "gradient_boosting": 0.5025,
+          "logistic_regression": 0.5068,
+          "mlp_exploratory": 0.501
+        },
+        "max_tpr_at_1pct": 0.0106,
+        "status": "PASS"
+      },
+      "A5_utility": {
+        "status": "NOT COMPLETE"
+      },
+      "A6_regressions": {
+        "detail": "12/12",
+        "status": "PASS"
+      }
+    },
+    "model": "Qwen/Qwen2.5-1.5B",
+    "revision": "8faed761d45a263340a0528343f099c05c9a4323"
+  },
+  {
+    "gates": {
+      "A1_integrity": {
+        "detail": "n_tensors=772",
+        "status": "PASS"
+      },
+      "A2_A3_roundtrip": {
+        "detail": "n_done=270/270 embed_failed=0 cycle_extractions=1080",
+        "status": "PASS"
+      },
+      "A4_detectability": {
+        "control_clean_vs_clean_auc": 0.4999,
+        "detail": {
+          "gradient_boosting": 0.5002,
+          "logistic_regression": 0.5007,
+          "mlp_exploratory": 0.5
+        },
+        "max_tpr_at_1pct": 0.0101,
+        "status": "PASS"
+      },
+      "A5_utility": {
+        "status": "NOT COMPLETE"
+      },
+      "A6_regressions": {
+        "detail": "12/12",
+        "status": "PASS"
+      }
+    },
+    "model": "EleutherAI/pythia-1.4b",
+    "revision": "fedc38a16eea3bd36a96b906d78d11d2ce18ed79"
+  },
+  {
+    "gates": {
+      "A1_integrity": {
+        "detail": "n_tensors=795",
+        "status": "PASS"
+      },
+      "A2_A3_roundtrip": {
+        "detail": "n_done=270/270 embed_failed=0 cycle_extractions=1080",
+        "status": "PASS"
+      },
+      "A4_detectability": {
+        "control_clean_vs_clean_auc": 0.5059,
+        "detail": {
+          "gradient_boosting": 0.5008,
+          "logistic_regression": 0.5018,
+          "mlp_exploratory": 0.5003
+        },
+        "max_tpr_at_1pct": 0.0104,
+        "status": "PASS"
+      },
+      "A5_utility": {
+        "status": "NOT COMPLETE"
+      },
+      "A6_regressions": {
+        "detail": "12/12",
+        "status": "PASS"
+      }
+    },
+    "model": "tiiuae/Falcon3-1B-Base",
+    "revision": "cb37ef3559b157b5c9d9226296ba01a5162da1f7"
+  }
+]

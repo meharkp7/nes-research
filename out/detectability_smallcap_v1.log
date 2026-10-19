@@ -1,0 +1,3 @@
+nohup: ignoring input
+Failed to load CPU gemm_4bit_forward from kernels-community: No module named 'kernels'. Please make sure you already `pip install kernels` and the kernels >= 0.11.1
+{"status": "COMPLETED", "n_examples": 32768, "n_groups": 4, "aucs": {"gradient_boosting": 0.5197376335660616, "logistic_regression": 0.5342904478311539, "mlp_exploratory": 0.5052520235379537}}

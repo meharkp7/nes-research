@@ -1,0 +1,20 @@
+{
+  "elapsed_s": 102.9,
+  "output": "/tmp/nes_stage/pythia_clean",
+  "output_core_bytes": 1036742035,
+  "output_core_files": {
+    "config.json": "ed0682cd46b60364830958e8bd58e1c2e3c90d05ca37b62207123375761ad46f",
+    "generation_config.json": "a2eea4fc7c308e564345a9e55741669a74726eeb64ba96fc4b5fd907a5da4241",
+    "model.safetensors": "76408b01d9d01bb00e9a1787524c89ffdd900cd94bcdcb4699db861f2f0d65a1"
+  },
+  "quantization": {
+    "blocksize": 64,
+    "compute_dtype": "float16",
+    "double_quant": true,
+    "quant_storage": "uint8",
+    "quant_type": "nf4"
+  },
+  "source": "/tmp/nes_stage/pythia_fp16",
+  "status": "DONE",
+  "torch": "2.14.1+cpu"
+}

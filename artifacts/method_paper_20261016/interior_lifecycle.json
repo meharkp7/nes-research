@@ -1,0 +1,45 @@
+{
+  "arguments": {
+    "bits": 10000,
+    "checkpoint": "cache/method_paper_20261016/interior_nearest_10k",
+    "intermediate": "cache/method_paper_20261016/interior_floating",
+    "method": "interior_nearest",
+    "mode": "lifecycle",
+    "output": "cache/method_paper_20261016/interior_requantized",
+    "report": "artifacts/method_paper_20261016/interior_lifecycle.json",
+    "seed": 20261016,
+    "tensor": "model.layers.0.self_attn.q_proj.weight",
+    "tokenizer": "Qwen/Qwen2.5-3B",
+    "utility": false
+  },
+  "codec_sha256": "ed0cdbe8de3f77feb4031208353e75baf6210357963df2b13c62b6b9bce9cb1a",
+  "duration_seconds": 17.012452666999707,
+  "intermediate_dtype": "torch.bfloat16",
+  "original_weight_conversion_operations": [
+    "Bnb4bitDeserialize"
+  ],
+  "original_weight_conversion_types": [
+    "WeightConverter"
+  ],
+  "output_file_hashes": {
+    "config.json": "d319acc274e2f7459a45522b3cd56d5e3974b4955ab42f64600a352dd9673c92",
+    "generation_config.json": "a2ac0d07aac37502207a212b122abe32bd9564266594a317c0ff490ebce1f226",
+    "model-00001-of-00002.safetensors": "26622f6673daf2829a8c6501b8f2ddc8f7749f1ffe2175bc226cd661e756fe5c",
+    "model-00002-of-00002.safetensors": "af62fb1bee7ab4917c077de3df0bff3e67e13b511b0a4d10012618e806d6d94d",
+    "model.safetensors.index.json": "0f60858a1be19492091c939bc9b296742b83558ca10c3ce15c2aea1687702534"
+  },
+  "output_tensor_sha256": "904f523abcca6cfbd5f0bd71a5c69f811f91ce51aef81cf58f4ba2ce5ccbb9ce",
+  "recovery": {
+    "ber_uses_evaluator_known_length": true,
+    "decode_error": null,
+    "exact_recovery": true,
+    "payload_ber": 0.0,
+    "payload_bit_errors": 0,
+    "recovered_sha256": "580fde145167ba17d539b08631a82ccc0889b6b695b332d55777e3cfd3a6cdc9"
+  },
+  "runner_sha256": "65de30512246fad77373882e3455676946b598ffe88979e83e130c4a4cb5bdb7",
+  "status": "PASS",
+  "transformation": "whole model NF4 -> floating checkpoint -> fresh nested NF4 checkpoint",
+  "transformation_completed": true,
+  "weight_conversion_reverse_bypassed_after_dequantization": true
+}

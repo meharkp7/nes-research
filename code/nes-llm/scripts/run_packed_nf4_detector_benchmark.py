@@ -1,0 +1,417 @@
+#!/usr/bin/env python3
+"""Run one consolidated mixed-model packed-NF4 detector benchmark.
+
+Primary: random split of matched clean/embedded block pairs, stratified by model.
+Sensitivity: hold out complete source/run groups to expose artifact/run leakage.
+This is an exploratory block-feature benchmark, not proof of universal stealth.
+"""
+from __future__ import annotations
+
+import argparse
+import hashlib
+import json
+from datetime import datetime, timezone
+from pathlib import Path
+
+import numpy as np
+import pandas as pd
+from sklearn.base import clone
+from sklearn.ensemble import HistGradientBoostingClassifier, RandomForestClassifier
+from sklearn.impute import SimpleImputer
+from sklearn.linear_model import LogisticRegression
+from sklearn.inspection import permutation_importance
+from sklearn.metrics import (
+    accuracy_score, average_precision_score, balanced_accuracy_score,
+    confusion_matrix, f1_score, precision_score, recall_score, roc_auc_score,
+)
+from sklearn.model_selection import GroupKFold
+from sklearn.neural_network import MLPClassifier
+from sklearn.pipeline import make_pipeline
+from sklearn.preprocessing import StandardScaler
+
+META = {
+    "artifact_id", "artifact_sha256", "run_id", "source_id", "model_id",
+    "tensor_key", "role", "label", "block_index", "split",
+}
+SPLITS = ("train", "validation", "test")
+PAIR_COLS = ("source_id", "run_id", "block_index")
+GROUP_COLS = ("source_id", "run_id")
+
+
+def sha256_file(path: Path) -> str:
+    h = hashlib.sha256()
+    with path.open("rb") as f:
+        for chunk in iter(lambda: f.read(1024 * 1024), b""):
+            h.update(chunk)
+    return h.hexdigest()
+
+
+def validate_dataset(df: pd.DataFrame) -> list[str]:
+    required = META | set(PAIR_COLS) | set(GROUP_COLS)
+    missing = sorted(required - set(df.columns))
+    if missing:
+        raise ValueError(f"Missing required columns: {missing}")
+    if df.empty:
+        raise ValueError("Dataset is empty")
+    role_label = df["role"].map({"clean": 0, "embedded": 1})
+    labels = pd.to_numeric(df["label"], errors="coerce")
+    if role_label.isna().any() or labels.isna().any() or not np.array_equal(role_label.to_numpy(), labels.astype(int).to_numpy()):
+        raise ValueError("Role/label mismatch or unknown role")
+    features = [c for c in df.columns if c not in META]
+    bad = [c for c in features if not pd.api.types.is_numeric_dtype(df[c])]
+    if not features or bad:
+        raise ValueError(f"Features must be numeric and non-empty; invalid: {bad}")
+    if df[["model_id", *PAIR_COLS]].isna().any().any():
+        raise ValueError("Model and pair identifiers may not be null")
+    pair = df.groupby(list(PAIR_COLS), dropna=False)
+    bad_pairs = []
+    for key, g in pair:
+        if len(g) != 2 or set(g["label"].astype(int)) != {0, 1} or g["model_id"].nunique() != 1:
+            bad_pairs.append(str(key))
+            if len(bad_pairs) >= 5:
+                break
+    if bad_pairs:
+        raise ValueError(f"Expected exactly one clean and one embedded row per matched pair; examples: {bad_pairs}")
+    return features
+
+
+def make_mixed_split(df: pd.DataFrame, seed: int) -> pd.DataFrame:
+    """Assign matched pairs to partitions; balance each model across partitions."""
+    pairs = df[list(PAIR_COLS + ("model_id",))].drop_duplicates()
+    if pairs.duplicated(list(PAIR_COLS)).any():
+        raise ValueError("A matched pair maps to multiple model IDs")
+    pairs["pair_key"] = pairs[list(PAIR_COLS)].astype(str).agg("::".join, axis=1)
+    pairs["split"] = ""
+    rng = np.random.RandomState(seed)
+    for model, sub in pairs.groupby("model_id", sort=True):
+        keys = sub["pair_key"].to_numpy().copy()
+        rng.shuffle(keys)
+        n = len(keys)
+        if n < 3:
+            raise ValueError(f"Model {model!r} has only {n} pairs; need at least 3 for three partitions")
+        n_train = max(1, int(round(n * 0.60)))
+        n_val = max(1, int(round(n * 0.20)))
+        if n_train + n_val >= n:
+            n_train, n_val = n - 2, 1
+        assigned = ["train"] * n_train + ["validation"] * n_val + ["test"] * (n - n_train - n_val)
+        for key, split in zip(keys, assigned):
+            pairs.loc[pairs["pair_key"] == key, "split"] = split
+    lookup = pairs.set_index("pair_key")["split"].to_dict()
+    row_keys = df[list(PAIR_COLS)].astype(str).agg("::".join, axis=1)
+    result = df.copy()
+    result["split"] = row_keys.map(lookup)
+    if result["split"].isna().any():
+        raise ValueError("Failed to assign split to one or more rows")
+    return result
+
+
+def metric_pack(y: np.ndarray, scores: np.ndarray, threshold: float = 0.5) -> dict:
+    pred = (scores >= threshold).astype(int)
+    tn, fp, fn, tp = confusion_matrix(y, pred, labels=[0, 1]).ravel()
+    return {
+        "n_rows": int(len(y)),
+        "roc_auc": float(roc_auc_score(y, scores)) if len(np.unique(y)) == 2 else None,
+        "pr_auc": float(average_precision_score(y, scores)) if len(np.unique(y)) == 2 else None,
+        "accuracy": float(accuracy_score(y, pred)),
+        "balanced_accuracy": float(balanced_accuracy_score(y, pred)),
+        "precision": float(precision_score(y, pred, zero_division=0)),
+        "recall": float(recall_score(y, pred, zero_division=0)),
+        "f1": float(f1_score(y, pred, zero_division=0)),
+        "false_positive_rate": float(fp / max(1, fp + tn)),
+        "confusion_matrix_tn_fp_fn_tp": [int(tn), int(fp), int(fn), int(tp)],
+        "threshold": float(threshold),
+    }
+
+
+def model_zoo(seed: int) -> dict:
+    return {
+        "logistic_regression": make_pipeline(
+            SimpleImputer(strategy="median"), StandardScaler(),
+            LogisticRegression(C=1.0, max_iter=1500, class_weight="balanced", random_state=seed),
+        ),
+        "random_forest": make_pipeline(
+            SimpleImputer(strategy="median"),
+            RandomForestClassifier(n_estimators=250, min_samples_leaf=3, class_weight="balanced",
+                                   n_jobs=-1, random_state=seed),
+        ),
+        "hist_gradient_boosting": make_pipeline(
+            SimpleImputer(strategy="median"),
+            HistGradientBoostingClassifier(max_iter=160, learning_rate=0.08, max_leaf_nodes=15,
+                                           l2_regularization=1.0, random_state=seed),
+        ),
+        "mlp": make_pipeline(
+            SimpleImputer(strategy="median"), StandardScaler(),
+            MLPClassifier(hidden_layer_sizes=(64, 32), early_stopping=True, max_iter=120,
+                          batch_size=512, random_state=seed),
+        ),
+    }
+
+
+def evaluate_model(model, train, validation, test, features) -> dict:
+    Xtr, ytr = train[features].to_numpy(float), train["label"].to_numpy(int)
+    Xv, yv = validation[features].to_numpy(float), validation["label"].to_numpy(int)
+    Xt, yt = test[features].to_numpy(float), test["label"].to_numpy(int)
+    model.fit(Xtr, ytr)
+    vscore = model.predict_proba(Xv)[:, 1]
+    # Threshold chosen only on validation by Youden's J; test remains untouched.
+    thresholds = np.unique(np.concatenate(([0.0, 0.5, 1.0], vscore)))
+    threshold = max(thresholds, key=lambda t: (
+        np.mean(vscore[yv == 1] >= t) - np.mean(vscore[yv == 0] >= t),
+        -abs(float(t) - 0.5),
+    ))
+    tscore = model.predict_proba(Xt)[:, 1]
+    by_model = {}
+    test_with_scores = test.copy()
+    test_with_scores["score"] = tscore
+    for model_id, sub in test_with_scores.groupby("model_id", sort=True):
+        by_model[str(model_id)] = metric_pack(sub["label"].to_numpy(int), sub["score"].to_numpy(float), threshold)
+    return {
+        "validation": metric_pack(yv, vscore, threshold),
+        "test_pooled": metric_pack(yt, tscore, threshold),
+        "test_by_model": by_model,
+        "validation_selected_threshold": float(threshold),
+    }
+
+
+def grouped_sensitivity(df, features, seed) -> dict:
+    """GroupKFold out-of-fold sensitivity; every source/run group is held out once."""
+    group_ids = df[list(GROUP_COLS)].astype(str).agg("::".join, axis=1).to_numpy()
+    n_groups = len(np.unique(group_ids))
+    if n_groups < 3:
+        return {"status": "NOT_EVALUABLE", "reason": f"Need at least 3 source/run groups; found {n_groups}."}
+    n_splits = min(4, n_groups)
+    splitter = GroupKFold(n_splits=n_splits)
+    results = {
+        "status": "COMPLETED",
+        "method": "GroupKFold out-of-fold evaluation",
+        "fold_count": n_splits,
+        "total_group_count": n_groups,
+        "warning": "Exploratory grouped sensitivity. A small number of independent groups limits inference.",
+        "models": {},
+    }
+    y_all = df["label"].to_numpy(int)
+    model_ids = df["model_id"].astype(str).to_numpy()
+    for name, template in model_zoo(seed).items():
+        oof_scores = np.full(len(df), np.nan, dtype=float)
+        fold_details = []
+        for fold, (train_idx, test_idx) in enumerate(splitter.split(df, y_all, groups=group_ids)):
+            train, test = df.iloc[train_idx], df.iloc[test_idx]
+            train_groups = set(group_ids[train_idx])
+            test_groups = set(group_ids[test_idx])
+            if train_groups & test_groups:
+                raise AssertionError("Source/run group crossed grouped fold boundary")
+            if train["label"].nunique() < 2 or test["label"].nunique() < 2:
+                return {"status": "NOT_EVALUABLE",
+                        "reason": f"Fold {fold} lacks both labels in train or held-out groups.",
+                        "fold_count": n_splits, "total_group_count": n_groups}
+            fitted = clone(template).fit(train[features].to_numpy(float), train["label"].to_numpy(int))
+            oof_scores[test_idx] = fitted.predict_proba(test[features].to_numpy(float))[:, 1]
+            fold_details.append({
+                "fold": fold,
+                "train_group_count": len(train_groups),
+                "held_out_group_count": len(test_groups),
+                "held_out_groups": sorted(test_groups),
+                "held_out_models": sorted(test["model_id"].astype(str).unique().tolist()),
+            })
+        if np.isnan(oof_scores).any():
+            raise AssertionError("GroupKFold did not produce an out-of-fold score for every row")
+        pooled = metric_pack(y_all, oof_scores, 0.5)
+        by_model = {}
+        for model_id in sorted(np.unique(model_ids)):
+            mask = model_ids == model_id
+            by_model[model_id] = metric_pack(y_all[mask], oof_scores[mask], 0.5)
+        results["models"][name] = {
+            "oof_pooled": pooled,
+            "oof_by_model": by_model,
+            "folds": fold_details,
+        }
+    results["interpretation"] = (
+        "Each source/run group is held out once across folds. These are out-of-fold grouped "
+        "metrics, not a single fixed test split; report model-specific results and the small "
+        "number of independent groups. They are not confirmatory uncertainty estimates."
+    )
+    return results
+
+
+def label_randomization(df, features, seed, repetitions=5) -> dict:
+    """Sanity control: shuffle labels at matched-pair level and rerun a light baseline."""
+    base = df.copy()
+    train = base[base["split"] == "train"].copy()
+    test = base[base["split"] == "test"].copy()
+    out = []
+    for i in range(repetitions):
+        rng = np.random.RandomState(seed + 1000 + i)
+        # Shuffle row labels independently within each partition while keeping rows in
+        # their original partition. This is a pipeline sanity check, not a scientific null.
+        train_y = train["label"].to_numpy(int).copy()
+        test_y = test["label"].to_numpy(int).copy()
+        rng.shuffle(train_y)
+        rng.shuffle(test_y)
+        # If a tiny split loses a class after shuffling, report rather than crash.
+        if len(np.unique(train_y)) < 2 or len(np.unique(test_y)) < 2:
+            out.append({"replicate": i, "status": "NOT_EVALUABLE", "reason": "Shuffled labels lack both classes"})
+            continue
+        model = make_pipeline(SimpleImputer(strategy="median"), StandardScaler(),
+                              LogisticRegression(max_iter=1000, class_weight="balanced", random_state=seed+i))
+        model.fit(train[features].to_numpy(float), train_y)
+        scores = model.predict_proba(test[features].to_numpy(float))[:, 1]
+        out.append({"replicate": i, "status": "COMPLETED",
+                    "metrics": metric_pack(test_y, scores, 0.5)})
+    valid = [x["metrics"]["roc_auc"] for x in out if x["status"] == "COMPLETED"]
+    return {"repetitions": repetitions, "results": out,
+            "mean_roc_auc": float(np.mean(valid)) if valid else None,
+            "interpretation": "Pipeline sanity control only; not a biological/stealth control."}
+
+
+def paired_feature_diagnostics(df: pd.DataFrame, features: list[str]) -> dict:
+    """Descriptive clean/embedded paired effects, pooled and by model."""
+    output = {"interpretation": "Descriptive paired effects only; no p-values or independent-run claims.", "by_model": {}}
+    for model_id, subset in df.groupby("model_id", sort=True):
+        effects = {}
+        for feature in features:
+            p = subset.pivot_table(index=list(PAIR_COLS), columns="label", values=feature, aggfunc="first")
+            if 0 not in p.columns or 1 not in p.columns:
+                continue
+            paired = (p[1] - p[0]).dropna()
+            scale = float(subset[feature].std(ddof=1))
+            effects[feature] = {
+                "mean_embedded_minus_clean": float(paired.mean()) if len(paired) else None,
+                "median_embedded_minus_clean": float(paired.median()) if len(paired) else None,
+                "std_paired_difference": float(paired.std(ddof=1)) if len(paired) > 1 else 0.0,
+                "standardized_mean_difference": float(paired.mean() / scale) if len(paired) and scale > 0 else None,
+                "matched_pairs": int(len(paired)),
+            }
+        output["by_model"][str(model_id)] = effects
+    return output
+
+
+def qwen_random_forest_permutation_importance(train, test, features, seed, max_rows=3000) -> dict:
+    """Held-out Qwen permutation importance to localize RF signal without using IDs as features."""
+    qwen = "Qwen/Qwen2.5-3B"
+    if train[train["model_id"].astype(str) == qwen].empty or test[test["model_id"].astype(str) == qwen].empty:
+        return {"status": "NOT_EVALUABLE", "reason": "Qwen absent from train or primary test partition."}
+    model = make_pipeline(
+        SimpleImputer(strategy="median"),
+        RandomForestClassifier(n_estimators=250, min_samples_leaf=3, class_weight="balanced",
+                               n_jobs=-1, random_state=seed),
+    )
+    model.fit(train[features].to_numpy(float), train["label"].to_numpy(int))
+    sample = test[test["model_id"].astype(str) == qwen]
+    if len(sample) > max_rows:
+        sample = sample.sample(n=max_rows, random_state=seed).sort_index()
+    result = permutation_importance(
+        model, sample[features].to_numpy(float), sample["label"].to_numpy(int),
+        scoring="roc_auc", n_repeats=3, random_state=seed, n_jobs=-1,
+    )
+    ranking = sorted(
+        [{"feature": feature, "mean_auc_drop": float(result.importances_mean[i]),
+          "std_auc_drop": float(result.importances_std[i])}
+         for i, feature in enumerate(features)],
+        key=lambda item: item["mean_auc_drop"], reverse=True,
+    )
+    return {
+        "status": "COMPLETED",
+        "evaluation_scope": "Qwen rows from primary held-out test partition",
+        "n_test_rows_used": int(len(sample)),
+        "method": "Permutation importance; ROC-AUC decrease after permuting one feature",
+        "top_features": ranking[:10],
+        "all_features": ranking,
+        "warning": "Correlated features can share or mask importance. Importance localizes model reliance; it does not establish a causal mechanism.",
+    }
+
+
+def main() -> int:
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument("--dataset", type=Path, required=True)
+    parser.add_argument("--output-dir", type=Path, required=True)
+    parser.add_argument("--seed", type=int, default=20261010)
+    parser.add_argument("--permutations", type=int, default=5)
+    args = parser.parse_args()
+    data_path, out = args.dataset.expanduser().resolve(), args.output_dir.expanduser().resolve()
+    if not data_path.is_file():
+        raise FileNotFoundError(data_path)
+    if out.exists():
+        raise FileExistsError(f"Refusing to overwrite existing output: {out}")
+    df = pd.read_csv(data_path)
+    features = validate_dataset(df)
+    mixed = make_mixed_split(df, args.seed)
+    parts = {s: mixed[mixed["split"] == s].copy() for s in SPLITS}
+    for split, part in parts.items():
+        if part.empty or set(part["label"].astype(int).unique()) != {0, 1}:
+            raise ValueError(f"{split} must contain both labels")
+        if set(part["model_id"].unique()) != set(df["model_id"].unique()):
+            raise ValueError(f"{split} does not contain every model family")
+    # Persist a new derived split manifest; the original dataset and pilot remain untouched.
+    manifest = {
+        "schema": "nes.packed_nf4_mixed_model_split.v1",
+        "seed": args.seed,
+        "dataset_sha256": sha256_file(data_path),
+        "pair_columns": list(PAIR_COLS),
+        "group_columns": list(GROUP_COLS),
+        "split_rows": {s: int(len(parts[s])) for s in SPLITS},
+        "split_pair_counts": {s: int(parts[s][list(PAIR_COLS)].drop_duplicates().shape[0]) for s in SPLITS},
+        "models_by_split": {s: sorted(parts[s]["model_id"].astype(str).unique().tolist()) for s in SPLITS},
+        "split_rule": "Matched clean/embedded block pairs assigned together; pair groups stratified within model. Source/run groups may cross partitions in primary mixed-block evaluation.",
+        "leakage_note": "Primary mixed-block result may be optimistic because blocks from the same source/run may occur in multiple partitions. See grouped sensitivity results.",
+    }
+    zoo = model_zoo(args.seed)
+    model_results = {}
+    for name, model in zoo.items():
+        model_results[name] = evaluate_model(model, parts["train"], parts["validation"], parts["test"], features)
+    # Integrated diagnostics: grouped sensitivity, label control, paired feature effects,
+    # and Qwen-specific RF permutation importance. This is one benchmark report.
+    randomized = label_randomization(mixed, features, args.seed, max(1, args.permutations))
+    grouped = grouped_sensitivity(mixed, features, args.seed)
+    paired_effects = paired_feature_diagnostics(mixed, features)
+    qwen_importance = qwen_random_forest_permutation_importance(parts["train"], parts["test"], features, args.seed)
+    report = {
+        "schema": "nes.packed_nf4_detector_benchmark.v1",
+        "status": "COMPLETED",
+        "created_utc": datetime.now(timezone.utc).isoformat(),
+        "dataset_path": str(data_path),
+        "dataset_sha256": sha256_file(data_path),
+        "rows": int(len(df)),
+        "feature_columns": features,
+        "metadata_excluded_from_features": sorted(META),
+        "models": sorted(df["model_id"].astype(str).unique().tolist()),
+        "split_manifest": manifest,
+        "primary_mixed_block_evaluation": {
+            "models": model_results,
+            "metrics_note": "Validation selects threshold by Youden's J; test is evaluated once at that threshold. Pooled row metrics are descriptive because rows are correlated.",
+        },
+        "grouped_leakage_sensitivity": grouped,
+        "label_randomization_control": randomized,
+        "paired_feature_diagnostics": paired_effects,
+        "qwen_random_forest_permutation_importance": qwen_importance,
+        "clean_vs_clean_control": {
+            "status": "NOT_AVAILABLE_IN_CURRENT_DATASET",
+            "reason": "The supplied dataset contains clean and embedded labels, but no independent clean-vs-clean artifact class with suitable provenance. Do not substitute duplicate clean files as independent negatives.",
+        },
+        "uncertainty": {
+            "status": "NOT_ESTIMATED",
+            "reason": "The available independent source/run group count is small; naive row bootstrap would overstate effective sample size. Reported row metrics are descriptive.",
+        },
+        "interpretation": {
+            "scope": "Packed-NF4 block-feature detectability on this dataset and split.",
+            "not_established": ["universal stealth", "undetectability", "generalization to unseen model families", "independent-run statistical significance"],
+            "next_scientific_constraint": "Collect more independent source/run artifacts and valid clean-vs-clean controls before confirmatory claims.",
+        },
+    }
+    out.mkdir(parents=True, exist_ok=False)
+    manifest_path = out / "mixed_model_split_manifest.json"
+    manifest_path.write_text(json.dumps(manifest, indent=2, sort_keys=True) + "\n", encoding="utf-8")
+    report_path = out / "packed_nf4_detector_benchmark.json"
+    report_path.write_text(json.dumps(report, indent=2, sort_keys=True) + "\n", encoding="utf-8")
+    print(json.dumps({
+        "status": report["status"], "report": str(report_path), "manifest": str(manifest_path),
+        "split_rows": manifest["split_rows"], "models_by_split": manifest["models_by_split"],
+        "primary_test_roc_auc": {k: v["test_pooled"]["roc_auc"] for k, v in model_results.items()},
+        "grouped_sensitivity_status": grouped.get("status"),
+        "label_randomization_mean_auc": randomized.get("mean_roc_auc"),
+        "warning": "Mixed-block results are exploratory and may be optimistic due to source/run overlap.",
+    }, indent=2))
+    return 0
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())

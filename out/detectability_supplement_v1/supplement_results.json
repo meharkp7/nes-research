@@ -1,0 +1,15 @@
+{
+  "artifact_level_auc_leave_one_tensor_out": 0.5300925925925927,
+  "artifact_level_auc_per_size": {
+    "10000": 0.5104166666666666,
+    "50000": 0.5497685185185186
+  },
+  "interpretation": "block-level chance is largely explained by sparsity; artifact-level and oracle results are reported separately",
+  "n_artifacts": 84,
+  "oracle_block_auc_modified_vs_clean": 0.6965607000952783,
+  "oracle_note": "exploratory: random 5-fold, not grouped; upper-bound style",
+  "parity_feature": {
+    "mean_parity_clean_blocks": 0.5061159208945389,
+    "mean_parity_modified_blocks": 0.5024730520654433
+  }
+}

@@ -1,0 +1,65 @@
+{
+  "control_clean_vs_clean": {
+    "auc": 0.48598700761795044,
+    "auc_ci95": [
+      0.4752402901649475,
+      0.49308156967163086
+    ]
+  },
+  "detectors": {
+    "gradient_boosting": {
+      "auc": 0.5197376335660616,
+      "auc_ci95": [
+        0.5162187442183495,
+        0.5235579709211986
+      ],
+      "auc_group_qwen::model.layers.17.self_attn.k_proj.weight": 0.5147272348403931,
+      "auc_group_qwen::model.layers.35.self_attn.v_proj.weight": 0.5214719772338867,
+      "auc_group_tinyllama::model.layers.21.self_attn.k_proj.weight": 0.5188918511072794,
+      "auc_group_tinyllama::model.layers.21.self_attn.v_proj.weight": 0.5252713759740193,
+      "auc_model_qwen": 0.5178400377432506,
+      "auc_model_tinyllama": 0.521923581759135,
+      "tpr_at_fpr_0.01": 0.0101318359375,
+      "tpr_at_fpr_0.05": 0.053019205729166664
+    },
+    "logistic_regression": {
+      "auc": 0.5342904478311539,
+      "auc_ci95": [
+        0.5332257052262623,
+        0.5363303124904633
+      ],
+      "auc_group_qwen::model.layers.17.self_attn.k_proj.weight": 0.533370852470398,
+      "auc_group_qwen::model.layers.35.self_attn.v_proj.weight": 0.5341930389404297,
+      "auc_group_tinyllama::model.layers.21.self_attn.k_proj.weight": 0.5355674425760905,
+      "auc_group_tinyllama::model.layers.21.self_attn.v_proj.weight": 0.5371992985407512,
+      "auc_model_qwen": 0.5334896345933278,
+      "auc_model_tinyllama": 0.5363303124904633,
+      "tpr_at_fpr_0.01": 0.013875325520833334,
+      "tpr_at_fpr_0.05": 0.061075846354166664
+    },
+    "mlp_exploratory": {
+      "auc": 0.5052520235379537,
+      "auc_ci95": [
+        0.5044588098923365,
+        0.5061742067337036
+      ],
+      "auc_group_qwen::model.layers.17.self_attn.k_proj.weight": 0.5057769219080607,
+      "auc_group_qwen::model.layers.35.self_attn.v_proj.weight": 0.5041082700093586,
+      "auc_group_tinyllama::model.layers.21.self_attn.k_proj.weight": 0.5048549175262451,
+      "auc_group_tinyllama::model.layers.21.self_attn.v_proj.weight": 0.5066117445627848,
+      "auc_model_qwen": 0.5048537651697795,
+      "auc_model_tinyllama": 0.5057355562845866,
+      "tpr_at_fpr_0.01": 0.010701497395833334,
+      "tpr_at_fpr_0.05": 0.051839192708333336
+    }
+  },
+  "group_labels": [
+    "qwen::model.layers.17.self_attn.k_proj.weight",
+    "qwen::model.layers.35.self_attn.v_proj.weight",
+    "tinyllama::model.layers.21.self_attn.k_proj.weight",
+    "tinyllama::model.layers.21.self_attn.v_proj.weight"
+  ],
+  "n_embedded_artifacts": 12,
+  "n_examples": 32768,
+  "n_groups": 4
+}

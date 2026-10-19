@@ -1,0 +1,70 @@
+{
+  "checkpoint": "ckpt/qwen15_clean",
+  "model": "Qwen/Qwen2.5-1.5B",
+  "n_pass": 12,
+  "n_total": 12,
+  "results": [
+    {
+      "detail": "eb979f770c8a",
+      "pass": true,
+      "test": "deterministic_fixed_seed"
+    },
+    {
+      "detail": "",
+      "pass": true,
+      "test": "endpoints_unchanged"
+    },
+    {
+      "detail": "",
+      "pass": true,
+      "test": "interior_only"
+    },
+    {
+      "detail": "",
+      "pass": true,
+      "test": "carrier_eligibility_stable"
+    },
+    {
+      "detail": "1250 580fde145167ba17d539b08631a82ccc0889b6b695b332d55777e3cfd3a6cdc9",
+      "pass": true,
+      "test": "fresh_process_extraction"
+    },
+    {
+      "detail": "",
+      "pass": true,
+      "test": "requantize_cycles_0_5_exact"
+    },
+    {
+      "detail": "ValueError: Envelope magic mismatch",
+      "pass": true,
+      "test": "corrupted_carrier_detected"
+    },
+    {
+      "detail": "carriers_hit=6, raised ValueError",
+      "pass": true,
+      "test": "fixed_offset_corruption_consistent"
+    },
+    {
+      "detail": "ValueError",
+      "pass": true,
+      "test": "truncated_artifact_handled"
+    },
+    {
+      "detail": "ValueError: Envelope magic mismatch",
+      "pass": true,
+      "test": "wrong_key_not_exact"
+    },
+    {
+      "detail": "ValueError",
+      "pass": true,
+      "test": "over_capacity_rejected"
+    },
+    {
+      "detail": "ValueError: Envelope length exceeds receiver capacity",
+      "pass": true,
+      "test": "pair_parity_fails_after_requant"
+    }
+  ],
+  "revision": "8faed761d45a263340a0528343f099c05c9a4323",
+  "tensor": "model.layers.0.self_attn.q_proj.weight"
+}

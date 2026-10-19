@@ -1,0 +1,21 @@
+{
+  "arguments": {
+    "bits": 10000,
+    "checkpoint": "/workspace/nes_run_20261016_anchor_ablation/ckpt/tinyllama_fp16",
+    "intermediate": null,
+    "method": "interior_nearest",
+    "mode": "export",
+    "output": "/workspace/nes_run_20261016_anchor_ablation/ckpt/tinyllama_clean",
+    "report": "/workspace/nes_run_20261016_anchor_ablation/out/export_clean.json",
+    "seed": 20261016,
+    "tensor": "model.layers.0.self_attn.q_proj.weight",
+    "tokenizer": "TinyLlama/TinyLlama-1.1B-Chat-v1.0",
+    "utility": false
+  },
+  "codec_sha256": "07ce008dcabebb7ac0d4fa10c88251bf10dc9f2a7ae27dfc79bf23b8cd75b764",
+  "duration_seconds": 2.9645431919998373,
+  "error": "ValueError: Using a `device_map`, `tp_plan`, `torch.device` context manager or setting `torch.set_default_device(device)` requires `accelerate`. You can install it with `pip install accelerate`",
+  "runner_sha256": "18dbe6fb9da621d1aba6148806a585962fb16f80d7be79cc65ca9c8a676c871b",
+  "status": "ERROR",
+  "traceback": "Traceback (most recent call last):\n  File \"/workspace/nes_run_20261016_anchor_ablation/code/nes-llm/scripts/nf4_anchor_checkpoint.py\", line 231, in main\n    report.update({\"export\": export_clean, \"materialize\": materialize,\n                  ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\n                   \"receive\": receive, \"lifecycle\": lifecycle}[args.mode](args))\n                   ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^\n  File \"/workspace/nes_run_20261016_anchor_ablation/code/nes-llm/scripts/nf4_anchor_checkpoint.py\", line 103, in export_clean\n    model = AutoModelForCausalLM.from_pretrained(\n        str(args.checkpoint), quantization_config=config, device_map={\"\": \"cpu\"},\n        dtype=torch.bfloat16, trust_remote_code=False, local_files_only=True,\n    )\n  File \"/workspace/nes_env/lib/python3.13/site-packages/transformers/models/auto/auto_factory.py\", line 411, in from_pretrained\n    return model_class.from_pretrained(\n           ~~~~~~~~~~~~~~~~~~~~~~~~~~~^\n        pretrained_model_name_or_path, *model_args, config=config, **hub_kwargs, **kwargs\n        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n    )\n    ^\n  File \"/workspace/nes_env/lib/python3.13/site-packages/transformers/modeling_utils.py\", line 4194, in from_pretrained\n    device_map = check_and_set_device_map(device_map)  # warn, error and fix the device map\n  File \"/workspace/nes_env/lib/python3.13/site-packages/transformers/integrations/accelerate.py\", line 137, in check_and_set_device_map\n    raise ValueError(\n    ...<2 lines>...\n    )\nValueError: Using a `device_map`, `tp_plan`, `torch.device` context manager or setting `torch.set_default_device(device)` requires `accelerate`. You can install it with `pip install accelerate`\n"
+}

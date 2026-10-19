@@ -1,0 +1,21 @@
+{
+  "checkpoint": "/workspace/nes_run_20261016_anchor_ablation/ckpt/stablelm_clean",
+  "codec_sha256": "07ce008dcabebb7ac0d4fa10c88251bf10dc9f2a7ae27dfc79bf23b8cd75b764",
+  "cycles": 1,
+  "method_primary": "interior_nearest",
+  "methods": [
+    "interior_nearest"
+  ],
+  "mode": "embed",
+  "n_conditions": 1,
+  "n_embedded": 1,
+  "seeds": [
+    20261016
+  ],
+  "sizes": [
+    1000
+  ],
+  "tensors": [
+    "model.layers.0.self_attn.q_proj.weight"
+  ]
+}

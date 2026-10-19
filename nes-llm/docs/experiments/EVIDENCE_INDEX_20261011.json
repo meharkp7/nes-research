@@ -1,0 +1,126 @@
+{
+  "schema": "nes.evidence_index.v1",
+  "generated_utc": "2026-10-10T21:30:30.789602+00:00",
+  "branch": "research/contract-b-b14-and-evaluation",
+  "focused_test_gate": {
+    "command_scope": [
+      "tests/test_seven_method_protocol.py",
+      "tests/test_embedding.py",
+      "tests/test_extraction.py",
+      "tests/test_residuals.py",
+      "tests/test_matrix_extraction_report_parser.py",
+      "tests/test_contract_b_robustness_matrix.py",
+      "tests/test_validate_packed_nf4_detector_readiness.py",
+      "tests/test_run_packed_nf4_cross_model_detector.py",
+      "tests/test_run_packed_nf4_detector_ablation.py",
+      "tests/test_run_packed_nf4_detector_benchmark.py"
+    ],
+    "result": "30 passed, 4 warnings in 4.54s",
+    "warning": "scikit-learn MLP batch_size clipped in grouped-sensitivity test",
+    "scope_note": "Focused tests only; not the full repository suite."
+  },
+  "residual_descriptive_batch": {
+    "report_schema": "nes.seven_method_detectability_stage1.v2",
+    "cells": 5,
+    "methods": [
+      "lwe_grid_parity",
+      "magnitude_aware",
+      "qae",
+      "sign",
+      "split_sign_parity"
+    ],
+    "all_recovery_status_pass": true,
+    "all_descriptive_ready": true,
+    "feature_rows": 309760,
+    "layer_rows": 55,
+    "elapsed_seconds": 79.08,
+    "limitation": "Descriptive feature export only; no trained detector, no stealth claim, and correlated blocks are not independent samples."
+  },
+  "artifacts": [
+    {
+      "path": "cache/detectability_tinyllama_residual_20261011/cell_status.csv",
+      "bytes": 2758,
+      "sha256": "d15619565a042075e8af32798c9c9554e179c9b4d79c4617ce36c70afc526f24"
+    },
+    {
+      "path": "cache/detectability_tinyllama_residual_20261011/detectability_stage1_report.json",
+      "bytes": 1929,
+      "sha256": "6a126ce1968dba0fb8e3d97a9933d764129db6a9b564eeb979555ba59b74d3db"
+    },
+    {
+      "path": "cache/detectability_tinyllama_residual_20261011/progress.json",
+      "bytes": 465,
+      "sha256": "bdec0bb70ff7126c82afb59723f7b18703c6a291c4322cc4cc54cfd93b421e74"
+    },
+    {
+      "path": "cache/detectability_tinyllama_residual_20261011/residual_layer_descriptives.csv",
+      "bytes": 73495,
+      "sha256": "694316693fc9003e705822256df789b6186f4fdb4b79fcdab828d0c97bd4eaa1"
+    },
+    {
+      "path": "cache/detectability_tinyllama_residual_20261011/residual_paired_block_features.csv",
+      "bytes": 178362048,
+      "sha256": "e550f412f80787441a21af5a508c13644fa133683426e7ac20f715508bb42bc3"
+    },
+    {
+      "path": "cache/seven_method_evidence_inventory.json",
+      "bytes": 71351,
+      "sha256": "bbca8f2ad41e2e3c5d0492b6a9e9d4dae1af1c8eb782fc0ee9299f59cb5786b6"
+    },
+    {
+      "path": "cache/seven_method_evidence_inventory.csv",
+      "bytes": 35690,
+      "sha256": "eb19abb77f5ff7f75fca03e677e1f14f5d4e936d7175b12bf186f5a13731fd0b"
+    },
+    {
+      "path": "nes-llm/tests/test_seven_method_protocol.py",
+      "bytes": 3972,
+      "sha256": "ae11dcedc0d9a2cd4e35c241535b84b4952590e88f8db21e1d3837098ddf2abb"
+    },
+    {
+      "path": "nes-llm/tests/test_embedding.py",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "nes-llm/tests/test_extraction.py",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "nes-llm/tests/test_residuals.py",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "nes-llm/tests/test_matrix_extraction_report_parser.py",
+      "bytes": 1441,
+      "sha256": "0d7b2905124e4a5dd28f33a5b1e559cbf4e7dc091974d197b58213fa21449f38"
+    },
+    {
+      "path": "nes-llm/tests/test_contract_b_robustness_matrix.py",
+      "bytes": 2444,
+      "sha256": "d5389fbaa40507ee15044e46e696e1219cf38843914f59c15339256adc0c1e70"
+    },
+    {
+      "path": "nes-llm/tests/test_validate_packed_nf4_detector_readiness.py",
+      "bytes": 4204,
+      "sha256": "0c628df489ed9f2c70923706e773e5ddefda9151555211e1a6cd736075350ebb"
+    },
+    {
+      "path": "nes-llm/tests/test_run_packed_nf4_cross_model_detector.py",
+      "bytes": 2389,
+      "sha256": "95948f3aa1949f3b87fa868391c7ae3da1c7f9e57470069ce72c6e93757acc45"
+    },
+    {
+      "path": "nes-llm/tests/test_run_packed_nf4_detector_ablation.py",
+      "bytes": 3869,
+      "sha256": "4d9c3fd44e8cf6fdaa367950f4df9b7d7dbdf3504eb8ad8dfe400977029f91e5"
+    },
+    {
+      "path": "nes-llm/tests/test_run_packed_nf4_detector_benchmark.py",
+      "bytes": 3582,
+      "sha256": "cefed3ab1af842dfe26550012831318f178f91395817fbb8bf337913bb909bf1"
+    }
+  ]
+}
