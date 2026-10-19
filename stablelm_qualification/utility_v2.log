@@ -1,0 +1,43 @@
+nohup: ignoring input
+Failed to load CPU gemm_4bit_forward from kernels-community: No module named 'kernels'. Please make sure you already `pip install kernels` and the kernels >= 0.11.1
+Loading weights:   0%|          | 0/340 [00:00<?, ?it/s]Loading weights:  57%|█████▋    | 194/340 [00:00<00:00, 1929.74it/s]Loading weights: 100%|██████████| 340/340 [00:00<00:00, 2321.31it/s]
+{"cond": "clean", "ppl": 12.977961663618768}
+Loading weights:   0%|          | 0/340 [00:00<?, ?it/s]Loading weights:  51%|█████     | 174/340 [00:00<00:00, 1726.58it/s]Loading weights: 100%|██████████| 340/340 [00:00<00:00, 2507.43it/s]
+{"cond": "emb_10000_20261016", "ppl": 12.977800133980212}
+Loading weights:   0%|          | 0/340 [00:00<?, ?it/s]Loading weights:  54%|█████▍    | 184/340 [00:00<00:00, 1833.57it/s]Loading weights: 100%|██████████| 340/340 [00:00<00:00, 2483.10it/s]
+{"cond": "emb_10000_20261017", "ppl": 12.979483028337418}
+Loading weights:   0%|          | 0/340 [00:00<?, ?it/s]Loading weights:  58%|█████▊    | 196/340 [00:00<00:00, 1938.57it/s]Loading weights: 100%|██████████| 340/340 [00:00<00:00, 2379.18it/s]
+Failed to load CPU gemm_4bit_forward from kernels-community: No module named 'kernels'. Please make sure you already `pip install kernels` and the kernels >= 0.11.1
+{"cond": "clean", "ppl": 12.977961663618768}
+{"cond": "emb_10000_20261016", "ppl": 12.977800133980212}
+{"cond": "emb_10000_20261017", "ppl": 12.979483028337418}
+Loading weights:   0%|          | 0/340 [00:00<?, ?it/s]Loading weights:  58%|█████▊    | 198/340 [00:00<00:00, 1967.39it/s]Loading weights: 100%|██████████| 340/340 [00:00<00:00, 2333.68it/s]
+{"cond": "emb_10000_20261018", "ppl": 12.979699834660856}
+Loading weights:   0%|          | 0/340 [00:00<?, ?it/s]Loading weights:  60%|█████▉    | 203/340 [00:00<00:00, 2020.15it/s]Loading weights: 100%|██████████| 340/340 [00:00<00:00, 2437.34it/s]
+Failed to load CPU gemm_4bit_forward from kernels-community: No module named 'kernels'. Please make sure you already `pip install kernels` and the kernels >= 0.11.1
+{"cond": "clean", "ppl": 12.977961663618768}
+{"cond": "emb_10000_20261016", "ppl": 12.977800133980212}
+{"cond": "emb_10000_20261017", "ppl": 12.979483028337418}
+{"cond": "emb_10000_20261018", "ppl": 12.979699834660856}
+Loading weights:   0%|          | 0/340 [00:00<?, ?it/s]Loading weights:   8%|▊         | 26/340 [00:00<00:01, 240.86it/s]Loading weights:  15%|█▌        | 51/340 [00:00<00:01, 219.90it/s]Loading weights:  22%|██▏       | 76/340 [00:00<00:01, 224.11it/s]Loading weights:  30%|███       | 103/340 [00:00<00:01, 231.54it/s]Loading weights:  37%|███▋      | 127/340 [00:00<00:00, 229.78it/s]Loading weights:  44%|████▍     | 150/340 [00:00<00:00, 221.81it/s]Loading weights:  51%|█████▏    | 175/340 [00:00<00:00, 228.99it/s]Loading weights:  61%|██████    | 207/340 [00:00<00:00, 255.83it/s]Loading weights:  72%|███████▏  | 245/340 [00:00<00:00, 290.74it/s]Loading weights: 100%|██████████| 340/340 [00:01<00:00, 317.16it/s]
+{"cond": "emb_50000_20261016", "ppl": 12.979503398798732}
+Loading weights:   0%|          | 0/340 [00:00<?, ?it/s]Loading weights:  54%|█████▎    | 182/340 [00:00<00:00, 1807.83it/s]Loading weights: 100%|██████████| 340/340 [00:00<00:00, 2418.23it/s]
+Failed to load CPU gemm_4bit_forward from kernels-community: No module named 'kernels'. Please make sure you already `pip install kernels` and the kernels >= 0.11.1
+{"cond": "clean", "ppl": 12.977961663618768}
+{"cond": "emb_10000_20261016", "ppl": 12.977800133980212}
+{"cond": "emb_10000_20261017", "ppl": 12.979483028337418}
+{"cond": "emb_10000_20261018", "ppl": 12.979699834660856}
+{"cond": "emb_50000_20261016", "ppl": 12.979503398798732}
+Loading weights:   0%|          | 0/340 [00:00<?, ?it/s]Loading weights:  10%|▉         | 33/340 [00:00<00:00, 329.73it/s]Loading weights:  19%|█▉        | 66/340 [00:00<00:00, 312.87it/s]Loading weights:  32%|███▏      | 109/340 [00:00<00:00, 346.41it/s]Loading weights:  49%|████▉     | 166/340 [00:00<00:00, 429.24it/s]Loading weights:  65%|██████▌   | 221/340 [00:00<00:00, 471.16it/s]Loading weights: 100%|██████████| 340/340 [00:00<00:00, 635.58it/s]
+{"cond": "emb_50000_20261017", "ppl": 12.979480892661721}
+Loading weights:   0%|          | 0/340 [00:00<?, ?it/s]Loading weights:  57%|█████▋    | 193/340 [00:00<00:00, 1912.19it/s]Loading weights: 100%|██████████| 340/340 [00:00<00:00, 2396.87it/s]
+Failed to load CPU gemm_4bit_forward from kernels-community: No module named 'kernels'. Please make sure you already `pip install kernels` and the kernels >= 0.11.1
+{"cond": "clean", "ppl": 12.977961663618768}
+{"cond": "emb_10000_20261016", "ppl": 12.977800133980212}
+{"cond": "emb_10000_20261017", "ppl": 12.979483028337418}
+{"cond": "emb_10000_20261018", "ppl": 12.979699834660856}
+{"cond": "emb_50000_20261016", "ppl": 12.979503398798732}
+{"cond": "emb_50000_20261017", "ppl": 12.979480892661721}
+Loading weights:   0%|          | 0/340 [00:00<?, ?it/s]Loading weights:   6%|▌         | 19/340 [00:00<00:01, 184.13it/s]Loading weights:  11%|█         | 38/340 [00:00<00:01, 183.41it/s]Loading weights:  17%|█▋        | 57/340 [00:00<00:01, 169.15it/s]Loading weights:  25%|██▍       | 84/340 [00:00<00:01, 201.64it/s]Loading weights:  34%|███▎      | 114/340 [00:00<00:00, 231.29it/s]Loading weights:  41%|████      | 140/340 [00:00<00:00, 237.93it/s]Loading weights:  51%|█████     | 174/340 [00:00<00:00, 268.29it/s]Loading weights:  60%|█████▉    | 203/340 [00:00<00:00, 262.28it/s]Loading weights:  68%|██████▊   | 230/340 [00:00<00:00, 239.41it/s]Loading weights:  76%|███████▌  | 257/340 [00:01<00:00, 246.79it/s]Loading weights: 100%|██████████| 340/340 [00:01<00:00, 289.59it/s]
+{"cond": "emb_50000_20261018", "ppl": 12.979768666768292}
+{"done": true, "comparisons": 6}

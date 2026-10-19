@@ -1,0 +1,47 @@
+{
+  "delta_ppl_abs": 0.0031411028598107293,
+  "delta_ppl_rel_pct": 0.03097984095229376,
+  "finite_logits_and_loss": true,
+  "integrity": {
+    "differing_keys": [
+      "model.layers.0.self_attn.q_proj.weight"
+    ],
+    "exact_recovery": true,
+    "extract_error": null,
+    "only_intended_tensor_differs": true,
+    "source_tensor_sha256": "ce26ecb75d4ce5058dc7ccc93f2a06f26262cef13dc8e0e8d3db91f844b80ea8"
+  },
+  "manual_mean_nll": 2.316717202820501,
+  "materialization": {
+    "changed_codes": 25096,
+    "checkpoint_files": {
+      "config.json": "3f983fc8892b528830471c40d8b1427681db0138ae2a6ba83cec5f4d23421d3f",
+      "generation_config.json": "842227a2e8f3a6f20226711de202722a16e61ac7bd99812ca1adcdf09243126c",
+      "merges.txt": "599bab54075088774b1733fde865d5bd747cbcc7a547c5bc12610e874e26f5e3",
+      "model.safetensors": "897e839189eb75fa5cf23d623a0786b16fb9706987300750082ef58906f6aca7",
+      "stego_tensor.safetensors": "3d6d2ec949e420a1bcc7f7d08d37a36881b682bbb684db75eb8fd02881888915",
+      "tokenizer.json": "c0382117ea329cdf097041132f6d735924b697924d6f6fc3945713e96ce87539",
+      "tokenizer_config.json": "c91efca15ceff6e9ee9424db58a6f59cd41294e550a86cbd07e3c1fb500b34f9",
+      "vocab.json": "ca10d7e9fb3ed18575dd1e277a2579c16d108e32f27439684afa0e10b1440910"
+    },
+    "framed_bits": 50128,
+    "payload_sha256": "3a3756522640108183b01d9db4d257cfade397824761d8229cfd00f0fed7a416",
+    "stego_tensor_sha256": "ec98dd49ed45a7f5e4c8411f171e178c8ec96297d5f7ff0ffc20053ca431e64c"
+  },
+  "model": "qwen",
+  "model_scalar_loss_mean": 2.3167171478271484,
+  "n_sequences": 30,
+  "n_tokens": 15330,
+  "paired_vs_clean": {
+    "ci95": [
+      -0.13699157714843752,
+      0.43733428955078124
+    ],
+    "mean_delta_nll": 0.158282470703125,
+    "n_sequences": 30
+  },
+  "ppl": 10.142324401598344,
+  "runtime_s": 435.8,
+  "seed": 20261017,
+  "size": 50000
+}

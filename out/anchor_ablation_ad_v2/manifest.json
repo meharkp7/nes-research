@@ -1,0 +1,34 @@
+{
+  "arms": [
+    "interior_nearest_anchored",
+    "nearest_parity_anchored",
+    "interior_nearest_unanchored",
+    "pair_parity_unrestricted"
+  ],
+  "checkpoint": "/workspace/nes_run_20261016_anchor_ablation/ckpt/tinyllama_clean",
+  "checkpoint_hashes": {
+    "/workspace/nes_run_20261016_anchor_ablation/ckpt/tinyllama_clean/model.safetensors": "f84d0a8ec6e011d683ae7d1aec961d4bb021b254da9d84516185df428f3b37a7"
+  },
+  "created_at": "2026-10-16T18:33:59.337572+00:00",
+  "cycles": 3,
+  "payload": "Deterministic random bytes; B1.4 16-byte framing; no ECC or encryption",
+  "payload_bits": 10000,
+  "platform": "Linux-6.8.0-1055-gke-x86_64-with-glibc2.41",
+  "run_id": "nes_anchor_ablation_ad_20261016",
+  "scope": "Minimal matched causal A-D anchor-preservation experiment; one tensor; no steganalysis or task utility",
+  "seed": 20261016,
+  "source_hashes": {
+    "/workspace/nes_run_20261016_anchor_ablation/code/nes-llm/scripts/contract_b_nf4_b14.py": "ba8beaa196eb4939de5d5c5c9d93b25c8a8cd6faacd65ddb0bb29613f864b14a",
+    "/workspace/nes_run_20261016_anchor_ablation/code/nes-llm/scripts/exp_anchor_ablation_ad.py": "692a01709d4f4b970dfda4d934e74dc7ef3323768948ff9d25b7fa05e0eeab1a",
+    "/workspace/nes_run_20261016_anchor_ablation/code/nes-llm/scripts/run_nf4_anchor_pilot.py": "ff2e5883e0a5be6efe25e9f68bb3a3b71c0397ab7a398a0b0cb4cb0109ab394f",
+    "/workspace/nes_run_20261016_anchor_ablation/code/nes-llm/src/experiments/nf4_anchor_channel.py": "07ce008dcabebb7ac0d4fa10c88251bf10dc9f2a7ae27dfc79bf23b8cd75b764"
+  },
+  "tensor": "model.layers.0.self_attn.q_proj.weight",
+  "transformation": "bitsandbytes dequantize to stored dtype then fresh NF4 with same block size and nesting",
+  "versions": {
+    "bitsandbytes": "0.50.2",
+    "numpy": "2.5.4",
+    "safetensors": "0.8.0",
+    "torch": "2.14.1+cpu"
+  }
+}

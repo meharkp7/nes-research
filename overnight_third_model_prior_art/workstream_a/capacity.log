@@ -1,0 +1,41 @@
+nohup: ignoring input
+Failed to load CPU gemm_4bit_forward from kernels-community: No module named 'kernels'. Please make sure you already `pip install kernels` and the kernels >= 0.11.1
+{"cond": "model.layers.0.self_attn.q_proj.weight__interior_nearest__c0", "status": "MEASURED", "exact": true, "ber": 0.0}
+{"cond": "model.layers.0.self_attn.q_proj.weight__interior_nearest__c1", "status": "MEASURED", "exact": true, "ber": 0.0}
+{"cond": "model.layers.0.self_attn.q_proj.weight__interior_nearest__c2", "status": "MEASURED", "exact": true, "ber": 0.0}
+{"cond": "model.layers.0.self_attn.q_proj.weight__interior_nearest__c3", "status": "MEASURED", "exact": true, "ber": 0.0}
+{"cond": "model.layers.0.self_attn.q_proj.weight__pair_parity__c0", "status": "MEASURED", "exact": true, "ber": 0.0}
+{"cond": "model.layers.0.self_attn.q_proj.weight__pair_parity__c1", "status": "MEASURED", "exact": false, "ber": 0.003}
+{"cond": "model.layers.0.self_attn.q_proj.weight__pair_parity__c2", "status": "MEASURED", "exact": false, "ber": 0.003}
+{"cond": "model.layers.0.self_attn.q_proj.weight__pair_parity__c3", "status": "MEASURED", "exact": false, "ber": 0.003}
+{"status": "COMPLETE", "total": 8, "done_now": 8, "skipped": 0}
+Failed to load CPU gemm_4bit_forward from kernels-community: No module named 'kernels'. Please make sure you already `pip install kernels` and the kernels >= 0.11.1
+{"cond": "model.layers.0.self_attn.q_proj.weight__interior_nearest__c0", "status": "MEASURED", "exact": true, "ber": 0.0}
+{"cond": "model.layers.0.self_attn.q_proj.weight__interior_nearest__c1", "status": "MEASURED", "exact": true, "ber": 0.0}
+{"cond": "model.layers.0.self_attn.q_proj.weight__interior_nearest__c2", "status": "MEASURED", "exact": true, "ber": 0.0}
+{"cond": "model.layers.0.self_attn.q_proj.weight__interior_nearest__c3", "status": "MEASURED", "exact": true, "ber": 0.0}
+{"cond": "model.layers.0.self_attn.q_proj.weight__pair_parity__c0", "status": "MEASURED", "exact": true, "ber": 0.0}
+{"cond": "model.layers.0.self_attn.q_proj.weight__pair_parity__c1", "status": "MEASURED", "exact": false, "ber": 0.0034}
+{"cond": "model.layers.0.self_attn.q_proj.weight__pair_parity__c2", "status": "MEASURED", "exact": false, "ber": 0.0034}
+{"cond": "model.layers.0.self_attn.q_proj.weight__pair_parity__c3", "status": "MEASURED", "exact": false, "ber": 0.0034}
+{"status": "COMPLETE", "total": 8, "done_now": 8, "skipped": 0}
+Failed to load CPU gemm_4bit_forward from kernels-community: No module named 'kernels'. Please make sure you already `pip install kernels` and the kernels >= 0.11.1
+{"cond": "model.layers.0.self_attn.q_proj.weight__interior_nearest__c0", "status": "MEASURED", "exact": true, "ber": 0.0}
+{"cond": "model.layers.0.self_attn.q_proj.weight__interior_nearest__c1", "status": "MEASURED", "exact": true, "ber": 0.0}
+{"cond": "model.layers.0.self_attn.q_proj.weight__interior_nearest__c2", "status": "MEASURED", "exact": true, "ber": 0.0}
+{"cond": "model.layers.0.self_attn.q_proj.weight__interior_nearest__c3", "status": "MEASURED", "exact": true, "ber": 0.0}
+{"cond": "model.layers.0.self_attn.q_proj.weight__pair_parity__c0", "status": "MEASURED", "exact": true, "ber": 0.0}
+{"cond": "model.layers.0.self_attn.q_proj.weight__pair_parity__c1", "status": "MEASURED", "exact": false, "ber": 0.005}
+{"cond": "model.layers.0.self_attn.q_proj.weight__pair_parity__c2", "status": "MEASURED", "exact": false, "ber": 0.005}
+{"cond": "model.layers.0.self_attn.q_proj.weight__pair_parity__c3", "status": "MEASURED", "exact": false, "ber": 0.005}
+{"status": "COMPLETE", "total": 8, "done_now": 8, "skipped": 0}
+Failed to load CPU gemm_4bit_forward from kernels-community: No module named 'kernels'. Please make sure you already `pip install kernels` and the kernels >= 0.11.1
+{"cond": "model.layers.0.self_attn.q_proj.weight__interior_nearest__c0", "status": "MEASURED", "exact": true, "ber": 0.0}
+{"cond": "model.layers.0.self_attn.q_proj.weight__interior_nearest__c1", "status": "MEASURED", "exact": true, "ber": 0.0}
+{"cond": "model.layers.0.self_attn.q_proj.weight__interior_nearest__c2", "status": "MEASURED", "exact": true, "ber": 0.0}
+{"cond": "model.layers.0.self_attn.q_proj.weight__interior_nearest__c3", "status": "MEASURED", "exact": true, "ber": 0.0}
+{"cond": "model.layers.0.self_attn.q_proj.weight__pair_parity__c0", "status": "MEASURED", "exact": true, "ber": 0.0}
+{"cond": "model.layers.0.self_attn.q_proj.weight__pair_parity__c1", "status": "MEASURED", "exact": false, "ber": 0.00558}
+{"cond": "model.layers.0.self_attn.q_proj.weight__pair_parity__c2", "status": "MEASURED", "exact": false, "ber": 0.00558}
+{"cond": "model.layers.0.self_attn.q_proj.weight__pair_parity__c3", "status": "MEASURED", "exact": false, "ber": 0.00558}
+{"status": "COMPLETE", "total": 8, "done_now": 8, "skipped": 0}

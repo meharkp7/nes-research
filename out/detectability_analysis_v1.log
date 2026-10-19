@@ -1,0 +1,2 @@
+nohup: ignoring input
+{"status": "COMPLETED", "detectors": ["logistic_regression", "gradient_boosting", "mlp_exploratory"]}

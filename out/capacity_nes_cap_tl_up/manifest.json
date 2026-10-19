@@ -1,0 +1,36 @@
+{
+  "baseline_bits": 10000,
+  "baseline_method": "pair_parity",
+  "checkpoint": "/workspace/nes_run_20261016_anchor_ablation/ckpt/tinyllama_clean",
+  "checkpoint_hashes": {
+    "/workspace/nes_run_20261016_anchor_ablation/ckpt/tinyllama_clean/model.safetensors": "f84d0a8ec6e011d683ae7d1aec961d4bb021b254da9d84516185df428f3b37a7"
+  },
+  "created_at": "2026-10-16T20:24:02.607988+00:00",
+  "cycles": 3,
+  "method": "interior_nearest",
+  "platform": "Linux-6.8.0-1055-gke-x86_64-with-glibc2.41",
+  "predeclared_seeds": [
+    20261016,
+    20261017,
+    20261018
+  ],
+  "predeclared_sizes": [
+    50000
+  ],
+  "run_id": "nes_cap_tl_up",
+  "scope": "Payload-capacity characterization of frozen interior_nearest; one tensor per checkpoint",
+  "source_hashes": {
+    "/workspace/nes_run_20261016_anchor_ablation/code/nes-llm/scripts/exp_capacity.py": "8f401b475a7173ff33e1d7cea5098f1a9f17fd6582500cc4b0b134e32b24f16b",
+    "/workspace/nes_run_20261016_anchor_ablation/code/nes-llm/scripts/exp_tensor_matrix.py": "416298216c1f3536b9f08f2fddcfc494354bce831027252e482a7df02516b94a",
+    "/workspace/nes_run_20261016_anchor_ablation/code/nes-llm/scripts/run_nf4_anchor_pilot.py": "ff2e5883e0a5be6efe25e9f68bb3a3b71c0397ab7a398a0b0cb4cb0109ab394f",
+    "/workspace/nes_run_20261016_anchor_ablation/code/nes-llm/src/experiments/nf4_anchor_channel.py": "07ce008dcabebb7ac0d4fa10c88251bf10dc9f2a7ae27dfc79bf23b8cd75b764"
+  },
+  "tensor": "model.layers.11.mlp.up_proj.weight",
+  "transformation": "bitsandbytes dequantize to stored dtype then fresh NF4 with same block size and nesting",
+  "versions": {
+    "bitsandbytes": "0.50.2",
+    "numpy": "2.5.4",
+    "safetensors": "0.8.0",
+    "torch": "2.14.1+cpu"
+  }
+}

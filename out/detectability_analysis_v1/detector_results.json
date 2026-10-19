@@ -1,0 +1,49 @@
+{
+  "control_clean_vs_clean": {
+    "auc": 0.4899716377258301,
+    "expected": "~0.5"
+  },
+  "control_seed_vs_seed": {
+    "auc": 0.4993862211704254,
+    "expected": "~0.5 (payload bits are the only difference)"
+  },
+  "detectors": {
+    "gradient_boosting": {
+      "auc": 0.501611296777372,
+      "auc_model_qwen": 0.5023765586040637,
+      "auc_model_tinyllama": 0.500797916341711,
+      "auc_size_10000": 0.499857735854608,
+      "auc_size_50000": 0.503364857700136,
+      "tpr_at_fpr_0.01": 0.009589301215277778,
+      "tpr_at_fpr_0.05": 0.049153645833333336
+    },
+    "logistic_regression": {
+      "auc": 0.5055589686941218,
+      "auc_model_qwen": 0.5057580758024145,
+      "auc_model_tinyllama": 0.5054062538676791,
+      "auc_size_10000": 0.5018498831325107,
+      "auc_size_50000": 0.5092680542557327,
+      "tpr_at_fpr_0.01": 0.009928385416666666,
+      "tpr_at_fpr_0.05": 0.05002170138888889
+    },
+    "mlp_exploratory": {
+      "auc": 0.4991806585479666,
+      "auc_model_qwen": 0.4996832719555607,
+      "auc_model_tinyllama": 0.49873360218825163,
+      "auc_size_10000": 0.49964559630111416,
+      "auc_size_50000": 0.498715720794819,
+      "tpr_at_fpr_0.01": 0.009914822048611112,
+      "tpr_at_fpr_0.05": 0.049967447916666664
+    }
+  },
+  "leave_one_model_out": {
+    "qwen": {
+      "auc": 0.5015836622979906,
+      "note": "exploratory: single held-out checkpoint"
+    },
+    "tinyllama": {
+      "auc": 0.5030202600691054,
+      "note": "exploratory: single held-out checkpoint"
+    }
+  }
+}

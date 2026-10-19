@@ -1,0 +1,38 @@
+{
+  "qwen": {
+    "absmax_value": 0.0,
+    "adjacent_equal_frac": 0.003658794600851217,
+    "adjacent_parity_change": -0.00018883104150401678,
+    "code_entropy": -0.011232514144148605,
+    "distinct_codes": -0.006312560092080814,
+    "endpoint_frac": 0.0,
+    "fifteen_count": 0.0,
+    "interior_frac": 0.0,
+    "max_run": 0.0005880287730528166,
+    "mean_abs_value": -0.016232537468205487,
+    "mean_code": 0.0022722331835511303,
+    "odd_frac": -0.002797611870859825,
+    "odd_interior_frac": -0.0028823730622859114,
+    "parity_imbalance": 0.0023564959657310296,
+    "std_code": -0.014408306279983282,
+    "zero_count": 0.0
+  },
+  "tinyllama": {
+    "absmax_value": 0.0,
+    "adjacent_equal_frac": 0.0020010428619217447,
+    "adjacent_parity_change": -0.00013807783071980456,
+    "code_entropy": -0.0042717863516819,
+    "distinct_codes": -0.004062204298215318,
+    "endpoint_frac": 0.0,
+    "fifteen_count": 0.0,
+    "interior_frac": 0.0,
+    "max_run": 0.0004116451349293011,
+    "mean_abs_value": -0.013092411890783459,
+    "mean_code": 0.002504129302667662,
+    "odd_frac": -0.0010196062967605527,
+    "odd_interior_frac": -0.0010307329719102761,
+    "parity_imbalance": -0.0027340818409360176,
+    "std_code": -0.011399350712724745,
+    "zero_count": 0.0
+  }
+}

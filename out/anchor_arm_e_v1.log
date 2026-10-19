@@ -1,0 +1,4 @@
+nohup: ignoring input
+Failed to load CPU gemm_4bit_forward from kernels-community: No module named 'kernels'. Please make sure you already `pip install kernels` and the kernels >= 0.11.1
+{"arm": "interior_parity_baseline_op", "source_tensor_sha256": "283aa75d1f34daff33b4aae984c42fac6a8741deecd3348eaed6459852fd2161", "blocksize": 64, "nested": true, "total_codes": 4194304}
+{"status": "COMPLETED", "measured_rows": 4, "output": "/workspace/nes_run_20261016_anchor_ablation/out/anchor_arm_e_v1"}

@@ -1,0 +1,62 @@
+{
+  "anchor_codes_before": 108911,
+  "bits": 20000,
+  "blocksize": 64,
+  "carrier_agreement_cycle0": 1.0,
+  "changed_anchor_codes": 264,
+  "changed_codes": 10048,
+  "clean_tensor_sha256": "216ebcf4c9eb7a6ff889ad6311449ff248112dfc85113d0b4710f29bf8153a6e",
+  "condition": "pair_parity__L0.self_attn.q__20000__20261017",
+  "cycles": [
+    {
+      "anchor_codes_after": 108971,
+      "anchor_codes_delta": 60,
+      "artifact": "artifacts/pair_parity__L0.self_attn.q__20000__20261017_c0.bin",
+      "artifact_sha256": "a328ca5e23294e0b6faffb522565da39f67c0e71b936da0e2a80c1013b3f52f9",
+      "blocks_without_endpoint": 94,
+      "changed_anchor_codes": 264,
+      "cycle": 0,
+      "packed_code_hamming_vs_source": 10048
+    },
+    {
+      "anchor_codes_after": 109212,
+      "anchor_codes_delta": 301,
+      "artifact": "artifacts/pair_parity__L0.self_attn.q__20000__20261017_c1.bin",
+      "artifact_sha256": "b1f2c3eb16790d23163931f314d8d0e422062e460698b35b305b6a5678373d71",
+      "blocks_without_endpoint": 0,
+      "changed_anchor_codes": 264,
+      "cycle": 1,
+      "packed_code_hamming_vs_source": 12223
+    },
+    {
+      "anchor_codes_after": 109212,
+      "anchor_codes_delta": 301,
+      "artifact": "artifacts/pair_parity__L0.self_attn.q__20000__20261017_c2.bin",
+      "artifact_sha256": "b1f2c3eb16790d23163931f314d8d0e422062e460698b35b305b6a5678373d71",
+      "blocks_without_endpoint": 0,
+      "changed_anchor_codes": 264,
+      "cycle": 2,
+      "packed_code_hamming_vs_source": 12223
+    },
+    {
+      "anchor_codes_after": 109212,
+      "anchor_codes_delta": 301,
+      "artifact": "artifacts/pair_parity__L0.self_attn.q__20000__20261017_c3.bin",
+      "artifact_sha256": "b1f2c3eb16790d23163931f314d8d0e422062e460698b35b305b6a5678373d71",
+      "blocks_without_endpoint": 0,
+      "changed_anchor_codes": 264,
+      "cycle": 3,
+      "packed_code_hamming_vs_source": 12223
+    }
+  ],
+  "elapsed_s": 0.28,
+  "eligible_codes": 4194304,
+  "method": "pair_parity",
+  "nested": true,
+  "payload_sha256": "07c2589f24b88239c76dd334099864ad69d4a55ea101f38d1ed0ab57ec50ed3d",
+  "quant_type": "nf4",
+  "seed": 20261017,
+  "status": "EMBEDDED",
+  "stego_tensor_sha256": "a328ca5e23294e0b6faffb522565da39f67c0e71b936da0e2a80c1013b3f52f9",
+  "tensor": "model.layers.0.self_attn.q_proj.weight"
+}

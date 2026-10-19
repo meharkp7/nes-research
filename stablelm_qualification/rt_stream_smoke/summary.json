@@ -1,0 +1,23 @@
+{
+  "codec_sha256": "07ce008dcabebb7ac0d4fa10c88251bf10dc9f2a7ae27dfc79bf23b8cd75b764",
+  "cycles": 2,
+  "method_primary": "interior_nearest",
+  "methods": [
+    "interior_nearest",
+    "pair_parity"
+  ],
+  "n_conditions": 2,
+  "n_cycle_extractions": 6,
+  "n_done": 2,
+  "n_embed_failed": 0,
+  "n_exact": 4,
+  "seeds": [
+    20261016
+  ],
+  "sizes": [
+    1000
+  ],
+  "tensors": [
+    "model.layers.0.self_attn.q_proj.weight"
+  ]
+}
