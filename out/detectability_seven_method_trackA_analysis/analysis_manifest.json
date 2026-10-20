@@ -1,0 +1,32 @@
+{
+  "created_at": "2026-10-20T11:47:13.333978+00:00",
+  "features": [
+    "f_mean",
+    "f_std",
+    "f_min",
+    "f_max",
+    "f_median",
+    "f_q25",
+    "f_q75",
+    "f_mean_square",
+    "f_positive_fraction",
+    "f_skew",
+    "f_excess_kurtosis",
+    "f_hist_entropy",
+    "f_zero_fraction",
+    "f_abs_mean"
+  ],
+  "features_dir": "/Users/meharkapoor7/nes-agent-workspace/nes-research/out/detectability_seven_method_trackA",
+  "features_file_sha256": "3e6da70d6830cd5707d77396497cb5e8e464bb5e8ba9fd48c2c9f2b8b722c336",
+  "grouping": "GroupKFold by model::method::layer_id",
+  "n_examples": 11516160,
+  "n_features": 14,
+  "n_groups": 505,
+  "platform": "macOS-26.3-arm64-arm-64bit-Mach-O",
+  "run_id": "nes_detectability_analysis_20261020",
+  "versions": {
+    "numpy": "2.4.3",
+    "scikit-learn": "1.9.0",
+    "torch": "2.11.0"
+  }
+}

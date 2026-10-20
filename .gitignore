@@ -15,3 +15,4 @@ __pycache__/
 
 # OS files
 .DS_Store
+out/detectability_seven_method_trackA/residual_paired_block_features.csv

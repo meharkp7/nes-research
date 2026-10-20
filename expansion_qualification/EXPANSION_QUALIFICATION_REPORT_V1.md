@@ -196,6 +196,9 @@ the expected scale and the CIs being well-calibrated.
 - Integrity, idempotence, and rejection invariants hold on all four.
 - Detectability at or near chance on all four, under the predeclared screen.
 - **Utility equivalence within ±0.5% relative PPL on all four models (24/24 conditions).**
+- **Small-capacity detectability (14 groups, 50k bits): LR AUC 0.5059 [0.5020, 0.5120], p>0.05; GB AUC 0.5014; MLP 0.5011. All at or near chance.**
+- **Held-out checkpoint neural detection (4 checkpoints, leave-one-out): Mean AUC 0.4998 ± 0.0002, all at chance. No generalization gap detected.**
+- **Requantization robustness: 12/12 regression tests pass per model including cycles 0–5 exact recovery.**
 
 **Unresolved discrepancies (retained, not resolved away):**
 1. Qwen2.5 LR detector AUC 0.5068, p=0.015 (sub-threshold; below its own control).

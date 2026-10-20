@@ -1,0 +1,28 @@
+{
+  "schema": "nes.seven_method_detectability_stage1.v2",
+  "purpose": "Paired per-layer residual distribution diagnostics and block feature export; not a trained detector benchmark.",
+  "cache_root": "/private/tmp/nes_local_run/cache_v2",
+  "block_size": 4096,
+  "quantile_method": "Deterministic evenly-spaced sample; quantiles are approximate when input exceeds the sample cap.",
+  "quantile_sample_max": 32768,
+  "cells_discovered": 30,
+  "cells_paired_descriptive_ready": 30,
+  "cells_blocked": 0,
+  "residual_block_feature_rows": 11516160,
+  "layer_descriptive_rows": 505,
+  "elapsed_seconds": 3279.72,
+  "outputs": {
+    "cell_status": "/Users/meharkapoor7/nes-agent-workspace/nes-research/out/detectability_seven_method_trackA/cell_status.csv",
+    "residual_block_features": "/Users/meharkapoor7/nes-agent-workspace/nes-research/out/detectability_seven_method_trackA/residual_paired_block_features.csv",
+    "residual_layer_descriptives": "/Users/meharkapoor7/nes-agent-workspace/nes-research/out/detectability_seven_method_trackA/residual_layer_descriptives.csv",
+    "progress": "/Users/meharkapoor7/nes-agent-workspace/nes-research/out/detectability_seven_method_trackA/progress.json"
+  },
+  "guardrails": [
+    "No classifier was fitted because current evidence does not establish enough independent artifacts per cell for a leakage-resistant split.",
+    "NF4 QSE/DCE are blocked until matched same-source clean packed-code artifacts are supplied.",
+    "Feature blocks from the same tensor are correlated; block-level rows are descriptive samples, not independent inferential units.",
+    "Quantile features are approximate for tensors larger than the deterministic sample cap; all other listed statistics use full values.",
+    "Successful pairing and distribution summaries do not establish stealth, undetectability, or cross-model generalization.",
+    "Historical input artifacts and reports are read-only; outputs are written to a new directory."
+  ]
+}
