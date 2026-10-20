@@ -1,0 +1,21 @@
+{
+  "elapsed_s": 6.7,
+  "model_id": "TinyLlama/TinyLlama-1.1B-Chat-v1.0",
+  "output": "/Users/meharkapoor7/nes-agent-workspace/nes-research/evidence/ckpt_nf4/tinyllama_clean",
+  "output_core_bytes": 762454657,
+  "output_core_files": {
+    "config.json": "8a0d1374af9cf01a6a05ab53e13f0cf22a88ff72fef128a0e7dd43c79688858c",
+    "generation_config.json": "920e52ecbd494733d0442dd32c4983545877b58cbe0529243bba59f8bfe9cece",
+    "model.safetensors": "eb9b2a2d8787c18b0f6c1b463bad12a61503d259df3316ae7e47464d7efea28d"
+  },
+  "quantization": {
+    "blocksize": 64,
+    "compute_dtype": "float16",
+    "double_quant": true,
+    "quant_storage": "uint8",
+    "quant_type": "nf4"
+  },
+  "revision": "fe8a4ea1ffedaf415f4da2f062534de366a451e6",
+  "status": "DONE",
+  "torch": "2.11.0"
+}

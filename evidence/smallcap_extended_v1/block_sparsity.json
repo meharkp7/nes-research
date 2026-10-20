@@ -1,0 +1,364 @@
+{
+  "per_artifact": [
+    {
+      "blocks_touched": 7853,
+      "blocks_touched_frac": 0.9586181640625,
+      "changed_codes": 25087,
+      "model": "tinyllama",
+      "sampled_touched": 1963,
+      "seed": 20261016,
+      "tensor": "model.layers.21.self_attn.k_proj.weight",
+      "total_blocks": 8192
+    },
+    {
+      "blocks_touched": 7832,
+      "blocks_touched_frac": 0.9560546875,
+      "changed_codes": 25193,
+      "model": "tinyllama",
+      "sampled_touched": 1965,
+      "seed": 20261017,
+      "tensor": "model.layers.21.self_attn.k_proj.weight",
+      "total_blocks": 8192
+    },
+    {
+      "blocks_touched": 7815,
+      "blocks_touched_frac": 0.9539794921875,
+      "changed_codes": 25107,
+      "model": "tinyllama",
+      "sampled_touched": 1953,
+      "seed": 20261018,
+      "tensor": "model.layers.21.self_attn.k_proj.weight",
+      "total_blocks": 8192
+    },
+    {
+      "blocks_touched": 7858,
+      "blocks_touched_frac": 0.959228515625,
+      "changed_codes": 25171,
+      "model": "tinyllama",
+      "sampled_touched": 1972,
+      "seed": 20261016,
+      "tensor": "model.layers.21.self_attn.v_proj.weight",
+      "total_blocks": 8192
+    },
+    {
+      "blocks_touched": 7832,
+      "blocks_touched_frac": 0.9560546875,
+      "changed_codes": 24999,
+      "model": "tinyllama",
+      "sampled_touched": 1961,
+      "seed": 20261017,
+      "tensor": "model.layers.21.self_attn.v_proj.weight",
+      "total_blocks": 8192
+    },
+    {
+      "blocks_touched": 7838,
+      "blocks_touched_frac": 0.956787109375,
+      "changed_codes": 24987,
+      "model": "tinyllama",
+      "sampled_touched": 1977,
+      "seed": 20261018,
+      "tensor": "model.layers.21.self_attn.v_proj.weight",
+      "total_blocks": 8192
+    },
+    {
+      "blocks_touched": 7808,
+      "blocks_touched_frac": 0.953125,
+      "changed_codes": 25047,
+      "model": "qwen3b",
+      "sampled_touched": 1949,
+      "seed": 20261016,
+      "tensor": "model.layers.17.self_attn.k_proj.weight",
+      "total_blocks": 8192
+    },
+    {
+      "blocks_touched": 7835,
+      "blocks_touched_frac": 0.9564208984375,
+      "changed_codes": 24989,
+      "model": "qwen3b",
+      "sampled_touched": 1961,
+      "seed": 20261017,
+      "tensor": "model.layers.17.self_attn.k_proj.weight",
+      "total_blocks": 8192
+    },
+    {
+      "blocks_touched": 7827,
+      "blocks_touched_frac": 0.9554443359375,
+      "changed_codes": 25087,
+      "model": "qwen3b",
+      "sampled_touched": 1969,
+      "seed": 20261018,
+      "tensor": "model.layers.17.self_attn.k_proj.weight",
+      "total_blocks": 8192
+    },
+    {
+      "blocks_touched": 7819,
+      "blocks_touched_frac": 0.9544677734375,
+      "changed_codes": 24892,
+      "model": "qwen3b",
+      "sampled_touched": 1953,
+      "seed": 20261016,
+      "tensor": "model.layers.35.self_attn.v_proj.weight",
+      "total_blocks": 8192
+    },
+    {
+      "blocks_touched": 7816,
+      "blocks_touched_frac": 0.9541015625,
+      "changed_codes": 24836,
+      "model": "qwen3b",
+      "sampled_touched": 1954,
+      "seed": 20261017,
+      "tensor": "model.layers.35.self_attn.v_proj.weight",
+      "total_blocks": 8192
+    },
+    {
+      "blocks_touched": 7799,
+      "blocks_touched_frac": 0.9520263671875,
+      "changed_codes": 24856,
+      "model": "qwen3b",
+      "sampled_touched": 1947,
+      "seed": 20261018,
+      "tensor": "model.layers.35.self_attn.v_proj.weight",
+      "total_blocks": 8192
+    },
+    {
+      "blocks_touched": 20914,
+      "blocks_touched_frac": 0.319122314453125,
+      "changed_codes": 25115,
+      "model": "pythia",
+      "sampled_touched": 628,
+      "seed": 20261016,
+      "tensor": "gpt_neox.layers.11.attention.dense.weight",
+      "total_blocks": 65536
+    },
+    {
+      "blocks_touched": 20907,
+      "blocks_touched_frac": 0.3190155029296875,
+      "changed_codes": 25190,
+      "model": "pythia",
+      "sampled_touched": 652,
+      "seed": 20261017,
+      "tensor": "gpt_neox.layers.11.attention.dense.weight",
+      "total_blocks": 65536
+    },
+    {
+      "blocks_touched": 20906,
+      "blocks_touched_frac": 0.319000244140625,
+      "changed_codes": 25106,
+      "model": "pythia",
+      "sampled_touched": 645,
+      "seed": 20261018,
+      "tensor": "gpt_neox.layers.11.attention.dense.weight",
+      "total_blocks": 65536
+    },
+    {
+      "blocks_touched": 23829,
+      "blocks_touched_frac": 0.09090042114257812,
+      "changed_codes": 24978,
+      "model": "pythia",
+      "sampled_touched": 178,
+      "seed": 20261016,
+      "tensor": "gpt_neox.layers.11.mlp.dense_4h_to_h.weight",
+      "total_blocks": 262144
+    },
+    {
+      "blocks_touched": 23903,
+      "blocks_touched_frac": 0.09118270874023438,
+      "changed_codes": 25014,
+      "model": "pythia",
+      "sampled_touched": 185,
+      "seed": 20261017,
+      "tensor": "gpt_neox.layers.11.mlp.dense_4h_to_h.weight",
+      "total_blocks": 262144
+    },
+    {
+      "blocks_touched": 23985,
+      "blocks_touched_frac": 0.09149551391601562,
+      "changed_codes": 25126,
+      "model": "pythia",
+      "sampled_touched": 185,
+      "seed": 20261018,
+      "tensor": "gpt_neox.layers.11.mlp.dense_4h_to_h.weight",
+      "total_blocks": 262144
+    },
+    {
+      "blocks_touched": 17604,
+      "blocks_touched_frac": 0.5372314453125,
+      "changed_codes": 24921,
+      "model": "falcon",
+      "sampled_touched": 1141,
+      "seed": 20261016,
+      "tensor": "model.layers.8.self_attn.k_proj.weight",
+      "total_blocks": 32768
+    },
+    {
+      "blocks_touched": 17708,
+      "blocks_touched_frac": 0.5404052734375,
+      "changed_codes": 25296,
+      "model": "falcon",
+      "sampled_touched": 1105,
+      "seed": 20261017,
+      "tensor": "model.layers.8.self_attn.k_proj.weight",
+      "total_blocks": 32768
+    },
+    {
+      "blocks_touched": 17521,
+      "blocks_touched_frac": 0.534698486328125,
+      "changed_codes": 25141,
+      "model": "falcon",
+      "sampled_touched": 1115,
+      "seed": 20261018,
+      "tensor": "model.layers.8.self_attn.k_proj.weight",
+      "total_blocks": 32768
+    },
+    {
+      "blocks_touched": 17672,
+      "blocks_touched_frac": 0.539306640625,
+      "changed_codes": 25105,
+      "model": "falcon",
+      "sampled_touched": 1094,
+      "seed": 20261016,
+      "tensor": "model.layers.17.self_attn.v_proj.weight",
+      "total_blocks": 32768
+    },
+    {
+      "blocks_touched": 17618,
+      "blocks_touched_frac": 0.53765869140625,
+      "changed_codes": 25041,
+      "model": "falcon",
+      "sampled_touched": 1111,
+      "seed": 20261017,
+      "tensor": "model.layers.17.self_attn.v_proj.weight",
+      "total_blocks": 32768
+    },
+    {
+      "blocks_touched": 17661,
+      "blocks_touched_frac": 0.538970947265625,
+      "changed_codes": 25108,
+      "model": "falcon",
+      "sampled_touched": 1123,
+      "seed": 20261018,
+      "tensor": "model.layers.17.self_attn.v_proj.weight",
+      "total_blocks": 32768
+    },
+    {
+      "blocks_touched": 20951,
+      "blocks_touched_frac": 0.3196868896484375,
+      "changed_codes": 25093,
+      "model": "smollm2",
+      "sampled_touched": 613,
+      "seed": 20261016,
+      "tensor": "model.layers.11.self_attn.k_proj.weight",
+      "total_blocks": 65536
+    },
+    {
+      "blocks_touched": 20948,
+      "blocks_touched_frac": 0.31964111328125,
+      "changed_codes": 25082,
+      "model": "smollm2",
+      "sampled_touched": 645,
+      "seed": 20261017,
+      "tensor": "model.layers.11.self_attn.k_proj.weight",
+      "total_blocks": 65536
+    },
+    {
+      "blocks_touched": 20947,
+      "blocks_touched_frac": 0.3196258544921875,
+      "changed_codes": 25198,
+      "model": "smollm2",
+      "sampled_touched": 650,
+      "seed": 20261018,
+      "tensor": "model.layers.11.self_attn.k_proj.weight",
+      "total_blocks": 65536
+    },
+    {
+      "blocks_touched": 20897,
+      "blocks_touched_frac": 0.3188629150390625,
+      "changed_codes": 25073,
+      "model": "smollm2",
+      "sampled_touched": 634,
+      "seed": 20261016,
+      "tensor": "model.layers.23.self_attn.v_proj.weight",
+      "total_blocks": 65536
+    },
+    {
+      "blocks_touched": 20834,
+      "blocks_touched_frac": 0.317901611328125,
+      "changed_codes": 24903,
+      "model": "smollm2",
+      "sampled_touched": 672,
+      "seed": 20261017,
+      "tensor": "model.layers.23.self_attn.v_proj.weight",
+      "total_blocks": 65536
+    },
+    {
+      "blocks_touched": 20808,
+      "blocks_touched_frac": 0.3175048828125,
+      "changed_codes": 25127,
+      "model": "smollm2",
+      "sampled_touched": 650,
+      "seed": 20261018,
+      "tensor": "model.layers.23.self_attn.v_proj.weight",
+      "total_blocks": 65536
+    },
+    {
+      "blocks_touched": 6049,
+      "blocks_touched_frac": 0.9845377604166666,
+      "changed_codes": 25009,
+      "model": "qwen15",
+      "sampled_touched": 2019,
+      "seed": 20261016,
+      "tensor": "model.layers.13.self_attn.k_proj.weight",
+      "total_blocks": 6144
+    },
+    {
+      "blocks_touched": 6053,
+      "blocks_touched_frac": 0.9851888020833334,
+      "changed_codes": 25039,
+      "model": "qwen15",
+      "sampled_touched": 2022,
+      "seed": 20261017,
+      "tensor": "model.layers.13.self_attn.k_proj.weight",
+      "total_blocks": 6144
+    },
+    {
+      "blocks_touched": 6055,
+      "blocks_touched_frac": 0.9855143229166666,
+      "changed_codes": 25089,
+      "model": "qwen15",
+      "sampled_touched": 2021,
+      "seed": 20261018,
+      "tensor": "model.layers.13.self_attn.k_proj.weight",
+      "total_blocks": 6144
+    },
+    {
+      "blocks_touched": 6060,
+      "blocks_touched_frac": 0.986328125,
+      "changed_codes": 25098,
+      "model": "qwen15",
+      "sampled_touched": 2019,
+      "seed": 20261016,
+      "tensor": "model.layers.27.self_attn.v_proj.weight",
+      "total_blocks": 6144
+    },
+    {
+      "blocks_touched": 6059,
+      "blocks_touched_frac": 0.9861653645833334,
+      "changed_codes": 25017,
+      "model": "qwen15",
+      "sampled_touched": 2013,
+      "seed": 20261017,
+      "tensor": "model.layers.27.self_attn.v_proj.weight",
+      "total_blocks": 6144
+    },
+    {
+      "blocks_touched": 6063,
+      "blocks_touched_frac": 0.98681640625,
+      "changed_codes": 25203,
+      "model": "qwen15",
+      "sampled_touched": 2018,
+      "seed": 20261018,
+      "tensor": "model.layers.27.self_attn.v_proj.weight",
+      "total_blocks": 6144
+    }
+  ]
+}

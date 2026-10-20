@@ -1,0 +1,21 @@
+{
+  "elapsed_s": 148.3,
+  "model_id": "EleutherAI/pythia-1.4b",
+  "output": "/Users/meharkapoor7/nes-agent-workspace/nes-research/evidence/ckpt_nf4/pythia_clean",
+  "output_core_bytes": 1036742034,
+  "output_core_files": {
+    "config.json": "2ffa1cdacf9c0ad38f6a568fa859b517c8a64d58c0aed47b3ea67065615d00b4",
+    "generation_config.json": "610b0de1ff0f7ff7c07e2a13e7e59591184b3bcf1ae4aadc5d1b7af134dae9a7",
+    "model.safetensors": "aa64e4db2ff509b0764b261de87bd5e351325c224baee267ad88fa2f9c29aced"
+  },
+  "quantization": {
+    "blocksize": 64,
+    "compute_dtype": "float16",
+    "double_quant": true,
+    "quant_storage": "uint8",
+    "quant_type": "nf4"
+  },
+  "revision": "fedc38a16eea3bd36a96b906d78d11d2ce18ed79",
+  "status": "DONE",
+  "torch": "2.11.0"
+}

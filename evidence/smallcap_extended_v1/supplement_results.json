@@ -1,0 +1,109 @@
+{
+  "control_clean_vs_clean": {
+    "auc": 0.5052196416589949,
+    "auc_ci95": [
+      0.4963011760678556,
+      0.5142068188223573
+    ]
+  },
+  "detectors": {
+    "gradient_boosting": {
+      "auc": 0.5100194762150447,
+      "auc_ci95": [
+        0.5045180408422042,
+        0.516903288303702
+      ],
+      "auc_group_falcon::model.layers.17.self_attn.v_proj.weight": 0.5032673279444377,
+      "auc_group_falcon::model.layers.8.self_attn.k_proj.weight": 0.5029953320821126,
+      "auc_group_pythia::gpt_neox.layers.11.attention.dense.weight": 0.5025230646133423,
+      "auc_group_pythia::gpt_neox.layers.11.mlp.dense_4h_to_h.weight": 0.5014169613520305,
+      "auc_group_qwen15::model.layers.13.self_attn.k_proj.weight": 0.5323591232299805,
+      "auc_group_qwen15::model.layers.27.self_attn.v_proj.weight": 0.5174587567647299,
+      "auc_group_qwen3b::model.layers.17.self_attn.k_proj.weight": 0.5122905572255453,
+      "auc_group_qwen3b::model.layers.35.self_attn.v_proj.weight": 0.5151176055272421,
+      "auc_group_smollm2::model.layers.11.self_attn.k_proj.weight": 0.5018441279729208,
+      "auc_group_smollm2::model.layers.23.self_attn.v_proj.weight": 0.503975788752238,
+      "auc_group_tinyllama::model.layers.21.self_attn.k_proj.weight": 0.5192118088404337,
+      "auc_group_tinyllama::model.layers.21.self_attn.v_proj.weight": 0.5305283864339193,
+      "auc_model_falcon": 0.5023739039897919,
+      "auc_model_pythia": 0.5019634366035461,
+      "auc_model_qwen15": 0.5228161811828613,
+      "auc_model_qwen3b": 0.5138778388500214,
+      "auc_model_smollm2": 0.5031269888083141,
+      "auc_model_tinyllama": 0.5244043966134389,
+      "tpr_at_fpr_0.01": 0.010308159722222222,
+      "tpr_at_fpr_0.05": 0.05282931857638889
+    },
+    "logistic_regression": {
+      "auc": 0.5166886639263895,
+      "auc_ci95": [
+        0.5090329786348673,
+        0.5258476614814114
+      ],
+      "auc_group_falcon::model.layers.17.self_attn.v_proj.weight": 0.5077414909998575,
+      "auc_group_falcon::model.layers.8.self_attn.k_proj.weight": 0.508621335029602,
+      "auc_group_pythia::gpt_neox.layers.11.attention.dense.weight": 0.5042686065038046,
+      "auc_group_pythia::gpt_neox.layers.11.mlp.dense_4h_to_h.weight": 0.5010270277659098,
+      "auc_group_qwen15::model.layers.13.self_attn.k_proj.weight": 0.5471265713373821,
+      "auc_group_qwen15::model.layers.27.self_attn.v_proj.weight": 0.537283221880595,
+      "auc_group_qwen3b::model.layers.17.self_attn.k_proj.weight": 0.5300108194351196,
+      "auc_group_qwen3b::model.layers.35.self_attn.v_proj.weight": 0.5318653583526611,
+      "auc_group_smollm2::model.layers.11.self_attn.k_proj.weight": 0.5041519006093343,
+      "auc_group_smollm2::model.layers.23.self_attn.v_proj.weight": 0.5043870608011881,
+      "auc_group_tinyllama::model.layers.21.self_attn.k_proj.weight": 0.533090353012085,
+      "auc_group_tinyllama::model.layers.21.self_attn.v_proj.weight": 0.5322938362757365,
+      "auc_model_falcon": 0.5080592632293701,
+      "auc_model_pythia": 0.5026183625062306,
+      "auc_model_qwen15": 0.536697765191396,
+      "auc_model_qwen3b": 0.5307391981283824,
+      "auc_model_smollm2": 0.5042192339897156,
+      "auc_model_tinyllama": 0.5326262215773265,
+      "tpr_at_fpr_0.01": 0.0128173828125,
+      "tpr_at_fpr_0.05": 0.058878580729166664
+    },
+    "mlp_exploratory": {
+      "auc": 0.50265106531205,
+      "auc_ci95": [
+        0.5011179598807184,
+        0.50458890778461
+      ],
+      "auc_group_falcon::model.layers.17.self_attn.v_proj.weight": 0.5013320048650106,
+      "auc_group_falcon::model.layers.8.self_attn.k_proj.weight": 0.501166582107544,
+      "auc_group_pythia::gpt_neox.layers.11.attention.dense.weight": 0.5011250575383503,
+      "auc_group_pythia::gpt_neox.layers.11.mlp.dense_4h_to_h.weight": 0.4991004864374796,
+      "auc_group_qwen15::model.layers.13.self_attn.k_proj.weight": 0.5049216747283936,
+      "auc_group_qwen15::model.layers.27.self_attn.v_proj.weight": 0.5125035444895427,
+      "auc_group_qwen3b::model.layers.17.self_attn.k_proj.weight": 0.5028892755508423,
+      "auc_group_qwen3b::model.layers.35.self_attn.v_proj.weight": 0.5023144483566284,
+      "auc_group_smollm2::model.layers.11.self_attn.k_proj.weight": 0.49921091397603357,
+      "auc_group_smollm2::model.layers.23.self_attn.v_proj.weight": 0.5012766520182291,
+      "auc_group_tinyllama::model.layers.21.self_attn.k_proj.weight": 0.5027804772059122,
+      "auc_group_tinyllama::model.layers.21.self_attn.v_proj.weight": 0.5062174797058105,
+      "auc_model_falcon": 0.5012407799561819,
+      "auc_model_pythia": 0.50007896622022,
+      "auc_model_qwen15": 0.5080175002415975,
+      "auc_model_qwen3b": 0.5025098224480947,
+      "auc_model_smollm2": 0.5002312461535136,
+      "auc_model_tinyllama": 0.5044266978899637,
+      "tpr_at_fpr_0.01": 0.010552300347222222,
+      "tpr_at_fpr_0.05": 0.05223253038194445
+    }
+  },
+  "group_labels": [
+    "falcon::model.layers.17.self_attn.v_proj.weight",
+    "falcon::model.layers.8.self_attn.k_proj.weight",
+    "pythia::gpt_neox.layers.11.attention.dense.weight",
+    "pythia::gpt_neox.layers.11.mlp.dense_4h_to_h.weight",
+    "qwen15::model.layers.13.self_attn.k_proj.weight",
+    "qwen15::model.layers.27.self_attn.v_proj.weight",
+    "qwen3b::model.layers.17.self_attn.k_proj.weight",
+    "qwen3b::model.layers.35.self_attn.v_proj.weight",
+    "smollm2::model.layers.11.self_attn.k_proj.weight",
+    "smollm2::model.layers.23.self_attn.v_proj.weight",
+    "tinyllama::model.layers.21.self_attn.k_proj.weight",
+    "tinyllama::model.layers.21.self_attn.v_proj.weight"
+  ],
+  "n_embedded_artifacts": 36,
+  "n_examples": 98304,
+  "n_groups": 12
+}
