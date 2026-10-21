@@ -1,0 +1,41 @@
+{
+  "experiment": "exp7",
+  "title": "exp7",
+  "model_id": "Qwen/Qwen2.5-3B",
+  "family": "qwen",
+  "configuration": {},
+  "metrics": {},
+  "thresholds": {},
+  "status": "ERROR",
+  "gate_status": "ERROR",
+  "reproducibility": {
+    "model_id": "Qwen/Qwen2.5-3B",
+    "family": "qwen",
+    "expected_layers": 36,
+    "actual_layers": null,
+    "layer_count_matches_expected": null,
+    "random_seed": 42,
+    "device": "mps",
+    "software_versions": {
+      "python": "3.14.3",
+      "platform": "macOS-26.3-arm64-arm-64bit-Mach-O",
+      "torch": "2.13.0",
+      "transformers": "5.16.1",
+      "bitsandbytes": "0.50.2",
+      "accelerate": "1.14.0",
+      "numpy": "2.5.2"
+    },
+    "platform_notes": [
+      "Apple Silicon/MPS: NF4 dequantization must stay on CPU. Moving large dequantized tensors to MPS raises RuntimeError: Invalid buffer size.",
+      "MPS has no native int8/uint8 dequantize; PYTORCH_ENABLE_MPS_FALLBACK is set to 1."
+    ],
+    "residual_source": "live_extraction",
+    "residual_definition": "R = W_FP16 - dequantize(W_NF4)",
+    "timestamp": "2026-10-02T07:49:26.986632+00:00"
+  },
+  "notes": "KeyError: 'exp7_statistical'",
+  "traceback": "Traceback (most recent call last):\n  File \"/Users/meharkapoor7/nes-research/nes-llm/src/experiments/runner.py\", line 191, in run_experiment\n    artifact = module.run(context, **kwargs)\n  File \"/Users/meharkapoor7/nes-research/nes-llm/src/experiments/experiments/exp7_security.py\", line 44, in run\n    gate = gate_for(STATISTICAL_EXPERIMENT)\n  File \"/Users/meharkapoor7/nes-research/nes-llm/src/experiments/experiment_registry.py\", line 250, in gate_for\n    return THRESHOLDS[EXPERIMENTS[experiment][\"gate_key\"]]\n                      ~~~~~~~~~~~^^^^^^^^^^^^\nKeyError: 'exp7_statistical'\n",
+  "source": "run",
+  "duration_seconds": 0.03,
+  "generated_at": "2026-10-02T07:49:27.013392+00:00"
+}
