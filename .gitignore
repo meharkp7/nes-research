@@ -3,7 +3,7 @@ evidence/ckpt_nf4/*/model.safetensors*
 evidence/ckpt_nf4/*/model-*.safetensors
 evidence/ckpt_nf4/*/*.bin
 evidence/ckpt_nf4/*/pytorch_model*.bin
-
+*.safetensors
 # Cache directories
 cache/
 __pycache__/
