@@ -1,0 +1,24 @@
+{
+  "elapsed_s": 92.4,
+  "output": "/Users/meharkapoor7/nes-agent-workspace/nes-research/evidence/ckpt_nf4/qwen_clean",
+  "output_core_bytes": 5547377071,
+  "output_core_files": {
+    "config.json": "61e20f7cecb4bd9adf88625f069b64d186cf65a88e2cd935f1e4836d13d32108",
+    "generation_config.json": "39f9baa97b7e274bf3d118576f71dbcf38a2204e9b18d8b04e58067b70d1379f",
+    "model-00001-of-00004.safetensors": "f093b5d0f3e0601d7d1b1f21139392892eccc301a98684764fa5d55ed7494eed",
+    "model-00002-of-00004.safetensors": "069d2b2cff5b87ac4838df4d8c30ac393e914232b4263430259b4053d6cbb2b4",
+    "model-00003-of-00004.safetensors": "decd49eb6da4f85e11033924d7148c7cab3515a5757c1e881e2245511735a9d0",
+    "model-00004-of-00004.safetensors": "3e9413cc51e7628e2d23b7df3bd04b6583d9404be7894ad3b2c5945a8d78a1ad",
+    "model.safetensors.index.json": "740357fc9f70f3c8f0d6ceed94cdeb55c902b31904143caa8d9baa7750b86dab"
+  },
+  "quantization": {
+    "blocksize": 64,
+    "compute_dtype": "float16",
+    "double_quant": true,
+    "quant_storage": "uint8",
+    "quant_type": "nf4"
+  },
+  "source": "/Users/meharkapoor7/nes-agent-workspace/nes-research/fp16_models/qwen",
+  "status": "DONE",
+  "torch": "2.11.0"
+}

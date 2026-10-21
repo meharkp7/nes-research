@@ -1,0 +1,19 @@
+{
+  "batch": 4,
+  "codec_sha256": "07ce008dcabebb7ac0d4fa10c88251bf10dc9f2a7ae27dfc79bf23b8cd75b764",
+  "corpus": {
+    "config": "wikitext-2-raw-v1",
+    "file_sha256": "b8906574aa44e573182a4ba2a70922c3254da47a6fe9fcbbb7b9a61a3b7d7b6b",
+    "name": "Salesforce/wikitext",
+    "split": "test"
+  },
+  "equivalence_margin_pct": 0.5,
+  "method": "interior_nearest",
+  "model": "mistralai/Mistral-7B-v0.3",
+  "n_sequences": 580,
+  "revision": "caa1feb0e54d415e2df31207e5f4e273e33509b1",
+  "run_id": "utility_mistral_20261022_retry2",
+  "seqlen": 512,
+  "tensor": "model.layers.11.self_attn.k_proj.weight",
+  "windows_available": 647
+}

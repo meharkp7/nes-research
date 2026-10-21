@@ -27,7 +27,7 @@ from pathlib import Path
 
 import numpy as np
 
-REPO = "/workspace/nes_run_20261016_anchor_ablation/code/nes-llm"
+REPO = "/Users/meharkapoor7/nes-agent-workspace/nes-research/code/nes-llm"
 sys.path.insert(0, REPO)
 sys.path.insert(0, f"{REPO}/scripts")
 from scripts.run_nf4_anchor_pilot import load_tensor, sha_file  # noqa: E402

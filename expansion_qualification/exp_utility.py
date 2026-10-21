@@ -23,20 +23,29 @@ from pathlib import Path
 import numpy as np
 import torch
 
-REPO = "/workspace/nes_run_20261016_anchor_ablation/code/nes-llm"
+REPO = "/Users/meharkapoor7/nes-agent-workspace/nes-research/code/nes-llm"
 sys.path.insert(0, REPO)
 sys.path.insert(0, f"{REPO}/scripts")
 from scripts.run_nf4_anchor_pilot import load_tensor, sha_file  # noqa: E402
 from src.experiments.nf4_anchor_channel import embed, unpack  # noqa: E402
 
-ROOT = Path("/workspace/nes_run_20261016_anchor_ablation")
+ROOT = Path("/Users/meharkapoor7/nes-agent-workspace/nes-research")
 CORPUS = ROOT / "out/_corpus_wikitext2_test.parquet"
 METHOD = "interior_nearest"
 SEQLEN = 512
 
 
 def write_json(path, data):
-    Path(path).write_text(json.dumps(data, indent=2, sort_keys=True, allow_nan=False) + "\n")
+    def sanitize(obj):
+        if isinstance(obj, float):
+            if not np.isfinite(obj):
+                return None
+        elif isinstance(obj, dict):
+            return {k: sanitize(v) for k, v in obj.items()}
+        elif isinstance(obj, list):
+            return [sanitize(v) for v in obj]
+        return obj
+    Path(path).write_text(json.dumps(sanitize(data), indent=2, sort_keys=True, allow_nan=False) + "\n")
 
 
 def payload_for(bits, seed):
@@ -100,8 +109,19 @@ def eval_nll(ckpt_dir, windows, batch, ckpt_path=None):
                     {"seq_nll": seq_nll, "n_done": i + len(b)}, sort_keys=True) + "\n")
     del model
     seq_nll = np.array(seq_nll)
-    n_tok = len(windows) * (SEQLEN - 1)
-    return {"seq_nll": seq_nll.tolist(), "ppl": float(np.exp(seq_nll.sum() / n_tok)),
+    # Filter out non-finite NLL values
+    valid_nll = seq_nll[np.isfinite(seq_nll)]
+    n_tok = len(valid_nll) * (SEQLEN - 1) if len(valid_nll) > 0 else 1
+    if len(valid_nll) == 0:
+        ppl = float('inf')
+    else:
+        mean_nll = valid_nll.sum() / n_tok
+        # Cap PPL to avoid overflow
+        if mean_nll > 100:
+            ppl = float('inf')
+        else:
+            ppl = float(np.exp(mean_nll))
+    return {"seq_nll": seq_nll.tolist(), "ppl": ppl,
             "n_sequences": len(windows), "n_tokens": n_tok,
             "runtime_s": round(time.time() - t0, 1), "finite_logits_and_loss": finite}
 

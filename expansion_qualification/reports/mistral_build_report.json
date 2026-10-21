@@ -1,0 +1,23 @@
+{
+  "elapsed_s": 96.7,
+  "output": "/Users/meharkapoor7/nes-agent-workspace/nes-research/evidence/ckpt_nf4/mistral_clean",
+  "output_core_bytes": 4138402803,
+  "output_core_files": {
+    "config.json": "9e9ab2b3e4a4f7fe21e52ee8e5368ca86184170e8cc6bc55abd645b102f5b7ac",
+    "generation_config.json": "019fc3a1675bdb812b14662176990e8c70f2cdd082561d5708784581274ac421",
+    "model-00001-of-00003.safetensors": "69669ece6544c6352136a903984e8eedee0fb369affb30d97d73bf77384f230a",
+    "model-00002-of-00003.safetensors": "7650fdc00e39029f614f1751ac5772c50c6d1fff65e02fbab1ef20f95b03b09b",
+    "model-00003-of-00003.safetensors": "d9ecc49128ca36c10343b5776c32140aeea0fd42b835da0ca84293d827a35adc",
+    "model.safetensors.index.json": "172e1fc3cc2a081ff839a9def236e7ddc15a30cffc7201475f5a29f5ea733450"
+  },
+  "quantization": {
+    "blocksize": 64,
+    "compute_dtype": "float16",
+    "double_quant": true,
+    "quant_storage": "uint8",
+    "quant_type": "nf4"
+  },
+  "source": "/Users/meharkapoor7/nes-agent-workspace/nes-research/fp16_models/mistral",
+  "status": "DONE",
+  "torch": "2.11.0"
+}
