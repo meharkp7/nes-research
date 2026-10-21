@@ -3,6 +3,7 @@ name: Contract B and DCE prototype tests
 on:
   push:
     branches:
+      - main
       - research/contract-b-b14-and-evaluation
   pull_request:
     paths:
