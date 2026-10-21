@@ -1,0 +1,21 @@
+{
+  "elapsed_s": 129.6,
+  "model_id": "tiiuae/Falcon3-1B-Base",
+  "output": "/Users/meharkapoor7/nes-agent-workspace/nes-research/evidence/ckpt_nf4/falcon_clean",
+  "output_core_bytes": 1658349545,
+  "output_core_files": {
+    "config.json": "d685d03b6d840a1d6645b594d390b9109ba220bc00107939cc4a9109db1db758",
+    "generation_config.json": "8a5e8d6acf78cbb9067199fa2c596862ca30fe2281fc2d26e2bf70bbd8964b0e",
+    "model.safetensors": "20a2aa7957f9b0e97972d3080b2c86f4800bcb22d140559afd1abb65b20486a9"
+  },
+  "quantization": {
+    "blocksize": 64,
+    "compute_dtype": "float16",
+    "double_quant": true,
+    "quant_storage": "uint8",
+    "quant_type": "nf4"
+  },
+  "revision": "cb37ef3559b157b5c9d9226296ba01a5162da1f7",
+  "status": "DONE",
+  "torch": "2.11.0"
+}

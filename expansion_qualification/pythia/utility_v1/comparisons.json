@@ -1,0 +1,130 @@
+{
+  "comparisons": [
+    {
+      "ci95_nll": [
+        -6.353080067357771e-05,
+        0.00010307132662220442
+      ],
+      "clean_ppl": 16.43042605935915,
+      "clean_tensor_sha256": "b9d8bb3079ef30005ae30e93803309e762c592e98d20481d1e0952c9e0c67d87",
+      "condition": "emb_10000_20261016",
+      "embedded_ppl": 16.43073226331508,
+      "mean_delta_per_token_nll": 1.8636224136384107e-05,
+      "n_sequences": 563,
+      "relative_ppl_change_ci95_pct": [
+        -0.006352878263504724,
+        0.010307663865383176
+      ],
+      "relative_ppl_change_pct": 0.0018636397791871318,
+      "seed": 20261016,
+      "size": 10000,
+      "stego_tensor_sha256": "19f05a3c1bc4a174067e86cf39375d9ec8d6900ea0dce5a7d633d5188cb25b07",
+      "within_margin_0p5pct": true
+    },
+    {
+      "ci95_nll": [
+        -4.251675171306195e-05,
+        0.00011881610694684742
+      ],
+      "clean_ppl": 16.43042605935915,
+      "clean_tensor_sha256": "b9d8bb3079ef30005ae30e93803309e762c592e98d20481d1e0952c9e0c67d87",
+      "condition": "emb_10000_20261017",
+      "embedded_ppl": 16.431037385374655,
+      "mean_delta_per_token_nll": 3.7206256294687393e-05,
+      "n_sequences": 563,
+      "relative_ppl_change_ci95_pct": [
+        -0.0042515847888835445,
+        0.011882316585998254
+      ],
+      "relative_ppl_change_pct": 0.003720694845599226,
+      "seed": 20261017,
+      "size": 10000,
+      "stego_tensor_sha256": "4991cd8a97ec5bdf6213fc19fc22874c649a6fbe1ee6e518477516c54eb77738",
+      "within_margin_0p5pct": true
+    },
+    {
+      "ci95_nll": [
+        -0.00011545403180633847,
+        4.5167220658447016e-05
+      ],
+      "clean_ppl": 16.43042605935915,
+      "clean_tensor_sha256": "b9d8bb3079ef30005ae30e93803309e762c592e98d20481d1e0952c9e0c67d87",
+      "condition": "emb_10000_20261018",
+      "embedded_ppl": 16.429834136298453,
+      "mean_delta_per_token_nll": -3.6026681300683374e-05,
+      "n_sequences": 563,
+      "relative_ppl_change_ci95_pct": [
+        -0.011544736724611315,
+        0.004516824071276737
+      ],
+      "relative_ppl_change_pct": -0.0036026032347646897,
+      "seed": 20261018,
+      "size": 10000,
+      "stego_tensor_sha256": "85702ebf52a7e95fcfce41eb7a99f9a2df3dea7c2ad7dc088752677bff31246b",
+      "within_margin_0p5pct": true
+    },
+    {
+      "ci95_nll": [
+        -0.00010051674587968175,
+        8.412347510824511e-05
+      ],
+      "clean_ppl": 16.43042605935915,
+      "clean_tensor_sha256": "b9d8bb3079ef30005ae30e93803309e762c592e98d20481d1e0952c9e0c67d87",
+      "condition": "emb_50000_20261016",
+      "embedded_ppl": 16.430267328301912,
+      "mean_delta_per_token_nll": -9.660846493158518e-06,
+      "n_sequences": 563,
+      "relative_ppl_change_ci95_pct": [
+        -0.010051169424085682,
+        0.008412701358695429
+      ],
+      "relative_ppl_change_pct": -0.0009660799827337918,
+      "seed": 20261016,
+      "size": 50000,
+      "stego_tensor_sha256": "c08835980cce53671f76ac37a9c335b8dbcce1d095087bb146c4b5532465b68f",
+      "within_margin_0p5pct": true
+    },
+    {
+      "ci95_nll": [
+        -9.528877828013228e-05,
+        7.787914771833597e-05
+      ],
+      "clean_ppl": 16.43042605935915,
+      "clean_tensor_sha256": "b9d8bb3079ef30005ae30e93803309e762c592e98d20481d1e0952c9e0c67d87",
+      "condition": "emb_50000_20261017",
+      "embedded_ppl": 16.430251178861358,
+      "mean_delta_per_token_nll": -1.0643754936903226e-05,
+      "n_sequences": 563,
+      "relative_ppl_change_ci95_pct": [
+        -0.009528423844873402,
+        0.0077882180377963905
+      ],
+      "relative_ppl_change_pct": -0.0010643698292289727,
+      "seed": 20261017,
+      "size": 50000,
+      "stego_tensor_sha256": "042ff9d720905897131ba47a676e92b0e8b49446166df816df218abfcfbe3477",
+      "within_margin_0p5pct": true
+    },
+    {
+      "ci95_nll": [
+        1.0455532106924734e-05,
+        0.00019130490456556007
+      ],
+      "clean_ppl": 16.43042605935915,
+      "clean_tensor_sha256": "b9d8bb3079ef30005ae30e93803309e762c592e98d20481d1e0952c9e0c67d87",
+      "condition": "emb_50000_20261018",
+      "embedded_ppl": 16.432091689825477,
+      "mean_delta_per_token_nll": 0.00010136961997033298,
+      "n_sequences": 563,
+      "relative_ppl_change_ci95_pct": [
+        0.0010455586766155989,
+        0.019132320451564766
+      ],
+      "relative_ppl_change_pct": 0.010137475804383733,
+      "seed": 20261018,
+      "size": 50000,
+      "stego_tensor_sha256": "92f9287ff0eec9696de5b0021a0487a4e8ab472a99bae25de5dd76a9d914f099",
+      "within_margin_0p5pct": true
+    }
+  ]
+}

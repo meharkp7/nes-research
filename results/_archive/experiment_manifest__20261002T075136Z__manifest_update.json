@@ -1,0 +1,119 @@
+{
+  "schema_version": "1.0",
+  "generated_at": "2026-10-02T07:49:27.013663+00:00",
+  "description": "NES multi-model experiment manifest. One entry per experiment x model cell. Status is never inferred from implementation alone.",
+  "records": {
+    "exp1::Qwen/Qwen2.5-3B": {
+      "experiment": "exp1",
+      "model_id": "Qwen/Qwen2.5-3B",
+      "family": "qwen",
+      "status": "PASS",
+      "gate_status": "PASS",
+      "artifact_path": "/Users/meharkapoor7/nes-research/results/exp1_qwen__qwen2.5-3b.json",
+      "artifact_exists": true,
+      "configuration": {
+        "probe_payload_bits": 10000,
+        "module": "mlp.down_proj",
+        "residual_layers_expected": 36
+      },
+      "source": "run",
+      "notes": "Structural probe passed. This is not a fidelity, robustness or security claim.",
+      "updated_at": "2026-10-02T07:45:36.886470+00:00",
+      "metrics": {
+        "layer_mismatch": 0
+      },
+      "duration_seconds": 7.62
+    },
+    "exp2::Qwen/Qwen2.5-3B": {
+      "experiment": "exp2",
+      "model_id": "Qwen/Qwen2.5-3B",
+      "family": "qwen",
+      "status": "FAIL",
+      "gate_status": "FAIL",
+      "artifact_path": "/Users/meharkapoor7/nes-research/results/exp2_qwen__qwen2.5-3b.json",
+      "artifact_exists": true,
+      "configuration": {
+        "profiler": "LayerProfiler",
+        "num_bins": 64,
+        "module": "mlp.down_proj"
+      },
+      "source": "run",
+      "notes": "Only 4/36 layers exceed mag_mean 0.002 (11.1% < 80%). A FAIL here is a real property of this model's NF4 residual scale, not a pipeline error.",
+      "updated_at": "2026-10-02T07:45:44.781395+00:00",
+      "metrics": {
+        "fraction_above_threshold": 0.1111111111111111
+      },
+      "duration_seconds": 7.88
+    },
+    "exp3::Qwen/Qwen2.5-3B": {
+      "experiment": "exp3",
+      "model_id": "Qwen/Qwen2.5-3B",
+      "family": "qwen",
+      "status": "PASS",
+      "gate_status": "PASS",
+      "artifact_path": "/Users/meharkapoor7/nes-research/results/exp3_qwen__qwen2.5-3b.json",
+      "artifact_exists": true,
+      "configuration": {
+        "payload_bits": 50000,
+        "message_length_chars": 6000,
+        "embedding_strategy": "sign",
+        "carrier_selection": "qaci",
+        "message_source": "repeated 'A'; AES-256-GCM nonce is fresh per run"
+      },
+      "source": "run",
+      "notes": "Clean round trip recovered exactly.",
+      "updated_at": "2026-10-02T07:47:58.564922+00:00",
+      "metrics": {
+        "ber": 0.0
+      },
+      "duration_seconds": 24.17
+    },
+    "exp6::Qwen/Qwen2.5-3B": {
+      "experiment": "exp6",
+      "model_id": "Qwen/Qwen2.5-3B",
+      "family": "qwen",
+      "status": "PASS",
+      "gate_status": "PASS",
+      "artifact_path": "/Users/meharkapoor7/nes-research/results/exp6_qwen__qwen2.5-3b.json",
+      "artifact_exists": true,
+      "configuration": {
+        "sigmas": [
+          0.0,
+          0.0005,
+          0.001,
+          0.002,
+          0.005,
+          0.01,
+          0.02
+        ],
+        "trials_per_sigma": 5,
+        "payload_bits": 10000,
+        "noise": "additive i.i.d. Gaussian on all residual tensors",
+        "seed": 42
+      },
+      "source": "run",
+      "notes": "Both operating-point gates hold. Non-gate sigma values are stochastic and vary slightly across reruns.",
+      "updated_at": "2026-10-02T07:49:26.944759+00:00",
+      "metrics": {
+        "payload_bits": 10000,
+        "ber_at_sigma_0_001": 0.0,
+        "ber_at_sigma_0_002": 0.0
+      },
+      "duration_seconds": 54.13
+    },
+    "exp7::Qwen/Qwen2.5-3B": {
+      "experiment": "exp7",
+      "model_id": "Qwen/Qwen2.5-3B",
+      "family": "qwen",
+      "status": "ERROR",
+      "gate_status": "ERROR",
+      "artifact_path": "/Users/meharkapoor7/nes-research/results/exp7_qwen__qwen2.5-3b.json",
+      "artifact_exists": true,
+      "configuration": {},
+      "source": "run",
+      "notes": "KeyError: 'exp7_statistical'",
+      "updated_at": "2026-10-02T07:49:27.013641+00:00",
+      "duration_seconds": 0.03
+    }
+  }
+}

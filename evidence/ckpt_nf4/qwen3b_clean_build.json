@@ -1,0 +1,23 @@
+{
+  "elapsed_s": 18.7,
+  "model_id": "Qwen/Qwen2.5-3B",
+  "output": "/Users/meharkapoor7/nes-agent-workspace/nes-research/evidence/ckpt_nf4/qwen3b_clean",
+  "output_core_bytes": 2054784551,
+  "output_core_files": {
+    "config.json": "623d03c20eae6acefb1fb7fa355c27e83abe5f5b08e50fb95ec69ffca5379c4c",
+    "generation_config.json": "39f9baa97b7e274bf3d118576f71dbcf38a2204e9b18d8b04e58067b70d1379f",
+    "model-00001-of-00002.safetensors": "c63ea3e7766efa0daa459beb10878559f736589a3bba2878d65d4386bb2bd61d",
+    "model-00002-of-00002.safetensors": "d24f299af7f1218fbd2fa39ee74c73da695b87369360d40a5084f7cb6ff497c1",
+    "model.safetensors.index.json": "f0fa7e1e4fcdb2ba3695f6cbbef67a1395df3c2dee6a255a76234d77165fb924"
+  },
+  "quantization": {
+    "blocksize": 64,
+    "compute_dtype": "float16",
+    "double_quant": true,
+    "quant_storage": "uint8",
+    "quant_type": "nf4"
+  },
+  "revision": "3aab1f1954e9cc14eb9509a215f9e5ca08227a9b",
+  "status": "DONE",
+  "torch": "2.11.0"
+}

@@ -1,0 +1,22 @@
+{
+  "elapsed_s": 50.9,
+  "output": "/Users/meharkapoor7/nes-agent-workspace/nes-research/evidence/ckpt_nf4/phi3_clean",
+  "output_core_bytes": 2264190380,
+  "output_core_files": {
+    "config.json": "b8ec1014212f72f59b1135fe6099c262454c6a9a99e76adb57b4be241836f091",
+    "generation_config.json": "42b50ac914cc36f55767278399720b7862b842a3c92f23c96e6442516cc645ff",
+    "model-00001-of-00002.safetensors": "57fc4daee51775284ceac84a31066463e26b07db5ae5f54528d33801e11e8efe",
+    "model-00002-of-00002.safetensors": "86295ec5493b9f163d2e536c101aa8ce7de7fcfb608a937963fbca1a1dfbe60b",
+    "model.safetensors.index.json": "8cc9c704a6181737308575df9e2d4db47cafabb92de7ec37106e1dc4993295f8"
+  },
+  "quantization": {
+    "blocksize": 64,
+    "compute_dtype": "float16",
+    "double_quant": true,
+    "quant_storage": "uint8",
+    "quant_type": "nf4"
+  },
+  "source": "/Users/meharkapoor7/nes-agent-workspace/nes-research/fp16_models/phi3",
+  "status": "DONE",
+  "torch": "2.11.0"
+}

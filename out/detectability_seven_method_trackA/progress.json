@@ -1,0 +1,13 @@
+{
+  "schema": "nes.seven_method_detectability_stage1.progress.v1",
+  "cells_total": 30,
+  "cells_completed": 30,
+  "cells_ready": 30,
+  "cells_blocked": 0,
+  "block_feature_rows_written": 11516160,
+  "layer_descriptive_rows_written": 505,
+  "current_cell": "mistralai/Mistral-7B-v0.3|split_sign_parity",
+  "elapsed_seconds": 3279.71,
+  "quantile_method": "deterministic evenly-spaced sample; exact only when tensor <= sample cap",
+  "quantile_sample_max": 32768
+}

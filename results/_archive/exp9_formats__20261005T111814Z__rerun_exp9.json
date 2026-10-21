@@ -1,0 +1,48 @@
+{
+  "experiment": "exp9",
+  "title": "GPTQ / AWQ beyond NF4",
+  "model": "Qwen/Qwen2.5-3B-Instruct",
+  "configuration": {
+    "targets": [
+      "Qwen/Qwen2.5-3B-Instruct-GPTQ-Int4",
+      "Qwen/Qwen2.5-3B-Instruct-AWQ"
+    ],
+    "payload_bits": 10000,
+    "module": "mlp.down_proj",
+    "dequantization": "format-specific adapters, verified against FP16 reference"
+  },
+  "metrics": {
+    "results": {
+      "Qwen/Qwen2.5-3B-Instruct-GPTQ-Int4": {
+        "status": "PASS",
+        "ber": 0.0,
+        "mean_residual_magnitude": 0.002787,
+        "layers": 36,
+        "dequant_verification": {
+          "correlation": 0.9903,
+          "residual_ratio": 0.1402,
+          "usable": true
+        },
+        "notes": "Clean BER 0.0 through the GPTQ dequantization path, verified against the FP16 reference (correlation 0.9903)."
+      },
+      "Qwen/Qwen2.5-3B-Instruct-AWQ": {
+        "status": "NOT_RUN",
+        "dequant_verification": {
+          "correlation": 0.2343,
+          "residual_ratio": 1.0269,
+          "usable": false
+        },
+        "notes": "AWQ dequantization could not be verified against the FP16 reference (correlation 0.2343 < 0.95), so no residual was computed. Reporting NOT_RUN rather than a BER that would look valid and mean nothing."
+      }
+    },
+    "overall_status": "PASS",
+    "formats_validated": [
+      "gptq"
+    ]
+  },
+  "status": "PASS",
+  "gate_status": "PASS",
+  "conclusion": "GPTQ is verified and works: clean BER 0.0. AWQ is NOT_RUN because its dequantization could not be verified (correlation 0.2343 vs GPTQ's 0.9903).",
+  "source": "run",
+  "generated_at": "2026-10-02"
+}

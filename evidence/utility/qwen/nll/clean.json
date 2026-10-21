@@ -1,0 +1,9 @@
+{
+  "checkpoint": "/Users/meharkapoor7/nes-agent-workspace/nes-research/evidence/ckpt_nf4/qwen_clean",
+  "finite_logits_and_loss": true,
+  "n_sequences": 0,
+  "n_tokens": 1,
+  "ppl": null,
+  "runtime_s": 0.0,
+  "seq_nll": []
+}

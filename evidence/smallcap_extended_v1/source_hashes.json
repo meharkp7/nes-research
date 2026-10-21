@@ -1,0 +1,14 @@
+{
+  "falcon:model.layers.17.self_attn.v_proj.weight": "7b38834d79e7ce532c9a88baeb1bfb685b9252a251fc99922a2c9318589a073b",
+  "falcon:model.layers.8.self_attn.k_proj.weight": "0d3cf6321a4559f96709d6ee3b501b55e7aba03bc9c5fd1e96043a5d8fdcbad6",
+  "pythia:gpt_neox.layers.11.attention.dense.weight": "9540e503b4b6d41425c4ffc664f29a55ceda7887bba0a1d7722d3004a11f86ca",
+  "pythia:gpt_neox.layers.11.mlp.dense_4h_to_h.weight": "681412c7f1d351d4113585ba0de9474ba8b82c3ed3f96bd1421f15c1d8f0a21b",
+  "qwen15:model.layers.13.self_attn.k_proj.weight": "e462f07369745a2a1bd697119071ccd210bb7ce6909397c1cd776a1c76d334a4",
+  "qwen15:model.layers.27.self_attn.v_proj.weight": "45be340b3395dc58161d2b2cff3f826596edf5c21431f23f23a9b7c80da23ad8",
+  "qwen3b:model.layers.17.self_attn.k_proj.weight": "d0e3f9a091e6b3e2508449de3638683b41318e64512e5473dc2d3dc1026932dc",
+  "qwen3b:model.layers.35.self_attn.v_proj.weight": "ee64cbac291a81d7aebea4cdb73d1eaaa4451696c730272b5ac061cc40cbb3ef",
+  "smollm2:model.layers.11.self_attn.k_proj.weight": "e1ed583339d56e0fe17e68870ad6c8344e34b14986bc2d724d761e6870ac9957",
+  "smollm2:model.layers.23.self_attn.v_proj.weight": "4befccdf9c5f12fb4104c60bcf93c68f5bef2ef923be0def543ba40809083e81",
+  "tinyllama:model.layers.21.self_attn.k_proj.weight": "310ad7e7e3a56b4d95fbb9da0dfbae5f0e038713c0fff835bbdf8ccd548b273a",
+  "tinyllama:model.layers.21.self_attn.v_proj.weight": "c85ac395217f03340080dff94385e50e9b2825688d9df221fbdef22acc040c49"
+}

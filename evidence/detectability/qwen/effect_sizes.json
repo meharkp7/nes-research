@@ -1,0 +1,484 @@
+{
+  "effects": [
+    {
+      "cohen_d": 0.0,
+      "feature": "endpoint_frac",
+      "tensor": "model.layers.0.mlp.up_proj.weight"
+    },
+    {
+      "cohen_d": 0.0,
+      "feature": "zero_count",
+      "tensor": "model.layers.0.mlp.up_proj.weight"
+    },
+    {
+      "cohen_d": 0.0,
+      "feature": "fifteen_count",
+      "tensor": "model.layers.0.mlp.up_proj.weight"
+    },
+    {
+      "cohen_d": 0.0,
+      "feature": "interior_frac",
+      "tensor": "model.layers.0.mlp.up_proj.weight"
+    },
+    {
+      "cohen_d": 6.747351313703319e-05,
+      "feature": "mean_code",
+      "tensor": "model.layers.0.mlp.up_proj.weight"
+    },
+    {
+      "cohen_d": -0.0003673793541540976,
+      "feature": "std_code",
+      "tensor": "model.layers.0.mlp.up_proj.weight"
+    },
+    {
+      "cohen_d": 0.00034846895025554965,
+      "feature": "odd_frac",
+      "tensor": "model.layers.0.mlp.up_proj.weight"
+    },
+    {
+      "cohen_d": 0.00023371067462297398,
+      "feature": "parity_imbalance",
+      "tensor": "model.layers.0.mlp.up_proj.weight"
+    },
+    {
+      "cohen_d": 0.00035697795729255834,
+      "feature": "odd_interior_frac",
+      "tensor": "model.layers.0.mlp.up_proj.weight"
+    },
+    {
+      "cohen_d": 8.202165572374117e-05,
+      "feature": "distinct_codes",
+      "tensor": "model.layers.0.mlp.up_proj.weight"
+    },
+    {
+      "cohen_d": 5.4599796285473645e-05,
+      "feature": "code_entropy",
+      "tensor": "model.layers.0.mlp.up_proj.weight"
+    },
+    {
+      "cohen_d": -0.00039163885816109826,
+      "feature": "mean_abs_value",
+      "tensor": "model.layers.0.mlp.up_proj.weight"
+    },
+    {
+      "cohen_d": 0.0,
+      "feature": "absmax_value",
+      "tensor": "model.layers.0.mlp.up_proj.weight"
+    },
+    {
+      "cohen_d": -0.00048324657428366023,
+      "feature": "adjacent_equal_frac",
+      "tensor": "model.layers.0.mlp.up_proj.weight"
+    },
+    {
+      "cohen_d": 0.00014346902503869398,
+      "feature": "adjacent_parity_change",
+      "tensor": "model.layers.0.mlp.up_proj.weight"
+    },
+    {
+      "cohen_d": 0.0004392354689839203,
+      "feature": "max_run",
+      "tensor": "model.layers.0.mlp.up_proj.weight"
+    },
+    {
+      "cohen_d": 0.0,
+      "feature": "endpoint_frac",
+      "tensor": "model.layers.0.self_attn.q_proj.weight"
+    },
+    {
+      "cohen_d": 0.0,
+      "feature": "zero_count",
+      "tensor": "model.layers.0.self_attn.q_proj.weight"
+    },
+    {
+      "cohen_d": 0.0,
+      "feature": "fifteen_count",
+      "tensor": "model.layers.0.self_attn.q_proj.weight"
+    },
+    {
+      "cohen_d": 0.0,
+      "feature": "interior_frac",
+      "tensor": "model.layers.0.self_attn.q_proj.weight"
+    },
+    {
+      "cohen_d": 0.0002310473094995296,
+      "feature": "mean_code",
+      "tensor": "model.layers.0.self_attn.q_proj.weight"
+    },
+    {
+      "cohen_d": -0.0016947835519602974,
+      "feature": "std_code",
+      "tensor": "model.layers.0.self_attn.q_proj.weight"
+    },
+    {
+      "cohen_d": -0.001348654725966473,
+      "feature": "odd_frac",
+      "tensor": "model.layers.0.self_attn.q_proj.weight"
+    },
+    {
+      "cohen_d": 0.0015969814406657753,
+      "feature": "parity_imbalance",
+      "tensor": "model.layers.0.self_attn.q_proj.weight"
+    },
+    {
+      "cohen_d": -0.0013836332694998187,
+      "feature": "odd_interior_frac",
+      "tensor": "model.layers.0.self_attn.q_proj.weight"
+    },
+    {
+      "cohen_d": -0.000505015209885665,
+      "feature": "distinct_codes",
+      "tensor": "model.layers.0.self_attn.q_proj.weight"
+    },
+    {
+      "cohen_d": -0.001612168828017753,
+      "feature": "code_entropy",
+      "tensor": "model.layers.0.self_attn.q_proj.weight"
+    },
+    {
+      "cohen_d": -0.0017947730865285933,
+      "feature": "mean_abs_value",
+      "tensor": "model.layers.0.self_attn.q_proj.weight"
+    },
+    {
+      "cohen_d": 0.0,
+      "feature": "absmax_value",
+      "tensor": "model.layers.0.self_attn.q_proj.weight"
+    },
+    {
+      "cohen_d": 0.00011227891913218116,
+      "feature": "adjacent_equal_frac",
+      "tensor": "model.layers.0.self_attn.q_proj.weight"
+    },
+    {
+      "cohen_d": -0.002847591871047605,
+      "feature": "adjacent_parity_change",
+      "tensor": "model.layers.0.self_attn.q_proj.weight"
+    },
+    {
+      "cohen_d": 0.000301901037693499,
+      "feature": "max_run",
+      "tensor": "model.layers.0.self_attn.q_proj.weight"
+    },
+    {
+      "cohen_d": 0.0,
+      "feature": "endpoint_frac",
+      "tensor": "model.layers.13.mlp.down_proj.weight"
+    },
+    {
+      "cohen_d": 0.0,
+      "feature": "zero_count",
+      "tensor": "model.layers.13.mlp.down_proj.weight"
+    },
+    {
+      "cohen_d": 0.0,
+      "feature": "fifteen_count",
+      "tensor": "model.layers.13.mlp.down_proj.weight"
+    },
+    {
+      "cohen_d": 0.0,
+      "feature": "interior_frac",
+      "tensor": "model.layers.13.mlp.down_proj.weight"
+    },
+    {
+      "cohen_d": 5.294948948352334e-05,
+      "feature": "mean_code",
+      "tensor": "model.layers.13.mlp.down_proj.weight"
+    },
+    {
+      "cohen_d": -0.00028610773771259616,
+      "feature": "std_code",
+      "tensor": "model.layers.13.mlp.down_proj.weight"
+    },
+    {
+      "cohen_d": 0.0003430200002468387,
+      "feature": "odd_frac",
+      "tensor": "model.layers.13.mlp.down_proj.weight"
+    },
+    {
+      "cohen_d": 0.000707250502579412,
+      "feature": "parity_imbalance",
+      "tensor": "model.layers.13.mlp.down_proj.weight"
+    },
+    {
+      "cohen_d": 0.000349981871936272,
+      "feature": "odd_interior_frac",
+      "tensor": "model.layers.13.mlp.down_proj.weight"
+    },
+    {
+      "cohen_d": 0.0,
+      "feature": "distinct_codes",
+      "tensor": "model.layers.13.mlp.down_proj.weight"
+    },
+    {
+      "cohen_d": -0.00010955503526005126,
+      "feature": "code_entropy",
+      "tensor": "model.layers.13.mlp.down_proj.weight"
+    },
+    {
+      "cohen_d": -0.00035592283570431277,
+      "feature": "mean_abs_value",
+      "tensor": "model.layers.13.mlp.down_proj.weight"
+    },
+    {
+      "cohen_d": 0.0,
+      "feature": "absmax_value",
+      "tensor": "model.layers.13.mlp.down_proj.weight"
+    },
+    {
+      "cohen_d": 0.00017520901561341503,
+      "feature": "adjacent_equal_frac",
+      "tensor": "model.layers.13.mlp.down_proj.weight"
+    },
+    {
+      "cohen_d": -0.00041241496001216,
+      "feature": "adjacent_parity_change",
+      "tensor": "model.layers.13.mlp.down_proj.weight"
+    },
+    {
+      "cohen_d": 0.00014060910316811704,
+      "feature": "max_run",
+      "tensor": "model.layers.13.mlp.down_proj.weight"
+    },
+    {
+      "cohen_d": 0.0,
+      "feature": "endpoint_frac",
+      "tensor": "model.layers.13.self_attn.k_proj.weight"
+    },
+    {
+      "cohen_d": 0.0,
+      "feature": "zero_count",
+      "tensor": "model.layers.13.self_attn.k_proj.weight"
+    },
+    {
+      "cohen_d": 0.0,
+      "feature": "fifteen_count",
+      "tensor": "model.layers.13.self_attn.k_proj.weight"
+    },
+    {
+      "cohen_d": 0.0,
+      "feature": "interior_frac",
+      "tensor": "model.layers.13.self_attn.k_proj.weight"
+    },
+    {
+      "cohen_d": 0.001988614949041414,
+      "feature": "mean_code",
+      "tensor": "model.layers.13.self_attn.k_proj.weight"
+    },
+    {
+      "cohen_d": -0.00987414317335876,
+      "feature": "std_code",
+      "tensor": "model.layers.13.self_attn.k_proj.weight"
+    },
+    {
+      "cohen_d": 0.0015272872884608097,
+      "feature": "odd_frac",
+      "tensor": "model.layers.13.self_attn.k_proj.weight"
+    },
+    {
+      "cohen_d": 0.0014321123363646366,
+      "feature": "parity_imbalance",
+      "tensor": "model.layers.13.self_attn.k_proj.weight"
+    },
+    {
+      "cohen_d": 0.0015746971693574598,
+      "feature": "odd_interior_frac",
+      "tensor": "model.layers.13.self_attn.k_proj.weight"
+    },
+    {
+      "cohen_d": -0.0029961566015683128,
+      "feature": "distinct_codes",
+      "tensor": "model.layers.13.self_attn.k_proj.weight"
+    },
+    {
+      "cohen_d": -0.006560021314446385,
+      "feature": "code_entropy",
+      "tensor": "model.layers.13.self_attn.k_proj.weight"
+    },
+    {
+      "cohen_d": -0.011592689258593523,
+      "feature": "mean_abs_value",
+      "tensor": "model.layers.13.self_attn.k_proj.weight"
+    },
+    {
+      "cohen_d": 0.0,
+      "feature": "absmax_value",
+      "tensor": "model.layers.13.self_attn.k_proj.weight"
+    },
+    {
+      "cohen_d": 0.0037390251045968776,
+      "feature": "adjacent_equal_frac",
+      "tensor": "model.layers.13.self_attn.k_proj.weight"
+    },
+    {
+      "cohen_d": 0.006051672117973169,
+      "feature": "adjacent_parity_change",
+      "tensor": "model.layers.13.self_attn.k_proj.weight"
+    },
+    {
+      "cohen_d": 0.004044522282061802,
+      "feature": "max_run",
+      "tensor": "model.layers.13.self_attn.k_proj.weight"
+    },
+    {
+      "cohen_d": 0.0,
+      "feature": "endpoint_frac",
+      "tensor": "model.layers.27.mlp.gate_proj.weight"
+    },
+    {
+      "cohen_d": 0.0,
+      "feature": "zero_count",
+      "tensor": "model.layers.27.mlp.gate_proj.weight"
+    },
+    {
+      "cohen_d": 0.0,
+      "feature": "fifteen_count",
+      "tensor": "model.layers.27.mlp.gate_proj.weight"
+    },
+    {
+      "cohen_d": 0.0,
+      "feature": "interior_frac",
+      "tensor": "model.layers.27.mlp.gate_proj.weight"
+    },
+    {
+      "cohen_d": -1.8713287225572037e-05,
+      "feature": "mean_code",
+      "tensor": "model.layers.27.mlp.gate_proj.weight"
+    },
+    {
+      "cohen_d": -0.0003524281970417957,
+      "feature": "std_code",
+      "tensor": "model.layers.27.mlp.gate_proj.weight"
+    },
+    {
+      "cohen_d": 0.0004759389120413936,
+      "feature": "odd_frac",
+      "tensor": "model.layers.27.mlp.gate_proj.weight"
+    },
+    {
+      "cohen_d": 0.0004371057056678281,
+      "feature": "parity_imbalance",
+      "tensor": "model.layers.27.mlp.gate_proj.weight"
+    },
+    {
+      "cohen_d": 0.0004788907011300844,
+      "feature": "odd_interior_frac",
+      "tensor": "model.layers.27.mlp.gate_proj.weight"
+    },
+    {
+      "cohen_d": -0.00017992702586247958,
+      "feature": "distinct_codes",
+      "tensor": "model.layers.27.mlp.gate_proj.weight"
+    },
+    {
+      "cohen_d": -0.0002419032756958904,
+      "feature": "code_entropy",
+      "tensor": "model.layers.27.mlp.gate_proj.weight"
+    },
+    {
+      "cohen_d": -0.000415054191023791,
+      "feature": "mean_abs_value",
+      "tensor": "model.layers.27.mlp.gate_proj.weight"
+    },
+    {
+      "cohen_d": 0.0,
+      "feature": "absmax_value",
+      "tensor": "model.layers.27.mlp.gate_proj.weight"
+    },
+    {
+      "cohen_d": 7.869213175820858e-05,
+      "feature": "adjacent_equal_frac",
+      "tensor": "model.layers.27.mlp.gate_proj.weight"
+    },
+    {
+      "cohen_d": 0.0002704632432774245,
+      "feature": "adjacent_parity_change",
+      "tensor": "model.layers.27.mlp.gate_proj.weight"
+    },
+    {
+      "cohen_d": 0.00048557510770052257,
+      "feature": "max_run",
+      "tensor": "model.layers.27.mlp.gate_proj.weight"
+    },
+    {
+      "cohen_d": 0.0,
+      "feature": "endpoint_frac",
+      "tensor": "model.layers.27.self_attn.v_proj.weight"
+    },
+    {
+      "cohen_d": 0.0,
+      "feature": "zero_count",
+      "tensor": "model.layers.27.self_attn.v_proj.weight"
+    },
+    {
+      "cohen_d": 0.0,
+      "feature": "fifteen_count",
+      "tensor": "model.layers.27.self_attn.v_proj.weight"
+    },
+    {
+      "cohen_d": 0.0,
+      "feature": "interior_frac",
+      "tensor": "model.layers.27.self_attn.v_proj.weight"
+    },
+    {
+      "cohen_d": 0.0020029731102790102,
+      "feature": "mean_code",
+      "tensor": "model.layers.27.self_attn.v_proj.weight"
+    },
+    {
+      "cohen_d": -0.007708600680290536,
+      "feature": "std_code",
+      "tensor": "model.layers.27.self_attn.v_proj.weight"
+    },
+    {
+      "cohen_d": 0.00014422192445609077,
+      "feature": "odd_frac",
+      "tensor": "model.layers.27.self_attn.v_proj.weight"
+    },
+    {
+      "cohen_d": 0.0014468501997611414,
+      "feature": "parity_imbalance",
+      "tensor": "model.layers.27.self_attn.v_proj.weight"
+    },
+    {
+      "cohen_d": 0.00010870644183623286,
+      "feature": "odd_interior_frac",
+      "tensor": "model.layers.27.self_attn.v_proj.weight"
+    },
+    {
+      "cohen_d": -0.003979211853799895,
+      "feature": "distinct_codes",
+      "tensor": "model.layers.27.self_attn.v_proj.weight"
+    },
+    {
+      "cohen_d": -0.0058986965407365945,
+      "feature": "code_entropy",
+      "tensor": "model.layers.27.self_attn.v_proj.weight"
+    },
+    {
+      "cohen_d": -0.009139701299769468,
+      "feature": "mean_abs_value",
+      "tensor": "model.layers.27.self_attn.v_proj.weight"
+    },
+    {
+      "cohen_d": 0.0,
+      "feature": "absmax_value",
+      "tensor": "model.layers.27.self_attn.v_proj.weight"
+    },
+    {
+      "cohen_d": 0.004480665342856239,
+      "feature": "adjacent_equal_frac",
+      "tensor": "model.layers.27.self_attn.v_proj.weight"
+    },
+    {
+      "cohen_d": 0.005197457086208037,
+      "feature": "adjacent_parity_change",
+      "tensor": "model.layers.27.self_attn.v_proj.weight"
+    },
+    {
+      "cohen_d": 0.0029212999240538023,
+      "feature": "max_run",
+      "tensor": "model.layers.27.self_attn.v_proj.weight"
+    }
+  ]
+}

@@ -1,23 +1,18 @@
-*.venv
-*.DS_Store
-*.ipynb_checkpoints
-*.pt
-
-# Duplicate of the tracked artifacts/exp7_detector_dataset.pkl. The suite
-# resolves datasets from the repo-root artifacts/ directory, so tracking a
-# second 16MB copy only risks the two drifting apart.
-nes-llm/artifacts/
+# Model checkpoints (large files)
+evidence/ckpt_nf4/*/model.safetensors*
+evidence/ckpt_nf4/*/model-*.safetensors
+evidence/ckpt_nf4/*/*.bin
+evidence/ckpt_nf4/*/pytorch_model*.bin
+*.safetensors
+# Cache directories
 cache/
-*cache/
-# Superseded experiment artifacts live in results/_archive/ so a rerun
-# preserves the previous result instead of overwriting it. The archive is
-# kept on disk for inspection but is not part of the recorded history.
-results/_archive/
-# Byte-compiled Python. These were tracked (19 of them) and only ever
-# produced noise in `git status` -- a committed .pyc is also a lie about
-# which source produced it.
 __pycache__/
 *.pyc
-# gptqmodel's runtime logs (nes-llm/logs/): regenerated on every run,
-# tool chatter with no measurement content -- same category as .pyc.
-nes-llm/logs/
+
+# Temporary files
+/tmp/
+*.tmp
+
+# OS files
+.DS_Store
+out/detectability_seven_method_trackA/residual_paired_block_features.csv

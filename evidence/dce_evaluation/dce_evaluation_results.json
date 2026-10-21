@@ -1,0 +1,458 @@
+{
+  "smollm2": {
+    "model": "smollm2",
+    "tensor": "model.layers.11.self_attn.k_proj.weight",
+    "grid_width": 4,
+    "grid_offset": 0,
+    "tests": [
+      {
+        "size": 10000,
+        "seed": 20261016,
+        "correct_key": true,
+        "wrong_key": false,
+        "keyless": false,
+        "pass": true
+      },
+      {
+        "size": 10000,
+        "seed": 20261017,
+        "correct_key": true,
+        "wrong_key": false,
+        "keyless": false,
+        "pass": true
+      },
+      {
+        "size": 10000,
+        "seed": 20261018,
+        "correct_key": true,
+        "wrong_key": false,
+        "keyless": false,
+        "pass": true
+      },
+      {
+        "size": 50000,
+        "seed": 20261016,
+        "correct_key": true,
+        "wrong_key": false,
+        "keyless": false,
+        "pass": true
+      },
+      {
+        "size": 50000,
+        "seed": 20261017,
+        "correct_key": true,
+        "wrong_key": false,
+        "keyless": false,
+        "pass": true
+      },
+      {
+        "size": 50000,
+        "seed": 20261018,
+        "correct_key": true,
+        "wrong_key": false,
+        "keyless": false,
+        "pass": true
+      }
+    ],
+    "overall": "PASS"
+  },
+  "qwen15": {
+    "model": "qwen15",
+    "tensor": "model.layers.13.self_attn.k_proj.weight",
+    "grid_width": 4,
+    "grid_offset": 0,
+    "tests": [
+      {
+        "size": 10000,
+        "seed": 20261016,
+        "correct_key": true,
+        "wrong_key": false,
+        "keyless": false,
+        "pass": true
+      },
+      {
+        "size": 10000,
+        "seed": 20261017,
+        "correct_key": true,
+        "wrong_key": false,
+        "keyless": false,
+        "pass": true
+      },
+      {
+        "size": 10000,
+        "seed": 20261018,
+        "correct_key": true,
+        "wrong_key": false,
+        "keyless": false,
+        "pass": true
+      },
+      {
+        "size": 50000,
+        "seed": 20261016,
+        "correct_key": true,
+        "wrong_key": false,
+        "keyless": false,
+        "pass": true
+      },
+      {
+        "size": 50000,
+        "seed": 20261017,
+        "correct_key": true,
+        "wrong_key": false,
+        "keyless": false,
+        "pass": true
+      },
+      {
+        "size": 50000,
+        "seed": 20261018,
+        "correct_key": true,
+        "wrong_key": false,
+        "keyless": false,
+        "pass": true
+      }
+    ],
+    "overall": "PASS"
+  },
+  "pythia": {
+    "model": "pythia",
+    "tensor": "gpt_neox.layers.11.attention.dense.weight",
+    "grid_width": 4,
+    "grid_offset": 0,
+    "tests": [
+      {
+        "size": 10000,
+        "seed": 20261016,
+        "correct_key": true,
+        "wrong_key": false,
+        "keyless": false,
+        "pass": true
+      },
+      {
+        "size": 10000,
+        "seed": 20261017,
+        "correct_key": true,
+        "wrong_key": false,
+        "keyless": false,
+        "pass": true
+      },
+      {
+        "size": 10000,
+        "seed": 20261018,
+        "correct_key": true,
+        "wrong_key": false,
+        "keyless": false,
+        "pass": true
+      },
+      {
+        "size": 50000,
+        "seed": 20261016,
+        "correct_key": true,
+        "wrong_key": false,
+        "keyless": false,
+        "pass": true
+      },
+      {
+        "size": 50000,
+        "seed": 20261017,
+        "correct_key": true,
+        "wrong_key": false,
+        "keyless": false,
+        "pass": true
+      },
+      {
+        "size": 50000,
+        "seed": 20261018,
+        "correct_key": true,
+        "wrong_key": false,
+        "keyless": false,
+        "pass": true
+      }
+    ],
+    "overall": "PASS"
+  },
+  "falcon": {
+    "model": "falcon",
+    "tensor": "model.layers.8.self_attn.k_proj.weight",
+    "grid_width": 4,
+    "grid_offset": 0,
+    "tests": [
+      {
+        "size": 10000,
+        "seed": 20261016,
+        "correct_key": true,
+        "wrong_key": false,
+        "keyless": false,
+        "pass": true
+      },
+      {
+        "size": 10000,
+        "seed": 20261017,
+        "correct_key": true,
+        "wrong_key": false,
+        "keyless": false,
+        "pass": true
+      },
+      {
+        "size": 10000,
+        "seed": 20261018,
+        "correct_key": true,
+        "wrong_key": false,
+        "keyless": false,
+        "pass": true
+      },
+      {
+        "size": 50000,
+        "seed": 20261016,
+        "correct_key": true,
+        "wrong_key": false,
+        "keyless": false,
+        "pass": true
+      },
+      {
+        "size": 50000,
+        "seed": 20261017,
+        "correct_key": true,
+        "wrong_key": false,
+        "keyless": false,
+        "pass": true
+      },
+      {
+        "size": 50000,
+        "seed": 20261018,
+        "correct_key": true,
+        "wrong_key": false,
+        "keyless": false,
+        "pass": true
+      }
+    ],
+    "overall": "PASS"
+  },
+  "mistral": {
+    "model": "mistral",
+    "tensor": "model.layers.11.self_attn.k_proj.weight",
+    "grid_width": 4,
+    "grid_offset": 0,
+    "tests": [
+      {
+        "size": 10000,
+        "seed": 20261016,
+        "correct_key": true,
+        "wrong_key": false,
+        "keyless": false,
+        "pass": true
+      },
+      {
+        "size": 10000,
+        "seed": 20261017,
+        "correct_key": true,
+        "wrong_key": false,
+        "keyless": false,
+        "pass": true
+      },
+      {
+        "size": 10000,
+        "seed": 20261018,
+        "correct_key": true,
+        "wrong_key": false,
+        "keyless": false,
+        "pass": true
+      },
+      {
+        "size": 50000,
+        "seed": 20261016,
+        "correct_key": true,
+        "wrong_key": false,
+        "keyless": false,
+        "pass": true
+      },
+      {
+        "size": 50000,
+        "seed": 20261017,
+        "correct_key": true,
+        "wrong_key": false,
+        "keyless": false,
+        "pass": true
+      },
+      {
+        "size": 50000,
+        "seed": 20261018,
+        "correct_key": true,
+        "wrong_key": false,
+        "keyless": false,
+        "pass": true
+      }
+    ],
+    "overall": "PASS"
+  },
+  "gemma": {
+    "model": "gemma",
+    "tensor": "model.layers.21.self_attn.k_proj.weight",
+    "grid_width": 4,
+    "grid_offset": 0,
+    "tests": [
+      {
+        "size": 10000,
+        "seed": 20261016,
+        "correct_key": true,
+        "wrong_key": false,
+        "keyless": false,
+        "pass": true
+      },
+      {
+        "size": 10000,
+        "seed": 20261017,
+        "correct_key": true,
+        "wrong_key": false,
+        "keyless": false,
+        "pass": true
+      },
+      {
+        "size": 10000,
+        "seed": 20261018,
+        "correct_key": true,
+        "wrong_key": false,
+        "keyless": false,
+        "pass": true
+      },
+      {
+        "size": 50000,
+        "seed": 20261016,
+        "correct_key": true,
+        "wrong_key": false,
+        "keyless": false,
+        "pass": true
+      },
+      {
+        "size": 50000,
+        "seed": 20261017,
+        "correct_key": true,
+        "wrong_key": false,
+        "keyless": false,
+        "pass": true
+      },
+      {
+        "size": 50000,
+        "seed": 20261018,
+        "correct_key": true,
+        "wrong_key": false,
+        "keyless": false,
+        "pass": true
+      }
+    ],
+    "overall": "PASS"
+  },
+  "qwen": {
+    "model": "qwen",
+    "tensor": "model.layers.13.self_attn.k_proj.weight",
+    "grid_width": 4,
+    "grid_offset": 0,
+    "tests": [
+      {
+        "size": 10000,
+        "seed": 20261016,
+        "correct_key": true,
+        "wrong_key": false,
+        "keyless": false,
+        "pass": true
+      },
+      {
+        "size": 10000,
+        "seed": 20261017,
+        "correct_key": true,
+        "wrong_key": false,
+        "keyless": false,
+        "pass": true
+      },
+      {
+        "size": 10000,
+        "seed": 20261018,
+        "correct_key": true,
+        "wrong_key": false,
+        "keyless": false,
+        "pass": true
+      },
+      {
+        "size": 50000,
+        "seed": 20261016,
+        "correct_key": true,
+        "wrong_key": false,
+        "keyless": false,
+        "pass": true
+      },
+      {
+        "size": 50000,
+        "seed": 20261017,
+        "correct_key": true,
+        "wrong_key": false,
+        "keyless": false,
+        "pass": true
+      },
+      {
+        "size": 50000,
+        "seed": 20261018,
+        "correct_key": true,
+        "wrong_key": false,
+        "keyless": false,
+        "pass": true
+      }
+    ],
+    "overall": "PASS"
+  },
+  "phi3": {
+    "model": "phi3",
+    "tensor": "model.layers.11.self_attn.qkv_proj.weight",
+    "grid_width": 4,
+    "grid_offset": 0,
+    "tests": [
+      {
+        "size": 10000,
+        "seed": 20261016,
+        "correct_key": true,
+        "wrong_key": false,
+        "keyless": false,
+        "pass": true
+      },
+      {
+        "size": 10000,
+        "seed": 20261017,
+        "correct_key": true,
+        "wrong_key": false,
+        "keyless": false,
+        "pass": true
+      },
+      {
+        "size": 10000,
+        "seed": 20261018,
+        "correct_key": true,
+        "wrong_key": false,
+        "keyless": false,
+        "pass": true
+      },
+      {
+        "size": 50000,
+        "seed": 20261016,
+        "correct_key": true,
+        "wrong_key": false,
+        "keyless": false,
+        "pass": true
+      },
+      {
+        "size": 50000,
+        "seed": 20261017,
+        "correct_key": true,
+        "wrong_key": false,
+        "keyless": false,
+        "pass": true
+      },
+      {
+        "size": 50000,
+        "seed": 20261018,
+        "correct_key": true,
+        "wrong_key": false,
+        "keyless": false,
+        "pass": true
+      }
+    ],
+    "overall": "PASS"
+  }
+}

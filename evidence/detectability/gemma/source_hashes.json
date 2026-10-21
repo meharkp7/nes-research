@@ -1,0 +1,8 @@
+{
+  "model.layers.0.mlp.up_proj.weight": "9f55ba8cf865f848cca2ae713b537604b7003a1596e9ac5897edcabbcc82fd5c",
+  "model.layers.0.self_attn.q_proj.weight": "a9f4a827bc09cb81e51ac49f17ed6460acecf937d02a1aad5df35544a1da558f",
+  "model.layers.21.mlp.down_proj.weight": "f73de882ddceeaa43fea302feae69361fab6189ed8716ec1532c88fde95ae411",
+  "model.layers.21.self_attn.k_proj.weight": "84d0b71e88964f566ce9d512fab581576c7c3a8b032cd401f6e1c3d991d4162f",
+  "model.layers.41.mlp.gate_proj.weight": "cdb85e31f3a57c636025bc0f2efed0c3e949c40d98aaf33598088a71e08cff23",
+  "model.layers.41.self_attn.v_proj.weight": "993d8b89a60ca760971dc34ba04fabcc29647c1f1c6c58f97a684c7721e0670d"
+}

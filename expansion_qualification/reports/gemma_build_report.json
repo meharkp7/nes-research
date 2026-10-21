@@ -1,0 +1,24 @@
+{
+  "elapsed_s": 101.0,
+  "output": "/Users/meharkapoor7/nes-agent-workspace/nes-research/evidence/ckpt_nf4/gemma_clean",
+  "output_core_bytes": 6130888667,
+  "output_core_files": {
+    "config.json": "046e7fc0413c7e31e33fc89e92bf4d89f7497317e799b2bdf9f33ee9142a4922",
+    "generation_config.json": "0008bfbd4f7fb2bf7f0f651ca045a65067435707fb04a995ca641c5a9dbf2c5a",
+    "model-00001-of-00004.safetensors": "9b7f1cbd50dae2e06c5ddb54b47cfb4702ff9d8efd1b1bee70aff30ed465b701",
+    "model-00002-of-00004.safetensors": "314857f4a3cbf74bc7c6f01f488bc231eff1ba92af1db87c7f6c3755e2a6a5d3",
+    "model-00003-of-00004.safetensors": "4872cbe568a78bac8746c91503dbdc33b4291105ba2b05277d4897e696c50fef",
+    "model-00004-of-00004.safetensors": "1fe6560236777b326dcf62dd2c49e1f9a37fd6f9664f332fbdf5e95ae19d90d2",
+    "model.safetensors.index.json": "d59152c6b7ab61cf3bfbecd696624f543c4032015dcda8311868698cd87bf77a"
+  },
+  "quantization": {
+    "blocksize": 64,
+    "compute_dtype": "float16",
+    "double_quant": true,
+    "quant_storage": "uint8",
+    "quant_type": "nf4"
+  },
+  "source": "/Users/meharkapoor7/nes-agent-workspace/nes-research/fp16_models/gemma",
+  "status": "DONE",
+  "torch": "2.11.0"
+}

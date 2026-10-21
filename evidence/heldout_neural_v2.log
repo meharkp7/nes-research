@@ -1,0 +1,79 @@
+Device: mps
+Building datasets for all models...
+  Building smollm2...
+    smollm2: 86016 samples, 86016 meta entries
+  Building qwen15...
+    qwen15: 86016 samples, 86016 meta entries
+  Building pythia...
+    pythia: 86016 samples, 86016 meta entries
+  Building falcon...
+    falcon: 86016 samples, 86016 meta entries
+Total samples: 344064
+Models: [np.str_('falcon'), np.str_('pythia'), np.str_('qwen15'), np.str_('smollm2')]
+Tensors per model: 6
+
+============================================================
+Held-out model: smollm2
+============================================================
+Train samples: 258048 (221184 embedded)
+Test samples:  86016 (73728 embedded)
+Training...
+  Epoch 01/20 loss=0.421364 test_acc=0.8571 test_auc=0.5001
+  Epoch 05/20 loss=0.412785 test_acc=0.8571 test_auc=0.5004
+  Epoch 10/20 loss=0.412094 test_acc=0.8571 test_auc=0.5003
+  Epoch 15/20 loss=0.411662 test_acc=0.8571 test_auc=0.5004
+  Epoch 20/20 loss=0.411392 test_acc=0.8571 test_auc=0.5009
+  Clean-vs-clean control AUC: 0.4946
+  Final: AUC=0.5009, Acc=0.8571
+
+============================================================
+Held-out model: qwen15
+============================================================
+Train samples: 258048 (221184 embedded)
+Test samples:  86016 (73728 embedded)
+Training...
+  Epoch 01/20 loss=0.420386 test_acc=0.8571 test_auc=0.5006
+  Epoch 05/20 loss=0.412759 test_acc=0.8571 test_auc=0.4995
+  Epoch 10/20 loss=0.411960 test_acc=0.8571 test_auc=0.5034
+  Epoch 15/20 loss=0.411794 test_acc=0.8571 test_auc=0.5028
+  Epoch 20/20 loss=0.411476 test_acc=0.8571 test_auc=0.4988
+  Clean-vs-clean control AUC: 0.5072
+  Final: AUC=0.4988, Acc=0.8571
+
+============================================================
+Held-out model: pythia
+============================================================
+Train samples: 258048 (221184 embedded)
+Test samples:  86016 (73728 embedded)
+Training...
+  Epoch 01/20 loss=0.421472 test_acc=0.8571 test_auc=0.5002
+  Epoch 05/20 loss=0.413016 test_acc=0.8571 test_auc=0.5005
+  Epoch 10/20 loss=0.412025 test_acc=0.8571 test_auc=0.5005
+  Epoch 15/20 loss=0.411695 test_acc=0.8571 test_auc=0.5005
+  Epoch 20/20 loss=0.411420 test_acc=0.8571 test_auc=0.5005
+  Clean-vs-clean control AUC: 0.5015
+  Final: AUC=0.5005, Acc=0.8571
+
+============================================================
+Held-out model: falcon
+============================================================
+Train samples: 258048 (221184 embedded)
+Test samples:  86016 (73728 embedded)
+Training...
+  Epoch 01/20 loss=0.423243 test_acc=0.8571 test_auc=0.5001
+  Epoch 05/20 loss=0.413701 test_acc=0.8571 test_auc=0.4997
+  Epoch 10/20 loss=0.412426 test_acc=0.8571 test_auc=0.4998
+  Epoch 15/20 loss=0.411828 test_acc=0.8571 test_auc=0.5005
+  Epoch 20/20 loss=0.411533 test_acc=0.8571 test_auc=0.4998
+  Clean-vs-clean control AUC: 0.5062
+  Final: AUC=0.4998, Acc=0.8571
+
+============================================================
+SUMMARY
+============================================================
+  smollm2: AUC=0.5009, Acc=0.8571
+  qwen15: AUC=0.4988, Acc=0.8571
+  pythia: AUC=0.5005, Acc=0.8571
+  falcon: AUC=0.4998, Acc=0.8571
+  Mean AUC: 0.5000 ± 0.0008
+{"status": "COMPLETED", "mean_auc": 0.5000073861468721, "std_auc": 0.0007709884694093181, "individual_aucs": {"smollm2": 0.5008602721823586, "qwen15": 0.4988393159928146, "pythia": 0.5005086494816674, "falcon": 0.49982130693064797}}
