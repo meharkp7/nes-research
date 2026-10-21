@@ -1,0 +1,77 @@
+{
+  "build_seconds": 8.4,
+  "control_clean_vs_clean": {
+    "auc": 0.5012879901462131,
+    "auc_ci95": [
+      0.4913796053992377,
+      0.5083097881740994
+    ]
+  },
+  "detectors": {
+    "gradient_boosting": {
+      "auc": 0.4998075045921184,
+      "auc_ci95": [
+        0.49913726134432684,
+        0.5004109584484939
+      ],
+      "auc_tensor_model.layers.0.mlp.up_proj.weight": 0.5007957617441813,
+      "auc_tensor_model.layers.0.self_attn.q_proj.weight": 0.4999481439590454,
+      "auc_tensor_model.layers.21.mlp.down_proj.weight": 0.5004404584566752,
+      "auc_tensor_model.layers.21.self_attn.k_proj.weight": 0.4982808828353882,
+      "auc_tensor_model.layers.41.mlp.gate_proj.weight": 0.4995791713396708,
+      "auc_tensor_model.layers.41.self_attn.v_proj.weight": 0.49956800540288293,
+      "permutation_n": 200,
+      "permutation_p": 0.527363184079602,
+      "runtime_s": 20.1,
+      "tpr_at_fpr_0.01": 0.009711371527777778,
+      "tpr_at_fpr_0.05": 0.049519856770833336
+    },
+    "logistic_regression": {
+      "auc": 0.5005817623050124,
+      "auc_ci95": [
+        0.5002344846725464,
+        0.5010070006052654
+      ],
+      "auc_tensor_model.layers.0.mlp.up_proj.weight": 0.5001213153203328,
+      "auc_tensor_model.layers.0.self_attn.q_proj.weight": 0.500529964764913,
+      "auc_tensor_model.layers.21.mlp.down_proj.weight": 0.50027863184611,
+      "auc_tensor_model.layers.21.self_attn.k_proj.weight": 0.5013186732927959,
+      "auc_tensor_model.layers.41.mlp.gate_proj.weight": 0.5002307097117107,
+      "auc_tensor_model.layers.41.self_attn.v_proj.weight": 0.501313308874766,
+      "permutation_n": 200,
+      "permutation_p": 0.3880597014925373,
+      "runtime_s": 21.6,
+      "tpr_at_fpr_0.01": 0.009779188368055556,
+      "tpr_at_fpr_0.05": 0.04953342013888889
+    },
+    "mlp_exploratory": {
+      "auc": 0.5000524040725496,
+      "auc_ci95": [
+        0.4998874936390806,
+        0.5001830767702173
+      ],
+      "auc_tensor_model.layers.0.mlp.up_proj.weight": 0.5000998179117838,
+      "auc_tensor_model.layers.0.self_attn.q_proj.weight": 0.5001991589864094,
+      "auc_tensor_model.layers.21.mlp.down_proj.weight": 0.5001478989919026,
+      "auc_tensor_model.layers.21.self_attn.k_proj.weight": 0.5002178351084391,
+      "auc_tensor_model.layers.41.mlp.gate_proj.weight": 0.5000289281209309,
+      "auc_tensor_model.layers.41.self_attn.v_proj.weight": 0.4996553063392639,
+      "permutation_n": 200,
+      "permutation_p": 0.48258706467661694,
+      "runtime_s": 23.1,
+      "tpr_at_fpr_0.01": 0.009928385416666666,
+      "tpr_at_fpr_0.05": 0.050008138020833336
+    }
+  },
+  "group_labels": [
+    "gemma-2-9b::model.layers.0.mlp.up_proj.weight",
+    "gemma-2-9b::model.layers.0.self_attn.q_proj.weight",
+    "gemma-2-9b::model.layers.21.mlp.down_proj.weight",
+    "gemma-2-9b::model.layers.21.self_attn.k_proj.weight",
+    "gemma-2-9b::model.layers.41.mlp.gate_proj.weight",
+    "gemma-2-9b::model.layers.41.self_attn.v_proj.weight"
+  ],
+  "n_embedded_artifacts": 36,
+  "n_examples": 86016,
+  "n_groups": 6
+}
