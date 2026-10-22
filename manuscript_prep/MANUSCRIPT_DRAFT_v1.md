@@ -10,7 +10,7 @@
 
 ## Abstract
 
-NF4 quantization with double quantization is the de facto standard for compressing large language models. However, requantization — the dequantize/requantize cycle — perturbs block scales and code assignments, breaking most payload embedding schemes. We present `interior_nearest`, an NF4-specific anchor-preserving formulation that restricts carriers to interior NF4 codes (1–14), never rewriting endpoints (0, 15) that carry double-quantized block scales. The embedding moves each carrier to the nearest interior code with the target parity bit. Across five model architectures (SmolLM2-1.7B, Qwen2.5-1.5B, Pythia-1.4b, Falcon3-1B, StableLM-2-1.6B), six tensors per model, five payload sizes (1k–50k bits), three seeds, and four requantization cycles (0–3), all 1,800 roundtrip conditions achieve exact payload recovery (BER = 0). Baseline methods (`pair_parity`, `nearest_parity`) fail from cycle 1 (90–108/360 exact). Paired perplexity on wikitext-2 (580 sequences, ±0.5% margin) shows all 24 expansion conditions within margin (max |Δ| 0.019%). Detectability under grouped cross-validation (logistic regression, gradient boosting, exploratory MLP; 16 features) is at chance: max AUC 0.512, TPR@1% ≤ 0.011, clean-control AUC ~0.5. A small-capacity supplement (12 groups, k_proj/v_proj at 50k bits) shows logistic regression AUC 0.517 [0.509, 0.526] — above the main evaluation but within screening threshold (AUC < 0.55). A leave-one-checkpoint-out neural detector on four checkpoints yields mean AUC 0.5000 ± 0.0008. Novelty is limited: nearest-same-parity code-index embedding originates in NID (Liu et al. 2016) / CNV-QIM (Xiao et al. 2008); invariant-region preservation for quantized LLM weights is proposed by Li et al. (2023) and Guo et al. (2025); FreMark 2025 (LNCS 16177) describes free-region marking but is paywalled and overlap cannot be assessed (Gate G = PARTIAL). Our contribution is the NF4 packed-code formulation with endpoint exclusion and empirical demonstration of exact repeated-requantization exactness.
+NF4 quantization with double quantization is the de facto standard for compressing large language models. However, requantization — the dequantize/requantize cycle — perturbs block scales and code assignments, breaking most payload embedding schemes. We present `interior_nearest`, an NF4-specific anchor-preserving formulation that restricts carriers to interior NF4 codes (1–14), never rewriting endpoints (0, 15) that carry double-quantized block scales. The embedding moves each carrier to the nearest interior code with the target parity bit. Across five model architectures (SmolLM2-1.7B, Qwen2.5-1.5B, Pythia-1.4b, Falcon3-1B, StableLM-2-1.6B), six tensors per model, five payload sizes (1k–50k bits), three seeds, and four requantization cycles (0–3), all 1,800 roundtrip conditions achieve exact payload recovery (BER = 0). Baseline methods (`pair_parity`, `nearest_parity`) fail from cycle 1 (90–108/360 exact). Paired perplexity on wikitext-2 (580 sequences, ±0.5% margin) shows all 24 expansion conditions within margin (max |Δ| 0.019%). Detectability under grouped cross-validation (logistic regression, gradient boosting, exploratory MLP; 16 features) is at chance: max AUC 0.512, TPR@1% ≤ 0.011, clean-control AUC ~0.5. A small-capacity supplement (12 groups, k_proj/v_proj at 50k bits) shows logistic regression AUC 0.517 [0.509, 0.526] — above the main evaluation but within screening threshold (AUC < 0.55). A leave-one-checkpoint-out neural detector on four checkpoints (balanced test, class-weighted loss) yields mean AUC 0.5004 ± 0.0003. Novelty is limited: nearest-same-parity code-index embedding originates in NID (Liu et al. 2016) / CNV-QIM (Xiao et al. 2008); invariant-region preservation for quantized LLM weights is proposed by Li et al. (2023) and Guo et al. (2025); FreMark 2025 (LNCS 16177) describes free-region marking but is paywalled and overlap cannot be assessed (Gate G = PARTIAL). Our contribution is the NF4 packed-code formulation with endpoint exclusion and empirical demonstration of exact repeated-requantization exactness.
 
 ---
 
@@ -225,7 +225,7 @@ wikitext-2-raw-v1 test split, model's own tokenizer, context 512, non-overlappin
 
 **Total:** 1,800/1,800 exact for `interior_nearest`; 0 anchor code mutations.
 
-**Stress test (regression):** `requantize_cycles_0_5_exact` PASS on all 5 models (cycles 0–5).
+**Stress test (regression):** `requantize_cycles_0_5_exact` PASS on all 5 models (cycles 0–5). **Extended stress test:** Single-tensor (k_proj) on 4 expansion models shows 100% exact recovery through 10 requantization cycles (264 conditions: 4 models × 2 sizes × 3 seeds × 11 cycles).
 
 **Source:** `expansion_qualification/expansion_audit_table.csv` (4,320 rows), `stablelm_qualification/roundtrip_stream_v1/summary.json`.
 
@@ -261,22 +261,25 @@ All 5 models + StableLM: `differing_keys == [target_tensor]`, `shape_preserved: 
 
 **Clean-vs-clean:** AUC 0.5052 [0.4963, 0.5142]
 
-**Groups:** 12 (6 models × 2 tensors: k_proj, v_proj at 50k bits). **Previous report claimed 14 groups with LR AUC 0.5059 [0.5020, 0.5120]; current re-run on durable checkpoints yields 12 groups, LR AUC 0.5167.** The difference stems from inclusion of SmolLM2/Qwen15 small-cap tensors (AUC 0.50–0.55) vs. original TinyLlama/Qwen3B only (AUC 0.53). All detectors PASS screening (AUC < 0.55). Labeled **exploratory** — 12 groups underpowered for definitive conclusion.
+**Groups:** 12 (6 models × 2 tensors: k_proj, v_proj at 50k bits). This is the primary durable supplement. Earlier 4-group experiment (TinyLlama + Qwen2.5-3B) yielded LR AUC 0.5343; merged 14-group analysis yielded LR AUC 0.5059. All detectors PASS screening (AUC < 0.55). Labeled **exploratory** — 12 groups underpowered for definitive conclusion.
 
-**Source:** `evidence/smallcap_extended_v1/supplement_results.json`, `out/detectability_smallcap_v1/supplement_results.json` (original 4-group).
+**Source:** `evidence/smallcap_extended_v1/supplement_results.json` (primary); `out/detectability_smallcap_v1/supplement_results.json` (original 4-group, archived); `out/detectability_smallcap_analysis_v2/detector_results.json` (merged 14-group, archived).
 
-### 5.5 Detectability — Held-Out Checkpoint Neural
+### 5.5 Detectability — Held-Out Checkpoint Neural (Fixed v3)
 
-| Held-out | Neural MLP AUC | Clean-vs-Clean AUC | n_train | n_test |
-|----------|----------------|-------------------|---------|--------|
-| SmolLM2 | 0.50086 | 0.4946 | 258,048 | 86,016 |
-| Qwen2.5-1.5B | 0.49884 | 0.5072 | 258,048 | 86,016 |
-| Pythia-1.4b | 0.50051 | 0.5015 | 258,048 | 86,016 |
-| Falcon3-1B | 0.49982 | 0.5062 | 258,048 | 86,016 |
+| Held-out | Neural MLP AUC | AUC 95% CI | Clean-vs-Clean AUC | n_train | n_test_bal |
+|----------|----------------|------------|-------------------|---------|------------|
+| SmolLM2 | 0.5007 | [0.4932, 0.5084] | 0.5027 | 258,048 | 24,576 |
+| Qwen2.5-1.5B | 0.5007 | [0.4934, 0.5087] | 0.4899 | 258,048 | 24,576 |
+| Pythia-1.4b | 0.5000 | [0.4926, 0.5071] | 0.4994 | 258,048 | 24,576 |
+| Falcon3-1B | 0.5003 | [0.4931, 0.5073] | 0.5098 | 258,048 | 24,576 |
 
-**Mean AUC:** 0.5000 ± 0.0008 — all at chance. **Previous report:** 0.4998 ± 0.0002 (consistent within noise; epoch/batch differences). No cross-checkpoint generalization.
+**Mean AUC:** 0.5004 ± 0.0003 — all at chance. Balanced accuracy ≈ 0.500.  
+**Fixes applied:** Class-weighted BCE loss, balanced test sets (equal clean/embedded per tensor), bootstrap CI.  
+**Previous v2 issue:** Severe class imbalance (6:1) caused all-positive prediction collapse (TN=0, FN=0, accuracy=85.7%).  
+**Interpretation:** No cross-checkpoint generalization; neural detector performs at chance under balanced evaluation.
 
-**Source:** `evidence/heldout_neural_v2/heldout_neural_results.json`.
+**Source:** `evidence/heldout_neural_v3/heldout_neural_results.json`.
 
 ### 5.6 Utility — Paired PPL Equivalence (Gate A5)
 
@@ -349,7 +352,7 @@ Not tested: fine-tuning, distillation, pruning, QAT, adversarial fine-tuning, we
 
 ## 7. Conclusion
 
-We present `interior_nearest`, an NF4-specific anchor-preserving payload embedding formulation that achieves **exact repeated-requantization exactness** (BER=0 across 0–5 cycles) by restricting carriers to interior NF4 codes (1–14) and never rewriting endpoints (0, 15) that carry double-quantized block scales. Across five model architectures, 1,800 roundtrip conditions, all achieve exact recovery. Paired perplexity on wikitext-2 is within ±0.5% on all 24 expansion conditions. Detectability under grouped CV is at chance (max AUC 0.512); a small-capacity supplement (12 groups) shows LR AUC 0.517 (exploratory); a leave-one-checkpoint-out neural detector yields mean AUC 0.5000. The embedding principle (nearest-same-parity) is not novel (NID 2016, CNV-QIM 2008); invariant-region preservation is proposed by Li 2023 and Guo 2025; FreMark 2025 overlap is unresolved due to paywall (Gate G = PARTIAL). We do not claim universal undetectability, universal robustness, or unqualified novelty. The contribution is the NF4-specific formulation and its empirical validation.
+We present `interior_nearest`, an NF4-specific anchor-preserving payload embedding formulation that achieves **exact repeated-requantization exactness** (BER=0 across 0–5 cycles in regression stress test; 10 cycles on single-tensor k_proj stress test) by restricting carriers to interior NF4 codes (1–14) and never rewriting endpoints (0, 15) that carry double-quantized block scales. Across five model architectures, 1,800 roundtrip conditions (cycles 0–3 matrix), all achieve exact recovery. Paired perplexity on wikitext-2 is within ±0.5% on all 24 expansion conditions. Detectability under grouped CV is at chance (max AUC 0.512); a small-capacity supplement (12 groups) shows LR AUC 0.517 (exploratory); a leave-one-checkpoint-out neural detector on four checkpoints (balanced test, class-weighted loss) yields mean AUC 0.5004 ± 0.0003. The embedding principle (nearest-same-parity) is not novel (NID 2016, CNV-QIM 2008); invariant-region preservation is proposed by Li 2023 and Guo 2025; FreMark 2025 overlap is unresolved due to paywall (Gate G = PARTIAL). We do not claim universal undetectability, universal robustness, or unqualified novelty. The contribution is the NF4-specific formulation and its empirical validation.
 
 ---
 
@@ -364,7 +367,7 @@ We present `interior_nearest`, an NF4-specific anchor-preserving payload embeddi
 | Roundtrip audit | `expansion_qualification/expansion_audit_table.csv` |
 | Detectability (main) | `expansion_qualification/*/detectability_v1/` |
 | Detectability (small-cap) | `evidence/smallcap_extended_v1/`, `out/detectability_smallcap_v1/` |
-| Detectability (held-out neural) | `evidence/heldout_neural_v2/` |
+| Detectability (held-out neural) | `evidence/heldout_neural_v3/` (fixed: balanced test, class-weighted loss) |
 | Utility | `expansion_qualification/*/utility_v1/`, `stablelm_qualification/utility_v2/` |
 | Regression | `expansion_qualification/*/regressions.json` |
 | Manifest v2 | `FROZEN_ALL_HASHES_v2.txt` (+ `.sha256`) |
