@@ -35,7 +35,7 @@
 | D1 | Main detectability: all 5 models PASS screening (AUC ≤ 0.55, TPR@1% ≤ 0.02, clean-control ~0.5) | **DIRECTLY_SUPPORTED** | 5 × `detectability_results.json` — max GB AUC 0.5025 (Qwen), max LR AUC 0.5068 (Qwen), max MLP AUC 0.5010 | Qwen LR nominal p=0.015 but < clean control |
 | D2 | Qwen2.5-1.5B LR AUC 0.5068 (p=0.015) is an unresolved minor discrepancy | **DIRECTLY_SUPPORTED** | `expansion_qualification/qwen15/detectability_v1/detectability_results.json` | AUC < clean-control (0.5120) |
 | D3 | Small-capacity supplement (4 groups): LR AUC 0.5343, permutation p=0.005 | **QUALIFIED** | `out/detectability_smallcap_v1/supplement_results.json` | Only 4 groups → exploratory, underpowered |
-| D5 | Held-out checkpoint neural detector: mean AUC 0.5000 ± 0.0008 (all at chance) | **DIRECTLY_SUPPORTED** | `evidence/heldout_neural_v2/heldout_neural_results.json` — 4 checkpoints, mean AUC 0.500007 ± 0.000771 | Completed 2026-10-21 |
+| D5 | Held-out checkpoint neural detector: mean AUC 0.5004 ± 0.0003 (all at chance, balanced test, class-weighted loss) | **DIRECTLY_SUPPORTED** | `evidence/heldout_neural_v3/heldout_neural_results.json` — 4 checkpoints, balanced test sets, class-weighted BCE, mean AUC 0.500449 ± 0.000284 | Completed 2026-10-23 (fixed v3) |
 | D6 | Clean-vs-clean controls at chance (AUC ~0.5) | **DIRECTLY_SUPPORTED** | All `detectability_results.json` + `supplement_results.json` (0.4860) | Required for valid screening |
 | D7 | Embedded seed-vs-seed control at chance | **UNVERIFIED** | Not run on Track C models | Gap in controls |
 
@@ -45,7 +45,7 @@
 
 | # | Claim | Classification | Evidence Source | Notes |
 |---|-------|----------------|-----------------|-------|
-| U1 | Expansion models (4): all 24 conditions (4 models × 2 sizes × 3 seeds) have paired 95% CI within ±0.5% PPL | **BLOCKED** | NF4 checkpoints fail to load via HF `from_pretrained` (NaN PPL); 4/8 models completed clean PPL, 4/8 failed | HF/bitsandbytes NF4 loading bug; utility claims deferred |
+| U1 | Expansion models (4): all 24 conditions (4 models × 2 sizes × 3 seeds) have paired 95% CI within ±0.5% PPL | **DIRECTLY_SUPPORTED** | 4 × `expansion_qualification/*/utility_v1/comparisons.json` — all 24 `within_margin_0p5pct: true`, max |Δ| 0.019% | Track A utility was blocked; Track C utility VALID |
 | U2 | StableLM (protocol-matched): 6/6 conditions within ±0.5% PPL, 296,380 tokens/condition | **DIRECTLY_SUPPORTED** | `stablelm_qualification/utility_v2/gate_e_reanalysis.json` — `all_within_margin: true`, `n_within_margin: 6/6` | 13× tighter CI than margin |
 | U3 | Pythia used 563 sequences (vs 580 target) due to tokenizer vocabulary | **DIRECTLY_SUPPORTED** | `expansion_qualification/pythia/utility_v1/comparisons.json` — `"n_sequences": 563` | All 6 CIs still within margin |
 | U4 | Utility equivalence holds for generation quality / downstream tasks | **PROHIBITED** | Not tested | Only wikitext-2 PPL measured |
@@ -124,7 +124,7 @@
 
 ### ✅ DIRECTLY_SUPPORTED (Safe to state as findings)
 - C1–C6: Core roundtrip exactness, endpoint preservation, carrier stability, baseline failures
-- D1, D2, D4, D6: Detectability screening PASS, Qwen discrepancy documented, merged small-cap within threshold, clean controls at chance
+- D1, D2, D4, D5, D6: Detectability screening PASS, Qwen discrepancy documented, merged small-cap within threshold, clean controls at chance, **held-out neural AUC 0.5004 ± 0.0003 (fixed v3)**
 - U1–U3: Utility ±0.5% PASS on all conditions, StableLM tighter CI, Pythia 563 sequences noted
 - I1–I5: Integrity, regression tests, frozen codec, v2 manifest
 - N1, N2, N4, N7, N8: Prior art overlaps confirmed, narrow contribution stated, Gate G = PARTIAL
@@ -137,7 +137,6 @@
 - S6: NF4 bitsandbytes generality — **naming convention dependency noted**
 
 ### ❌ UNVERIFIED (Do not state as findings; re-run or remove)
-- D5: Held-out neural detector results lost
 - D7: Seed-vs-seed control not run
 
 ### 🚫 PROHIBITED (Must not appear)
@@ -156,8 +155,10 @@
 |--------|---------|--------------|----------------|
 | `EXPANSION_QUALIFICATION_REPORT_V1.md` | §0.1 | "raw artifacts re-verify clean" | "raw artifacts re-verify clean; 6 narrative docs changed post-manifest (self-hash mismatch documented)" |
 | `STABLELM_QUALIFICATION_REPORT.md` | Gate G | "PARTIAL / UNRESOLVED RISK" | "PARTIAL — NID 2016 / CNV-QIM 2008 overlap confirmed; FreMark 2025 paywalled" |
-| `FINAL_SPRINT_REPORT.md` | Track C status | "QUALIFIED ✅" | "QUALIFIED ✅ (Gate G = PARTIAL, small-cap exploratory, held-out neural to re-run)" |
+| `FINAL_SPRINT_REPORT.md` | Track C status | "QUALIFIED ✅" | "QUALIFIED ✅ (Gate G = PARTIAL, small-cap exploratory, held-out neural fixed v3)" |
 | All reports | "first / novel / universal" | Any occurrence | Remove or replace with qualified claim N7 |
+| `CLAIMS_AUDIT.md` | U1 | "BLOCKED" (Track A utility issue conflated) | "DIRECTLY_SUPPORTED — Track C utility 24/24 PASS; Track A utility blocked separately" |
+| `CLAIMS_AUDIT.md` | D5 | "heldout_neural_v2 (all-positive collapse)" | "heldout_neural_v3 (balanced test, class-weighted loss, AUC 0.5004 ± 0.0003)" |
 
 ---
 
@@ -167,10 +168,12 @@
 - [x] Every claim in CLAIMS_AUDIT.md classified
 - [x] No PROHIBITED claims in MANUSCRIPT_OUTLINE.md
 - [x] QUALIFIED claims have explicit caveats in LIMITATIONS_AND_THREATS.md
-- [x] UNVERIFIED claims flagged for re-run (held-out neural)
+- [x] UNVERIFIED claims flagged for re-run (held-out neural — FIXED in v3)
 - [x] Gate G = PARTIAL documented with NID/CNV-QIM overlap and FreMark paywall
 - [x] Qwen LR discrepancy documented as unresolved minor discrepancy
 - [x] Pythia 563 vs 580 sequences documented
 - [x] Qwen2.5-3B revision UNVERIFIED documented
 - [x] Frozen manifest self-hash mismatch documented
 - [x] No commits, pushes, merges performed
+- [x] Held-out neural detector re-run with class weighting and balanced test sets (v3)
+- [x] Track C utility documentation corrected (was conflated with Track A blocker)

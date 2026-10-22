@@ -129,24 +129,26 @@
 
 ---
 
-## Held-Out Checkpoint Neural Detection (A4.2)
+## Held-Out Checkpoint Neural Detection (A4.2) — FIXED v3
 
 **Design:** Leave-one-checkpoint-out neural detector (MLP) on 4 local checkpoints  
 **Checkpoints:** SmolLM2, Qwen2.5-1.5B, Pythia-1.4b, Falcon3 (StableLM/TinyLlama/Qwen2.5-3B not available locally)  
-**Protocol:** Train MLP on 3 checkpoints, test on held-out 1; train-only preprocessing; clean-vs-clean control on held-out.
+**Protocol:** Train MLP on 3 checkpoints, test on held-out 1; train-only preprocessing; clean-vs-clean control on held-out.  
+**Fixes in v3:** Class-weighted BCE loss (pos_weight), balanced test sets (equal clean/embedded per tensor), bootstrap 95% CI.
 
-| Held-out | Neural MLP AUC | TPR@1% | TPR@5% | n_train | n_test |
-|----------|----------------|--------|--------|---------|--------|
-| SmolLM2 | 0.5001 | 0.0100 | 0.0501 | 147,456 | 49,152 |
-| Qwen2.5-1.5B | 0.4996 | 0.0102 | 0.0491 | 147,456 | 49,152 |
-| Pythia | 0.4997 | 0.0098 | 0.0506 | 147,456 | 49,152 |
-| Falcon | 0.4998 | 0.0100 | 0.0503 | 147,456 | 49,152 |
+| Held-out | Neural MLP AUC | AUC 95% CI | Balanced Acc | n_train | n_test_bal |
+|----------|----------------|------------|--------------|---------|------------|
+| SmolLM2 | 0.5007 | [0.4932, 0.5084] | 0.5002 | 258,048 | 24,576 |
+| Qwen2.5-1.5B | 0.5007 | [0.4934, 0.5087] | 0.5003 | 258,048 | 24,576 |
+| Pythia | 0.5000 | [0.4926, 0.5071] | 0.5003 | 258,048 | 24,576 |
+| Falcon | 0.5003 | [0.4931, 0.5073] | 0.4997 | 258,048 | 24,576 |
 
-**Mean AUC:** 0.4998 ± 0.0002 — all at chance  
-**Clean-vs-clean controls:** AUC ~0.5 (failed due to class imbalance in test split — noted in logs)  
-**Interpretation:** No generalization gap; neural detector does not transfer across checkpoints.
+**Mean AUC:** 0.5004 ± 0.0003 — all at chance  
+**Clean-vs-clean controls:** AUC ≈ 0.5 (all CIs include 0.5)  
+**Interpretation:** No cross-checkpoint generalization; neural detector performs at chance under balanced evaluation.
 
-**Source:** `/tmp/nes_local_run/out/detectability_heldout_neural/heldout_neural_results.json` (needs re-run — /tmp was cleaned)
+**Source:** `evidence/heldout_neural_v3/heldout_neural_results.json` + `manifest.json`  
+**Previous v2 (defective):** All-positive prediction collapse (TN=0, FN=0, accuracy=85.7%) due to 6:1 class imbalance.
 
 ---
 
@@ -174,6 +176,8 @@
 - `expansion_qualification/pythia/utility_v1/comparisons.json`
 - `expansion_qualification/falcon/utility_v1/comparisons.json`
 - `stablelm_qualification/utility_v2/gate_e_reanalysis.json` (`all_within_margin: true`, `n_within_margin: 6/6`)
+
+**Note:** Previous "BLOCKED" label in CLAIMS_AUDIT.md was incorrect — it conflated Track A residual-method utility (which failed to load) with Track C `interior_nearest` utility (which completed successfully). Track C utility is **DIRECTLY_SUPPORTED**.
 
 ---
 
@@ -229,25 +233,6 @@
 | MLP | 0.5011 | [0.5001, 0.5022] |
 
 **Source:** `out/detectability_smallcap_analysis_v2/detector_results.json`
-
----
-
-## Held-Out Checkpoint Neural Detection (Leave-One-Checkpoint-Out)
-
-**Design:** Train MLP on 3 checkpoints, test on held-out 1; 4 checkpoints (SmolLM2, Qwen2.5-1.5B, Pythia, Falcon); StableLM/TinyLlama/Qwen2.5-3B not local.
-
-| Held-out | Neural MLP AUC | TPR@1% | TPR@5% | n_train | n_test |
-|----------|----------------|--------|--------|---------|--------|
-| SmolLM2 | 0.5001 | 0.0100 | 0.0501 | 147,456 | 49,152 |
-| Qwen2.5-1.5B | 0.4996 | 0.0102 | 0.0491 | 147,456 | 49,152 |
-| Pythia | 0.4997 | 0.0098 | 0.0506 | 147,456 | 49,152 |
-| Falcon | 0.4998 | 0.0100 | 0.0503 | 147,456 | 49,152 |
-
-**Mean AUC:** 0.4998 ± 0.0002 (all at chance)  
-**Held-out controls:** Clean-vs-clean AUC ~0.5 (some folds failed — class imbalance)  
-**Interpretation:** No generalization gap; neural detector does not transfer across checkpoints.
-
-**Source:** `/tmp/nes_local_run/out/detectability_heldout_neural/heldout_neural_results.json` (output was in /tmp, cleaned; needs re-run)
 
 ---
 

@@ -6,30 +6,33 @@
 
 ## Phase 1: Track C — Manuscript-Readiness Gaps (Must Complete Before Submission)
 
-### C1: Held-Out Checkpoint Neural Detector (COMPLETED)
+### C1: Held-Out Checkpoint Neural Detector (COMPLETED — FIXED v3)
 
 | Field | Value |
 |-------|-------|
 | **Scientific Question** | Does a neural detector trained on 3 checkpoints generalize to a held-out 4th checkpoint? |
-| **Current State** | **COMPLETED** — results saved at `evidence/heldout_neural_v2/heldout_neural_results.json` |
-| **Results** | Mean AUC = 0.500007 ± 0.000771; individual AUCs: falcon=0.4998, pythia=0.5005, qwen15=0.4988, smollm2=0.5009. All within [0.49, 0.51]. Clean-vs-clean AUCs all ≈0.5. |
-| **Evidence Location** | `evidence/heldout_neural_v2/heldout_neural_results.json` + `manifest.json` |
-| **Pass Criteria** | ✅ Mean AUC ≈ 0.5 (at chance); all 4 held-out AUCs within [0.49, 0.51] |
+| **Current State** | **COMPLETED** — results saved at `evidence/heldout_neural_v3/heldout_neural_results.json` |
+| **Results** | Mean AUC = 0.5004 ± 0.0003; individual AUCs: falcon=0.5003, pythia=0.5000, qwen15=0.5007, smollm2=0.5007. All within [0.493, 0.509] (bootstrap 95% CI). Balanced accuracy ≈ 0.500. Clean-vs-clean AUCs all ≈0.5. |
+| **Evidence Location** | `evidence/heldout_neural_v3/heldout_neural_results.json` + `manifest.json` |
+| **Pass Criteria** | ✅ Mean AUC ≈ 0.5 (at chance); all 4 held-out AUCs within [0.49, 0.51]; balanced test, class-weighted loss |
 | **Interpretation** | ✅ AUC ≈ 0.5 → no cross-checkpoint generalization (supports undetectability) |
-| **Status** | **COMPLETED** — 2026-10-21
+| **Fixes Applied** | Class-weighted BCE loss (pos_weight), balanced test sets (equal clean/embedded per tensor), bootstrap CI |
+| **Previous Issue (v2)** | Severe class imbalance (6:1 embedded:clean) → all-positive prediction collapse (TN=0, FN=0, accuracy=85.7%) |
+| **Status** | **COMPLETED** — 2026-10-23 (fixed v3)
 
 ---
 
-### C2: Verify Merged Small-Capacity 14-Group Analysis (COMPLETED)
+### C2: Verify Small-Capacity Supplement (COMPLETED — 12-Group Extended Analysis is Primary)
 
 | Field | Value |
 |-------|-------|
-| **Scientific Question** | Does the merged 14-group small-capacity analysis confirm LR AUC within screening threshold? |
-| **Current State** | **COMPLETED** — analysis exists at `evidence/smallcap_extended_v1/supplement_results.json` |
-| **Results** | LR AUC = 0.5167 [0.5090, 0.5258] (within screening threshold of 0.55). Gradient boosting AUC = 0.5100. MLP = 0.5027. 14 groups (6 models × 2 tensors + 2 controls). Clean-vs-clean AUC = 0.5052. |
-| **Evidence Location** | `evidence/smallcap_extended_v1/supplement_results.json` + `manifest.json` + `effect_sizes.json` |
+| **Scientific Question** | Does the small-capacity supplement (k_proj/v_proj at 50k bits, ~95% blocks touched) show detectability within screening threshold? |
+| **Current State** | **COMPLETED** — primary result at `evidence/smallcap_extended_v1/supplement_results.json` (12 groups, 6 models × 2 tensors) |
+| **Results** | LR AUC = 0.5167 [0.5090, 0.5258] (within screening threshold of 0.55). Gradient boosting AUC = 0.5100. MLP = 0.5027. Clean-vs-clean AUC = 0.5052 [0.4963, 0.5142]. |
+| **Evidence Location** | `evidence/smallcap_extended_v1/supplement_results.json` + `manifest.json` + `effect_sizes.json` (12 groups) |
+| **Historical Note** | Original 4-group experiment (TinyLlama + Qwen2.5-3B): `out/detectability_smallcap_v1/supplement_results.json` — LR AUC 0.5343. Merged 14-group analysis (added Pythia, Falcon, SmolLM2, Qwen1.5B): `out/detectability_smallcap_analysis_v2/detector_results.json` — LR AUC 0.5059. **The 12-group extended analysis (v1) is the primary durable supplement; 4-group and 14-group are archived as historical context.** |
 | **Pass Criteria** | ✅ LR AUC within screening threshold (0.55); clean-vs-clean ≈ 0.5 |
-| **Status** | **COMPLETED** — 2026-10-21
+| **Status** | **COMPLETED** — 2026-10-21 (12-group primary designated 2026-10-23)
 
 ---
 
@@ -46,15 +49,16 @@
 
 ---
 
-### C4: Requantization Extension to 10 Cycles (COMPLETED)
+### C4: Requantization Extension to 10 Cycles (COMPLETED — Single-Tensor Stress Test)
 
 | Field | Value |
 |-------|-------|
 | **Scientific Question** | Does exact recovery hold for 10 requantization cycles (vs current 5 stress / 3 matrix)? |
 | **Current State** | **COMPLETED** — all 4 expansion models (SmolLM2, Qwen2.5-1.5B, Pythia-1.4B, Falcon3-1B) show 100% exact recovery through 10 cycles |
-| **Results** | 4 models × 2 sizes × 3 seeds × 11 cycles = 264 conditions; **100% exact recovery** through cycle 10 |
+| **Results** | 4 models × 2 sizes × 3 seeds × 11 cycles = 264 conditions; **100% exact recovery** through cycle 10. **Note: This is a single-tensor stress test (k_proj only per model), not the full 6-tensor matrix.** |
 | **Evidence Location** | `evidence/requant_10cycle/requant_10cycle_results.json` + per-model manifests in `evidence/requant_10cycle/{model}/` |
 | **Pass Criteria** | ✅ 100% exact recovery through cycle 10 |
+| **Clarification** | Manuscript should state: "single-tensor stress test (k_proj) on 4 models shows exact recovery through 10 cycles" not "4 models × 11 cycles = 264/264" without the single-tensor qualification. |
 | **Status** | **COMPLETED** — 2026-10-21 |
 
 ---
@@ -101,7 +105,7 @@
 
 ---
 
-### A3: Utility Evaluation (BLOCKED — GPU/NF4 Loading Issue)
+### A3: Utility Evaluation (BLOCKED — Track A Only; Track C Utility is VALID)
 
 | Field | Value |
 |-------|-------|
@@ -114,7 +118,8 @@
 | **Expected Runtime** | 30 conditions × 1.5 hr = 45 GPU-hours (sequential) |
 | **Output** | `out/utility_trackA/{model}/comparisons.json` |
 | **Pass Criteria** | Paired 95% CI within ±0.5% PPL for all conditions |
-| **Status** | **BLOCKED** — HF/bitsandbytes NF4 loading bug; utility claims deferred |
+| **Critical Distinction** | **Track C utility (interior_nearest on 4 expansion models + StableLM) is VALID and COMPLETE (24/24 PASS).** The blocker is ONLY for Track A residual methods (sign, magnitude_aware, qae, lwe_grid_parity, split_sign_parity). Do not conflate. |
+| **Status** | **BLOCKED** — HF/bitsandbytes NF4 loading bug; Track A utility claims deferred |
 
 ---
 
