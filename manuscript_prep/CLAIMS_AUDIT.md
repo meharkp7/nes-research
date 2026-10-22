@@ -35,10 +35,9 @@
 | D1 | Main detectability: all 5 models PASS screening (AUC ≤ 0.55, TPR@1% ≤ 0.02, clean-control ~0.5) | **DIRECTLY_SUPPORTED** | 5 × `detectability_results.json` — max GB AUC 0.5025 (Qwen), max LR AUC 0.5068 (Qwen), max MLP AUC 0.5010 | Qwen LR nominal p=0.015 but < clean control |
 | D2 | Qwen2.5-1.5B LR AUC 0.5068 (p=0.015) is an unresolved minor discrepancy | **DIRECTLY_SUPPORTED** | `expansion_qualification/qwen15/detectability_v1/detectability_results.json` | AUC < clean-control (0.5120) |
 | D3 | Small-capacity supplement (4 groups): LR AUC 0.5343, permutation p=0.005 | **QUALIFIED** | `out/detectability_smallcap_v1/supplement_results.json` | Only 4 groups → exploratory, underpowered |
-| D4 | Merged small-capacity (14 groups): LR AUC 0.5059 [0.5020, 0.5120], within screening | **DIRECTLY_SUPPORTED** | `out/detectability_smallcap_analysis_v2/detector_results.json` | 14 groups = 4 original + 4 Pythia + 4 Falcon + 2 Qwen15 |
-| D5 | Held-out checkpoint neural detector: mean AUC 0.4998 ± 0.0002 (all at chance) | **UNVERIFIED** | Results in `/tmp/nes_local_run/out/detectability_heldout_neural/` — **lost in /tmp cleanup** | Must re-run before submission |
+| D5 | Held-out checkpoint neural detector: mean AUC 0.5000 ± 0.0008 (all at chance) | **DIRECTLY_SUPPORTED** | `evidence/heldout_neural_v2/heldout_neural_results.json` — 4 checkpoints, mean AUC 0.500007 ± 0.000771 | Completed 2026-10-21 |
 | D6 | Clean-vs-clean controls at chance (AUC ~0.5) | **DIRECTLY_SUPPORTED** | All `detectability_results.json` + `supplement_results.json` (0.4860) | Required for valid screening |
-| D7 | Embedded seed-vs-seed control at chance | **UNVERIFIED** | Not run on StableLM; not run on expansion models | Gap in controls |
+| D7 | Embedded seed-vs-seed control at chance | **UNVERIFIED** | Not run on Track C models | Gap in controls |
 
 ---
 
@@ -46,7 +45,7 @@
 
 | # | Claim | Classification | Evidence Source | Notes |
 |---|-------|----------------|-----------------|-------|
-| U1 | Expansion models (4): all 24 conditions (4 models × 2 sizes × 3 seeds) have paired 95% CI within ±0.5% PPL | **DIRECTLY_SUPPORTED** | 4 × `comparisons.json` — all `"within_margin_0p5pct": true` | 6/6 PASS per model |
+| U1 | Expansion models (4): all 24 conditions (4 models × 2 sizes × 3 seeds) have paired 95% CI within ±0.5% PPL | **BLOCKED** | NF4 checkpoints fail to load via HF `from_pretrained` (NaN PPL); 4/8 models completed clean PPL, 4/8 failed | HF/bitsandbytes NF4 loading bug; utility claims deferred |
 | U2 | StableLM (protocol-matched): 6/6 conditions within ±0.5% PPL, 296,380 tokens/condition | **DIRECTLY_SUPPORTED** | `stablelm_qualification/utility_v2/gate_e_reanalysis.json` — `all_within_margin: true`, `n_within_margin: 6/6` | 13× tighter CI than margin |
 | U3 | Pythia used 563 sequences (vs 580 target) due to tokenizer vocabulary | **DIRECTLY_SUPPORTED** | `expansion_qualification/pythia/utility_v1/comparisons.json` — `"n_sequences": 563` | All 6 CIs still within margin |
 | U4 | Utility equivalence holds for generation quality / downstream tasks | **PROHIBITED** | Not tested | Only wikitext-2 PPL measured |

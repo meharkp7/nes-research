@@ -112,26 +112,23 @@ python3 exp_detectability_smallcap.py --models smollm2,qwen15,pythia,falcon --ou
 python3 scripts/exp_detectability_analysis_smallcap.py --features-dir out/detectability_smallcap_v1 --output out/detectability_smallcap_analysis_v2
 ```
 
-**Held-out neural (requires local checkpoints):**
+**Held-out neural (completed — results in evidence/heldout_neural_v2/):**
 ```bash
-python3 exp_detectability_heldout_neural.py --checkpoints smollm2,qwen15,pythia,falcon --output out/detectability_heldout_neural
+# Results: evidence/heldout_neural_v2/heldout_neural_results.json
+# Mean AUC: 0.500007 ± 0.000771 (all 4 checkpoints at chance)
 ```
 
-### 5.3 Utility (Gate A5)
+### 5.3 Utility (Gate A5) — BLOCKED
 
-```bash
-cd /Users/meharkapoor7/nes-agent-workspace/nes-research/expansion_qualification
-python3 exp_utility.py --model smollm2 --output out/utility_v1 --n-seq 580 --batch 4
-python3 exp_utility.py --model qwen15 --output out/utility_v1 --n-seq 580 --batch 4
-python3 exp_utility.py --model pythia --output out/utility_v1 --n-seq 580 --batch 4
-python3 exp_utility.py --model falcon --output out/utility_v1 --n-seq 580 --batch 4
-```
+**Reason:** NF4 checkpoints fail to load via HF `from_pretrained` (NaN PPL); HF/bitsandbytes NF4 loading bug. 4/8 models completed clean PPL; 4/8 failed to load or produced NaN PPL.
 
-**StableLM (protocol-matched):**
+**StableLM (protocol-matched — reference):**
 ```bash
 cd /workspace/nes_run_20261016_anchor_ablation/stablelm_qualification
 python3 exp_utility_v2.py --n-seq 580 --batch 4 --output utility_v2
 ```
+
+**Note:** Utility claims for Track A are deferred due to HF/bitsandbytes NF4 loading bug. StableLM reference shows 6/6 conditions within ±0.5% PPL.
 
 ### 5.4 Regression Tests (Gate A6)
 
