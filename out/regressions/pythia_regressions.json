@@ -1,0 +1,70 @@
+{
+  "checkpoint": "evidence/ckpt_nf4/pythia_clean",
+  "model": "Pythia-1.4b",
+  "n_pass": 12,
+  "n_total": 12,
+  "results": [
+    {
+      "detail": "19f05a3c1bc4",
+      "pass": true,
+      "test": "deterministic_fixed_seed"
+    },
+    {
+      "detail": "",
+      "pass": true,
+      "test": "endpoints_unchanged"
+    },
+    {
+      "detail": "",
+      "pass": true,
+      "test": "interior_only"
+    },
+    {
+      "detail": "",
+      "pass": true,
+      "test": "carrier_eligibility_stable"
+    },
+    {
+      "detail": "1250 580fde145167ba17d539b08631a82ccc0889b6b695b332d55777e3cfd3a6cdc9",
+      "pass": true,
+      "test": "fresh_process_extraction"
+    },
+    {
+      "detail": "",
+      "pass": true,
+      "test": "requantize_cycles_0_5_exact"
+    },
+    {
+      "detail": "ValueError: Envelope magic mismatch",
+      "pass": true,
+      "test": "corrupted_carrier_detected"
+    },
+    {
+      "detail": "carriers_hit=3, raised ValueError",
+      "pass": true,
+      "test": "fixed_offset_corruption_consistent"
+    },
+    {
+      "detail": "ValueError",
+      "pass": true,
+      "test": "truncated_artifact_handled"
+    },
+    {
+      "detail": "ValueError: Envelope magic mismatch",
+      "pass": true,
+      "test": "wrong_key_not_exact"
+    },
+    {
+      "detail": "ValueError",
+      "pass": true,
+      "test": "over_capacity_rejected"
+    },
+    {
+      "detail": "ValueError: Envelope checksum mismatch",
+      "pass": true,
+      "test": "pair_parity_fails_after_requant"
+    }
+  ],
+  "revision": "fedc38a16eea3bd36a96b906d78d11d2ce18ed79",
+  "tensor": "gpt_neox.layers.0.attention.query_key_value.weight"
+}
