@@ -1,0 +1,122 @@
+{
+  "blocks_per_artifact": 2048,
+  "codec_sha256": "07ce008dcabebb7ac0d4fa10c88251bf10dc9f2a7ae27dfc79bf23b8cd75b764",
+  "created_at": "2026-10-22T19:50:13.580544+00:00",
+  "detector_config": {
+    "batch_size": 64,
+    "dropout": [
+      0.3,
+      0.2
+    ],
+    "epochs": 20,
+    "hidden_1": 256,
+    "hidden_2": 64,
+    "learning_rate": 0.0001,
+    "loss": "BCEWithLogitsLoss with pos_weight",
+    "test_balancing": "equal clean/embedded per held-out model"
+  },
+  "features": [
+    "endpoint_frac",
+    "zero_count",
+    "fifteen_count",
+    "interior_frac",
+    "mean_code",
+    "std_code",
+    "odd_frac",
+    "parity_imbalance",
+    "odd_interior_frac",
+    "distinct_codes",
+    "code_entropy",
+    "mean_abs_value",
+    "absmax_value",
+    "adjacent_equal_frac",
+    "adjacent_parity_change",
+    "max_run"
+  ],
+  "models": [
+    "smollm2",
+    "qwen15",
+    "pythia",
+    "falcon"
+  ],
+  "platform": "macOS-27.0.1-arm64-arm-64bit-Mach-O",
+  "run_id": "nes_heldout_neural_v2_fixed_20261022",
+  "sample_seed": 424242,
+  "scope": "Leave-one-model-out neural detector on 4 checkpoints (FIXED: class-weighted, balanced test)",
+  "seeds": [
+    20261016,
+    20261017,
+    20261018
+  ],
+  "sizes": [
+    10000,
+    50000
+  ],
+  "source_hashes": {
+    "falcon:model.layers.0.mlp.up_proj.weight": "337f1584bc0f2b931b598cb66dafc6eb973f6608b7eaed9afd6fdbccb8a16ba9",
+    "falcon:model.layers.0.self_attn.q_proj.weight": "f6185ffa3335fc5d1ce782fcef2adf62d8cb74509b97ad4fc40c0327ea731f6a",
+    "falcon:model.layers.17.mlp.gate_proj.weight": "d363c0b03e1d27175043bf5cd0fd51854a3c5a327e58347c8e737239dc219105",
+    "falcon:model.layers.17.self_attn.v_proj.weight": "7b38834d79e7ce532c9a88baeb1bfb685b9252a251fc99922a2c9318589a073b",
+    "falcon:model.layers.8.mlp.down_proj.weight": "c12026b67f1f820b4b91f7dc999bd110fb493ef204377d444071a73198e7abf4",
+    "falcon:model.layers.8.self_attn.k_proj.weight": "0d3cf6321a4559f96709d6ee3b501b55e7aba03bc9c5fd1e96043a5d8fdcbad6",
+    "pythia:gpt_neox.layers.0.attention.query_key_value.weight": "b9d8bb3079ef30005ae30e93803309e762c592e98d20481d1e0952c9e0c67d87",
+    "pythia:gpt_neox.layers.0.mlp.dense_h_to_4h.weight": "66742dd59be4489c0c5086d0b840fdc1a5ee87f442f38c7680354fbc95e08be4",
+    "pythia:gpt_neox.layers.11.attention.dense.weight": "9540e503b4b6d41425c4ffc664f29a55ceda7887bba0a1d7722d3004a11f86ca",
+    "pythia:gpt_neox.layers.11.mlp.dense_4h_to_h.weight": "681412c7f1d351d4113585ba0de9474ba8b82c3ed3f96bd1421f15c1d8f0a21b",
+    "pythia:gpt_neox.layers.23.attention.query_key_value.weight": "572bd07a8293e7f67b08c8cf2766016768fe61f265e7065165f7b62520a97bd4",
+    "pythia:gpt_neox.layers.23.mlp.dense_h_to_4h.weight": "3eac5aa13cccd2803a99bc1e95f28ce3a00dda434bd91eb5ea889419f4f4037d",
+    "qwen15:model.layers.0.mlp.up_proj.weight": "b6587c3bab5b24ee725361f8e5a30a575ee8d6858cda7b15ef4d05dfe67df396",
+    "qwen15:model.layers.0.self_attn.q_proj.weight": "e955d7d09770fc4a900da00e7fd7a37352bc76703a135d68e0ab0e70867fae56",
+    "qwen15:model.layers.13.mlp.down_proj.weight": "1a4a4309c61b1262b31a70654538ff40ac1af6ed86cf19fa82d7c281c360f629",
+    "qwen15:model.layers.13.self_attn.k_proj.weight": "e462f07369745a2a1bd697119071ccd210bb7ce6909397c1cd776a1c76d334a4",
+    "qwen15:model.layers.27.mlp.gate_proj.weight": "ce321fcb9c840c0dad6725016cd66ddeefaed5b8e3eaa98acd18a7971a2f7e2c",
+    "qwen15:model.layers.27.self_attn.v_proj.weight": "45be340b3395dc58161d2b2cff3f826596edf5c21431f23f23a9b7c80da23ad8",
+    "smollm2:model.layers.0.mlp.up_proj.weight": "2adaa8309e0ab3ee547602dc922138a5973627a7f24ca37e5e3730dd9a9fcdb2",
+    "smollm2:model.layers.0.self_attn.q_proj.weight": "37b26c49a03b8a7c4bd4bca6f59751cf83343c06aa19cda6c48a2fd1524b421f",
+    "smollm2:model.layers.11.mlp.down_proj.weight": "6bb485e6c3603937481112ab02879b7fa0ddd4dac8c9c414d171b77a39295363",
+    "smollm2:model.layers.11.self_attn.k_proj.weight": "e1ed583339d56e0fe17e68870ad6c8344e34b14986bc2d724d761e6870ac9957",
+    "smollm2:model.layers.23.mlp.gate_proj.weight": "13485d464f4c3010cd2a70f9d54fe50d3e6458fa3730e347ccb39b8d9015a79a",
+    "smollm2:model.layers.23.self_attn.v_proj.weight": "4befccdf9c5f12fb4104c60bcf93c68f5bef2ef923be0def543ba40809083e81"
+  },
+  "tensors_per_model": {
+    "falcon": [
+      "model.layers.0.self_attn.q_proj.weight",
+      "model.layers.8.self_attn.k_proj.weight",
+      "model.layers.17.self_attn.v_proj.weight",
+      "model.layers.0.mlp.up_proj.weight",
+      "model.layers.8.mlp.down_proj.weight",
+      "model.layers.17.mlp.gate_proj.weight"
+    ],
+    "pythia": [
+      "gpt_neox.layers.0.attention.query_key_value.weight",
+      "gpt_neox.layers.11.attention.dense.weight",
+      "gpt_neox.layers.23.attention.query_key_value.weight",
+      "gpt_neox.layers.0.mlp.dense_h_to_4h.weight",
+      "gpt_neox.layers.11.mlp.dense_4h_to_h.weight",
+      "gpt_neox.layers.23.mlp.dense_h_to_4h.weight"
+    ],
+    "qwen15": [
+      "model.layers.0.self_attn.q_proj.weight",
+      "model.layers.13.self_attn.k_proj.weight",
+      "model.layers.27.self_attn.v_proj.weight",
+      "model.layers.0.mlp.up_proj.weight",
+      "model.layers.13.mlp.down_proj.weight",
+      "model.layers.27.mlp.gate_proj.weight"
+    ],
+    "smollm2": [
+      "model.layers.0.self_attn.q_proj.weight",
+      "model.layers.11.self_attn.k_proj.weight",
+      "model.layers.23.self_attn.v_proj.weight",
+      "model.layers.0.mlp.up_proj.weight",
+      "model.layers.11.mlp.down_proj.weight",
+      "model.layers.23.mlp.gate_proj.weight"
+    ]
+  },
+  "versions": {
+    "bitsandbytes": "0.50.2",
+    "numpy": "2.5.2",
+    "safetensors": "0.8.0",
+    "scikit-learn": "1.9.1",
+    "torch": "2.13.0"
+  }
+}
