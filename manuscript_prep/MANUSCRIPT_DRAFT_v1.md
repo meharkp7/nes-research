@@ -34,7 +34,7 @@ We do **not** claim robustness against adaptive attackers, fine-tuning, pruning,
 
 1. **NF4 anchor-preserving formulation:** Carriers restricted to interior codes (1–14); endpoints (0, 15) never modified, preserving double-quantized block scales.
 2. **Nearest-same-parity embedding:** Each carrier moved to nearest interior code with target parity (minimal |Δ| = 1).
-3. **Exact repeated-requantization exactness:** BER = 0 across 0–5 requantization cycles on 5 models, 1,800 conditions (matrix) + stress tests.
+3. **Exact repeated-requantization exactness:** BER = 0 across 0–5 requantization cycles on 5 model checkpoints, 1,800 conditions (cycles 0–3 matrix) + separate stress tests.
 4. **Utility preservation:** Paired PPL on wikitext-2 within ±0.5% on all 24 expansion conditions.
 5. **Detectability at chance:** Main evaluation AUC ≤ 0.512; small-capacity supplement AUC 0.517 (exploratory); neural cross-checkpoint AUC 0.5000.
 6. **Reproducible pipeline:** Frozen codec (SHA-256 verified), pinned model revisions, regression suite (60/60 tests PASS).
@@ -100,9 +100,9 @@ Each block of 64 weights shares one scale (and double-quantized scale). The 16 c
 
 For each 64-weight block, a code at position `i` is eligible iff:
 ```
-eligible[i] = (code[i] ≥ 1) AND (code[i] ≤ 14)
+eligible[i] = (1 ≤ code[i] ≤ 14) AND (the 64-code block containing i has at least one code equal to 0 or 15)
 ```
-Only interior codes (1–14) participate. Endpoints are frozen.
+Only interior codes (1–14) in blocks containing at least one endpoint code (0 or 15) participate. Blocks without an endpoint anchor are excluded; endpoint codes are never modified.
 
 ### 3.3 Payload Framing
 
@@ -261,7 +261,7 @@ All 5 models + StableLM: `differing_keys == [target_tensor]`, `shape_preserved: 
 
 **Clean-vs-clean:** AUC 0.5052 [0.4963, 0.5142]
 
-**Groups:** 12 (6 models × 2 tensors: k_proj, v_proj at 50k bits). This is the primary durable supplement. Earlier 4-group experiment (TinyLlama + Qwen2.5-3B) yielded LR AUC 0.5343; merged 14-group analysis yielded LR AUC 0.5059. All detectors PASS screening (AUC < 0.55). Labeled **exploratory** — 12 groups underpowered for definitive conclusion.
+**Groups:** 12 model–tensor groups (6 checkpoints × 2 tensors: k_proj, v_proj at 50k bits). This is the primary durable supplement. Earlier 4-group experiment (TinyLlama + Qwen2.5-3B) yielded LR AUC 0.5343; merged 14-group analysis yielded LR AUC 0.5059. All detectors PASS screening (AUC < 0.55). Labeled **exploratory** — 12 groups underpowered for definitive conclusion.
 
 **Source:** `evidence/smallcap_extended_v1/supplement_results.json` (primary); `out/detectability_smallcap_v1/supplement_results.json` (original 4-group, archived); `out/detectability_smallcap_analysis_v2/detector_results.json` (merged 14-group, archived).
 
@@ -312,7 +312,7 @@ All 5 models + StableLM: `differing_keys == [target_tensor]`, `shape_preserved: 
 | over_capacity_rejected | ✅ | ✅ | ✅ | ✅ | ✅ |
 | pair_parity_fails_after_requant | ✅ | ✅ | ✅ | ✅ | ✅ |
 
-**Total:** 60/60 PASS.
+**Regression results:** 48/48 tests passed in the reported run across four expansion checkpoints (12 per checkpoint). StableLM's 12 tests were run separately; 60/60 is an aggregate across separate runs, not one jointly executed run.
 
 **Source:** `expansion_qualification/{model}/regressions.json`, `stablelm_qualification/regressions.json`.
 
@@ -419,7 +419,7 @@ Full audit: `manuscript_prep/CLAIMS_AUDIT.md`.
 | Model coverage (5 small models) | §4.1, §6.5 |
 | Tensor coverage (6/1000) | §4.2, §6.5 |
 | Payload size (≤50k) | §4.3, §6.5 |
-| Requantization cycles (0–5) | §3.8, §5.1, §6.4 |
+| Requantization cycles (0–3 matrix; 0–5 regression; 0–10 single-tensor k_proj stress test) | §3.8, §5.1, §6.4 |
 | Utility corpus (wikitext-2 only) | §4.4, §6.3 |
 | Qwen LR discrepancy | §5.3, §6.2 |
 | Small-cap exploratory | §5.4, §6.2 |
