@@ -3,14 +3,14 @@
 **Authors:** [Anonymized for submission]  
 **Date:** 2026-10-21  
 **Code:** `code/nes-llm/src/experiments/nf4_anchor_channel.py` (SHA-256: `07ce008dcabebb7ac0d4fa10c88251bf10dc9f2a7ae27dfc79bf23b8cd75b764`)  
-**Data:** `evidence/ckpt_nf4/`, `evidence/heldout_neural_v2/`, `evidence/smallcap_extended_v1/`  
-**Protocol:** `stablelm_qualification/QUALIFICATION_PROTOCOL_V2.md` (Track A gates)
+**Data:** `evidence/ckpt_nf4/`, `evidence/heldout_neural_v3/`, `evidence/smallcap_extended_v1/`, `evidence/requant_10cycle/`  
+**Protocol:** Track C qualification and utility artifacts documented in `manuscript_prep/REPRODUCIBILITY.md`
 
 ---
 
 ## Abstract
 
-NF4 quantization with double quantization is the de facto standard for compressing large language models. However, requantization — the dequantize/requantize cycle — perturbs block scales and code assignments, breaking most payload embedding schemes. We present `interior_nearest`, an NF4-specific anchor-preserving formulation that restricts carriers to interior NF4 codes (1–14), never rewriting endpoints (0, 15) that carry double-quantized block scales. The embedding moves each carrier to the nearest interior code with the target parity bit. Across five model architectures (SmolLM2-1.7B, Qwen2.5-1.5B, Pythia-1.4b, Falcon3-1B, StableLM-2-1.6B), six tensors per model, five payload sizes (1k–50k bits), three seeds, and four requantization cycles (0–3), all 1,800 roundtrip conditions achieve exact payload recovery (BER = 0). Baseline methods (`pair_parity`, `nearest_parity`) fail from cycle 1 (90–108/360 exact). Paired perplexity on wikitext-2 (580 sequences, ±0.5% margin) shows all 24 expansion conditions within margin (max |Δ| 0.019%). Detectability under grouped cross-validation (logistic regression, gradient boosting, exploratory MLP; 16 features) is at chance: max AUC 0.512, TPR@1% ≤ 0.011, clean-control AUC ~0.5. A small-capacity supplement (12 groups, k_proj/v_proj at 50k bits) shows logistic regression AUC 0.517 [0.509, 0.526] — above the main evaluation but within screening threshold (AUC < 0.55). A leave-one-checkpoint-out neural detector on four checkpoints (balanced test, class-weighted loss) yields mean AUC 0.5004 ± 0.0003. Novelty is limited: nearest-same-parity code-index embedding originates in NID (Liu et al. 2016) / CNV-QIM (Xiao et al. 2008); invariant-region preservation for quantized LLM weights is proposed by Li et al. (2023) and Guo et al. (2025); FreMark 2025 (LNCS 16177) describes free-region marking but is paywalled and overlap cannot be assessed (Gate G = PARTIAL). Our contribution is the NF4 packed-code formulation with endpoint exclusion and empirical demonstration of exact repeated-requantization exactness.
+NF4 quantization with double quantization is the de facto standard for compressing large language models. However, requantization — the dequantize/requantize cycle — perturbs block scales and code assignments, breaking most payload embedding schemes. We present `interior_nearest`, an NF4-specific anchor-preserving formulation that restricts carriers to interior NF4 codes (1–14), never rewriting endpoints (0, 15) that carry double-quantized block scales. The embedding moves each carrier to the nearest interior code with the target parity bit. Across five model checkpoints spanning approximately two architecture families (SmolLM2-1.7B, Qwen2.5-1.5B, Pythia-1.4b, Falcon3-1B, StableLM-2-1.6B), six tensors per model, five payload sizes (1k–50k bits), three seeds, and four requantization cycles (0–3), all 1,800 roundtrip conditions achieve exact payload recovery (BER = 0). Baseline methods (`pair_parity`, `nearest_parity`) fail from cycle 1 (90–108/360 exact). Paired perplexity on wikitext-2 (580 sequences, ±0.5% margin) shows all 24 expansion conditions within margin (max |Δ| 0.019%). Detectability under grouped cross-validation (logistic regression, gradient boosting, exploratory MLP; 16 features) is at chance: max AUC 0.512, TPR@1% ≤ 0.011, clean-control AUC ~0.5. A small-capacity supplement (12 groups, k_proj/v_proj at 50k bits) shows logistic regression AUC 0.517 [0.509, 0.526] — above the main evaluation but within screening threshold (AUC < 0.55). A leave-one-checkpoint-out neural detector on four checkpoints (balanced test, class-weighted loss) yields mean AUC 0.5004 ± 0.0003. Novelty is limited: nearest-same-parity code-index embedding originates in NID (Liu et al. 2016) / CNV-QIM (Xiao et al. 2008); invariant-region preservation for quantized LLM weights is proposed by Li et al. (2023) and Guo et al. (2025); FreMark 2025 (LNCS 16177) describes free-region marking but is paywalled and overlap cannot be assessed (Gate G = PARTIAL). Our contribution is the NF4 packed-code formulation with endpoint exclusion and empirical demonstration of exact repeated-requantization exactness.
 
 ---
 
@@ -32,12 +32,12 @@ We do **not** claim robustness against adaptive attackers, fine-tuning, pruning,
 
 ### 1.3 Contributions
 
-1. **NF4 anchor-preserving formulation:** Carriers restricted to interior codes (1–14); endpoints (0, 15) never modified, preserving double-quantized block scales.
+1. **NF4 anchor-preserving formulation:** Carriers are restricted to eligible interior codes (1–14) in blocks containing at least one endpoint code (0 or 15); endpoint codes are not modified during embedding.
 2. **Nearest-same-parity embedding:** Each carrier moved to nearest interior code with target parity (minimal |Δ| = 1).
 3. **Exact repeated-requantization exactness:** BER = 0 across 0–5 requantization cycles on 5 model checkpoints, 1,800 conditions (cycles 0–3 matrix) + separate stress tests.
 4. **Utility preservation:** Paired PPL on wikitext-2 within ±0.5% on all 24 expansion conditions.
-5. **Detectability at chance:** Main evaluation AUC ≤ 0.512; small-capacity supplement AUC 0.517 (exploratory); neural cross-checkpoint AUC 0.5000.
-6. **Reproducible pipeline:** Frozen codec (SHA-256 verified), pinned model revisions, regression suite (60/60 tests PASS).
+5. **Detectability under tested threat models:** Main statistical detectors remain below the prespecified screening threshold; the small-capacity supplement is exploratory (LR AUC 0.5167); the balanced held-out neural evaluation reports mean AUC 0.5004.
+6. **Reproducibility artifacts:** Frozen codec hash, pinned model revisions, manifests, and regression results are documented. The latest reported run executed 48/48 regression tests across four expansion checkpoints; StableLM's 12 tests were run separately.
 
 ### 1.4 Non-Claims (Explicit Limitations)
 
@@ -94,7 +94,7 @@ We do **not** claim robustness against adaptive attackers, fine-tuning, pruning,
 | Storage | uint8 (4-bit packed, 2 codes/byte) |
 | Compute dtype | float16 |
 
-Each block of 64 weights shares one scale (and double-quantized scale). The 16 codebook levels map to indices 0–15. **Endpoints 0 and 15 carry scale information and are never rewritten.**
+Each block contains 64 quantized codes and associated quantization metadata, including scale information. The 16 codebook levels map to indices 0–15. This method treats endpoint codes 0 and 15 as invariant anchors and leaves them unchanged during embedding; it does not claim that endpoint codes themselves store the double-quantized scales.
 
 ### 3.2 Carrier Eligibility
 
@@ -223,7 +223,7 @@ wikitext-2-raw-v1 test split, model's own tokenizer, context 512, non-overlappin
 | Falcon3-1B | pair_parity | 108/360 | — | 0–3 |
 | StableLM-2-1.6B | interior_nearest | 360/360 | 0 | 0–3 |
 
-**Total:** 1,800/1,800 exact for `interior_nearest`; 0 anchor code mutations.
+**Total:** 1,800/1,800 reported exact-recovery conditions for `interior_nearest`; zero endpoint-code mutations in the reported matrix.
 
 **Stress test (regression):** `requantize_cycles_0_5_exact` PASS on all 5 models (cycles 0–5). **Extended stress test:** Single-tensor (k_proj) on 4 expansion models shows 100% exact recovery through 10 requantization cycles (264 conditions: 4 models × 2 sizes × 3 seeds × 11 cycles).
 
@@ -277,7 +277,7 @@ All 5 models + StableLM: `differing_keys == [target_tensor]`, `shape_preserved: 
 **Mean AUC:** 0.5004 ± 0.0003 — all at chance. Balanced accuracy ≈ 0.500.  
 **Fixes applied:** Class-weighted BCE loss, balanced test sets (equal clean/embedded per tensor), bootstrap CI.  
 **Previous v2 issue:** Severe class imbalance (6:1) caused all-positive prediction collapse (TN=0, FN=0, accuracy=85.7%).  
-**Interpretation:** No cross-checkpoint generalization; neural detector performs at chance under balanced evaluation.
+**Interpretation:** The evaluated neural detector showed no meaningful ranking discrimination under this balanced, four-checkpoint setup. This does not establish universal undetectability or exclude stronger/adaptive detectors.
 
 **Source:** `evidence/heldout_neural_v3/heldout_neural_results.json`.
 
